@@ -1,7 +1,6 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@flowchat/types'],
 experimental: {
     typedRoutes: true,
   },

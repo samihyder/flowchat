@@ -1,8 +1,5 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
-  "build": {
-    "buildCommand": "npm install -g pnpm@11.5.0 && cd ../../ && pnpm install --frozen-lockfile && pnpm --filter @flowchat/web build"
-  },
   "deploy": {
     "startCommand": "node_modules/.bin/next start",
     "healthcheckPath": "/",

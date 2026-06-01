@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signUpSchema, type SignUpInput } from '@flowchat/types';
+import { signUpSchema, type SignUpInput } from '@/lib/schemas';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 
