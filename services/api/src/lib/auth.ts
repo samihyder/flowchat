@@ -1,6 +1,6 @@
 import { hash, verify } from '@node-rs/argon2';
 import { createId } from '@paralleldrive/cuid2';
-import { db, sessions, users, accounts, accountUsers } from '@flowchat/db';
+import { db, sessions, users, accounts, accountUsers } from '../db/index.js';
 import { eq, and } from 'drizzle-orm';
 import { sign, verify as jwtVerify } from 'hono/jwt';
 import { env } from './env.js';

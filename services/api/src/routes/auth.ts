@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { db, users, accounts, accountUsers } from '@flowchat/db';
-import { signUpSchema, signInSchema } from '@flowchat/types';
+import { db, users, accounts, accountUsers } from '../db/index.js';
+import { signUpSchema, signInSchema } from '../lib/schemas.js';
 import { eq } from 'drizzle-orm';
 import {
   hashPassword,
