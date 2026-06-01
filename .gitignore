@@ -1,5 +1,24 @@
-.DS_Store
-*.DS_Store
-node_modules/
+# Env files
 .env
 .env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+dist/
+.turbo/
+
+# OS
+.DS_Store
+*.DS_Store
+
+# Drizzle generated (keep the drizzle/ folder but ignore journal lock)
+packages/db/drizzle/*.sql.bak
+
+# Editor
+.vscode/settings.json
+.idea/
