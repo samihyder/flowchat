@@ -1,6 +1,6 @@
 import { pgTable, uuid, varchar, timestamp, pgEnum, primaryKey } from 'drizzle-orm/pg-core';
-import { accounts } from './accounts.js';
-import { users } from './users.js';
+import { accounts } from './accounts';
+import { users } from './users';
 
 export const agentRoleEnum = pgEnum('agent_role', ['administrator', 'agent']);
 export const availabilityEnum = pgEnum('availability_status', ['online', 'busy', 'offline']);
