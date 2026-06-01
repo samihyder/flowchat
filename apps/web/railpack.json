@@ -1,3 +1,8 @@
 {
-  "installCommand": "true"
+  "$schema": "https://schema.railpack.com",
+  "steps": {
+    "install": {
+      "commands": []
+    }
+  }
 }
