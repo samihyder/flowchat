@@ -1,3 +1,4 @@
+import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
@@ -38,9 +39,7 @@ app.onError((err, c) => {
 });
 
 const port = env.PORT;
-console.log(`🚀 FlowChat API running on http://localhost:${port}`);
 
-export default {
-  port,
-  fetch: app.fetch,
-};
+serve({ fetch: app.fetch, port }, () => {
+  console.log(`🚀 FlowChat API running on http://localhost:${port}`);
+});
