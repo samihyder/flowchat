@@ -113,6 +113,24 @@ agentsRouter.patch(
   }
 );
 
+// Update own availability
+agentsRouter.patch(
+  '/me/availability',
+  zValidator('json', z.object({ availability: z.enum(['online', 'busy', 'offline']) })),
+  async (c) => {
+    const accountId = c.get('accountId');
+    const userId = c.get('userId');
+    const { availability } = c.req.valid('json');
+
+    await db
+      .update(accountUsers)
+      .set({ availability, updatedAt: new Date() })
+      .where(and(eq(accountUsers.userId, userId), eq(accountUsers.accountId, accountId)));
+
+    return c.json({ availability });
+  }
+);
+
 // Remove agent from account (deactivate)
 agentsRouter.delete('/:userId', adminMiddleware, async (c) => {
   const accountId = c.get('accountId');

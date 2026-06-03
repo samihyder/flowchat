@@ -2,8 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
+import { useWsStore, type Availability } from '@/store/ws';
+import { useWebSocket } from '@/lib/useWebSocket';
+import { api } from '@/lib/api';
 
 const navItems = [
   { label: 'Conversations', href: '/dashboard', icon: (
@@ -31,10 +34,28 @@ const navItems = [
   )},
 ];
 
+const availabilityColors: Record<Availability, string> = {
+  online: 'bg-green-500',
+  busy: 'bg-yellow-500',
+  offline: 'bg-gray-400',
+};
+
+const availabilityLabels: Record<Availability, string> = {
+  online: 'Online',
+  busy: 'Busy',
+  offline: 'Offline',
+};
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, token, accountName, clearAuth } = useAuthStore();
+  const { user, token, accountId, accountName, clearAuth } = useAuthStore();
+  const { sendPresence, presence } = useWsStore();
+  const [showAvailability, setShowAvailability] = useState(false);
+
+  useWebSocket();
+
+  const myAvailability: Availability = (user ? (presence[user.id] ?? 'online') : 'offline') as Availability;
 
   useEffect(() => {
     if (!token) router.push('/sign-in');
@@ -87,14 +108,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        <div className="p-3 border-t border-gray-200">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-sm font-bold shrink-0">
-              {user.name.charAt(0).toUpperCase()}
+        <div className="p-3 border-t border-gray-200 relative">
+          {showAvailability && (
+            <div className="absolute bottom-16 left-3 right-3 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-10">
+              {(['online', 'busy', 'offline'] as Availability[]).map((a) => (
+                <button
+                  key={a}
+                  onClick={async () => {
+                    sendPresence(a);
+                    if (accountId && token) {
+                      await api.agents.update(accountId, user.id, {}, token);
+                    }
+                    setShowAvailability(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${myAvailability === a ? 'font-medium text-gray-900' : 'text-gray-600'}`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${availabilityColors[a]}`} />
+                  {availabilityLabels[a]}
+                  {myAvailability === a && <span className="ml-auto text-indigo-500">✓</span>}
+                </button>
+              ))}
             </div>
+          )}
+
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setShowAvailability(!showAvailability)}
+              className="relative shrink-0"
+              title="Change availability"
+            >
+              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-sm font-bold">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${availabilityColors[myAvailability]}`} />
+            </button>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-              <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              <p className="text-xs text-gray-400 capitalize">{myAvailability}</p>
             </div>
             <button
               onClick={() => { clearAuth(); router.push('/sign-in'); }}

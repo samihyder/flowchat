@@ -3,6 +3,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { validateSession } from './lib/auth.js';
 import { rooms } from './lib/rooms.js';
 import { publisher, subscriber } from './lib/redis.js';
+import { setAvailability } from './lib/presence.js';
 import { env } from './lib/env.js';
 
 // ─── HTTP server (health check) ─────────────────────────────────────────────
@@ -26,36 +27,36 @@ function extractToken(req: IncomingMessage): string | null {
   return url.searchParams.get('token');
 }
 
+function broadcast(accountId: string, payload: object, exclude?: WebSocket) {
+  const message = JSON.stringify(payload);
+  rooms.broadcast(`account:${accountId}`, message, exclude);
+  publisher.publish(`account:${accountId}`, message);
+}
+
 wss.on('connection', async (ws, req) => {
   const token = extractToken(req);
 
-  if (!token) {
-    ws.close(4001, 'Missing token');
-    return;
-  }
+  if (!token) { ws.close(4001, 'Missing token'); return; }
 
   const session = await validateSession(token);
-  if (!session) {
-    ws.close(4001, 'Invalid or expired token');
-    return;
-  }
+  if (!session) { ws.close(4001, 'Invalid or expired token'); return; }
 
   const { userId, accountId } = session;
 
-  // Auto-subscribe to the user's account room
   if (accountId) {
     rooms.join(`account:${accountId}`, ws);
+
+    // Mark online
+    await setAvailability(userId, accountId, 'online');
+    broadcast(accountId, { type: 'presence_updated', userId, availability: 'online' }, ws);
   }
 
   ws.send(JSON.stringify({ type: 'connected', userId, accountId }));
 
-  ws.on('message', (data) => {
+  ws.on('message', async (data) => {
     let msg: Record<string, unknown>;
-    try {
-      msg = JSON.parse(data.toString()) as Record<string, unknown>;
-    } catch {
-      return;
-    }
+    try { msg = JSON.parse(data.toString()) as Record<string, unknown>; }
+    catch { return; }
 
     switch (msg['type']) {
       case 'ping':
@@ -72,25 +73,26 @@ wss.on('connection', async (ws, req) => {
       }
 
       case 'presence': {
-        const room = msg['accountId'] as string | undefined;
-        const availability = msg['availability'] as string | undefined;
-        if (room && availability) {
-          const payload = JSON.stringify({ type: 'presence_updated', userId, availability });
-          // Broadcast to other clients in the room
-          rooms.broadcast(`account:${room}`, payload, ws);
-          // Publish to Redis so other WS instances broadcast too
-          publisher.publish(`account:${room}`, payload);
+        const avail = msg['availability'] as 'online' | 'busy' | 'offline' | undefined;
+        if (accountId && avail && ['online', 'busy', 'offline'].includes(avail)) {
+          await setAvailability(userId, accountId, avail);
+          broadcast(accountId, { type: 'presence_updated', userId, availability: avail }, ws);
         }
         break;
       }
     }
   });
 
-  ws.on('close', () => {
+  ws.on('close', async () => {
     rooms.leaveAll(ws);
+    // Auto-offline on disconnect
+    if (accountId) {
+      await setAvailability(userId, accountId, 'offline');
+      broadcast(accountId, { type: 'presence_updated', userId, availability: 'offline' });
+    }
   });
 
-  ws.on('error', (err) => {
+  ws.on('error', (err: Error) => {
     console.error(`[ws] client error: ${err.message}`);
     rooms.leaveAll(ws);
   });
@@ -100,18 +102,14 @@ wss.on('connection', async (ws, req) => {
 
 async function startRedis() {
   await Promise.all([publisher.connect(), subscriber.connect()]);
-
-  // Subscribe to all account channels
   await subscriber.psubscribe('account:*');
-
   subscriber.on('pmessage', (_pattern: string, channel: string, message: string) => {
     rooms.broadcast(channel, message);
   });
-
   console.log('[redis] pub/sub connected');
 }
 
-startRedis().catch((err) => console.error('[redis] failed to connect:', err.message));
+startRedis().catch((err: Error) => console.error('[redis] failed to connect:', err.message));
 
 // ─── Start ───────────────────────────────────────────────────────────────────
 
