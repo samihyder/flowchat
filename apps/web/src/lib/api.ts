@@ -85,6 +85,19 @@ export const api = {
       }),
   },
 
+  inboxes: {
+    list: (accountId: string, token: string) =>
+      request<{ inboxes: { id: string; name: string; channelType: string; widgetColor: string | null; isEnabled: boolean }[] }>(
+        `/accounts/${accountId}/inboxes`, { token }
+      ),
+    create: (accountId: string, body: { name: string; channelType?: string; greetingMessage?: string }, token: string) =>
+      request<{ inbox: { id: string; name: string; channelType: string } }>(
+        `/accounts/${accountId}/inboxes`, { method: 'POST', body, token }
+      ),
+    remove: (accountId: string, inboxId: string, token: string) =>
+      request<{ message: string }>(`/accounts/${accountId}/inboxes/${inboxId}`, { method: 'DELETE', token }),
+  },
+
   teams: {
     list: (accountId: string, token: string) =>
       request<{ teams: { id: string; name: string; description: string | null; isEnabled: boolean }[] }>(
