@@ -22,7 +22,7 @@ export default function SignInPage() {
   const onSubmit = async (data: SignInInput) => {
     try {
       const res = await api.auth.signIn(data);
-      setAuth(res.user, res.token);
+      setAuth(res.user, res.token, res.account?.id ?? '', res.account?.name ?? '');
       router.push('/dashboard');
     } catch (err: any) {
       setError('root', { message: err.message });

@@ -13,7 +13,9 @@ type User = {
 type AuthStore = {
   user: User | null;
   token: string | null;
-  setAuth: (user: User, token: string) => void;
+  accountId: string | null;
+  accountName: string | null;
+  setAuth: (user: User, token: string, accountId: string, accountName: string) => void;
   clearAuth: () => void;
 };
 
@@ -22,8 +24,11 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       user: null,
       token: null,
-      setAuth: (user, token) => set({ user, token }),
-      clearAuth: () => set({ user: null, token: null }),
+      accountId: null,
+      accountName: null,
+      setAuth: (user, token, accountId, accountName) =>
+        set({ user, token, accountId, accountName }),
+      clearAuth: () => set({ user: null, token: null, accountId: null, accountName: null }),
     }),
     { name: 'fc-auth' }
   )

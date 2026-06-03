@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { db, users, accounts, accountUsers } from '../db/index.js';
+import { db, users, accounts, accountUsers, sessions } from '../db/index.js';
 import { signUpSchema, signInSchema } from '../lib/schemas.js';
 import { eq } from 'drizzle-orm';
 import {
@@ -76,8 +76,19 @@ authRouter.post('/sign-in', zValidator('json', signInSchema), async (c) => {
 
   const { token, expiresAt } = await createSession(user.id);
 
+  const [membership] = await db
+    .select({ accountId: accountUsers.accountId, role: accountUsers.role })
+    .from(accountUsers)
+    .where(eq(accountUsers.userId, user.id))
+    .limit(1);
+
+  const [account] = membership
+    ? await db.select().from(accounts).where(eq(accounts.id, membership.accountId)).limit(1)
+    : [];
+
   return c.json({
     user: { id: user.id, name: user.name, email: user.email },
+    account: account ? { id: account.id, name: account.name, slug: account.slug } : null,
     token,
     expiresAt,
   });
