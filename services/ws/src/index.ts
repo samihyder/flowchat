@@ -104,7 +104,7 @@ async function startRedis() {
   // Subscribe to all account channels
   await subscriber.psubscribe('account:*');
 
-  subscriber.on('pmessage', (_pattern, channel, message) => {
+  subscriber.on('pmessage', (_pattern: string, channel: string, message: string) => {
     rooms.broadcast(channel, message);
   });
 
