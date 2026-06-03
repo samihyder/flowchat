@@ -11,10 +11,12 @@ const app = new Hono();
 // Middleware
 app.use('*', logger());
 app.use('*', prettyJSON());
+const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
+
 app.use(
   '*',
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: (origin) => (allowedOrigins.includes(origin) ? origin : allowedOrigins[0]!),
     credentials: true,
     allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
