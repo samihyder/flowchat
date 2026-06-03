@@ -5,6 +5,7 @@ import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
 import { env } from './lib/env.js';
 import { authRouter } from './routes/auth.js';
+import { agentsRouter } from './routes/agents.js';
 
 const app = new Hono();
 
@@ -30,6 +31,7 @@ app.get('/health', (c) =>
 
 // Routes
 app.route('/auth', authRouter);
+app.route('/accounts/:accountId/agents', agentsRouter);
 
 // 404 fallback
 app.notFound((c) => c.json({ error: 'Not found' }, 404));
