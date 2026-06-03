@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth.js';
 import { agentsRouter } from './routes/agents.js';
 import { teamsRouter } from './routes/teams.js';
 import { inboxesRouter } from './routes/inboxes.js';
+import { accountsRouter } from './routes/accounts.js';
 
 const app = new Hono();
 
@@ -36,6 +37,7 @@ app.route('/auth', authRouter);
 app.route('/accounts/:accountId/agents', agentsRouter);
 app.route('/accounts/:accountId/teams', teamsRouter);
 app.route('/accounts/:accountId/inboxes', inboxesRouter);
+app.route('/accounts/:accountId', accountsRouter);
 
 // 404 fallback
 app.notFound((c) => c.json({ error: 'Not found' }, 404));

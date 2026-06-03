@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const settingsNav = [
+  { label: 'Account', href: '/settings/account' },
   { label: 'Agents', href: '/settings/agents' },
   { label: 'Teams', href: '/settings/teams' },
 ];

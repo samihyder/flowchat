@@ -85,6 +85,21 @@ export const api = {
       }),
   },
 
+  account: {
+    get: (accountId: string, token: string) =>
+      request<{ account: { id: string; name: string; timezone: string; locale: string; logoUrl: string | null; slug: string } }>(
+        `/accounts/${accountId}`, { token }
+      ),
+    update: (accountId: string, body: { name?: string; timezone?: string; locale?: string; logoUrl?: string | null }, token: string) =>
+      request<{ account: { id: string; name: string; timezone: string; locale: string; logoUrl: string | null } }>(
+        `/accounts/${accountId}`, { method: 'PATCH', body, token }
+      ),
+    getLogoUploadUrl: (accountId: string, token: string) =>
+      request<{ uploadUrl: string; publicUrl: string }>(
+        `/accounts/${accountId}/logo-upload-url`, { method: 'POST', token }
+      ),
+  },
+
   inboxes: {
     list: (accountId: string, token: string) =>
       request<{ inboxes: { id: string; name: string; channelType: string; widgetColor: string | null; isEnabled: boolean }[] }>(
