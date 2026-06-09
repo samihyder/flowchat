@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "tsx src/index.ts",
+    "build": "echo 'API runs via tsx — typecheck in CI'",
     "typecheck": "tsc --noEmit",
+    "start": "tsx src/index.ts",
     "lint": "biome lint ./src",
     "test": "vitest run"
   },
