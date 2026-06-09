@@ -14,15 +14,19 @@
 <body>
   <h1>Widget test page</h1>
   <p>
-    Replace <code>YOUR_INBOX_ID</code> below with an inbox ID from Settings → Inboxes,
-    then open this page while the API and WS services are running.
+    Chat bubble should appear in the bottom-right. Send a message, then check
+    <strong>Dashboard</strong> in FlowChat as an agent.
+  </p>
+  <p>
+    To use a different inbox, copy the embed code from <strong>Settings → Inboxes</strong>
+    and replace the <code>window.flowchat</code> block below.
   </p>
 
   <script>
     window.flowchat = {
-      inboxId: 'YOUR_INBOX_ID',
-      apiUrl: 'http://localhost:3001',
-      wsUrl: 'ws://localhost:3002'
+      inboxId: '74ddbd4f-1205-4715-8296-75c96dd6b64c',
+      apiUrl: 'https://flowchat-production-be88.up.railway.app',
+      wsUrl: 'wss://flowchat-ws-production.up.railway.app'
     };
   </script>
   <script src="/widget.js" async></script>
