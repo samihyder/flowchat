@@ -32,7 +32,10 @@ export default function AgentsPage() {
   const [success, setSuccess] = useState('');
 
   const fetchAgents = async () => {
-    if (!token || !accountId) return;
+    if (!token || !accountId) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await api.agents.list(accountId, token);
       setAgents(res.agents);

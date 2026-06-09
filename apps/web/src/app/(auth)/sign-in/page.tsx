@@ -50,7 +50,11 @@ function SignInPage() {
         setTwoFaUserId(res.userId);
         return;
       }
-      setAuth(res.user, res.token, res.account?.id ?? '', res.account?.name ?? '');
+      if (!res.account?.id) {
+        setError('root', { message: 'No workspace found for this account. Contact support.' });
+        return;
+      }
+      setAuth(res.user, res.token, res.account.id, res.account.name);
       router.push('/dashboard');
     } catch (err: any) {
       setError('root', { message: err.message });
@@ -64,7 +68,11 @@ function SignInPage() {
     setTwoFaError('');
     try {
       const res = await api.twoFa.verify(twoFaUserId, twoFaCode);
-      setAuth(res.user, res.token, res.account?.id ?? '', res.account?.name ?? '');
+      if (!res.account?.id) {
+        setTwoFaError('No workspace found for this account.');
+        return;
+      }
+      setAuth(res.user, res.token, res.account.id, res.account.name);
       router.push('/dashboard');
     } catch (err: any) {
       setTwoFaError(err.message);

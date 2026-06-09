@@ -119,6 +119,17 @@ authRouter.get('/me', sessionMiddleware, async (c) => {
   }).from(users).where(eq(users.id, userId)).limit(1);
 
   if (!user) return c.json({ error: 'User not found' }, 404);
+
+  const [membership] = await db
+    .select({ accountId: accountUsers.accountId })
+    .from(accountUsers)
+    .where(eq(accountUsers.userId, userId))
+    .limit(1);
+
+  const [account] = membership
+    ? await db.select().from(accounts).where(eq(accounts.id, membership.accountId)).limit(1)
+    : [];
+
   return c.json({
     user: {
       id: user.id,
@@ -128,5 +139,6 @@ authRouter.get('/me', sessionMiddleware, async (c) => {
       totpEnabled: !!user.totpEnabledAt,
       createdAt: user.createdAt,
     },
+    account: account ? { id: account.id, name: account.name, slug: account.slug } : null,
   });
 });

@@ -91,6 +91,7 @@ export const api = {
           avatarUrl: string | null;
           totpEnabled: boolean;
         };
+        account: { id: string; name: string; slug: string } | null;
       }>('/auth/me', { token }),
   },
 

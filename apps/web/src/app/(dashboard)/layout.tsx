@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore, type Availability } from '@/store/ws';
 import { useWebSocket } from '@/lib/useWebSocket';
+import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
 import { api } from '@/lib/api';
 
 type Inbox = { id: string; name: string; channelType: string; widgetColor: string | null };
@@ -38,6 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const { user, token, accountId, accountName, clearAuth } = useAuthStore();
+  const { ready: authReady } = useAuthBootstrap();
   const { sendPresence, presence } = useWsStore();
   const [showAvailability, setShowAvailability] = useState(false);
   const [inboxes, setInboxes] = useState<Inbox[]>([]);
@@ -46,15 +48,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useWebSocket();
 
   useEffect(() => {
+    if (!authReady) return;
     if (!token) { router.push('/sign-in'); return; }
     if (!accountId) return;
     Promise.all([
       api.inboxes.list(accountId, token).then((r) => setInboxes(r.inboxes)).catch(() => {}),
       api.teams.list(accountId, token).then((r) => setTeams(r.teams)).catch(() => {}),
     ]);
-  }, [token, accountId, router]);
+  }, [authReady, token, accountId, router]);
 
-  if (!user) return null;
+  if (!authReady || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-sm text-gray-500">Loading…</p>
+      </div>
+    );
+  }
 
   const myAvailability: Availability = (presence[user.id] ?? 'online') as Availability;
   const isSettingsActive = pathname.startsWith('/settings');

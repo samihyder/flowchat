@@ -30,10 +30,18 @@ export default function InboxesPage() {
   const [widgetColor, setWidgetColor] = useState('#6366F1');
 
   const fetchInboxes = async () => {
-    if (!token || !accountId) return;
+    if (!token || !accountId) {
+      setLoading(false);
+      if (!accountId) setError('Workspace not loaded. Try signing out and back in.');
+      return;
+    }
+    setError('');
+    setLoading(true);
     try {
       const res = await api.inboxes.list(accountId, token);
       setInboxes(res.inboxes);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load inboxes');
     } finally {
       setLoading(false);
     }

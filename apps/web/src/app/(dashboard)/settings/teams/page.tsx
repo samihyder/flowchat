@@ -40,7 +40,10 @@ export default function TeamsPage() {
   const [error, setError] = useState('');
 
   const fetchTeams = async () => {
-    if (!token || !accountId) return;
+    if (!token || !accountId) {
+      setLoading(false);
+      return;
+    }
     try {
       const [teamsRes, agentsRes] = await Promise.all([
         api.teams.list(accountId, token),
