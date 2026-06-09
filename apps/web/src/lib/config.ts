@@ -1,8 +1,12 @@
 /** Production defaults — used when Vercel env vars are not set at build time. */
-const PRODUCTION_API_URL = 'https://flowchat-production-be88.up.railway.app';
-const PRODUCTION_WS_URL = 'wss://flowchat-ws-production.up.railway.app';
+export const PRODUCTION_API_URL = 'https://flowchat-production-be88.up.railway.app';
+export const PRODUCTION_WS_URL = 'wss://flowchat-ws-production.up.railway.app';
 
+/** Browser on a deployed app uses same-origin /api proxy to avoid CORS. */
 export function getApiUrl() {
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return '/api';
+  }
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   if (process.env.NODE_ENV === 'development') return 'http://localhost:3001';
   return PRODUCTION_API_URL;

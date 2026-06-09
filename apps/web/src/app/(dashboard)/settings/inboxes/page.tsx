@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type Inbox } from '@/lib/api';
-import { getApiUrl, getWsUrl } from '@/lib/config';
+import { PRODUCTION_API_URL, PRODUCTION_WS_URL } from '@/lib/config';
 
 const CHANNELS = [
   { value: 'web_widget', label: 'Website Live Chat', icon: '💬' },
@@ -87,8 +87,8 @@ export default function InboxesPage() {
 
   const embedSnippet = (inboxId: string) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://your-app.vercel.app';
-    const apiUrl = getApiUrl();
-    const wsUrl = getWsUrl();
+    const apiUrl = PRODUCTION_API_URL;
+    const wsUrl = PRODUCTION_WS_URL;
     return `<!-- FlowChat Widget — paste before </body> -->
 <script>
   window.flowchat = {
