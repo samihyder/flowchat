@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { Route } from 'next';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
@@ -16,6 +17,11 @@ const availabilityColors: Record<Availability, string> = {
   busy: 'bg-yellow-500',
   offline: 'bg-gray-400',
 };
+
+const conversationLinks: { label: string; href: Route; count: number }[] = [
+  { label: 'All', href: '/dashboard', count: 0 },
+  { label: 'Mine', href: '/dashboard?filter=mine' as Route, count: 0 },
+];
 
 const channelIcons: Record<string, string> = {
   web_widget: '💬',
@@ -82,10 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Conversations
             </div>
             <div className="space-y-0.5 mt-1">
-              {[
-                { label: 'All', href: '/dashboard', count: 0 },
-                { label: 'Mine', href: '/dashboard?filter=mine', count: 0 },
-              ].map((item) => (
+              {conversationLinks.map((item) => (
                 <Link
                   key={item.label}
                   href={item.href}
@@ -132,7 +135,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 inboxes.map((inbox) => (
                   <Link
                     key={inbox.id}
-                    href={`/dashboard?inbox=${inbox.id}`}
+                    href={`/dashboard?inbox=${inbox.id}` as Route}
                     className="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors group"
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -156,7 +159,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {teams.map((team) => (
                   <Link
                     key={team.id}
-                    href={`/dashboard?team=${team.id}`}
+                    href={`/dashboard?team=${team.id}` as Route}
                     className="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
                   >
                     <div className="flex items-center gap-2 min-w-0">

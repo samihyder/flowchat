@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import type { Route } from 'next';
 import { usePathname } from 'next/navigation';
 
-const settingsNav = [
+const settingsNav: { label: string; href: Route }[] = [
   { label: 'Account', href: '/settings/account' },
   { label: 'Inboxes', href: '/settings/inboxes' },
   { label: 'Agents', href: '/settings/agents' },
