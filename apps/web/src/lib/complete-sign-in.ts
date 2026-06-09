@@ -16,7 +16,23 @@ export async function resolveWorkspace(
       return { accountId: me.account.id, accountName: me.account.name };
     }
   } catch {
-    // Fall through — caller shows a friendly error.
+    // Railway API may be stale — try Vercel workspace resolver.
+  }
+
+  try {
+    const res = await fetch('/api/workspace', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const data = (await res.json()) as {
+        account?: { id: string; name: string } | null;
+      };
+      if (data.account?.id) {
+        return { accountId: data.account.id, accountName: data.account.name };
+      }
+    }
+  } catch {
+    // Fall through.
   }
 
   return null;
