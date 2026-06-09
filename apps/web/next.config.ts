@@ -12,10 +12,11 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL ?? PRODUCTION_WS_URL,
   },
   async rewrites() {
+    // Only proxy auth to Railway — Vercel route handlers own /api/workspace, /api/accounts/...
     return [
       {
-        source: '/api/:path*',
-        destination: `${apiOrigin}/:path*`,
+        source: '/api/auth/:path*',
+        destination: `${apiOrigin}/auth/:path*`,
       },
     ];
   },
