@@ -52,11 +52,12 @@ function SignInPage() {
         return;
       }
       const workspace = await resolveWorkspace(res.token, res.account);
-      if (!workspace) {
-        setError('root', { message: 'No workspace found for this account. Contact support.' });
-        return;
-      }
-      setAuth(res.user, res.token, workspace.accountId, workspace.accountName);
+      setAuth(
+        res.user,
+        res.token,
+        workspace?.accountId ?? '',
+        workspace?.accountName ?? ''
+      );
       router.push('/dashboard');
     } catch (err: any) {
       setError('root', { message: err.message });
@@ -71,11 +72,12 @@ function SignInPage() {
     try {
       const res = await api.twoFa.verify(twoFaUserId, twoFaCode);
       const workspace = await resolveWorkspace(res.token, res.account);
-      if (!workspace) {
-        setTwoFaError('No workspace found for this account.');
-        return;
-      }
-      setAuth(res.user, res.token, workspace.accountId, workspace.accountName);
+      setAuth(
+        res.user,
+        res.token,
+        workspace?.accountId ?? '',
+        workspace?.accountName ?? ''
+      );
       router.push('/dashboard');
     } catch (err: any) {
       setTwoFaError(err.message);

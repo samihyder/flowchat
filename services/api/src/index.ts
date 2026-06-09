@@ -40,7 +40,12 @@ app.use(
 
 // Health check
 app.get('/health', (c) =>
-  c.json({ status: 'ok', version: '0.1.0', timestamp: new Date().toISOString() })
+  c.json({
+    status: 'ok',
+    version: '0.3.0',
+    build: 'sprint-3',
+    timestamp: new Date().toISOString(),
+  })
 );
 
 // Routes
