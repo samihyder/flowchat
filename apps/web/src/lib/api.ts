@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+import { getApiUrl } from '@/lib/config';
 
 export type Inbox = {
   id: string;
@@ -42,17 +42,29 @@ type RequestOptions = {
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, token } = options;
+  const apiUrl = getApiUrl();
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${apiUrl}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new Error(`Cannot reach the API at ${apiUrl}. Check your connection and try again.`);
+  }
 
-  const data = await res.json();
+  let data: { error?: string };
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Unexpected response from API (${res.status}). Try again in a moment.`);
+  }
+
   if (!res.ok) throw new Error(data.error ?? 'Request failed');
   return data as T;
 }
@@ -78,7 +90,7 @@ export const api = {
         | { requiresTwoFactor: true; userId: string }
       >('/auth/sign-in', { method: 'POST', body }),
 
-    googleUrl: () => `${API_URL}/auth/google`,
+    googleUrl: () => `${getApiUrl()}/auth/google`,
 
     signOut: (token: string) => request('/auth/sign-out', { method: 'POST', token }),
 

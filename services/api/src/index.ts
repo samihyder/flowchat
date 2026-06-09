@@ -25,7 +25,13 @@ const allowedOrigins = env.CORS_ORIGIN.split(',').map((o) => o.trim());
 app.use(
   '*',
   cors({
-    origin: (origin) => (allowedOrigins.includes(origin) ? origin : allowedOrigins[0]!),
+    origin: (origin) => {
+      if (!origin) return allowedOrigins[0]!;
+      if (allowedOrigins.includes(origin)) return origin;
+      // Allow any Vercel preview/production deployment.
+      if (origin.endsWith('.vercel.app')) return origin;
+      return allowedOrigins[0]!;
+    },
     credentials: true,
     allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

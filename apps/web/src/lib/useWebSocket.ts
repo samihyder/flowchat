@@ -3,8 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore, type MessageCreatedEvent } from '@/store/ws';
-
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:3002';
+import { getWsUrl } from '@/lib/config';
 
 export function useWebSocket() {
   const { token } = useAuthStore();
@@ -15,8 +14,10 @@ export function useWebSocket() {
   useEffect(() => {
     if (!token) return;
 
+    const wsUrl = getWsUrl();
+
     function connect() {
-      const url = `${WS_URL}?token=${token}`;
+      const url = `${wsUrl}?token=${token}`;
       const ws = new WebSocket(url);
       socketRef.current = ws;
 
