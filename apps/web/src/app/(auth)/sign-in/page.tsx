@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signInSchema, type SignInInput } from '@/lib/schemas';
 import { api } from '@/lib/api';
+import { resolveWorkspace } from '@/lib/complete-sign-in';
 import { useAuthStore } from '@/store/auth';
 
 const OAUTH_ERRORS: Record<string, string> = {
@@ -50,11 +51,12 @@ function SignInPage() {
         setTwoFaUserId(res.userId);
         return;
       }
-      if (!res.account?.id) {
+      const workspace = await resolveWorkspace(res.token, res.account);
+      if (!workspace) {
         setError('root', { message: 'No workspace found for this account. Contact support.' });
         return;
       }
-      setAuth(res.user, res.token, res.account.id, res.account.name);
+      setAuth(res.user, res.token, workspace.accountId, workspace.accountName);
       router.push('/dashboard');
     } catch (err: any) {
       setError('root', { message: err.message });
@@ -68,11 +70,12 @@ function SignInPage() {
     setTwoFaError('');
     try {
       const res = await api.twoFa.verify(twoFaUserId, twoFaCode);
-      if (!res.account?.id) {
+      const workspace = await resolveWorkspace(res.token, res.account);
+      if (!workspace) {
         setTwoFaError('No workspace found for this account.');
         return;
       }
-      setAuth(res.user, res.token, res.account.id, res.account.name);
+      setAuth(res.user, res.token, workspace.accountId, workspace.accountName);
       router.push('/dashboard');
     } catch (err: any) {
       setTwoFaError(err.message);

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint ./src",
     "test": "vitest run"
@@ -25,11 +25,11 @@
     "hono": "^4.7.4",
     "ioredis": "^5.3.2",
     "oslo": "^1.2.1",
+    "tsx": "^4.19.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "tsx": "^4.19.0",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"
   }
