@@ -1,0 +1,579 @@
+FlowChat Chat Feature Inventory
+Generated: 2026-06-08
+Repository: /Users/samihaider/Documents/GitHub/FlowChat
+
+Purpose
+- This file separates the chat, messaging, inbox, widget, realtime, channel, CRM conversation, automation, AI, and support workflow features from the broader FlowChat product inventory.
+- It focuses on customer communication and CRM conversation capabilities, excluding OTP/2FA-specific security flows.
+
+Core Chat Product
+- Omnichannel customer communication platform.
+- Shared inbox for support and sales conversations.
+- Website live chat product.
+- Ecommerce chat and buyer-assistance direction.
+- CRM conversation layer for leads, contacts, and companies.
+- AI-assisted support and sales conversations.
+- Automation and chatbot-driven engagement.
+- Social messaging hub for external messaging channels.
+- Multi-tenant SaaS chat platform.
+- Account-scoped chat operations.
+
+Chat Architecture
+- Next.js dashboard for agents and admins.
+- Hono API service for chat resources.
+- Dedicated WebSocket service for realtime chat events.
+- PostgreSQL schema for accounts, inboxes, contacts, conversations, and messages.
+- Shared types package for cross-service contracts.
+- Public widget JavaScript for embedded website chat.
+- Redis pub/sub for multi-instance realtime fanout.
+- Account-scoped authorization for agent chat access.
+- Visitor-token authorization for public widget chat access.
+
+Implemented Inbox Features
+- Account-scoped inbox list.
+- Inbox creation.
+- Inbox update.
+- Inbox deletion.
+- Inbox member list.
+- Inbox member add.
+- Inbox name.
+- Inbox channel type.
+- Inbox avatar URL.
+- Inbox greeting message.
+- Inbox welcome title.
+- Inbox welcome tagline.
+- Inbox widget color.
+- Inbox enabled/disabled state.
+- Inbox membership linking users to inboxes.
+- Dashboard inbox settings.
+- Inbox creation form.
+- Channel selector.
+- Widget greeting configuration.
+- Widget color configuration.
+- Inbox list and delete action.
+- Embed code generation for web widget inboxes.
+
+Supported Channel Types
+- Web widget.
+- Email.
+- WhatsApp.
+- Facebook.
+- Instagram.
+- Telegram.
+- SMS.
+- API.
+
+Planned Omnichannel Features
+- Web live chat channel.
+- Email channel.
+- WhatsApp Cloud API channel.
+- WhatsApp through Twilio.
+- Facebook Messenger channel.
+- Instagram messaging channel.
+- Telegram channel.
+- SMS channel.
+- TikTok channel.
+- LINE channel.
+- API channel.
+- Per-channel display name.
+- Per-channel avatar.
+- Per-channel greeting.
+- Per-channel out-of-hours message.
+- Per-channel CSAT settings.
+- Per-channel working hours.
+- Per-channel auto-assignment settings.
+- Per-channel reply-window handling.
+- Per-channel agent membership.
+- Per-channel capacity configuration.
+- Channel health status.
+- Channel authorization refresh.
+- Channel connection diagnostics.
+
+Implemented Website Chat Widget Features
+- Embeddable JavaScript widget.
+- Script-based installation using an inbox ID.
+- Optional custom API URL configuration.
+- Optional custom WebSocket URL configuration.
+- Persistent visitor source ID in browser localStorage.
+- Chat launcher bubble.
+- Chat panel open and close behavior.
+- Pre-chat form.
+- Visitor name capture.
+- Optional visitor email capture.
+- Widget configuration loading from public API.
+- Configurable welcome title.
+- Configurable welcome tagline.
+- Configurable greeting message.
+- Configurable primary widget color.
+- Visitor session start/resume API call.
+- Visitor token storage in browser localStorage.
+- Message history loading.
+- Visitor message sending.
+- Realtime WebSocket connection after session start.
+- Realtime message_created event handling.
+- Reconnect behavior when WebSocket closes.
+- Local widget CSS injection.
+- Standalone operation without requiring dashboard code on the host site.
+
+Planned Widget Features
+- Widget prepopulation through public API.
+- Custom visitor attributes from host site.
+- Widget event tracking.
+- Widget campaign triggers.
+- Widget drip campaigns.
+- Widget chatbot entry points.
+- Widget self-service knowledge base search.
+- Widget AI answer suggestions.
+- Widget file attachments.
+- Widget unread badge behavior.
+- Widget localization.
+- Widget accessibility improvements.
+- Widget theme presets.
+- Widget brand customization.
+- Widget offline queue for PWA/mobile scenarios.
+
+Implemented Public Chat API Features
+- Public widget config endpoint by inbox ID.
+- Public widget session start endpoint.
+- Source ID support for visitor identification.
+- Visitor name capture.
+- Visitor email capture.
+- Contact creation from widget session.
+- Contact update from returning widget session.
+- Contact-inbox identity record creation.
+- Contact-inbox visitor token generation.
+- Visitor token reuse for returning sessions.
+- Open conversation creation during widget session start.
+- Existing open conversation resume support.
+- Public message list endpoint protected by visitor token.
+- Public visitor message send endpoint protected by visitor token.
+- Visitor message persistence.
+- Conversation preview update after visitor message.
+- Last-message timestamp update after visitor message.
+- Unread-count increment after visitor message.
+
+Implemented Conversation Features
+- Account-scoped conversation list.
+- Conversation list filtered by status.
+- Conversation list filtered by inbox.
+- Conversation detail view.
+- Conversation messages list.
+- Agent message send.
+- Conversation status update.
+- Conversation statuses: open, pending, resolved, snoozed.
+- Conversation unread count.
+- Conversation last message preview.
+- Conversation last message timestamp.
+- Conversation assignee ID field.
+- Conversation contact relationship.
+- Conversation inbox relationship.
+- Conversation account relationship.
+- Agent dashboard conversation list.
+- Agent dashboard conversation thread.
+- Dashboard status filtering for open conversations.
+- Dashboard inbox filtering through query parameter.
+- Automatic unread reset when opening a conversation.
+- Agent reply composer.
+- Resolve conversation action.
+- Realtime message append in active thread.
+- Realtime conversation preview update in list.
+- Realtime unread count update for inactive conversations.
+
+Planned Conversation Lifecycle Features
+- Priority levels: urgent, high, medium, low.
+- Priority filters.
+- Priority assignment actions.
+- Assignment to agents.
+- Assignment to teams.
+- Auto-assignment rules.
+- Auto-resolve policies.
+- Snooze with scheduled reopening.
+- Mute conversation.
+- Participant roster.
+- Labels and tags.
+- Conversation merge.
+- Transcript export.
+- Draft replies.
+- Bulk conversation actions.
+- Advanced conversation filters.
+- Saved views.
+- Conversation search.
+- Conversation collision detection.
+- Conversation ownership transfer.
+- Conversation activity timeline.
+- Conversation audit trail.
+- Conversation SLA state.
+- Conversation reply-window state for external channels.
+
+Implemented Message Features
+- Message records linked to conversation and account.
+- Message content field.
+- Sender type support for contact, agent, and system.
+- Sender ID support.
+- Message timestamp support.
+- Visitor message creation.
+- Agent message creation.
+- Message retrieval for conversations.
+- Realtime event delivery after new messages.
+- Dashboard rendering for inbound and outbound messages.
+- Widget rendering for visitor and agent messages.
+
+Planned Messaging Features
+- Rich text messages.
+- Emoji support.
+- File attachments.
+- Private notes.
+- Message editing.
+- Message deletion.
+- Read receipts.
+- Typing indicators.
+- Reply templates.
+- AI reply suggestions.
+- Translation.
+- Voice messages.
+- Structured content messages.
+- Mentions.
+- Canned responses.
+- Internal-only comments.
+- Attachment previews.
+- Attachment storage policies.
+- Message delivery status.
+- Channel-specific message formatting.
+
+Implemented Realtime Chat Features
+- Dedicated WebSocket service.
+- WebSocket health endpoint.
+- Visitor WebSocket authorization through visitor token and conversation ID.
+- Agent WebSocket authorization through session token.
+- Account room subscription for agents.
+- Conversation room subscription.
+- Redis pub/sub integration for multi-instance broadcast.
+- Agent presence online on WebSocket connect.
+- Agent presence offline on WebSocket close.
+- Ping message handling.
+- Subscribe-to-conversation message handling.
+- Presence message handling.
+- Typing message handling.
+- presence_updated broadcast event.
+- typing broadcast event.
+- message_created realtime event consumption by widget and dashboard.
+
+Planned Realtime Chat Features
+- Reliable event replay.
+- Offline event queueing.
+- Cross-device read state synchronization.
+- Agent collision indicators.
+- Realtime assignment updates.
+- Realtime conversation status updates.
+- Realtime label updates.
+- Realtime SLA breach notifications.
+- Realtime notification fanout.
+- Mobile push integration.
+
+Implemented Contact and CRM Chat Features
+- Account-scoped contacts table.
+- Contact name.
+- Contact email.
+- Contact phone.
+- Contact type: visitor, lead, customer.
+- Contact avatar URL.
+- Contact last activity timestamp.
+- Contact creation from widget sessions.
+- Contact updates from returning widget sessions.
+- Contact-to-inbox identity mapping.
+- Visitor source ID storage.
+- Visitor token storage for secure public access.
+- Conversation relationship to contact.
+- Dashboard conversation list displays contact name/email context.
+
+Planned Contact and CRM Chat Features
+- Contact CRUD dashboard.
+- Contact search.
+- Contact merge.
+- CSV contact import.
+- CSV contact export.
+- Contact history.
+- Contact notes.
+- Contact labels.
+- Company association.
+- Contact custom attributes.
+- Contact language metadata.
+- Contact country metadata.
+- Contact city metadata.
+- Contact referrer metadata.
+- Contact campaign source metadata.
+- Contact conversation timeline.
+- Contact profile side panel.
+- Contact lifecycle stages.
+- Contact segmentation.
+- CRM lead status.
+- CRM handoff into Flow CRM.
+- Company records.
+- Company domain.
+- Company conversation view.
+- Company timeline.
+- Account-based conversation analytics.
+
+Agent and Team Chat Operations
+- Agent list for assignment context.
+- Agent availability states: online, busy, offline.
+- Agent display name for conversations.
+- Agent avatar URL for conversations.
+- Inbox membership by agent.
+- Team membership by agent.
+- Team primitives for routing and analytics.
+- Planned team assignment from conversations.
+- Planned team inbox membership policies.
+- Planned team analytics.
+- Planned team capacity policies.
+- Planned team-level SLA policies.
+- Planned team routing rules.
+- Planned team working hours.
+- Planned team escalation policies.
+
+Dashboard Chat Features
+- Conversation list page.
+- Conversation detail thread.
+- Agent reply composer.
+- Resolve conversation action.
+- Inbox filter support.
+- Realtime message updates.
+- Settings navigation for inboxes, agents, teams, account, and security.
+- Agents settings page for chat workforce management.
+- Inboxes settings page for channel management.
+- Embed-code display for web widget inboxes.
+- Planned advanced inbox views.
+- Planned saved filters.
+- Planned contact CRM pages.
+- Planned company CRM pages.
+- Planned automation builder.
+- Planned macro editor.
+- Planned bot builder.
+- Planned AI assistant configuration.
+- Planned knowledge base management.
+- Planned campaign builder.
+- Planned reports dashboards.
+- Planned SLA policy management.
+- Planned webhook management.
+- Planned integration marketplace.
+
+Automation Chat Features
+- Automation rules.
+- Rule triggers.
+- Rule conditions.
+- Rule operators.
+- Rule actions.
+- Conversation-created trigger.
+- Message-created trigger.
+- Contact-updated trigger.
+- Time-based triggers.
+- Label-based conditions.
+- Inbox-based conditions.
+- Contact attribute conditions.
+- Assignment actions.
+- Label actions.
+- Priority actions.
+- Note creation actions.
+- Status change actions.
+- Webhook call actions.
+- Macro execution actions.
+- Macros for reusable agent actions.
+- Agent bots for automated conversation handling.
+- Bot handoff to human agents.
+- Bot routing and qualification.
+
+AI Chat Features
+- AI assistant module named Captain.
+- Configurable assistants.
+- AI model selection.
+- AI temperature configuration.
+- AI provider configuration.
+- Assistant guidelines.
+- Inbox assignment for assistants.
+- Help-center knowledge sources.
+- External URL knowledge sources.
+- PDF knowledge sources.
+- FAQ answering tool.
+- Human handoff tool.
+- Label application tool.
+- Priority update tool.
+- Internal note creation tool.
+- Conversation resolve tool.
+- Conversation status tool.
+- Premium custom AI tools.
+- Agent copilot reply suggestions.
+- Agent copilot conversation summaries.
+- Agent copilot rewrite support.
+- Agent copilot follow-up suggestions.
+- Agent copilot label suggestions.
+- AI-assisted sales support.
+- AI-assisted ecommerce buyer guidance.
+- AI-assisted support deflection.
+- AI chatbot foundations.
+
+Knowledge Base Chat Features
+- Knowledge base portals.
+- Help center portal publishing.
+- Article management.
+- Category management.
+- Article insertion into agent replies.
+- Knowledge sources for AI assistant.
+- Public self-service content.
+- Internal agent-facing content.
+- Article search.
+- Category organization.
+- Portal branding.
+- Portal localization planning.
+- Article analytics planning.
+
+Campaign and Engagement Chat Features
+- One-off SMS campaigns.
+- One-off WhatsApp campaigns.
+- Ongoing widget drip campaigns.
+- Audience targeting.
+- Contact segmentation.
+- Campaign scheduling.
+- Campaign message templates.
+- Campaign performance tracking.
+- Widget-based engagement campaigns.
+- Ecommerce engagement campaigns.
+- Lead nurture campaigns.
+
+Chat Reporting Features
+- Conversation volume metrics.
+- First response time metrics.
+- Resolution time metrics.
+- Agent performance metrics.
+- Team performance metrics.
+- Inbox performance metrics.
+- Channel performance metrics.
+- CSAT reporting.
+- Exportable reports.
+- SLA policy reporting.
+- SLA breach tracking.
+- Workload analytics.
+- Conversation trend analytics.
+- Customer satisfaction analytics.
+- Automation performance analytics.
+- AI performance analytics.
+
+Chat Notification Features
+- In-app notifications.
+- Email notifications.
+- Browser push notifications.
+- Assignment notifications.
+- Mention notifications.
+- New message notifications.
+- SLA breach notifications.
+- Conversation status notifications.
+- Team notifications.
+- User notification controls.
+- Notification trigger configuration.
+- Mobile push notification planning.
+- FCM support planning.
+
+Chat Integration Features
+- Google integration.
+- Microsoft integration.
+- Facebook integration.
+- Instagram integration.
+- X/Twitter integration planning.
+- TikTok integration planning.
+- Notion integration.
+- DialogFlow integration.
+- Webhooks.
+- Webhook subscriptions.
+- Webhook retry behavior.
+- Webhook request signing.
+- Dashboard apps.
+- Platform app API.
+- OAuth app registration.
+- Ecommerce connector roadmap.
+- CRM integration roadmap.
+- DAS integration roadmap.
+- LeadSnapper integration roadmap.
+
+Platform Chat API Features
+- REST APIs for chat resources.
+- Conversation filtering.
+- Conversation search.
+- Bulk operations.
+- Cursor pagination.
+- Rate limiting.
+- Public widget API.
+- Contact prepopulation.
+- Custom attributes API.
+- Widget events API.
+- Platform app API.
+- API channel for custom external messaging sources.
+- API tokens.
+- Webhook secrets.
+- Developer integration surface.
+
+Mobile and PWA Chat Features
+- Service worker support.
+- Offline queue.
+- Installable app experience.
+- Responsive dashboard.
+- Touch-friendly conversation UI.
+- FCM push notifications.
+- Mobile-first conversation handling.
+- Offline-safe message composition.
+- Mobile notification handling.
+- Mobile agent availability management.
+
+Ecommerce Chat Direction
+- Website chat for buyer assistance.
+- Product-aware support conversations.
+- Cart and order context integration roadmap.
+- Ecommerce connector roadmap.
+- WhatsApp/SMS buyer conversations.
+- Campaigns for ecommerce engagement.
+- AI product guidance.
+- Lead capture from store visitors.
+- Conversation-to-CRM handoff.
+- Customer history context for agents.
+
+CRM Chat Direction
+- Conversation-centric CRM foundation.
+- Contacts as sales/support records.
+- Companies as account records.
+- Notes and timeline activity.
+- Lead status planning.
+- Conversation history per contact.
+- Flow CRM module integration.
+- Pipeline integration roadmap.
+- Contact segmentation.
+- LeadSnapper-to-Flow CRM handoff.
+- CRM-to-FlowChat conversation continuity.
+
+Chatbot and Social Hub Direction
+- AI chatbot foundations.
+- Agent bots for automated handling.
+- Human handoff from bot flows.
+- Social messaging hub across Facebook, Instagram, TikTok, WhatsApp, Telegram, LINE, and SMS.
+- Shared inbox for all social channels.
+- Channel-specific reply windows.
+- Bot-driven qualification.
+- Bot-driven support deflection.
+- Campaign-driven widget engagement.
+
+Chat Roadmap Snapshot
+- Sprint 3: widget, conversations, messages, contacts, contact inboxes, widget WebSocket, inbox embed settings, conversation list, basic conversation view.
+- Sprint 4: conversation lifecycle, assignment, status, priority, labels, snooze, filters, bulk actions, typing indicators.
+- Sprint 5: attachments, private notes, edit/delete, read receipts, drafts, canned responses, merge, export, mentions.
+- Sprint 6: contact CRM CRUD, import, export, merge, notes, participants, custom attributes.
+- Sprint 7: email channel.
+- Sprint 8: WhatsApp channel.
+- Sprint 9: social channels, SMS, API channel.
+- Sprint 10: automation rules and macros.
+- Sprint 11: agent bots and AI copilot.
+- Sprint 12: AI assistant, knowledge sources, tools.
+- Sprint 13: help center.
+- Sprint 14: campaigns.
+- Sprint 15: reports and CSAT.
+- Sprint 16: SLA and custom roles.
+- Sprint 17: companies, webhooks, platform API.
+- Sprint 18: mobile and PWA foundations.
+- Sprint 19: mobile and realtime hardening.
+- Sprint 20: production hardening, QA, scale, and release readiness.

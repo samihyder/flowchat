@@ -83,8 +83,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div className="space-y-0.5 mt-1">
               {[
-                { label: 'All', href: '/dashboard' },
-                { label: 'Mine', href: '/dashboard?filter=mine' },
+                { label: 'All', href: '/dashboard', count: 0 },
+                { label: 'Mine', href: '/dashboard?filter=mine', count: 0 },
               ].map((item) => (
                 <Link
                   key={item.label}
@@ -96,6 +96,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   }`}
                 >
                   <span>{item.label}</span>
+                  {item.count > 0 && (
+                    <span className="text-xs font-semibold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+                      {item.count}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>
@@ -134,6 +139,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       <span className="text-xs">{channelIcons[inbox.channelType] ?? '💬'}</span>
                       <span className="truncate">{inbox.name}</span>
                     </div>
+                    <span className="text-xs text-gray-300 group-hover:text-gray-400">0</span>
                   </Link>
                 ))
               )}

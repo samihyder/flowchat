@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { setSessionCookie, clearSessionCookie } from '@/lib/session-cookie';
 
 type User = {
   id: string;
@@ -26,9 +27,14 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
       accountId: null,
       accountName: null,
-      setAuth: (user, token, accountId, accountName) =>
-        set({ user, token, accountId, accountName }),
-      clearAuth: () => set({ user: null, token: null, accountId: null, accountName: null }),
+      setAuth: (user, token, accountId, accountName) => {
+        setSessionCookie(token);
+        set({ user, token, accountId, accountName });
+      },
+      clearAuth: () => {
+        clearSessionCookie();
+        set({ user: null, token: null, accountId: null, accountName: null });
+      },
     }),
     { name: 'fc-auth' }
   )

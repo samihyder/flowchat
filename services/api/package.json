@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "lint": "biome lint ./src"
+    "lint": "biome lint ./src",
+    "test": "vitest run"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",
@@ -19,13 +20,17 @@
     "@node-rs/argon2": "^2.0.0",
     "@paralleldrive/cuid2": "^3.3.0",
     "drizzle-orm": "^0.38.3",
+    "dotenv": "^16.4.7",
+    "arctic": "^2.2.2",
     "hono": "^4.7.4",
+    "ioredis": "^5.3.2",
     "oslo": "^1.2.1",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
   }
 }

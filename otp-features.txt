@@ -1,0 +1,130 @@
+FlowChat OTP and Two-Factor Authentication Feature Inventory
+Generated: 2026-06-08
+Repository: /Users/samihaider/Documents/GitHub/FlowChat
+
+Purpose
+- This file separates OTP, TOTP, backup-code, and authentication-code security features from the broader FlowChat CRM and chat feature set.
+- FlowChat currently implements app-based TOTP two-factor authentication and backup-code recovery. SMS/email OTP is not implemented in the current codebase, but can be treated as a planned authentication extension if required by the product roadmap.
+
+Implemented Authentication-Code Features
+- TOTP two-factor authentication setup endpoint.
+- TOTP secret generation.
+- otpauth URI generation for authenticator apps.
+- QR-code setup flow in the dashboard security screen.
+- Manual secret display for authenticator apps.
+- TOTP verification during 2FA enablement.
+- 2FA enablement after a valid authenticator code.
+- Backup code generation during 2FA enablement.
+- Eight backup codes generated per enablement.
+- Backup code hashing with Argon2 before database storage.
+- Backup code display after successful 2FA enablement.
+- TOTP requirement during signin when the user has 2FA enabled.
+- Signin response that returns requiresTwoFactor and userId before session creation.
+- 2FA verification endpoint for completing signin.
+- Authenticator code verification during signin.
+- Backup code verification during signin.
+- Backup code consumption after successful use.
+- Session creation after successful TOTP or backup-code verification.
+- 2FA disablement with a valid authenticator code.
+- 2FA disablement with a valid backup code.
+- Current-user endpoint exposes whether TOTP is enabled.
+- User table stores TOTP secret.
+- User table stores TOTP enabled timestamp.
+- User table stores hashed backup codes.
+
+Dashboard OTP and 2FA Features
+- Security settings page.
+- Start 2FA setup action.
+- QR code display for authenticator-app enrollment.
+- Manual TOTP secret display.
+- Verification code input.
+- Enable 2FA action after code entry.
+- Backup-code display after enablement.
+- Disable 2FA form.
+- Disable 2FA with authenticator code or backup code.
+- User-facing indication that 2FA is enabled.
+- User-facing indication that 2FA is not enabled.
+
+Signin Flow With 2FA
+- User submits email and password.
+- Password is verified with Argon2.
+- If TOTP is not enabled, a session token is created immediately.
+- If TOTP is enabled, the API returns a requiresTwoFactor response.
+- Client must collect an authenticator code or backup code.
+- Client submits the second factor with the user ID.
+- API verifies the authenticator code or backup code.
+- If verification succeeds, the API creates a session token.
+- If a backup code is used, the used backup code is removed or invalidated.
+- If verification fails, signin does not create a session.
+
+Stored OTP/2FA Data
+- User TOTP secret.
+- TOTP enabled timestamp.
+- Hashed backup codes.
+- User ID used during intermediate 2FA signin.
+- Session token created only after successful second-factor verification.
+
+Security Properties
+- TOTP uses authenticator-app codes rather than reusable static codes.
+- Backup codes are one-time recovery codes.
+- Backup codes are hashed before storage.
+- Signin does not issue a session before second-factor verification when 2FA is enabled.
+- 2FA disablement requires proof through TOTP or backup code.
+- Backup codes are not stored as plaintext.
+- Passwords are hashed with Argon2.
+- Sessions are stored separately from user credentials.
+
+OTP Features Not Currently Implemented
+- SMS OTP login.
+- Email OTP login.
+- Phone-number verification OTP.
+- Email verification OTP.
+- Password reset OTP.
+- Magic-link OTP.
+- WhatsApp OTP.
+- Voice-call OTP.
+- OTP resend flow.
+- OTP expiry window configuration.
+- OTP attempt throttling per phone/email.
+- OTP delivery provider abstraction.
+- OTP audit event dashboard.
+- OTP device trust management.
+- OTP recovery flow beyond backup codes.
+
+Planned Authentication and OTP-Adjacent Features
+- Enforced 2FA policies.
+- Organization-level MFA policies.
+- Remember-me support.
+- Password reset flow.
+- API tokens.
+- Platform tokens.
+- Audit logs for security events.
+- FlowAuth extraction as a dedicated authentication service.
+- Dedicated identity and MFA service.
+- Opaque service sessions through future FlowAuth.
+- Session introspection API through future FlowAuth.
+- API key management through future FlowAuth.
+- WebAuthn/passkey support.
+- Magic-link login support.
+- Auth dashboard for identity and session management.
+- Auth rate limiting.
+- SAML/OIDC in later FlowAuth stages.
+
+Recommended Future OTP Feature Set
+- Email OTP for account verification.
+- SMS OTP for phone verification.
+- Password reset OTP with short expiry.
+- Login OTP as an alternative to authenticator apps.
+- OTP resend cooldown.
+- OTP max-attempt lockout.
+- OTP delivery logs.
+- OTP provider configuration.
+- OTP template management.
+- OTP localization.
+- OTP rate limiting by user, IP, phone, and email.
+- OTP fraud detection signals.
+- Admin policy to require 2FA for all agents.
+- Admin policy to require 2FA for administrators only.
+- Recovery-code regeneration.
+- Trusted-device management.
+- Security event notifications when 2FA is enabled, disabled, or recovery codes are used.

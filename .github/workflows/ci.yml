@@ -32,6 +32,9 @@ jobs:
       - name: Lint
         run: pnpm biome ci .
 
+      - name: Test
+        run: pnpm --filter @flowchat/api test
+
       - name: Build
         run: pnpm build
         env:

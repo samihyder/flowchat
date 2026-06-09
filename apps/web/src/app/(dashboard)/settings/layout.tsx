@@ -5,8 +5,10 @@ import { usePathname } from 'next/navigation';
 
 const settingsNav = [
   { label: 'Account', href: '/settings/account' },
+  { label: 'Inboxes', href: '/settings/inboxes' },
   { label: 'Agents', href: '/settings/agents' },
   { label: 'Teams', href: '/settings/teams' },
+  { label: 'Security', href: '/settings/security' },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {

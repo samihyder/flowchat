@@ -2,13 +2,13 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { useWsStore } from '@/store/ws';
+import { useWsStore, type MessageCreatedEvent } from '@/store/ws';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:3002';
 
 export function useWebSocket() {
   const { token } = useAuthStore();
-  const { setSocket, setConnected, setPresence } = useWsStore();
+  const { setSocket, setConnected, setPresence, pushMessageEvent } = useWsStore();
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
 
@@ -31,13 +31,15 @@ export function useWebSocket() {
           if (msg['type'] === 'presence_updated') {
             setPresence(msg['userId'] as string, msg['availability'] as 'online' | 'busy' | 'offline');
           }
+          if (msg['type'] === 'message_created') {
+            pushMessageEvent(msg as MessageCreatedEvent);
+          }
         } catch { /* ignore */ }
       };
 
       ws.onclose = () => {
         setSocket(null);
         setConnected(false);
-        // Reconnect after 3s
         reconnectTimer.current = setTimeout(connect, 3000);
       };
 
@@ -50,5 +52,5 @@ export function useWebSocket() {
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
       socketRef.current?.close();
     };
-  }, [token]);
+  }, [token, setSocket, setConnected, setPresence, pushMessageEvent]);
 }

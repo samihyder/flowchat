@@ -74,6 +74,11 @@ authRouter.post('/sign-in', zValidator('json', signInSchema), async (c) => {
     return c.json({ error: 'Invalid email or password' }, 401);
   }
 
+  // If 2FA is enabled, return a challenge instead of a token
+  if (user.totpEnabledAt) {
+    return c.json({ requiresTwoFactor: true, userId: user.id });
+  }
+
   const { token, expiresAt } = await createSession(user.id);
 
   const [membership] = await db
@@ -109,9 +114,19 @@ authRouter.get('/me', sessionMiddleware, async (c) => {
     name: users.name,
     email: users.email,
     avatarUrl: users.avatarUrl,
+    totpEnabledAt: users.totpEnabledAt,
     createdAt: users.createdAt,
   }).from(users).where(eq(users.id, userId)).limit(1);
 
   if (!user) return c.json({ error: 'User not found' }, 404);
-  return c.json({ user });
+  return c.json({
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      totpEnabled: !!user.totpEnabledAt,
+      createdAt: user.createdAt,
+    },
+  });
 });

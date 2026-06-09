@@ -6,3 +6,7 @@ export * from './inboxes';
 export * from './inbox_members';
 export * from './teams';
 export * from './team_members';
+export * from './contacts';
+export * from './contact_inboxes';
+export * from './conversations';
+export * from './messages';

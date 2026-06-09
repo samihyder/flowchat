@@ -1,3 +1,4 @@
+import './load-env.js';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -9,6 +10,10 @@ import { agentsRouter } from './routes/agents.js';
 import { teamsRouter } from './routes/teams.js';
 import { inboxesRouter } from './routes/inboxes.js';
 import { accountsRouter } from './routes/accounts.js';
+import { twoFaRouter } from './routes/auth-2fa.js';
+import { googleAuthRouter } from './routes/auth-google.js';
+import { publicWidgetRouter } from './routes/public/widget.js';
+import { conversationsRouter } from './routes/conversations.js';
 
 const app = new Hono();
 
@@ -38,6 +43,10 @@ app.route('/accounts/:accountId/agents', agentsRouter);
 app.route('/accounts/:accountId/teams', teamsRouter);
 app.route('/accounts/:accountId/inboxes', inboxesRouter);
 app.route('/accounts/:accountId', accountsRouter);
+app.route('/auth/2fa', twoFaRouter);
+app.route('/auth/google', googleAuthRouter);
+app.route('/public', publicWidgetRouter);
+app.route('/accounts/:accountId/conversations', conversationsRouter);
 
 // 404 fallback
 app.notFound((c) => c.json({ error: 'Not found' }, 404));

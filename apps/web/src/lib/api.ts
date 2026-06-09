@@ -1,5 +1,39 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+export type Inbox = {
+  id: string;
+  name: string;
+  channelType: string;
+  widgetColor: string | null;
+  greetingMessage?: string | null;
+  welcomeTitle?: string | null;
+  welcomeTagline?: string | null;
+  isEnabled: boolean;
+};
+
+export type Conversation = {
+  id: string;
+  inboxId: string;
+  contactId: string;
+  status: string;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  unreadCount: number;
+  createdAt: string;
+  contactName: string;
+  contactEmail: string | null;
+  inboxName: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  conversationId: string;
+  content: string;
+  senderType: 'contact' | 'agent' | 'system';
+  senderId: string | null;
+  createdAt: string;
+};
+
 type RequestOptions = {
   method?: string;
   body?: unknown;
@@ -34,20 +68,30 @@ export const api = {
       }>('/auth/sign-up', { method: 'POST', body }),
 
     signIn: (body: { email: string; password: string }) =>
-      request<{
-        user: { id: string; name: string; email: string };
-        account: { id: string; name: string; slug: string } | null;
-        token: string;
-        expiresAt: string;
-      }>('/auth/sign-in', { method: 'POST', body }),
+      request<
+        | {
+            user: { id: string; name: string; email: string };
+            account: { id: string; name: string; slug: string } | null;
+            token: string;
+            expiresAt: string;
+          }
+        | { requiresTwoFactor: true; userId: string }
+      >('/auth/sign-in', { method: 'POST', body }),
+
+    googleUrl: () => `${API_URL}/auth/google`,
 
     signOut: (token: string) => request('/auth/sign-out', { method: 'POST', token }),
 
     me: (token: string) =>
-      request<{ user: { id: string; name: string; email: string; avatarUrl: string | null } }>(
-        '/auth/me',
-        { token }
-      ),
+      request<{
+        user: {
+          id: string;
+          name: string;
+          email: string;
+          avatarUrl: string | null;
+          totpEnabled: boolean;
+        };
+      }>('/auth/me', { token }),
   },
 
   agents: {
@@ -100,17 +144,99 @@ export const api = {
       ),
   },
 
+  twoFa: {
+    setup: (token: string) =>
+      request<{ secret: string; uri: string }>('/auth/2fa/setup', { token }),
+    enable: (code: string, token: string) =>
+      request<{ backupCodes: string[] }>('/auth/2fa/enable', { method: 'POST', body: { code }, token }),
+    disable: (code: string, token: string) =>
+      request<{ message: string }>('/auth/2fa/disable', { method: 'POST', body: { code }, token }),
+    verify: (userId: string, code: string) =>
+      request<{ user: { id: string; name: string; email: string }; account: { id: string; name: string; slug: string } | null; token: string; expiresAt: string }>(
+        '/auth/2fa/verify', { method: 'POST', body: { userId, code } }
+      ),
+  },
+
   inboxes: {
     list: (accountId: string, token: string) =>
       request<{ inboxes: { id: string; name: string; channelType: string; widgetColor: string | null; isEnabled: boolean }[] }>(
         `/accounts/${accountId}/inboxes`, { token }
       ),
-    create: (accountId: string, body: { name: string; channelType?: string; greetingMessage?: string }, token: string) =>
-      request<{ inbox: { id: string; name: string; channelType: string } }>(
-        `/accounts/${accountId}/inboxes`, { method: 'POST', body, token }
-      ),
+    create: (
+      accountId: string,
+      body: {
+        name: string;
+        channelType?: string;
+        greetingMessage?: string;
+        welcomeTitle?: string;
+        welcomeTagline?: string;
+        widgetColor?: string;
+      },
+      token: string
+    ) =>
+      request<{ inbox: Inbox }>(`/accounts/${accountId}/inboxes`, { method: 'POST', body, token }),
+    update: (
+      accountId: string,
+      inboxId: string,
+      body: {
+        name?: string;
+        greetingMessage?: string | null;
+        welcomeTitle?: string | null;
+        welcomeTagline?: string | null;
+        widgetColor?: string;
+        isEnabled?: boolean;
+      },
+      token: string
+    ) =>
+      request<{ inbox: Inbox }>(`/accounts/${accountId}/inboxes/${inboxId}`, {
+        method: 'PATCH',
+        body,
+        token,
+      }),
     remove: (accountId: string, inboxId: string, token: string) =>
       request<{ message: string }>(`/accounts/${accountId}/inboxes/${inboxId}`, { method: 'DELETE', token }),
+  },
+
+  conversations: {
+    list: (accountId: string, token: string, params?: { inboxId?: string; status?: string }) => {
+      const qs = new URLSearchParams();
+      if (params?.inboxId) qs.set('inboxId', params.inboxId);
+      if (params?.status) qs.set('status', params.status);
+      const query = qs.toString();
+      return request<{ conversations: Conversation[] }>(
+        `/accounts/${accountId}/conversations${query ? `?${query}` : ''}`,
+        { token }
+      );
+    },
+
+    get: (accountId: string, conversationId: string, token: string) =>
+      request<{ conversation: Conversation }>(
+        `/accounts/${accountId}/conversations/${conversationId}`,
+        { token }
+      ),
+
+    listMessages: (accountId: string, conversationId: string, token: string) =>
+      request<{ messages: ChatMessage[] }>(
+        `/accounts/${accountId}/conversations/${conversationId}/messages`,
+        { token }
+      ),
+
+    sendMessage: (accountId: string, conversationId: string, content: string, token: string) =>
+      request<{ message: ChatMessage }>(
+        `/accounts/${accountId}/conversations/${conversationId}/messages`,
+        { method: 'POST', body: { content }, token }
+      ),
+
+    updateStatus: (
+      accountId: string,
+      conversationId: string,
+      status: 'open' | 'pending' | 'resolved' | 'snoozed',
+      token: string
+    ) =>
+      request<{ conversation: Conversation }>(
+        `/accounts/${accountId}/conversations/${conversationId}`,
+        { method: 'PATCH', body: { status }, token }
+      ),
   },
 
   teams: {

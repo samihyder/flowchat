@@ -1,9 +1,14 @@
 import { z } from 'zod';
 
+const defaultWsPort =
+  process.env.RAILWAY_ENVIRONMENT && process.env.PORT
+    ? Number(process.env.PORT)
+    : 3002;
+
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string(),
-  PORT: z.coerce.number().default(3002),
+  WS_PORT: z.coerce.number().default(defaultWsPort),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
 
