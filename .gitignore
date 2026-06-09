@@ -23,3 +23,4 @@ packages/db/drizzle/*.sql.bak
 # Editor
 .vscode/settings.json
 .idea/
+.vercel

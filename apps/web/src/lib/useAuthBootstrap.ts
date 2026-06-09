@@ -2,36 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { api } from '@/lib/api';
-
-async function backfillAccount() {
-  const state = useAuthStore.getState();
-  if (!state.token || state.accountId) return;
-
-  try {
-    const res = await api.auth.me(state.token);
-    if (res.account) {
-      state.setAccount(res.account.id, res.account.name);
-      return;
-    }
-  } catch {
-    // Railway API may be stale.
-  }
-
-  try {
-    const res = await fetch('/api/workspace', {
-      headers: { Authorization: `Bearer ${state.token}` },
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { account?: { id: string; name: string } | null };
-      if (data.account?.id) {
-        state.setAccount(data.account.id, data.account.name);
-      }
-    }
-  } catch {
-    // Session invalid — layout will redirect to sign-in.
-  }
-}
+import { ensureWorkspace } from '@/lib/workspace';
 
 /** Wait for persisted auth, then backfill accountId when missing from older sessions. */
 export function useAuthBootstrap() {
@@ -51,7 +22,7 @@ export function useAuthBootstrap() {
         });
       }
 
-      await backfillAccount();
+      await ensureWorkspace();
       if (!cancelled) setReady(true);
     }
 

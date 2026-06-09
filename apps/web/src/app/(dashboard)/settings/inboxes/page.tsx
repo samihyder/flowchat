@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type Inbox } from '@/lib/api';
 import { PRODUCTION_API_URL, PRODUCTION_WS_URL } from '@/lib/config';
+import { ensureWorkspace } from '@/lib/workspace';
 
 const CHANNELS = [
   { value: 'web_widget', label: 'Website Live Chat', icon: '💬' },
@@ -31,15 +32,19 @@ export default function InboxesPage() {
   const [widgetColor, setWidgetColor] = useState('#6366F1');
 
   const fetchInboxes = async () => {
-    if (!token || !accountId) {
+    if (!token) {
       setLoading(false);
-      if (!accountId) setError('Workspace not loaded. Try signing out and back in.');
       return;
     }
     setError('');
     setLoading(true);
     try {
-      const res = await api.inboxes.list(accountId, token);
+      const resolvedAccountId = accountId || (await ensureWorkspace());
+      if (!resolvedAccountId) {
+        setError('Workspace not loaded. Sign out and sign back in.');
+        return;
+      }
+      const res = await api.inboxes.list(resolvedAccountId, token);
       setInboxes(res.inboxes);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load inboxes');
@@ -54,13 +59,18 @@ export default function InboxesPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token || !accountId) return;
+    if (!token) return;
+    const resolvedAccountId = accountId || (await ensureWorkspace());
+    if (!resolvedAccountId) {
+      setError('Workspace not loaded. Sign out and sign back in.');
+      return;
+    }
     setCreating(true);
     setError('');
     setSuccess('');
     try {
       await api.inboxes.create(
-        accountId,
+        resolvedAccountId,
         { name, channelType, greetingMessage, widgetColor },
         token
       );
