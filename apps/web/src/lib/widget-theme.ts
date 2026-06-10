@@ -84,10 +84,20 @@ export function defaultWidgetTheme(primary = '#6366F1'): WidgetTheme {
 }
 
 export function mergeWidgetTheme(
-  partial?: Partial<WidgetTheme> | null,
+  partial?: Partial<WidgetTheme> | string | null,
   primary = '#6366F1'
 ): WidgetTheme {
-  return { ...defaultWidgetTheme(primary), ...(partial ?? {}) };
+  let theme: Partial<WidgetTheme> = {};
+  if (typeof partial === 'string') {
+    try {
+      theme = JSON.parse(partial) as Partial<WidgetTheme>;
+    } catch {
+      theme = {};
+    }
+  } else if (partial) {
+    theme = partial;
+  }
+  return { ...defaultWidgetTheme(primary), ...theme };
 }
 
 export type WidgetSettingsInput = {

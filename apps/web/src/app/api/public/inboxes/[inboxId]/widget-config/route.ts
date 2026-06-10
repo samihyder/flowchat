@@ -36,16 +36,24 @@ export async function GET(_req: Request, { params }: Params) {
 
   const primary = inbox.widgetColor ?? '#6366F1';
 
-  return Response.json({
-    inbox: {
-      id: inbox.id,
-      name: inbox.name,
-      greetingMessage: inbox.greetingMessage,
-      welcomeTitle: inbox.welcomeTitle ?? 'Hi there!',
-      welcomeTagline: inbox.welcomeTagline ?? 'We typically reply in a few minutes',
-      widgetColor: primary,
-      widgetIcon: inbox.widgetIcon ?? 'chat',
-      widgetTheme: mergeWidgetTheme(inbox.widgetTheme, primary),
+  return Response.json(
+    {
+      inbox: {
+        id: inbox.id,
+        name: inbox.name,
+        greetingMessage: inbox.greetingMessage,
+        welcomeTitle: inbox.welcomeTitle ?? 'Hi there!',
+        welcomeTagline: inbox.welcomeTagline ?? 'We typically reply in a few minutes',
+        widgetColor: primary,
+        widgetIcon: inbox.widgetIcon ?? 'chat',
+        widgetTheme: mergeWidgetTheme(inbox.widgetTheme, primary),
+      },
     },
-  });
+    {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Access-Control-Allow-Origin': '*',
+      },
+    }
+  );
 }

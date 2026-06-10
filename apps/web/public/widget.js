@@ -26,7 +26,7 @@
     launcherIcon: '#ffffff',
     headerBg: '#6366F1',
     headerTitle: '#ffffff',
-    headerSubtitle: '#ffffff',
+    headerSubtitle: 'rgba(255,255,255,0.9)',
     panelBg: '#ffffff',
     panelBorder: '#e5e7eb',
     messagesBg: '#f9fafb',
@@ -54,13 +54,17 @@
 
   let state = {
     open: false,
+    view: 'home',
     conversationId: null,
     visitorToken: null,
     contactName: null,
     messages: [],
     inbox: null,
+    configLoaded: false,
     ws: null,
     prechatDone: false,
+    sending: false,
+    error: '',
   };
 
   const root = document.createElement('div');
@@ -69,43 +73,189 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    #flowchat-widget-root { font-family: system-ui, -apple-system, sans-serif; z-index: 999999; }
-    #fc-launcher { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,.18); display: flex; align-items: center; justify-content: center; transition: transform .2s; }
-    #fc-launcher:hover { transform: scale(1.05); }
-    #fc-launcher svg { width: 26px; height: 26px; }
-    #fc-panel { position: fixed; bottom: 96px; right: 24px; width: 380px; max-width: calc(100vw - 32px); height: 520px; max-height: calc(100vh - 120px); border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,.16); display: none; flex-direction: column; overflow: hidden; }
-    #fc-panel.open { display: flex; animation: fcSlide .25s ease; }
-    @keyframes fcSlide { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-    #fc-header { padding: 16px 18px; }
-    #fc-header h3 { margin: 0; font-size: 15px; font-weight: 600; }
-    #fc-header p { margin: 4px 0 0; font-size: 12px; opacity: .9; }
-    #fc-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
-    .fc-msg { max-width: 85%; padding: 10px 12px; border-radius: 12px; font-size: 14px; line-height: 1.45; word-break: break-word; }
-    .fc-msg.in { align-self: flex-start; border-bottom-left-radius: 4px; }
-    .fc-msg.out { align-self: flex-end; border-bottom-right-radius: 4px; }
-    .fc-msg.sys { align-self: center; background: transparent; font-size: 12px; padding: 4px; }
-    #fc-prechat, #fc-composer { padding: 14px; border-top: 1px solid var(--fc-panel-border, #e5e7eb); }
-    #fc-prechat label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 4px; }
-    #fc-prechat input, #fc-composer input { width: 100%; box-sizing: border-box; margin-bottom: 8px; padding: 10px 12px; border-radius: 8px; font-size: 14px; }
-    #fc-prechat button, #fc-composer button { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; }
-    #fc-composer { display: flex; gap: 8px; align-items: center; }
-    #fc-composer input { flex: 1; margin-bottom: 0; }
-    #fc-composer button { width: auto; padding: 10px 16px; }
-    #fc-prechat input::placeholder, #fc-composer input::placeholder { opacity: 1; }
+    #flowchat-widget-root {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      z-index: 2147483000;
+      -webkit-font-smoothing: antialiased;
+    }
+    #fc-launcher {
+      position: fixed; bottom: 20px; right: 20px;
+      width: 60px; height: 60px; border-radius: 50%; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      background: var(--fc-launcher-bg); color: var(--fc-launcher-icon);
+      box-shadow: 0 4px 24px rgba(0,0,0,.18);
+      transition: transform .2s, box-shadow .2s;
+    }
+    #fc-launcher:hover { transform: scale(1.06); box-shadow: 0 6px 28px rgba(0,0,0,.22); }
+    #fc-launcher svg { width: 28px; height: 28px; }
+    #fc-launcher .fc-badge {
+      position: absolute; top: -2px; right: -2px;
+      min-width: 18px; height: 18px; padding: 0 5px;
+      background: #ef4444; color: #fff; font-size: 11px; font-weight: 700;
+      border-radius: 9px; display: none; align-items: center; justify-content: center;
+      border: 2px solid #fff;
+    }
+    #fc-panel {
+      position: fixed; bottom: 92px; right: 20px;
+      width: 400px; max-width: calc(100vw - 24px);
+      height: min(600px, calc(100vh - 110px));
+      background: var(--fc-panel-bg);
+      border: 1px solid var(--fc-panel-border);
+      border-radius: 16px;
+      box-shadow: 0 12px 48px rgba(0,0,0,.15);
+      display: none; flex-direction: column; overflow: hidden;
+    }
+    #fc-panel.open { display: flex; animation: fcSlideUp .28s cubic-bezier(.16,1,.3,1); }
+    @keyframes fcSlideUp {
+      from { opacity: 0; transform: translateY(16px) scale(.98); }
+      to { opacity: 1; transform: none; }
+    }
+    #fc-header {
+      padding: 18px 20px; background: var(--fc-header-bg);
+      color: var(--fc-header-title); flex-shrink: 0;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    #fc-header-text h3 {
+      margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3;
+      color: var(--fc-header-title);
+    }
+    #fc-header-text p {
+      margin: 4px 0 0; font-size: 13px; line-height: 1.4;
+      color: var(--fc-header-subtitle);
+    }
+    #fc-close {
+      background: rgba(255,255,255,.15); border: none; border-radius: 8px;
+      width: 32px; height: 32px; cursor: pointer; color: inherit;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    #fc-close:hover { background: rgba(255,255,255,.25); }
+    #fc-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+    #fc-home {
+      flex: 1; overflow-y: auto; padding: 24px 20px;
+      background: var(--fc-messages-bg);
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    #fc-home .fc-avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--fc-header-bg); color: var(--fc-header-title);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+    }
+    #fc-home .fc-avatar svg { width: 28px; height: 28px; }
+    #fc-home h4 { margin: 0 0 8px; font-size: 18px; font-weight: 600; color: #111827; }
+    #fc-home p { margin: 0 0 24px; font-size: 14px; color: #6b7280; line-height: 1.5; max-width: 280px; }
+    #fc-home .fc-cta {
+      width: 100%; padding: 12px 20px; border: none; border-radius: 10px;
+      background: var(--fc-button-bg); color: var(--fc-button-text);
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: opacity .15s;
+    }
+    #fc-home .fc-cta:hover { opacity: .92; }
+    #fc-messages {
+      flex: 1; overflow-y: auto; padding: 16px;
+      background: var(--fc-messages-bg);
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .fc-msg {
+      max-width: 82%; padding: 10px 14px; border-radius: 16px;
+      font-size: 14px; line-height: 1.5; word-break: break-word;
+    }
+    .fc-msg.in {
+      align-self: flex-start; background: var(--fc-agent-bubble-bg);
+      color: var(--fc-agent-bubble-text);
+      border: 1px solid var(--fc-panel-border);
+      border-bottom-left-radius: 4px;
+    }
+    .fc-msg.out {
+      align-self: flex-end; background: var(--fc-visitor-bubble-bg);
+      color: var(--fc-visitor-bubble-text);
+      border-bottom-right-radius: 4px;
+    }
+    .fc-msg.sys {
+      align-self: center; background: transparent; color: var(--fc-system-text);
+      font-size: 12px; padding: 4px 8px; text-align: center;
+    }
+    .fc-msg-time { font-size: 10px; opacity: .65; margin-top: 4px; display: block; }
+    #fc-prechat, #fc-composer {
+      padding: 16px; border-top: 1px solid var(--fc-panel-border);
+      background: var(--fc-composer-bg); flex-shrink: 0;
+    }
+    #fc-prechat label {
+      display: block; font-size: 12px; font-weight: 500;
+      color: var(--fc-label-text); margin-bottom: 4px;
+    }
+    #fc-prechat input {
+      width: 100%; box-sizing: border-box; margin-bottom: 12px;
+      padding: 11px 14px; border-radius: 10px; font-size: 14px;
+      background: var(--fc-input-bg); color: var(--fc-input-text);
+      border: 1px solid var(--fc-input-border); outline: none;
+    }
+    #fc-prechat input:focus { border-color: var(--fc-button-bg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fc-button-bg) 20%, transparent); }
+    #fc-prechat input::placeholder, #fc-composer input::placeholder { color: var(--fc-input-placeholder); }
+    #fc-prechat button, #fc-composer button[type="submit"] {
+      width: 100%; padding: 12px; border: none; border-radius: 10px;
+      background: var(--fc-button-bg); color: var(--fc-button-text);
+      font-weight: 600; font-size: 14px; cursor: pointer;
+    }
+    #fc-prechat button:disabled, #fc-composer button:disabled { opacity: .6; cursor: not-allowed; }
+    #fc-composer { display: flex; gap: 8px; align-items: flex-end; }
+    #fc-composer input {
+      flex: 1; padding: 11px 14px; border-radius: 10px; font-size: 14px;
+      background: var(--fc-input-bg); color: var(--fc-input-text);
+      border: 1px solid var(--fc-input-border); outline: none;
+    }
+    #fc-composer input:focus { border-color: var(--fc-button-bg); }
+    #fc-composer button[type="submit"] { width: auto; padding: 11px 18px; white-space: nowrap; }
+    #fc-error { padding: 8px 16px; background: #fef2f2; color: #b91c1c; font-size: 12px; text-align: center; }
+    #fc-powered { padding: 8px; text-align: center; font-size: 10px; color: #9ca3af; background: var(--fc-composer-bg); border-top: 1px solid var(--fc-panel-border); }
+    @media (max-width: 480px) {
+      #fc-panel {
+        bottom: 0; right: 0; left: 0; width: 100%; max-width: 100%;
+        height: 100%; max-height: 100%; border-radius: 0; border: none;
+      }
+      #fc-launcher { bottom: 16px; right: 16px; }
+    }
   `;
   document.head.appendChild(style);
 
+  function parseTheme(raw, primary) {
+    let partial = raw;
+    if (typeof partial === 'string') {
+      try { partial = JSON.parse(partial); } catch { partial = {}; }
+    }
+    const base = { ...DEFAULT_THEME, launcherBg: primary, headerBg: primary, visitorBubbleBg: primary, buttonBg: primary };
+    return { ...base, ...(partial || {}) };
+  }
+
   function theme() {
-    const t = state.inbox?.widgetTheme || {};
     const primary = state.inbox?.widgetColor || '#6366F1';
-    return {
-      ...DEFAULT_THEME,
-      launcherBg: primary,
-      headerBg: primary,
-      visitorBubbleBg: primary,
-      buttonBg: primary,
-      ...t,
+    return parseTheme(state.inbox?.widgetTheme, primary);
+  }
+
+  function applyThemeVars(t) {
+    const vars = {
+      '--fc-launcher-bg': t.launcherBg,
+      '--fc-launcher-icon': t.launcherIcon,
+      '--fc-header-bg': t.headerBg,
+      '--fc-header-title': t.headerTitle,
+      '--fc-header-subtitle': t.headerSubtitle,
+      '--fc-panel-bg': t.panelBg,
+      '--fc-panel-border': t.panelBorder,
+      '--fc-messages-bg': t.messagesBg,
+      '--fc-agent-bubble-bg': t.agentBubbleBg,
+      '--fc-agent-bubble-text': t.agentBubbleText,
+      '--fc-visitor-bubble-bg': t.visitorBubbleBg,
+      '--fc-visitor-bubble-text': t.visitorBubbleText,
+      '--fc-system-text': t.systemText,
+      '--fc-label-text': t.labelText,
+      '--fc-input-bg': t.inputBg,
+      '--fc-input-text': t.inputText,
+      '--fc-input-border': t.inputBorder,
+      '--fc-input-placeholder': t.inputPlaceholder,
+      '--fc-composer-bg': t.composerBg,
+      '--fc-button-bg': t.buttonBg,
+      '--fc-button-text': t.buttonText,
     };
+    Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
   }
 
   function launcherIconSvg() {
@@ -114,66 +264,9 @@
     return `<svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg>`;
   }
 
-  function render() {
-    const t = theme();
-    root.innerHTML = `
-      <button id="fc-launcher" style="background:${t.launcherBg};color:${t.launcherIcon}" aria-label="Open chat">${launcherIconSvg()}</button>
-      <div id="fc-panel" class="${state.open ? 'open' : ''}" style="background:${t.panelBg};border:1px solid ${t.panelBorder}">
-        <div id="fc-header" style="background:${t.headerBg};color:${t.headerTitle}">
-          <h3 style="color:${t.headerTitle}">${escapeHtml(state.inbox?.welcomeTitle || state.inbox?.name || 'Chat with us')}</h3>
-          <p style="color:${t.headerSubtitle}">${escapeHtml(state.inbox?.welcomeTagline || 'We reply quickly')}</p>
-        </div>
-        <div id="fc-messages" style="background:${t.messagesBg}">${renderMessages(t)}</div>
-        ${!state.prechatDone ? renderPrechat(t) : renderComposer(t)}
-      </div>
-    `;
-
-    document.getElementById('fc-launcher')?.addEventListener('click', toggle);
-    document.getElementById('fc-start')?.addEventListener('click', startChat);
-    document.getElementById('fc-send')?.addEventListener('click', sendMessage);
-    document.getElementById('fc-input')?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
-
-    scrollMessages();
-  }
-
-  function renderPrechat(t) {
-    return `<div id="fc-prechat" style="background:${t.composerBg}">
-      <label style="color:${t.labelText}">Your name</label>
-      <input id="fc-name" placeholder="Your name" required
-        style="background:${t.inputBg};color:${t.inputText};border:1px solid ${t.inputBorder}"
-        onfocus="this.style.outline='2px solid ${t.buttonBg}'" />
-      <label style="color:${t.labelText}">Email (optional)</label>
-      <input id="fc-email" type="email" placeholder="Email (optional)"
-        style="background:${t.inputBg};color:${t.inputText};border:1px solid ${t.inputBorder}" />
-      <button id="fc-start" style="background:${t.buttonBg};color:${t.buttonText}">Start chat</button>
-    </div>`;
-  }
-
-  function renderComposer(t) {
-    return `<div id="fc-composer" style="background:${t.composerBg}">
-      <input id="fc-input" placeholder="Type a message…"
-        style="background:${t.inputBg};color:${t.inputText};border:1px solid ${t.inputBorder}" />
-      <button id="fc-send" style="background:${t.buttonBg};color:${t.buttonText}">Send</button>
-    </div>`;
-  }
-
-  function renderMessages(t) {
-    if (!state.messages.length && state.prechatDone) {
-      return `<div class="fc-msg sys" style="color:${t.systemText}">${escapeHtml(state.inbox?.greetingMessage || 'How can we help?')}</div>`;
-    }
-    return state.messages
-      .map((m) => {
-        if (m.senderType === 'contact') {
-          return `<div class="fc-msg out" style="background:${t.visitorBubbleBg};color:${t.visitorBubbleText}">${escapeHtml(m.content)}</div>`;
-        }
-        if (m.senderType === 'agent') {
-          return `<div class="fc-msg in" style="background:${t.agentBubbleBg};color:${t.agentBubbleText};border:1px solid ${t.panelBorder}">${escapeHtml(m.content)}</div>`;
-        }
-        return `<div class="fc-msg sys" style="color:${t.systemText}">${escapeHtml(m.content)}</div>`;
-      })
-      .join('');
+  function formatTime(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   function escapeHtml(s) {
@@ -189,22 +282,125 @@
     if (el) el.scrollTop = el.scrollHeight;
   }
 
-  function toggle() {
-    state.open = !state.open;
-    render();
-    if (state.open && !state.inbox) loadConfig();
+  function renderMessages() {
+    if (!state.messages.length && state.prechatDone) {
+      return `<div class="fc-msg sys">${escapeHtml(state.inbox?.greetingMessage || 'How can we help?')}</div>`;
+    }
+    return state.messages.map((m) => {
+      const time = `<span class="fc-msg-time">${formatTime(m.createdAt)}</span>`;
+      if (m.senderType === 'contact') {
+        return `<div class="fc-msg out">${escapeHtml(m.content)}${time}</div>`;
+      }
+      if (m.senderType === 'agent') {
+        return `<div class="fc-msg in">${escapeHtml(m.content)}${time}</div>`;
+      }
+      return `<div class="fc-msg sys">${escapeHtml(m.content)}</div>`;
+    }).join('');
   }
 
-  async function loadConfig() {
+  function renderBody() {
+    if (state.view === 'home' && !state.prechatDone) {
+      return `<div id="fc-home">
+        <div class="fc-avatar">${launcherIconSvg()}</div>
+        <h4>${escapeHtml(state.inbox?.welcomeTitle || state.inbox?.name || 'Chat with us')}</h4>
+        <p>${escapeHtml(state.inbox?.welcomeTagline || 'We typically reply in a few minutes')}</p>
+        <button type="button" class="fc-cta" id="fc-start-home">Start conversation</button>
+      </div>`;
+    }
+    if (!state.prechatDone) {
+      return `<div id="fc-prechat">
+        <label for="fc-name">Your name</label>
+        <input id="fc-name" placeholder="Enter your name" required autocomplete="name" />
+        <label for="fc-email">Email <span style="font-weight:400;color:var(--fc-input-placeholder)">(optional)</span></label>
+        <input id="fc-email" type="email" placeholder="you@company.com" autocomplete="email" />
+        <button type="button" id="fc-start" ${state.sending ? 'disabled' : ''}>${state.sending ? 'Connecting…' : 'Start chat'}</button>
+      </div>`;
+    }
+    return `
+      <div id="fc-messages">${renderMessages()}</div>
+      <form id="fc-composer">
+        <input id="fc-input" placeholder="Type your message…" autocomplete="off" />
+        <button type="submit" id="fc-send" ${state.sending ? 'disabled' : ''}>Send</button>
+      </form>`;
+  }
+
+  function render() {
+    const t = theme();
+    applyThemeVars(t);
+
+    const unread = state.messages.filter((m) => m.senderType === 'agent').length;
+    const showBadge = !state.open && unread > 0 && state.prechatDone;
+
+    root.innerHTML = `
+      <button id="fc-launcher" aria-label="Open chat" aria-expanded="${state.open}">
+        ${launcherIconSvg()}
+        <span class="fc-badge" style="display:${showBadge ? 'flex' : 'none'}">${unread}</span>
+      </button>
+      <div id="fc-panel" class="${state.open ? 'open' : ''}" role="dialog" aria-label="Chat">
+        <div id="fc-header">
+          <div id="fc-header-text">
+            <h3>${escapeHtml(state.inbox?.welcomeTitle || state.inbox?.name || 'Chat with us')}</h3>
+            <p>${escapeHtml(state.inbox?.welcomeTagline || 'We reply quickly')}</p>
+          </div>
+          <button id="fc-close" aria-label="Close chat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div id="fc-body">
+          ${state.error ? `<div id="fc-error">${escapeHtml(state.error)}</div>` : ''}
+          ${renderBody()}
+        </div>
+        <div id="fc-powered">Powered by FlowChat</div>
+      </div>
+    `;
+
+    document.getElementById('fc-launcher')?.addEventListener('click', toggle);
+    document.getElementById('fc-close')?.addEventListener('click', close);
+    document.getElementById('fc-start-home')?.addEventListener('click', () => { state.view = 'prechat'; render(); });
+    document.getElementById('fc-start')?.addEventListener('click', startChat);
+    document.getElementById('fc-composer')?.addEventListener('submit', (e) => { e.preventDefault(); sendMessage(); });
+    document.getElementById('fc-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    scrollMessages();
+  }
+
+  function close() {
+    state.open = false;
+    render();
+  }
+
+  function toggle() {
+    state.open = !state.open;
+    if (state.open) {
+      loadConfig(true);
+      if (!state.prechatDone) state.view = 'home';
+    }
+    render();
+  }
+
+  async function loadConfig(force) {
+    if (state.configLoaded && !force) return;
     try {
       const res = await fetch(`${configUrl}/public/inboxes/${inboxId}/widget-config`);
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.inbox) {
+        if (typeof data.inbox.widgetTheme === 'string') {
+          try { data.inbox.widgetTheme = JSON.parse(data.inbox.widgetTheme); } catch { /* keep */ }
+        }
         state.inbox = data.inbox;
+        state.configLoaded = true;
+        state.error = '';
+        render();
+      } else {
+        state.error = data.error || 'Widget configuration not found';
         render();
       }
     } catch (e) {
       console.error('[FlowChat] config error', e);
+      state.error = 'Could not load widget settings';
+      render();
     }
   }
 
@@ -212,6 +408,10 @@
     const name = document.getElementById('fc-name')?.value?.trim();
     const email = document.getElementById('fc-email')?.value?.trim() || '';
     if (!name) return;
+
+    state.sending = true;
+    state.error = '';
+    render();
 
     try {
       const res = await fetch(`${apiUrl}/public/inboxes/${inboxId}/sessions`, {
@@ -226,11 +426,14 @@
       state.visitorToken = data.visitorToken;
       state.contactName = data.contact.name;
       state.prechatDone = true;
+      state.view = 'chat';
       await loadMessages();
       connectWs();
-      render();
     } catch (e) {
-      alert(e.message || 'Could not start chat');
+      state.error = e.message || 'Could not start chat';
+    } finally {
+      state.sending = false;
+      render();
     }
   }
 
@@ -246,9 +449,12 @@
   async function sendMessage() {
     const input = document.getElementById('fc-input');
     const content = input?.value?.trim();
-    if (!content || !state.conversationId || !state.visitorToken) return;
+    if (!content || !state.conversationId || !state.visitorToken || state.sending) return;
 
     input.value = '';
+    state.sending = true;
+    render();
+
     try {
       const res = await fetch(`${apiUrl}/public/conversations/${state.conversationId}/messages`, {
         method: 'POST',
@@ -259,30 +465,34 @@
         body: JSON.stringify({ content }),
       });
       const data = await res.json();
-      if (res.ok) {
-        appendMessage(data.message);
-      }
+      if (res.ok) appendMessage(data.message);
+      else state.error = data.error || 'Failed to send';
     } catch (e) {
+      state.error = 'Could not send message';
       console.error('[FlowChat] send error', e);
+    } finally {
+      state.sending = false;
+      render();
     }
   }
 
   function appendMessage(msg) {
     if (!msg || state.messages.some((m) => m.id === msg.id)) return;
     state.messages.push(msg);
-    const t = theme();
     const box = document.getElementById('fc-messages');
     if (box) {
       let html;
+      const time = `<span class="fc-msg-time">${formatTime(msg.createdAt)}</span>`;
       if (msg.senderType === 'contact') {
-        html = `<div class="fc-msg out" style="background:${t.visitorBubbleBg};color:${t.visitorBubbleText}">${escapeHtml(msg.content)}</div>`;
+        html = `<div class="fc-msg out">${escapeHtml(msg.content)}${time}</div>`;
       } else if (msg.senderType === 'agent') {
-        html = `<div class="fc-msg in" style="background:${t.agentBubbleBg};color:${t.agentBubbleText};border:1px solid ${t.panelBorder}">${escapeHtml(msg.content)}</div>`;
+        html = `<div class="fc-msg in">${escapeHtml(msg.content)}${time}</div>`;
       } else {
-        html = `<div class="fc-msg sys" style="color:${t.systemText}">${escapeHtml(msg.content)}</div>`;
+        html = `<div class="fc-msg sys">${escapeHtml(msg.content)}</div>`;
       }
       box.insertAdjacentHTML('beforeend', html);
       scrollMessages();
+      if (!state.open) render();
     }
   }
 
@@ -293,14 +503,10 @@
     state.ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data);
-        if (msg.type === 'message_created' && msg.message) {
-          appendMessage(msg.message);
-        }
+        if (msg.type === 'message_created' && msg.message) appendMessage(msg.message);
       } catch (_) {}
     };
-    state.ws.onclose = () => {
-      setTimeout(connectWs, 3000);
-    };
+    state.ws.onclose = () => setTimeout(connectWs, 3000);
   }
 
   loadConfig().then(render);

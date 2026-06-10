@@ -146,7 +146,7 @@ export default function InboxesPage() {
     wsUrl: "${wsUrl}"
   };
 </script>
-<script src="${origin}/widget.js" async></script>`;
+<script src="${origin}/widget.js?v=3" async></script>`;
   };
 
   return (

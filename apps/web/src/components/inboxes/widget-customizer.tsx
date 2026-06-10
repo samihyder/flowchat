@@ -7,6 +7,7 @@ import {
   type WidgetSettingsInput,
   type WidgetTheme,
 } from '@/lib/widget-theme';
+import { WidgetPreview } from '@/components/inboxes/widget-preview';
 
 const ICON_SVGS: Record<WidgetIconId, string> = {
   chat: '<path fill="currentColor" d="M8 10h8M8 14h5M20 6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2v3l4-3h6a2 2 0 0 0 2-2V6z"/>',
@@ -75,7 +76,7 @@ export function WidgetCustomizer({ settings, onChange, showNameChannel = true }:
               onChange={(e) => onChange({ ...settings, name: e.target.value })}
               placeholder="Website Support"
               required
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
           <div>
@@ -129,7 +130,7 @@ export function WidgetCustomizer({ settings, onChange, showNameChannel = true }:
               onClick={() => onChange({ ...settings, widgetIcon: icon.id })}
               className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-colors ${
                 settings.widgetIcon === icon.id
-                  ? 'border-indigo-500 bg-indigo-50'
+                  ? 'border-primary-500 bg-primary-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
@@ -190,52 +191,7 @@ export function WidgetCustomizer({ settings, onChange, showNameChannel = true }:
         ))}
       </div>
 
-      <div className="border border-gray-200 rounded-xl overflow-hidden max-w-xs shadow-sm">
-        <div className="px-4 py-3" style={{ background: settings.widgetTheme.headerBg, color: settings.widgetTheme.headerTitle }}>
-          <p className="text-sm font-semibold">{settings.welcomeTitle || 'Chat with us'}</p>
-          <p className="text-xs opacity-90" style={{ color: settings.widgetTheme.headerSubtitle }}>
-            {settings.welcomeTagline}
-          </p>
-        </div>
-        <div className="p-3 space-y-2" style={{ background: settings.widgetTheme.messagesBg }}>
-          <div
-            className="text-sm px-3 py-2 rounded-xl max-w-[85%]"
-            style={{
-              background: settings.widgetTheme.agentBubbleBg,
-              color: settings.widgetTheme.agentBubbleText,
-            }}
-          >
-            {settings.greetingMessage}
-          </div>
-          <div
-            className="text-sm px-3 py-2 rounded-xl max-w-[85%] ml-auto"
-            style={{
-              background: settings.widgetTheme.visitorBubbleBg,
-              color: settings.widgetTheme.visitorBubbleText,
-            }}
-          >
-            Hello!
-          </div>
-        </div>
-        <div className="p-3 flex gap-2" style={{ background: settings.widgetTheme.composerBg }}>
-          <div
-            className="flex-1 h-9 rounded-lg border"
-            style={{
-              background: settings.widgetTheme.inputBg,
-              borderColor: settings.widgetTheme.inputBorder,
-            }}
-          />
-          <div
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-            style={{
-              background: settings.widgetTheme.buttonBg,
-              color: settings.widgetTheme.buttonText,
-            }}
-          >
-            Send
-          </div>
-        </div>
-      </div>
+      <WidgetPreview settings={settings} />
     </div>
   );
 }
