@@ -10,10 +10,10 @@ function getSql() {
 export async function authorizeAccount(
   token: string,
   accountId: string
-): Promise<{ userId: string; role: string } | null> {
+): Promise<{ userId: string; role: string; status: string } | null> {
   const sql = getSql();
   const rows = await sql`
-    SELECT au.role, s.user_id
+    SELECT au.role, au.status, s.user_id
     FROM sessions s
     JOIN account_users au ON au.user_id = s.user_id
     WHERE s.token = ${token}
@@ -21,9 +21,10 @@ export async function authorizeAccount(
       AND au.account_id = ${accountId}::uuid
     LIMIT 1
   `;
-  const row = rows[0] as { user_id: string; role: string } | undefined;
+  const row = rows[0] as { user_id: string; role: string; status: string } | undefined;
   if (!row) return null;
-  return { userId: row.user_id, role: row.role };
+  if (row.status !== 'active') return null;
+  return { userId: row.user_id, role: row.role, status: row.status };
 }
 
 export function getBearerToken(req: Request) {

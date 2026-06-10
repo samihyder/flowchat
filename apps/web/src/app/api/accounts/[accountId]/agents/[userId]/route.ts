@@ -22,6 +22,8 @@ export async function PATCH(req: Request, { params }: Params) {
   const body = (await req.json()) as {
     role?: 'administrator' | 'agent';
     displayName?: string | null;
+    membershipStatus?: 'pending' | 'active' | 'suspended';
+    inboxIds?: string[];
   };
 
   const sql = neon(databaseUrl);
@@ -36,10 +38,30 @@ export async function PATCH(req: Request, { params }: Params) {
     UPDATE account_users SET
       role = COALESCE(${body.role ?? null}, role),
       display_name = COALESCE(${body.displayName !== undefined ? body.displayName : null}, display_name),
+      status = COALESCE(${body.membershipStatus ?? null}, status),
       updated_at = NOW()
     WHERE user_id = ${userId}::uuid AND account_id = ${accountId}::uuid
-    RETURNING user_id as "userId", role, availability, display_name as "displayName"
+    RETURNING user_id as "userId", role, availability, display_name as "displayName", status as "membershipStatus"
   `;
+
+  if (body.membershipStatus === 'active') {
+    if (body.inboxIds?.length) {
+      for (const inboxId of body.inboxIds) {
+        await sql`
+          INSERT INTO inbox_members (inbox_id, user_id)
+          VALUES (${inboxId}::uuid, ${userId}::uuid)
+          ON CONFLICT DO NOTHING
+        `;
+      }
+    } else {
+      await sql`
+        INSERT INTO inbox_members (inbox_id, user_id)
+        SELECT id, ${userId}::uuid FROM inboxes
+        WHERE account_id = ${accountId}::uuid AND default_assignee_id = ${userId}::uuid
+        ON CONFLICT DO NOTHING
+      `;
+    }
+  }
 
   return Response.json({ agent: rows[0] });
 }

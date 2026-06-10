@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
+import { createId } from '@paralleldrive/cuid2';
 
 type Params = { params: Promise<{ accountId: string }> };
 
@@ -33,31 +34,56 @@ export async function POST(req: Request, { params }: Params) {
     SELECT id, name, email FROM users WHERE LOWER(email) = ${email} LIMIT 1
   `;
   const user = users[0] as { id: string; name: string; email: string } | undefined;
-  if (!user) {
+
+  if (user) {
+    const existing = await sql`
+      SELECT user_id, status FROM account_users
+      WHERE user_id = ${user.id}::uuid AND account_id = ${accountId}::uuid
+      LIMIT 1
+    `;
+    if (existing[0]) {
+      return Response.json({ error: 'User is already linked to this workspace' }, { status: 409 });
+    }
+
+    await sql`
+      INSERT INTO account_users (account_id, user_id, role, availability, status)
+      VALUES (${accountId}::uuid, ${user.id}::uuid, ${role}, 'offline', 'pending')
+    `;
+
     return Response.json(
-      { error: 'No user found with that email. Ask them to sign up first.' },
-      { status: 404 }
+      {
+        message: 'Agent added with pending approval. They must wait for you to approve access.',
+        agent: { userId: user.id, name: user.name, email: user.email, role, membershipStatus: 'pending' },
+      },
+      { status: 201 }
     );
   }
 
-  const existing = await sql`
-    SELECT user_id FROM account_users
-    WHERE user_id = ${user.id}::uuid AND account_id = ${accountId}::uuid
-    LIMIT 1
-  `;
-  if (existing[0]) {
-    return Response.json({ error: 'Agent is already a member of this account' }, { status: 409 });
-  }
+  const inviteToken = createId();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   await sql`
-    INSERT INTO account_users (account_id, user_id, role, availability)
-    VALUES (${accountId}::uuid, ${user.id}::uuid, ${role}, 'offline')
+    INSERT INTO agent_invites (account_id, email, role, token, invited_by, expires_at)
+    VALUES (
+      ${accountId}::uuid,
+      ${email},
+      ${role},
+      ${inviteToken},
+      ${auth.userId}::uuid,
+      ${expiresAt.toISOString()}::timestamptz
+    )
   `;
+
+  const origin =
+    process.env.WEB_APP_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+  const inviteUrl = `${origin.replace(/\/$/, '')}/accept-invite?token=${inviteToken}`;
 
   return Response.json(
     {
-      message: 'Agent added successfully',
-      agent: { userId: user.id, name: user.name, email: user.email, role },
+      message: 'Invite created. Share this link with the agent.',
+      inviteUrl,
+      agent: { email, role, membershipStatus: 'invited' },
     },
     { status: 201 }
   );

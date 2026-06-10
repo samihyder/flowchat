@@ -21,6 +21,7 @@ export async function GET(req: Request, { params }: Params) {
     SELECT
       au.user_id as "userId",
       au.role,
+      au.status as "membershipStatus",
       au.availability,
       au.display_name as "displayName",
       u.name,

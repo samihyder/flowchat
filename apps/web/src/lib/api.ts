@@ -155,6 +155,7 @@ export const api = {
             expiresAt: string;
           }
         | { requiresTwoFactor: true; userId: string }
+        | { pendingApproval: true; accountName?: string }
       >('/auth/sign-in', { method: 'POST', body }),
 
     googleUrl: () => `${getApiUrl()}/auth/google`,
@@ -183,6 +184,7 @@ export const api = {
           email: string;
           role: string;
           availability: string;
+          membershipStatus: string;
           avatarUrl: string | null;
           isActive: boolean;
           displayName: string | null;
@@ -190,12 +192,29 @@ export const api = {
       }>(`/accounts/${accountId}/agents`, { token }),
 
     invite: (accountId: string, body: { email: string; role: 'administrator' | 'agent' }, token: string) =>
-      request<{ message: string; agent: { userId: string; name: string; email: string; role: string } }>(
-        `/accounts/${accountId}/agents/invite`,
-        { method: 'POST', body, token }
-      ),
+      request<{
+        message: string;
+        inviteUrl?: string;
+        agent: {
+          userId?: string;
+          name?: string;
+          email: string;
+          role: string;
+          membershipStatus?: string;
+        };
+      }>(`/accounts/${accountId}/agents/invite`, { method: 'POST', body, token }),
 
-    update: (accountId: string, userId: string, body: { role?: 'administrator' | 'agent'; displayName?: string | null }, token: string) =>
+    update: (
+      accountId: string,
+      userId: string,
+      body: {
+        role?: 'administrator' | 'agent';
+        displayName?: string | null;
+        membershipStatus?: 'pending' | 'active' | 'suspended';
+        inboxIds?: string[];
+      },
+      token: string
+    ) =>
       request<{ agent: unknown }>(`/accounts/${accountId}/agents/${userId}`, {
         method: 'PATCH',
         body,

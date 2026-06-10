@@ -2,12 +2,13 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { useWsStore, type MessageCreatedEvent } from '@/store/ws';
+import { useWsStore, type MessageCreatedEvent, type VisitorOnlineEvent } from '@/store/ws';
 import { getWsUrl } from '@/lib/config';
 
 export function useWebSocket() {
   const { token, accountId } = useAuthStore();
-  const { setSocket, setConnected, setPresence, pushMessageEvent, subscribeConversation } = useWsStore();
+  const { setSocket, setConnected, setPresence, pushMessageEvent, pushVisitorEvent, subscribeConversation } =
+    useWsStore();
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -51,6 +52,9 @@ export function useWebSocket() {
           }
           if (msg['type'] === 'message_created') {
             pushMessageEvent(msg as MessageCreatedEvent);
+          }
+          if (msg['type'] === 'visitor_online') {
+            pushVisitorEvent(msg as VisitorOnlineEvent);
           }
         } catch { /* ignore */ }
       };

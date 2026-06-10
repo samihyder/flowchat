@@ -1,7 +1,9 @@
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 
-export type Workspace = { accountId: string; accountName: string };
+export type Workspace =
+  | { accountId: string; accountName: string }
+  | { pendingApproval: true };
 
 /** Load workspace from API or Vercel /api/workspace fallback. */
 export async function fetchWorkspace(token: string): Promise<Workspace | null> {
@@ -22,7 +24,13 @@ export async function fetchWorkspace(token: string): Promise<Workspace | null> {
       throw new Error('DATABASE_URL is not configured on Vercel. Add your Neon connection string in Project Settings → Environment Variables.');
     }
     if (res.ok) {
-      const data = (await res.json()) as { account?: { id: string; name: string } | null };
+      const data = (await res.json()) as {
+        account?: { id: string; name: string } | null;
+        pendingApproval?: boolean;
+      };
+      if (data.pendingApproval) {
+        return { pendingApproval: true as const };
+      }
       if (data.account?.id) {
         return { accountId: data.account.id, accountName: data.account.name };
       }
@@ -41,7 +49,10 @@ export async function ensureWorkspace(): Promise<string | null> {
   if (state.accountId) return state.accountId;
 
   const workspace = await fetchWorkspace(state.token);
-  if (workspace) {
+  if (workspace && 'pendingApproval' in workspace) {
+    return null;
+  }
+  if (workspace && 'accountId' in workspace) {
     state.setAccount(workspace.accountId, workspace.accountName);
     return workspace.accountId;
   }

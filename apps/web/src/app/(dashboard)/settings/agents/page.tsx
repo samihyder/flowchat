@@ -13,6 +13,7 @@ type Agent = {
   name: string;
   email: string;
   role: string;
+  membershipStatus: string;
   availability: string;
   avatarUrl: string | null;
   isActive: boolean;
@@ -34,6 +35,7 @@ export default function AgentsPage() {
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [inviteUrl, setInviteUrl] = useState('');
 
   const fetchAgents = async () => {
     if (!token || !accountId) {
@@ -56,15 +58,28 @@ export default function AgentsPage() {
     setInviting(true);
     setError('');
     setSuccess('');
+    setInviteUrl('');
     try {
-      await api.agents.invite(accountId, { email: inviteEmail, role: inviteRole }, token);
-      setSuccess(`Agent added successfully.`);
+      const res = await api.agents.invite(accountId, { email: inviteEmail, role: inviteRole }, token);
+      setSuccess(res.message);
+      if (res.inviteUrl) setInviteUrl(res.inviteUrl);
       setInviteEmail('');
       fetchAgents();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Invite failed');
     } finally {
       setInviting(false);
+    }
+  };
+
+  const handleApprove = async (userId: string) => {
+    if (!token || !accountId) return;
+    try {
+      await api.agents.update(accountId, userId, { membershipStatus: 'active' }, token);
+      setSuccess('Agent approved. They can now access assigned websites.');
+      fetchAgents();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Approve failed');
     }
   };
 
@@ -73,18 +88,18 @@ export default function AgentsPage() {
     try {
       await api.agents.update(accountId, userId, { role }, token);
       fetchAgents();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Update failed');
     }
   };
 
   const handleRemove = async (userId: string) => {
-    if (!token || !accountId || !confirm('Remove this agent from the account?')) return;
+    if (!token || !accountId || !confirm('Remove this agent from the workspace?')) return;
     try {
       await api.agents.remove(accountId, userId, token);
       fetchAgents();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Remove failed');
     }
   };
 
@@ -92,13 +107,13 @@ export default function AgentsPage() {
     <div className="p-4 sm:p-6 max-w-3xl mx-auto w-full">
       <Card className="mb-6">
         <CardHeader
-          title="Invite Agent"
-          description="User must sign up first — then add them by email."
+          title="Invite agent"
+          description="Agents cannot self-register. Invite by email — new users get a link; existing users are added as pending until you approve."
         />
         <CardBody>
           <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3 sm:items-end">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Email address</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Work email</label>
               <Input
                 type="email"
                 value={inviteEmail}
@@ -112,18 +127,24 @@ export default function AgentsPage() {
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as 'agent' | 'administrator')}
-                className="w-full sm:w-auto px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-500"
+                className="w-full sm:w-auto px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white"
               >
                 <option value="agent">Agent</option>
                 <option value="administrator">Admin</option>
               </select>
             </div>
             <Button type="submit" disabled={inviting}>
-              {inviting ? 'Adding…' : 'Add Agent'}
+              {inviting ? 'Inviting…' : 'Invite'}
             </Button>
           </form>
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
           {success && <p className="mt-3 text-sm text-accent-600 font-medium">{success}</p>}
+          {inviteUrl && (
+            <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <p className="text-xs text-gray-500 mb-1">Share invite link:</p>
+              <code className="text-xs break-all text-gray-800">{inviteUrl}</code>
+            </div>
+          )}
         </CardBody>
       </Card>
 
@@ -134,9 +155,9 @@ export default function AgentsPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Agent</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Role</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Agent</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Role</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Access</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -161,7 +182,7 @@ export default function AgentsPage() {
                       <select
                         value={agent.role}
                         onChange={(e) => handleRoleChange(agent.userId, e.target.value as 'administrator' | 'agent')}
-                        className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white"
                       >
                         <option value="agent">Agent</option>
                         <option value="administrator">Admin</option>
@@ -169,16 +190,34 @@ export default function AgentsPage() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-xs font-medium capitalize ${
+                          agent.membershipStatus === 'active'
+                            ? 'text-green-700'
+                            : agent.membershipStatus === 'pending'
+                              ? 'text-amber-700'
+                              : 'text-gray-500'
+                        }`}
+                      >
+                        {agent.membershipStatus}
+                      </span>
                       <span className={`w-2 h-2 rounded-full ${availabilityColor[agent.availability] ?? 'bg-gray-300'}`} />
-                      <span className="text-xs text-gray-500 capitalize">{agent.availability}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right space-x-2">
+                    {agent.membershipStatus === 'pending' && agent.userId !== user?.id && (
+                      <button
+                        onClick={() => handleApprove(agent.userId)}
+                        className="text-xs text-green-600 hover:text-green-800 font-medium"
+                      >
+                        Approve
+                      </button>
+                    )}
                     {agent.userId !== user?.id && (
                       <button
                         onClick={() => handleRemove(agent.userId)}
-                        className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                        className="text-xs text-red-500 hover:text-red-700 font-medium"
                       >
                         Remove
                       </button>

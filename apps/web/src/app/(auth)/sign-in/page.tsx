@@ -51,12 +51,21 @@ function SignInPage() {
         setTwoFaUserId(res.userId);
         return;
       }
+      if ('pendingApproval' in res && res.pendingApproval) {
+        router.push('/pending-approval' as import('next').Route);
+        return;
+      }
+      if (!('token' in res)) return;
       const workspace = await resolveWorkspace(res.token, res.account);
+      if (workspace && 'pendingApproval' in workspace) {
+        router.push('/pending-approval' as import('next').Route);
+        return;
+      }
       setAuth(
         res.user,
         res.token,
-        workspace?.accountId ?? '',
-        workspace?.accountName ?? ''
+        workspace && 'accountId' in workspace ? workspace.accountId : '',
+        workspace && 'accountId' in workspace ? workspace.accountName : ''
       );
       router.push('/dashboard');
     } catch (err: any) {
@@ -72,11 +81,15 @@ function SignInPage() {
     try {
       const res = await api.twoFa.verify(twoFaUserId, twoFaCode);
       const workspace = await resolveWorkspace(res.token, res.account);
+      if (workspace && 'pendingApproval' in workspace) {
+        router.push('/pending-approval' as import('next').Route);
+        return;
+      }
       setAuth(
         res.user,
         res.token,
-        workspace?.accountId ?? '',
-        workspace?.accountName ?? ''
+        workspace && 'accountId' in workspace ? workspace.accountId : '',
+        workspace && 'accountId' in workspace ? workspace.accountName : ''
       );
       router.push('/dashboard');
     } catch (err: any) {

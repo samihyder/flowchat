@@ -43,7 +43,7 @@ export default function SignUpPage() {
               Flow<span className="text-primary-500">Chat</span>
             </span>
           </div>
-          <p className="text-gray-500 text-sm">Create your workspace</p>
+          <p className="text-gray-500 text-sm">Create your organization workspace (company email required)</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
@@ -94,8 +94,9 @@ export default function SignUpPage() {
                 type="email"
                 autoComplete="email"
                 className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-colors"
-                placeholder="you@company.com"
+                placeholder="you@yourcompany.com"
               />
+              <p className="mt-1 text-xs text-gray-400">Gmail, Yahoo, Outlook and other public emails are not allowed.</p>
               {errors.email && (
                 <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
               )}

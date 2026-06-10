@@ -4,6 +4,17 @@ import { create } from 'zustand';
 
 export type Availability = 'online' | 'busy' | 'offline';
 
+export type VisitorOnlineEvent = {
+  type: 'visitor_online';
+  inboxId: string;
+  inboxName: string;
+  accountId: string;
+  ipAddress: string | null;
+  pageUrl: string | null;
+  sourceId: string | null;
+  visitedAt: string;
+};
+
 export type MessageCreatedEvent = {
   type: 'message_created';
   conversationId: string;
@@ -26,6 +37,8 @@ type WsStore = {
   presence: PresenceMap;
   lastMessageEvent: MessageCreatedEvent | null;
   messageEventSeq: number;
+  lastVisitorEvent: VisitorOnlineEvent | null;
+  visitorEventSeq: number;
   activeConversationId: string | null;
   setSocket: (socket: WebSocket | null) => void;
   setConnected: (v: boolean) => void;
@@ -33,6 +46,7 @@ type WsStore = {
   sendPresence: (availability: Availability) => void;
   subscribeConversation: (conversationId: string) => void;
   pushMessageEvent: (event: MessageCreatedEvent) => void;
+  pushVisitorEvent: (event: VisitorOnlineEvent) => void;
 };
 
 export const useWsStore = create<WsStore>((set, get) => ({
@@ -41,6 +55,8 @@ export const useWsStore = create<WsStore>((set, get) => ({
   presence: {},
   lastMessageEvent: null,
   messageEventSeq: 0,
+  lastVisitorEvent: null,
+  visitorEventSeq: 0,
   activeConversationId: null,
 
   setSocket: (socket) => set({ socket }),
@@ -67,5 +83,11 @@ export const useWsStore = create<WsStore>((set, get) => ({
     set((s) => ({
       lastMessageEvent: event,
       messageEventSeq: s.messageEventSeq + 1,
+    })),
+
+  pushVisitorEvent: (event) =>
+    set((s) => ({
+      lastVisitorEvent: event,
+      visitorEventSeq: s.visitorEventSeq + 1,
     })),
 }));

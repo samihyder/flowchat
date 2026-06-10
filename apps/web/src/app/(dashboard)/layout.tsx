@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore, type Availability } from '@/store/ws';
 import { useWebSocket } from '@/lib/useWebSocket';
+import { useVisitorAlarm } from '@/lib/useVisitorAlarm';
 import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
 import { api } from '@/lib/api';
 
@@ -54,11 +55,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [teams, setTeams] = useState<Team[]>([]);
 
   useWebSocket();
+  const { alert: visitorAlert, muted: alarmMuted, toggleMute: toggleAlarm } = useVisitorAlarm();
 
   useEffect(() => {
     if (!authReady) return;
     if (!token) { router.push('/sign-in'); return; }
-    if (!accountId) return;
+    if (!accountId) {
+      fetch('/api/workspace', { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((data: { pendingApproval?: boolean }) => {
+          if (data.pendingApproval) router.push('/pending-approval' as Route);
+        })
+        .catch(() => {});
+      return;
+    }
     Promise.all([
       api.inboxes.list(accountId, token).then((r) => setInboxes(r.inboxes)).catch(() => {}),
       api.teams.list(accountId, token).then((r) => setTeams(r.teams)).catch(() => {}),
@@ -251,6 +261,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 min-h-screen">
+        {visitorAlert && (
+          <div className="bg-amber-500 text-white px-4 py-2.5 text-sm font-medium flex items-center justify-between gap-3 shrink-0 animate-pulse">
+            <span>
+              Visitor on {visitorAlert.inboxName}
+              {visitorAlert.ipAddress ? ` · ${visitorAlert.ipAddress}` : ''}
+            </span>
+            <button
+              type="button"
+              onClick={toggleAlarm}
+              className="text-xs underline opacity-90 shrink-0"
+            >
+              {alarmMuted ? 'Unmute alarm' : 'Mute alarm'}
+            </button>
+          </div>
+        )}
         <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 shrink-0">
           <button
             type="button"
