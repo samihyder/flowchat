@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
+import { isAccountAgent } from '@/lib/inbox-assignee';
 import { mergeWidgetTheme } from '@/lib/widget-theme';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -22,7 +23,8 @@ export async function GET(req: Request, { params }: Params) {
     SELECT id, name, channel_type as "channelType", widget_color as "widgetColor",
            widget_icon as "widgetIcon", widget_theme as "widgetTheme",
            greeting_message as "greetingMessage", welcome_title as "welcomeTitle",
-           welcome_tagline as "welcomeTagline", is_enabled as "isEnabled"
+           welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
+           default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled"
     FROM inboxes
     WHERE account_id = ${accountId}::uuid AND is_enabled = true
     ORDER BY created_at ASC
@@ -56,20 +58,31 @@ export async function POST(req: Request, { params }: Params) {
     widgetColor?: string;
     widgetIcon?: string;
     widgetTheme?: Record<string, string>;
+    websiteUrl?: string;
+    defaultAssigneeId?: string;
   };
 
   if (!body.name?.trim()) {
     return Response.json({ error: 'Name is required' }, { status: 400 });
   }
+  if (!body.defaultAssigneeId?.trim()) {
+    return Response.json({ error: 'Default agent is required' }, { status: 400 });
+  }
+
+  const sql = neon(databaseUrl);
+  const validAgent = await isAccountAgent(sql, accountId, body.defaultAssigneeId.trim());
+  if (!validAgent) {
+    return Response.json({ error: 'Selected agent is not in this workspace' }, { status: 400 });
+  }
 
   const primary = body.widgetColor ?? '#6366F1';
   const theme = mergeWidgetTheme(body.widgetTheme, primary);
 
-  const sql = neon(databaseUrl);
   const rows = await sql`
     INSERT INTO inboxes (
       account_id, name, channel_type, greeting_message,
-      welcome_title, welcome_tagline, widget_color, widget_icon, widget_theme
+      welcome_title, welcome_tagline, widget_color, widget_icon, widget_theme,
+      website_url, default_assignee_id
     )
     VALUES (
       ${accountId}::uuid,
@@ -80,12 +93,15 @@ export async function POST(req: Request, { params }: Params) {
       ${body.welcomeTagline ?? null},
       ${primary},
       ${body.widgetIcon ?? 'chat'},
-      ${JSON.stringify(theme)}::jsonb
+      ${JSON.stringify(theme)}::jsonb,
+      ${body.websiteUrl?.trim() || null},
+      ${body.defaultAssigneeId.trim()}::uuid
     )
     RETURNING id, name, channel_type as "channelType", widget_color as "widgetColor",
               widget_icon as "widgetIcon", widget_theme as "widgetTheme",
               greeting_message as "greetingMessage", welcome_title as "welcomeTitle",
-              welcome_tagline as "welcomeTagline", is_enabled as "isEnabled"
+              welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
+              default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled"
   `;
 
   const inbox = rows[0];

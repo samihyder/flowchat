@@ -19,9 +19,12 @@ const channelIcon: Record<string, string> = {
   api: '🔌',
 };
 
+type AgentOption = { userId: string; name: string; email: string };
+
 export default function InboxesPage() {
   const { token, accountId } = useAuthStore();
   const [inboxes, setInboxes] = useState<Inbox[]>([]);
+  const [agents, setAgents] = useState<AgentOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -46,8 +49,16 @@ export default function InboxesPage() {
         setError('Workspace not loaded. Sign out and sign back in.');
         return;
       }
-      const res = await api.inboxes.list(resolvedAccountId, token);
-      setInboxes(res.inboxes);
+      const [inboxRes, agentRes] = await Promise.all([
+        api.inboxes.list(resolvedAccountId, token),
+        api.agents.list(resolvedAccountId, token),
+      ]);
+      setInboxes(inboxRes.inboxes);
+      setAgents(
+        agentRes.agents
+          .filter((a) => a.isActive)
+          .map((a) => ({ userId: a.userId, name: a.displayName || a.name, email: a.email }))
+      );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load inboxes');
     } finally {
@@ -65,10 +76,55 @@ export default function InboxesPage() {
     greetingMessage: s.greetingMessage,
     welcomeTitle: s.welcomeTitle,
     welcomeTagline: s.welcomeTagline,
+    websiteUrl: s.websiteUrl.trim() || undefined,
+    defaultAssigneeId: s.defaultAssigneeId,
     widgetColor: s.widgetColor,
     widgetIcon: s.widgetIcon,
     widgetTheme: s.widgetTheme,
   });
+
+  const AgentFields = ({
+    settings,
+    onChange,
+  }: {
+    settings: WidgetSettingsInput;
+    onChange: (s: WidgetSettingsInput) => void;
+  }) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+          Website URL <span className="text-gray-400">(optional)</span>
+        </label>
+        <input
+          value={settings.websiteUrl}
+          onChange={(e) => onChange({ ...settings, websiteUrl: e.target.value })}
+          placeholder="https://example.com"
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+          Default agent <span className="text-red-500">*</span>
+        </label>
+        <select
+          value={settings.defaultAssigneeId}
+          onChange={(e) => onChange({ ...settings, defaultAssigneeId: e.target.value })}
+          required
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
+        >
+          <option value="">Select an agent…</option>
+          {agents.map((agent) => (
+            <option key={agent.userId} value={agent.userId}>
+              {agent.name} ({agent.email})
+            </option>
+          ))}
+        </select>
+        {agents.length === 0 && (
+          <p className="text-xs text-amber-600 mt-1">Invite agents in Settings → Agents first.</p>
+        )}
+      </div>
+    </div>
+  );
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +132,10 @@ export default function InboxesPage() {
     const resolvedAccountId = accountId || (await ensureWorkspace());
     if (!resolvedAccountId) {
       setError('Workspace not loaded. Sign out and sign back in.');
+      return;
+    }
+    if (!createSettings.defaultAssigneeId) {
+      setError('Please select a default agent for this website.');
       return;
     }
     setCreating(true);
@@ -98,6 +158,10 @@ export default function InboxesPage() {
     if (!token || !editingId) return;
     const resolvedAccountId = accountId || (await ensureWorkspace());
     if (!resolvedAccountId) return;
+    if (!editSettings.defaultAssigneeId) {
+      setError('Please select a default agent for this website.');
+      return;
+    }
     setSavingEdit(true);
     setError('');
     setSuccess('');
@@ -146,7 +210,7 @@ export default function InboxesPage() {
     wsUrl: "${wsUrl}"
   };
 </script>
-<script src="${origin}/widget.js?v=3" async></script>`;
+<script src="${origin}/widget.js?v=5" async></script>`;
   };
 
   return (
@@ -161,6 +225,7 @@ export default function InboxesPage() {
       <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
         <h3 className="text-sm font-semibold text-gray-900 mb-4">Create inbox</h3>
         <form onSubmit={handleCreate} className="space-y-4">
+          <AgentFields settings={createSettings} onChange={setCreateSettings} />
           <WidgetCustomizer settings={createSettings} onChange={setCreateSettings} />
           <button
             type="submit"
@@ -196,6 +261,9 @@ export default function InboxesPage() {
                       <p className="text-xs text-gray-400 capitalize">
                         {inbox.channelType.replace('_', ' ')}
                         {inbox.widgetIcon ? ` · ${inbox.widgetIcon} icon` : ''}
+                        {!inbox.defaultAssigneeId && (
+                          <span className="text-amber-600"> · No agent assigned</span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -231,6 +299,7 @@ export default function InboxesPage() {
                 {editingId === inbox.id && (
                   <form onSubmit={handleEdit} className="mt-4 pt-4 border-t border-gray-100 space-y-4">
                     <h4 className="text-sm font-semibold text-gray-900">Edit widget</h4>
+                    <AgentFields settings={editSettings} onChange={setEditSettings} />
                     <WidgetCustomizer
                       settings={editSettings}
                       onChange={setEditSettings}

@@ -25,6 +25,8 @@ type WsStore = {
   connected: boolean;
   presence: PresenceMap;
   lastMessageEvent: MessageCreatedEvent | null;
+  messageEventSeq: number;
+  activeConversationId: string | null;
   setSocket: (socket: WebSocket | null) => void;
   setConnected: (v: boolean) => void;
   setPresence: (userId: string, availability: Availability) => void;
@@ -38,6 +40,8 @@ export const useWsStore = create<WsStore>((set, get) => ({
   connected: false,
   presence: {},
   lastMessageEvent: null,
+  messageEventSeq: 0,
+  activeConversationId: null,
 
   setSocket: (socket) => set({ socket }),
   setConnected: (connected) => set({ connected }),
@@ -52,11 +56,16 @@ export const useWsStore = create<WsStore>((set, get) => ({
   },
 
   subscribeConversation: (conversationId) => {
+    set({ activeConversationId: conversationId });
     const { socket, connected } = get();
     if (socket && connected) {
       socket.send(JSON.stringify({ type: 'subscribe_conversation', conversationId }));
     }
   },
 
-  pushMessageEvent: (event) => set({ lastMessageEvent: event }),
+  pushMessageEvent: (event) =>
+    set((s) => ({
+      lastMessageEvent: event,
+      messageEventSeq: s.messageEventSeq + 1,
+    })),
 }));

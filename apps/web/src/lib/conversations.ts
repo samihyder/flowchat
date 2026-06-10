@@ -90,8 +90,9 @@ export async function insertMessage(params: {
     message: serialized,
   };
 
-  await publishEvent(`account:${params.accountId}`, payload);
-  await publishEvent(`conversation:${params.conversationId}`, payload);
+  // Fire-and-forget so HTTP response returns immediately after DB write
+  void publishEvent(`account:${params.accountId}`, payload);
+  void publishEvent(`conversation:${params.conversationId}`, payload);
 
   return serialized;
 }

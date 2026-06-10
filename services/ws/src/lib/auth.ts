@@ -34,7 +34,7 @@ const conversations = pgTable('conversations', {
   contactId: uuid('contact_id').notNull(),
 });
 
-export async function validateSession(token: string) {
+export async function validateSession(token: string, preferredAccountId?: string | null) {
   const [session] = await db
     .select({ userId: sessions.userId, expiresAt: sessions.expiresAt })
     .from(sessions)
@@ -42,6 +42,18 @@ export async function validateSession(token: string) {
     .limit(1);
 
   if (!session || session.expiresAt < new Date()) return null;
+
+  if (preferredAccountId) {
+    const [membership] = await db
+      .select({ accountId: accountUsers.accountId, role: accountUsers.role })
+      .from(accountUsers)
+      .where(
+        and(eq(accountUsers.userId, session.userId), eq(accountUsers.accountId, preferredAccountId))
+      )
+      .limit(1);
+    if (!membership) return null;
+    return { userId: session.userId, accountId: membership.accountId };
+  }
 
   const [membership] = await db
     .select({ accountId: accountUsers.accountId, role: accountUsers.role })

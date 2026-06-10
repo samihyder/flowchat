@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { corsHeaders, optionsResponse } from '@/lib/cors';
 import { newVisitorToken } from '@/lib/conversations';
+import { getClientIp } from '@/lib/request-ip';
 
 type Params = { params: Promise<{ inboxId: string }> };
 
@@ -28,11 +29,13 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const sql = neon(databaseUrl);
+  const clientIp = getClientIp(req);
   const inboxes = await sql`
-    SELECT id, account_id as "accountId" FROM inboxes
+    SELECT id, account_id as "accountId", default_assignee_id as "defaultAssigneeId"
+    FROM inboxes
     WHERE id = ${inboxId}::uuid AND is_enabled = true LIMIT 1
   `;
-  const inbox = inboxes[0] as { id: string; accountId: string } | undefined;
+  const inbox = inboxes[0] as { id: string; accountId: string; defaultAssigneeId: string | null } | undefined;
   if (!inbox) {
     return Response.json({ error: 'Inbox not found' }, { status: 404, headers: corsHeaders() });
   }
@@ -70,9 +73,21 @@ export async function POST(req: Request, { params }: Params) {
 
     if (!convRows[0]) {
       convRows = await sql`
-        INSERT INTO conversations (account_id, inbox_id, contact_id)
-        VALUES (${inbox.accountId}::uuid, ${inboxId}::uuid, ${link.contactId}::uuid)
+        INSERT INTO conversations (account_id, inbox_id, contact_id, assignee_id)
+        VALUES (
+          ${inbox.accountId}::uuid,
+          ${inboxId}::uuid,
+          ${link.contactId}::uuid,
+          ${inbox.defaultAssigneeId}::uuid
+        )
         RETURNING id
+      `;
+    }
+
+    if (clientIp) {
+      await sql`
+        UPDATE contact_inboxes SET last_ip_address = ${clientIp}, last_seen_at = NOW()
+        WHERE inbox_id = ${inboxId}::uuid AND source_id = ${sourceId}
       `;
     }
 
@@ -98,13 +113,25 @@ export async function POST(req: Request, { params }: Params) {
 
   const visitorToken = newVisitorToken();
   await sql`
-    INSERT INTO contact_inboxes (contact_id, inbox_id, source_id, visitor_token)
-    VALUES (${contact.id}::uuid, ${inboxId}::uuid, ${sourceId}, ${visitorToken})
+    INSERT INTO contact_inboxes (contact_id, inbox_id, source_id, visitor_token, last_ip_address, last_seen_at)
+    VALUES (
+      ${contact.id}::uuid,
+      ${inboxId}::uuid,
+      ${sourceId},
+      ${visitorToken},
+      ${clientIp},
+      NOW()
+    )
   `;
 
   const convRows = await sql`
-    INSERT INTO conversations (account_id, inbox_id, contact_id)
-    VALUES (${inbox.accountId}::uuid, ${inboxId}::uuid, ${contact.id}::uuid)
+    INSERT INTO conversations (account_id, inbox_id, contact_id, assignee_id)
+    VALUES (
+      ${inbox.accountId}::uuid,
+      ${inboxId}::uuid,
+      ${contact.id}::uuid,
+      ${inbox.defaultAssigneeId}::uuid
+    )
     RETURNING id
   `;
 

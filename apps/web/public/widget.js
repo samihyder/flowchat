@@ -46,6 +46,7 @@
   };
 
   const STORAGE_KEY = `fc_source_${inboxId}`;
+  const SESSION_KEY = `fc_session_${inboxId}`;
   let sourceId = localStorage.getItem(STORAGE_KEY);
   if (!sourceId) {
     sourceId = 'v_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -62,10 +63,29 @@
     inbox: null,
     configLoaded: false,
     ws: null,
+    wsConnected: false,
+    pollTimer: null,
+    pingTimer: null,
     prechatDone: false,
     sending: false,
     error: '',
   };
+
+  function saveSession() {
+    if (!state.conversationId || !state.visitorToken) return;
+    localStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify({
+        conversationId: state.conversationId,
+        visitorToken: state.visitorToken,
+        contactName: state.contactName,
+      })
+    );
+  }
+
+  function clearSession() {
+    localStorage.removeItem(SESSION_KEY);
+  }
 
   const root = document.createElement('div');
   root.id = 'flowchat-widget-root';
@@ -427,8 +447,10 @@
       state.contactName = data.contact.name;
       state.prechatDone = true;
       state.view = 'chat';
+      saveSession();
       await loadMessages();
       connectWs();
+      startPolling();
     } catch (e) {
       state.error = e.message || 'Could not start chat';
     } finally {
@@ -437,13 +459,49 @@
     }
   }
 
-  async function loadMessages() {
-    if (!state.conversationId || !state.visitorToken) return;
-    const res = await fetch(`${apiUrl}/public/conversations/${state.conversationId}/messages`, {
-      headers: { 'X-Visitor-Token': state.visitorToken },
-    });
-    const data = await res.json();
-    if (res.ok) state.messages = data.messages || [];
+  async function loadMessages(silent) {
+    if (!state.conversationId || !state.visitorToken) return false;
+    try {
+      const res = await fetch(`${apiUrl}/public/conversations/${state.conversationId}/messages`, {
+        headers: { 'X-Visitor-Token': state.visitorToken },
+      });
+      const data = await res.json();
+      if (!res.ok) return false;
+      const incoming = data.messages || [];
+      const prevLast = state.messages[state.messages.length - 1]?.id;
+      const newLast = incoming[incoming.length - 1]?.id;
+      const changed = incoming.length !== state.messages.length || prevLast !== newLast;
+      if (changed) {
+        const pending = state.messages.filter(function (m) {
+          return m.id && String(m.id).indexOf('pending-') === 0;
+        });
+        state.messages = incoming.concat(pending);
+        if (!silent && state.open && state.view === 'chat') render();
+        else if (silent && state.open && state.view === 'chat') {
+          var box = document.getElementById('fc-messages');
+          if (box) {
+            var html = state.messages.map(renderMsgHtml).join('');
+            box.innerHTML = html;
+            scrollMessages();
+          }
+        }
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function renderMsgHtml(msg) {
+    var time = '<span class="fc-msg-time">' + formatTime(msg.createdAt) + '</span>';
+    var pending = msg.id && String(msg.id).indexOf('pending-') === 0;
+    if (msg.senderType === 'contact') {
+      return '<div class="fc-msg out' + (pending ? ' fc-pending' : '') + '">' + escapeHtml(msg.content) + time + '</div>';
+    }
+    if (msg.senderType === 'agent') {
+      return '<div class="fc-msg in">' + escapeHtml(msg.content) + time + '</div>';
+    }
+    return '<div class="fc-msg sys">' + escapeHtml(msg.content) + '</div>';
   }
 
   async function sendMessage() {
@@ -452,8 +510,15 @@
     if (!content || !state.conversationId || !state.visitorToken || state.sending) return;
 
     input.value = '';
+    var tempId = 'pending-' + Date.now();
+    var optimistic = {
+      id: tempId,
+      content: content,
+      senderType: 'contact',
+      createdAt: new Date().toISOString(),
+    };
+    appendMessage(optimistic);
     state.sending = true;
-    render();
 
     try {
       const res = await fetch(`${apiUrl}/public/conversations/${state.conversationId}/messages`, {
@@ -465,14 +530,21 @@
         body: JSON.stringify({ content }),
       });
       const data = await res.json();
-      if (res.ok) appendMessage(data.message);
-      else state.error = data.error || 'Failed to send';
+      if (res.ok) {
+        state.messages = state.messages.filter(function (m) { return m.id !== tempId; });
+        appendMessage(data.message);
+      } else {
+        state.messages = state.messages.filter(function (m) { return m.id !== tempId; });
+        state.error = data.error || 'Failed to send';
+        render();
+      }
     } catch (e) {
+      state.messages = state.messages.filter(function (m) { return m.id !== tempId; });
       state.error = 'Could not send message';
       console.error('[FlowChat] send error', e);
+      render();
     } finally {
       state.sending = false;
-      render();
     }
   }
 
@@ -497,17 +569,96 @@
   }
 
   function connectWs() {
-    if (state.ws) state.ws.close();
+    if (!state.conversationId || !state.visitorToken) return;
+    if (state.ws) {
+      state.ws.onclose = null;
+      state.ws.close();
+    }
+    if (state.pingTimer) {
+      clearInterval(state.pingTimer);
+      state.pingTimer = null;
+    }
     const url = `${wsUrl}?visitorToken=${encodeURIComponent(state.visitorToken)}&conversationId=${encodeURIComponent(state.conversationId)}`;
-    state.ws = new WebSocket(url);
-    state.ws.onmessage = (ev) => {
+    const ws = new WebSocket(url);
+    state.ws = ws;
+    state.wsConnected = false;
+
+    ws.onopen = function () {
+      state.wsConnected = true;
+      startPolling();
+      state.pingTimer = setInterval(function () {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 25000);
+    };
+
+    ws.onmessage = function (ev) {
       try {
         const msg = JSON.parse(ev.data);
         if (msg.type === 'message_created' && msg.message) appendMessage(msg.message);
       } catch (_) {}
     };
-    state.ws.onclose = () => setTimeout(connectWs, 3000);
+
+    ws.onclose = function () {
+      state.wsConnected = false;
+      if (state.pingTimer) {
+        clearInterval(state.pingTimer);
+        state.pingTimer = null;
+      }
+      if (state.conversationId && state.visitorToken) {
+        setTimeout(connectWs, 2000);
+      }
+    };
   }
 
-  loadConfig().then(render);
+  function startPolling() {
+    if (state.pollTimer) clearInterval(state.pollTimer);
+    state.pollTimer = setInterval(function () {
+      if (state.prechatDone && state.conversationId && state.visitorToken) {
+        loadMessages(true);
+      }
+    }, 2500);
+  }
+
+  async function restoreSession() {
+    var raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    try {
+      var saved = JSON.parse(raw);
+      if (!saved.conversationId || !saved.visitorToken) return;
+      state.conversationId = saved.conversationId;
+      state.visitorToken = saved.visitorToken;
+      state.contactName = saved.contactName || null;
+      state.prechatDone = true;
+      var ok = await loadMessages(false);
+      if (ok) {
+        connectWs();
+        startPolling();
+      } else {
+        clearSession();
+        state.conversationId = null;
+        state.visitorToken = null;
+        state.prechatDone = false;
+      }
+    } catch (_) {
+      clearSession();
+    }
+  }
+
+  function trackVisit() {
+    fetch(`${apiUrl}/public/inboxes/${inboxId}/visit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sourceId,
+        pageUrl: window.location.href,
+      }),
+    }).catch(function () {});
+  }
+
+  trackVisit();
+  loadConfig().then(function () {
+    return restoreSession();
+  }).then(render);
 })();

@@ -1,5 +1,6 @@
 import { pgTable, uuid, varchar, text, boolean, timestamp, pgEnum, jsonb } from 'drizzle-orm/pg-core';
 import { accounts } from './accounts';
+import { users } from './users';
 
 export const channelTypeEnum = pgEnum('channel_type', [
   'web_widget',
@@ -26,6 +27,8 @@ export const inboxes = pgTable('inboxes', {
   widgetColor: varchar('widget_color', { length: 20 }).default('#1F93FF'),
   widgetIcon: varchar('widget_icon', { length: 32 }).default('chat'),
   widgetTheme: jsonb('widget_theme'),
+  websiteUrl: varchar('website_url', { length: 500 }),
+  defaultAssigneeId: uuid('default_assignee_id').references(() => users.id, { onDelete: 'set null' }),
   isEnabled: boolean('is_enabled').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

@@ -106,6 +106,8 @@ export type WidgetSettingsInput = {
   greetingMessage: string;
   welcomeTitle: string;
   welcomeTagline: string;
+  websiteUrl: string;
+  defaultAssigneeId: string;
   widgetColor: string;
   widgetIcon: WidgetIconId;
   widgetTheme: WidgetTheme;
@@ -117,6 +119,8 @@ export const emptyWidgetSettings = (): WidgetSettingsInput => ({
   greetingMessage: 'Hi! How can we help you today?',
   welcomeTitle: 'Chat with us',
   welcomeTagline: 'We typically reply in a few minutes',
+  websiteUrl: '',
+  defaultAssigneeId: '',
   widgetColor: '#6366F1',
   widgetIcon: 'chat',
   widgetTheme: defaultWidgetTheme(),
@@ -128,6 +132,8 @@ export function settingsFromInbox(inbox: {
   greetingMessage?: string | null;
   welcomeTitle?: string | null;
   welcomeTagline?: string | null;
+  websiteUrl?: string | null;
+  defaultAssigneeId?: string | null;
   widgetColor?: string | null;
   widgetIcon?: string | null;
   widgetTheme?: Partial<WidgetTheme> | null;
@@ -139,6 +145,8 @@ export function settingsFromInbox(inbox: {
     greetingMessage: inbox.greetingMessage ?? 'Hi! How can we help you today?',
     welcomeTitle: inbox.welcomeTitle ?? 'Chat with us',
     welcomeTagline: inbox.welcomeTagline ?? 'We typically reply in a few minutes',
+    websiteUrl: inbox.websiteUrl ?? '',
+    defaultAssigneeId: inbox.defaultAssigneeId ?? '',
     widgetColor: primary,
     widgetIcon: (inbox.widgetIcon as WidgetIconId) || 'chat',
     widgetTheme: mergeWidgetTheme(inbox.widgetTheme, primary),

@@ -29,6 +29,7 @@ function parseQuery(req: IncomingMessage) {
   const url = new URL(req.url ?? '/', 'http://localhost');
   return {
     token: url.searchParams.get('token'),
+    accountId: url.searchParams.get('accountId'),
     visitorToken: url.searchParams.get('visitorToken'),
     conversationId: url.searchParams.get('conversationId'),
   };
@@ -47,7 +48,7 @@ function broadcastConversation(conversationId: string, payload: object, exclude?
 }
 
 wss.on('connection', async (ws, req) => {
-  const { token, visitorToken, conversationId } = parseQuery(req);
+  const { token, accountId: queryAccountId, visitorToken, conversationId } = parseQuery(req);
 
   if (visitorToken && conversationId) {
     const visitor = await validateVisitor(conversationId, visitorToken);
@@ -66,7 +67,7 @@ wss.on('connection', async (ws, req) => {
     rooms.join(`conversation:${conversationId}`, ws);
     ws.send(JSON.stringify({ type: 'connected', role: 'visitor', conversationId }));
   } else if (token) {
-    const session = await validateSession(token);
+    const session = await validateSession(token, queryAccountId);
     if (!session?.accountId) {
       ws.close(4001, 'Invalid or expired token');
       return;

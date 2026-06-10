@@ -34,7 +34,48 @@ export type Inbox = {
   greetingMessage?: string | null;
   welcomeTitle?: string | null;
   welcomeTagline?: string | null;
+  websiteUrl?: string | null;
+  defaultAssigneeId?: string | null;
   isEnabled: boolean;
+};
+
+export type InboxAnalytics = {
+  inbox: {
+    id: string;
+    name: string;
+    websiteUrl: string | null;
+    defaultAssigneeId: string | null;
+    defaultAssigneeName: string | null;
+  };
+  range: { from: string; to: string };
+  summary: {
+    totalVisits: number;
+    uniqueVisitors: number;
+    totalConversations: number;
+    openConversations: number;
+    resolvedConversations: number;
+    totalMessages: number;
+    chatsStarted: number;
+  };
+  daily: { date: string; visits: number; conversations: number; messages: number }[];
+  activeChats: {
+    conversationId: string;
+    contactName: string;
+    contactEmail: string | null;
+    ipAddress: string | null;
+    startedAt: string;
+    lastMessageAt: string | null;
+    unreadCount: number;
+    assigneeName: string | null;
+    assigneeId: string | null;
+  }[];
+  recentVisits: {
+    ipAddress: string | null;
+    userAgent: string | null;
+    sourceId: string | null;
+    pageUrl: string | null;
+    visitedAt: string;
+  }[];
 };
 
 export type Conversation = {
@@ -210,6 +251,8 @@ export const api = {
         widgetColor?: string;
         widgetIcon?: string;
         widgetTheme?: WidgetTheme;
+        websiteUrl?: string;
+        defaultAssigneeId: string;
       },
       token: string
     ) =>
@@ -225,6 +268,8 @@ export const api = {
         widgetColor?: string;
         widgetIcon?: string;
         widgetTheme?: WidgetTheme;
+        websiteUrl?: string | null;
+        defaultAssigneeId?: string;
         isEnabled?: boolean;
       },
       token: string
@@ -236,6 +281,21 @@ export const api = {
       }),
     remove: (accountId: string, inboxId: string, token: string) =>
       request<{ message: string }>(`/accounts/${accountId}/inboxes/${inboxId}`, { method: 'DELETE', token }),
+    analytics: (
+      accountId: string,
+      inboxId: string,
+      token: string,
+      params?: { from?: string; to?: string }
+    ) => {
+      const qs = new URLSearchParams();
+      if (params?.from) qs.set('from', params.from);
+      if (params?.to) qs.set('to', params.to);
+      const query = qs.toString();
+      return request<InboxAnalytics>(
+        `/accounts/${accountId}/inboxes/${inboxId}/analytics${query ? `?${query}` : ''}`,
+        { token }
+      );
+    },
   },
 
   conversations: {

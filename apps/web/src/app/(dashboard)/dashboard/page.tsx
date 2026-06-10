@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const inboxFilter = searchParams.get('inbox');
   const { token, accountId } = useAuthStore();
-  const { lastMessageEvent } = useWsStore();
+  const { lastMessageEvent, messageEventSeq, connected } = useWsStore();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -39,6 +39,13 @@ export default function DashboardPage() {
     fetchConversations();
   }, [fetchConversations]);
 
+  // Poll conversation list as fallback when WebSocket is down
+  useEffect(() => {
+    if (!token || !accountId || connected) return;
+    const interval = setInterval(fetchConversations, 4000);
+    return () => clearInterval(interval);
+  }, [token, accountId, connected, fetchConversations]);
+
   useEffect(() => {
     if (!lastMessageEvent) return;
     setConversations((prev) => {
@@ -58,7 +65,7 @@ export default function DashboardPage() {
       updated.unshift(conv);
       return updated;
     });
-  }, [lastMessageEvent, selectedId, fetchConversations]);
+  }, [messageEventSeq, lastMessageEvent, selectedId, fetchConversations]);
 
   const selected = useMemo(
     () => conversations.find((c) => c.id === selectedId) ?? null,

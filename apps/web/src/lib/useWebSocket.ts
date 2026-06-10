@@ -6,24 +6,41 @@ import { useWsStore, type MessageCreatedEvent } from '@/store/ws';
 import { getWsUrl } from '@/lib/config';
 
 export function useWebSocket() {
-  const { token } = useAuthStore();
-  const { setSocket, setConnected, setPresence, pushMessageEvent } = useWsStore();
+  const { token, accountId } = useAuthStore();
+  const { setSocket, setConnected, setPresence, pushMessageEvent, subscribeConversation } = useWsStore();
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
+  const activeConversationRef = useRef(useWsStore.getState().activeConversationId);
 
   useEffect(() => {
-    if (!token) return;
+    return useWsStore.subscribe((s) => {
+      activeConversationRef.current = s.activeConversationId;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!token || !accountId) return;
 
     const wsUrl = getWsUrl();
 
     function connect() {
-      const url = `${wsUrl}?token=${token}`;
+      const qs = new URLSearchParams({ token: token!, accountId: accountId! });
+      const url = `${wsUrl}?${qs.toString()}`;
       const ws = new WebSocket(url);
       socketRef.current = ws;
 
       ws.onopen = () => {
         setSocket(ws);
         setConnected(true);
+        const cid = activeConversationRef.current;
+        if (cid) subscribeConversation(cid);
+
+        pingTimer.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 25000);
       };
 
       ws.onmessage = (event) => {
@@ -39,9 +56,13 @@ export function useWebSocket() {
       };
 
       ws.onclose = () => {
+        if (pingTimer.current) {
+          clearInterval(pingTimer.current);
+          pingTimer.current = null;
+        }
         setSocket(null);
         setConnected(false);
-        reconnectTimer.current = setTimeout(connect, 3000);
+        reconnectTimer.current = setTimeout(connect, 2000);
       };
 
       ws.onerror = () => ws.close();
@@ -51,7 +72,8 @@ export function useWebSocket() {
 
     return () => {
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (pingTimer.current) clearInterval(pingTimer.current);
       socketRef.current?.close();
     };
-  }, [token, setSocket, setConnected, setPresence, pushMessageEvent]);
+  }, [token, accountId, setSocket, setConnected, setPresence, pushMessageEvent, subscribeConversation]);
 }

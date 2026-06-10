@@ -105,6 +105,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <nav className="flex-1 overflow-y-auto p-3 space-y-5">
         <NavSection title="Conversations">
+          <Link
+            href={'/dashboard/analytics' as Route}
+            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
+              pathname === '/dashboard/analytics'
+                ? 'bg-primary-50 text-primary-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Analytics
+          </Link>
           {conversationLinks.map((item) => (
             <Link
               key={item.label}
