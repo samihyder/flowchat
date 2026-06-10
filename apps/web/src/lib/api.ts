@@ -1,10 +1,36 @@
 import { getApiUrl } from '@/lib/config';
 
+export type WidgetTheme = {
+  launcherBg: string;
+  launcherIcon: string;
+  headerBg: string;
+  headerTitle: string;
+  headerSubtitle: string;
+  panelBg: string;
+  panelBorder: string;
+  messagesBg: string;
+  agentBubbleBg: string;
+  agentBubbleText: string;
+  visitorBubbleBg: string;
+  visitorBubbleText: string;
+  systemText: string;
+  labelText: string;
+  inputBg: string;
+  inputText: string;
+  inputBorder: string;
+  inputPlaceholder: string;
+  composerBg: string;
+  buttonBg: string;
+  buttonText: string;
+};
+
 export type Inbox = {
   id: string;
   name: string;
   channelType: string;
   widgetColor: string | null;
+  widgetIcon?: string | null;
+  widgetTheme?: WidgetTheme | null;
   greetingMessage?: string | null;
   welcomeTitle?: string | null;
   welcomeTagline?: string | null;
@@ -172,9 +198,7 @@ export const api = {
 
   inboxes: {
     list: (accountId: string, token: string) =>
-      request<{ inboxes: { id: string; name: string; channelType: string; widgetColor: string | null; isEnabled: boolean }[] }>(
-        `/accounts/${accountId}/inboxes`, { token }
-      ),
+      request<{ inboxes: Inbox[] }>(`/accounts/${accountId}/inboxes`, { token }),
     create: (
       accountId: string,
       body: {
@@ -184,6 +208,8 @@ export const api = {
         welcomeTitle?: string;
         welcomeTagline?: string;
         widgetColor?: string;
+        widgetIcon?: string;
+        widgetTheme?: WidgetTheme;
       },
       token: string
     ) =>
@@ -197,6 +223,8 @@ export const api = {
         welcomeTitle?: string | null;
         welcomeTagline?: string | null;
         widgetColor?: string;
+        widgetIcon?: string;
+        widgetTheme?: WidgetTheme;
         isEnabled?: boolean;
       },
       token: string

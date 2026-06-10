@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, boolean, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, boolean, timestamp, pgEnum, jsonb } from 'drizzle-orm/pg-core';
 import { accounts } from './accounts';
 
 export const channelTypeEnum = pgEnum('channel_type', [
@@ -24,6 +24,8 @@ export const inboxes = pgTable('inboxes', {
   welcomeTitle: varchar('welcome_title', { length: 255 }),
   welcomeTagline: varchar('welcome_tagline', { length: 255 }),
   widgetColor: varchar('widget_color', { length: 20 }).default('#1F93FF'),
+  widgetIcon: varchar('widget_icon', { length: 32 }).default('chat'),
+  widgetTheme: jsonb('widget_theme'),
   isEnabled: boolean('is_enabled').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

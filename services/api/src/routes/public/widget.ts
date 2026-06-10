@@ -37,6 +37,31 @@ publicWidgetRouter.get('/inboxes/:inboxId/widget-config', async (c) => {
 
   if (!inbox) return c.json({ error: 'Inbox not found' }, 404);
 
+  const primary = inbox.widgetColor ?? '#6366F1';
+  const defaultTheme = {
+    launcherBg: primary,
+    launcherIcon: '#ffffff',
+    headerBg: primary,
+    headerTitle: '#ffffff',
+    headerSubtitle: '#ffffff',
+    panelBg: '#ffffff',
+    panelBorder: '#e5e7eb',
+    messagesBg: '#f9fafb',
+    agentBubbleBg: '#ffffff',
+    agentBubbleText: '#111827',
+    visitorBubbleBg: primary,
+    visitorBubbleText: '#ffffff',
+    systemText: '#6b7280',
+    labelText: '#374151',
+    inputBg: '#ffffff',
+    inputText: '#111827',
+    inputBorder: '#d1d5db',
+    inputPlaceholder: '#9ca3af',
+    composerBg: '#ffffff',
+    buttonBg: primary,
+    buttonText: '#ffffff',
+  };
+
   return c.json({
     inbox: {
       id: inbox.id,
@@ -44,7 +69,9 @@ publicWidgetRouter.get('/inboxes/:inboxId/widget-config', async (c) => {
       greetingMessage: inbox.greetingMessage,
       welcomeTitle: inbox.welcomeTitle ?? 'Hi there!',
       welcomeTagline: inbox.welcomeTagline ?? 'We typically reply in a few minutes',
-      widgetColor: inbox.widgetColor ?? '#6366F1',
+      widgetColor: primary,
+      widgetIcon: inbox.widgetIcon ?? 'chat',
+      widgetTheme: { ...defaultTheme, ...(inbox.widgetTheme as Record<string, string> | null) },
     },
   });
 });

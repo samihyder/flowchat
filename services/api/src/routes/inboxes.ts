@@ -38,6 +38,8 @@ inboxesRouter.post(
       welcomeTitle: z.string().max(255).optional(),
       welcomeTagline: z.string().max(255).optional(),
       widgetColor: z.string().max(20).optional(),
+      widgetIcon: z.string().max(32).optional(),
+      widgetTheme: z.record(z.string()).optional(),
     })
   ),
   async (c) => {
@@ -62,6 +64,8 @@ inboxesRouter.patch(
       welcomeTitle: z.string().max(255).nullable().optional(),
       welcomeTagline: z.string().max(255).nullable().optional(),
       widgetColor: z.string().max(20).optional(),
+      widgetIcon: z.string().max(32).optional(),
+      widgetTheme: z.record(z.string()).optional(),
       isEnabled: z.boolean().optional(),
     })
   ),
