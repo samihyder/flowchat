@@ -3,8 +3,8 @@
 
   const cfg = window.flowchat || {};
   const inboxId = cfg.inboxId;
-  const apiUrl = (cfg.apiUrl || 'http://localhost:3001').replace(/\/$/, '');
-  const configUrl = (cfg.configUrl || apiUrl).replace(/\/$/, '');
+  const configUrl = (cfg.configUrl || cfg.apiUrl || 'http://localhost:3001').replace(/\/$/, '');
+  const apiUrl = (cfg.apiUrl || configUrl).replace(/\/$/, '');
   const wsUrl = cfg.wsUrl || 'ws://localhost:3002';
 
   if (!inboxId) {

@@ -1,6 +1,7 @@
 'use client';
 
 import { type Conversation } from '@/lib/api';
+import { ListSkeleton } from '@/components/ui/skeleton';
 
 function formatTime(iso: string | null) {
   if (!iso) return '';
@@ -24,23 +25,19 @@ type Props = {
 };
 
 export function ConversationList({ conversations, selectedId, loading, onSelect }: Props) {
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-sm text-gray-400">
-        Loading conversations…
-      </div>
-    );
-  }
+  if (loading) return <ListSkeleton rows={6} />;
 
   if (conversations.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center mb-3">
-          <span className="text-xl">💬</span>
+        <div className="w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center mb-4">
+          <svg viewBox="0 0 24 24" className="w-7 h-7 text-primary-500" fill="currentColor">
+            <path d="M20 6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2v3l4-3h6a2 2 0 0 0 2-2V6z" />
+          </svg>
         </div>
-        <p className="text-sm font-medium text-gray-900 mb-1">No conversations yet</p>
-        <p className="text-xs text-gray-500 max-w-[200px]">
-          Embed the widget on your site to start receiving messages.
+        <p className="text-sm font-semibold text-gray-900 mb-1">No conversations yet</p>
+        <p className="text-xs text-gray-500 max-w-[220px] leading-relaxed">
+          Embed the widget on your site from Settings → Inboxes to start receiving messages.
         </p>
       </div>
     );
@@ -51,9 +48,10 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
       {conversations.map((conv) => (
         <li key={conv.id}>
           <button
+            type="button"
             onClick={() => onSelect(conv.id)}
-            className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-              selectedId === conv.id ? 'bg-indigo-50 border-l-2 border-indigo-600' : ''
+            className={`w-full text-left px-4 py-3.5 hover:bg-primary-50/50 transition-colors ${
+              selectedId === conv.id ? 'bg-primary-50 border-l-[3px] border-primary-500' : 'border-l-[3px] border-transparent'
             }`}
           >
             <div className="flex items-start justify-between gap-2 mb-1">
@@ -65,12 +63,12 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
                 {conv.lastMessagePreview || 'No messages yet'}
               </p>
               {conv.unreadCount > 0 && (
-                <span className="shrink-0 text-xs font-semibold bg-indigo-600 text-white px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+                <span className="shrink-0 text-xs font-semibold bg-primary-500 text-white px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
                   {conv.unreadCount}
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-1 truncate">{conv.inboxName}</p>
+            <p className="text-[11px] text-accent-600 mt-1 truncate font-medium">{conv.inboxName}</p>
           </button>
         </li>
       ))}

@@ -7,6 +7,7 @@ import { useWsStore } from '@/store/ws';
 import { api, type Conversation } from '@/lib/api';
 import { ConversationList } from '@/components/conversations/conversation-list';
 import { ConversationThread } from '@/components/conversations/conversation-thread';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function DashboardPage() {
   const searchParams = useSearchParams();
@@ -72,13 +73,18 @@ export default function DashboardPage() {
   };
 
   return (
-    <>
-      <header className="bg-white border-b border-gray-200 px-6 py-4 shrink-0">
-        <h1 className="text-base font-semibold text-gray-900">Conversations</h1>
-      </header>
+    <div className="flex flex-col h-full min-h-0 animate-fade-in">
+      <PageHeader
+        title="Conversations"
+        description={inboxFilter ? 'Filtered by inbox' : 'All open conversations'}
+      />
 
       <div className="flex-1 flex min-h-0">
-        <aside className="w-80 shrink-0 border-r border-gray-200 bg-white flex flex-col min-h-0">
+        <aside
+          className={`w-full md:w-80 lg:w-96 shrink-0 border-r border-gray-200 bg-white flex flex-col min-h-0 ${
+            selectedId ? 'hidden md:flex' : 'flex'
+          }`}
+        >
           <ConversationList
             conversations={conversations}
             selectedId={selectedId}
@@ -87,11 +93,22 @@ export default function DashboardPage() {
           />
         </aside>
 
-        <ConversationThread
-          conversation={selected}
-          onConversationUpdate={fetchConversations}
-        />
+        <div className={`flex-1 min-w-0 flex flex-col ${!selectedId ? 'hidden md:flex' : 'flex'}`}>
+          {selectedId && (
+            <button
+              type="button"
+              onClick={() => setSelectedId(null)}
+              className="md:hidden flex items-center gap-2 px-4 py-2 text-sm text-primary-600 border-b border-gray-200 bg-white"
+            >
+              ← Back to list
+            </button>
+          )}
+          <ConversationThread
+            conversation={selected}
+            onConversationUpdate={fetchConversations}
+          />
+        </div>
       </div>
-    </>
+    </div>
   );
 }

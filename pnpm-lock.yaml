@@ -26,6 +26,9 @@ importers:
       '@neondatabase/serverless':
         specifier: ^0.10.4
         version: 0.10.4
+      ioredis:
+        specifier: ^5.11.0
+        version: 5.11.0
       next:
         specifier: ^15.3.0
         version: 15.5.18(react-dom@19.2.6(react@19.2.6))(react@19.2.6)

@@ -12,6 +12,8 @@
   --color-primary-800: #3730A3;
   --color-primary-900: #312E81;
 
+  --color-accent-50: #F0FDFA;
+  --color-accent-100: #CCFBF1;
   --color-accent-500: #14B8A6;
   --color-accent-600: #0D9488;
 
@@ -20,4 +22,21 @@
 
 body {
   font-family: var(--font-sans);
+  background: #F9FAFB;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #E0E7FF;
+  color: #312E81;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
 }

@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { ListSkeleton } from '@/components/ui/skeleton';
 
 type Agent = {
   userId: string;
@@ -85,54 +89,47 @@ export default function AgentsPage() {
   };
 
   return (
-    <div className="p-6 max-w-3xl">
-      <div className="mb-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-1">Agents</h2>
-        <p className="text-sm text-gray-500">Manage who has access to this account.</p>
-      </div>
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto w-full">
+      <Card className="mb-6">
+        <CardHeader
+          title="Invite Agent"
+          description="User must sign up first — then add them by email."
+        />
+        <CardBody>
+          <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3 sm:items-end">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Email address</label>
+              <Input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="agent@company.com"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Role</label>
+              <select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as 'agent' | 'administrator')}
+                className="w-full sm:w-auto px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-500"
+              >
+                <option value="agent">Agent</option>
+                <option value="administrator">Admin</option>
+              </select>
+            </div>
+            <Button type="submit" disabled={inviting}>
+              {inviting ? 'Adding…' : 'Add Agent'}
+            </Button>
+          </form>
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+          {success && <p className="mt-3 text-sm text-accent-600 font-medium">{success}</p>}
+        </CardBody>
+      </Card>
 
-      {/* Invite form */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">Invite Agent</h3>
-        <form onSubmit={handleInvite} className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">Email address</label>
-            <input
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="agent@company.com"
-              required
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">Role</label>
-            <select
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as 'agent' | 'administrator')}
-              className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 bg-white"
-            >
-              <option value="agent">Agent</option>
-              <option value="administrator">Admin</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            disabled={inviting}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            {inviting ? 'Adding…' : 'Add Agent'}
-          </button>
-        </form>
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-        {success && <p className="mt-3 text-sm text-green-600">{success}</p>}
-      </div>
-
-      {/* Agents list */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <Card className="overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-sm text-gray-400">Loading…</div>
+          <ListSkeleton rows={4} />
         ) : (
           <table className="w-full text-sm">
             <thead className="border-b border-gray-200">
@@ -148,7 +145,7 @@ export default function AgentsPage() {
                 <tr key={agent.userId} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-xs font-bold shrink-0">
                         {agent.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -164,7 +161,7 @@ export default function AgentsPage() {
                       <select
                         value={agent.role}
                         onChange={(e) => handleRoleChange(agent.userId, e.target.value as 'administrator' | 'agent')}
-                        className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary-500"
                       >
                         <option value="agent">Agent</option>
                         <option value="administrator">Admin</option>
@@ -192,7 +189,7 @@ export default function AgentsPage() {
             </tbody>
           </table>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

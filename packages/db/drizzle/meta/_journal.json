@@ -12,12 +12,19 @@
     {
       "idx": 1,
       "version": "7",
+      "when": 1780450000000,
+      "tag": "0001_sprint2_inboxes_teams",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
       "when": 1780500000000,
       "tag": "0002_sprint3_conversations",
       "breakpoints": true
     },
     {
-      "idx": 2,
+      "idx": 3,
       "version": "7",
       "when": 1780600000000,
       "tag": "0003_widget_customization",

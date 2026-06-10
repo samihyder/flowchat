@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type Inbox } from '@/lib/api';
-import { PRODUCTION_API_URL, PRODUCTION_WS_URL } from '@/lib/config';
+import { PRODUCTION_WS_URL } from '@/lib/config';
 import { ensureWorkspace } from '@/lib/workspace';
 import { WidgetCustomizer } from '@/components/inboxes/widget-customizer';
 import {
@@ -135,15 +135,14 @@ export default function InboxesPage() {
 
   const embedSnippet = (inboxId: string) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://flowchat-web-ten.vercel.app';
-    const configUrl = `${origin}/api`;
-    const apiUrl = PRODUCTION_API_URL;
+    const apiUrl = `${origin}/api`;
     const wsUrl = PRODUCTION_WS_URL;
     return `<!-- FlowChat Widget — paste before </body> -->
 <script>
   window.flowchat = {
     inboxId: "${inboxId}",
     apiUrl: "${apiUrl}",
-    configUrl: "${configUrl}",
+    configUrl: "${apiUrl}",
     wsUrl: "${wsUrl}"
   };
 </script>
