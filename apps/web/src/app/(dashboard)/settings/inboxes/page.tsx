@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type Inbox } from '@/lib/api';
-import { PRODUCTION_WS_URL } from '@/lib/config';
+import { buildWidgetEmbedSnippet } from '@/lib/widget-embed';
 import { ensureWorkspace } from '@/lib/workspace';
 import { CreateInboxForm } from '@/components/inboxes/create-inbox-form';
 import { EditInboxForm } from '@/components/inboxes/edit-inbox-form';
@@ -68,21 +68,7 @@ export default function InboxesPage() {
     }
   };
 
-  const embedSnippet = (inboxId: string) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://flowchat-web-ten.vercel.app';
-    const apiUrl = `${origin}/api`;
-    const wsUrl = PRODUCTION_WS_URL;
-    return `<!-- FlowChat Widget — paste before </body> -->
-<script>
-  window.flowchat = {
-    inboxId: "${inboxId}",
-    apiUrl: "${apiUrl}",
-    configUrl: "${apiUrl}",
-    wsUrl: "${wsUrl}"
-  };
-</script>
-<script src="${origin}/widget.js?v=7" async></script>`;
-  };
+  const embedSnippet = (inboxId: string) => buildWidgetEmbedSnippet(inboxId);
 
   return (
     <div className="p-6 max-w-4xl">

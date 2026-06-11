@@ -18,18 +18,23 @@
     <strong>Dashboard</strong> in FlowChat as an agent.
   </p>
   <p>
-    To use a different inbox, copy the embed code from <strong>Settings → Inboxes</strong>
-    and replace the <code>window.flowchat</code> block below.
+    Production embed uses <code>flowchat-web-ten.vercel.app</code>. Locally, API calls use this origin.
+    Copy the latest snippet from <strong>Settings → Inboxes → Embed code</strong>.
   </p>
 
+  <!-- FlowChat Widget — paste before </body> -->
   <script>
     window.flowchat = {
-      inboxId: '99003b67-b56f-4042-8cc0-e9c6a0cfe363',
-      apiUrl: window.location.origin + '/api',
-      configUrl: window.location.origin + '/api',
-      wsUrl: 'wss://flowchat-ws-production.up.railway.app'
+      inboxId: "b9d1bc74-652f-4bf1-b339-904af115d033",
+      apiUrl: window.location.hostname === "localhost"
+        ? window.location.origin + "/api"
+        : "https://flowchat-web-ten.vercel.app/api",
+      configUrl: window.location.hostname === "localhost"
+        ? window.location.origin + "/api"
+        : "https://flowchat-web-ten.vercel.app/api",
+      wsUrl: "wss://flowchat-ws-production.up.railway.app"
     };
   </script>
-  <script src="/widget.js?v=3" async></script>
+  <script src="/widget.js?v=7" async></script>
 </body>
 </html>
