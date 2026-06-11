@@ -467,7 +467,12 @@
         state.error = '';
         render();
       } else {
-        state.error = data.error || 'Widget configuration not found (HTTP ' + res.status + ')';
+        if (res.status === 404) {
+          state.error =
+            'Inbox not found. In FlowChat go to Settings → Inboxes → Embed code and copy the latest snippet (inbox ID may have changed).';
+        } else {
+          state.error = data.error || 'Widget configuration not found (HTTP ' + res.status + ')';
+        }
         render();
       }
     } catch (e) {
