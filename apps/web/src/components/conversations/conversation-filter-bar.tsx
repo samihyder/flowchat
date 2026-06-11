@@ -7,7 +7,6 @@ const PRIORITIES = ['urgent', 'high', 'medium', 'low'] as const;
 
 export type ConversationFilters = {
   status: string;
-  filter: '' | 'mine' | 'unassigned';
   priority: string;
   labelId: string;
   from: string;
@@ -40,26 +39,6 @@ export function ConversationFilterBar({ filters, labels, onChange }: Props) {
         ))}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {(
-          [
-            ['', 'All'],
-            ['mine', 'Mine'],
-            ['unassigned', 'Unassigned'],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value || 'all'}
-            type="button"
-            onClick={() => onChange({ ...filters, filter: value })}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium ${
-              filters.filter === value
-                ? 'bg-gray-900 text-white'
-                : 'bg-white border border-gray-200 text-gray-600'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
         <select
           value={filters.priority}
           onChange={(e) => onChange({ ...filters, priority: e.target.value })}

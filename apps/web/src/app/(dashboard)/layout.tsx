@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore, type Availability } from '@/store/ws';
@@ -21,11 +21,6 @@ const availabilityColors: Record<Availability, string> = {
   busy: 'bg-amber-400',
   offline: 'bg-gray-300',
 };
-
-const conversationLinks: { label: string; href: Route }[] = [
-  { label: 'All', href: '/dashboard' },
-  { label: 'Mine', href: '/dashboard?filter=mine' as Route },
-];
 
 const channelIcons: Record<string, string> = {
   web_widget: '💬',
@@ -59,8 +54,6 @@ function DashboardShellFallback() {
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const listFilter = searchParams.get('filter');
   const { user, token, accountId, accountName, clearAuth } = useAuthStore();
   const { ready: authReady } = useAuthBootstrap();
   const { sendPresence, presence, lastMissedChatEvent, missedChatEventSeq, clearMissedChatEvent } =
@@ -151,6 +144,16 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       <nav className="flex-1 overflow-y-auto p-3 space-y-5">
         <NavSection title="Conversations">
           <Link
+            href={'/dashboard' as Route}
+            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
+              pathname === '/dashboard'
+                ? 'bg-primary-50 text-primary-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Conversations
+          </Link>
+          <Link
             href={'/dashboard/analytics' as Route}
             className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
               pathname === '/dashboard/analytics'
@@ -160,23 +163,6 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           >
             Analytics
           </Link>
-          {conversationLinks.map((item) => {
-            const isMine = item.href.includes('filter=mine');
-            const active =
-              pathname === '/dashboard' &&
-              (isMine ? listFilter === 'mine' : !listFilter && !searchParams.get('inbox'));
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-                  active ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
         </NavSection>
 
         <NavSection title="Inboxes">

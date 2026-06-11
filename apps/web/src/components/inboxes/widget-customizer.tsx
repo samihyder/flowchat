@@ -1,5 +1,6 @@
 'use client';
 
+import { memo, useDeferredValue } from 'react';
 import {
   THEME_FIELDS,
   WIDGET_ICONS,
@@ -57,7 +58,8 @@ function ColorField({
   );
 }
 
-export function WidgetCustomizer({ settings, onChange, showNameChannel = true }: Props) {
+function WidgetCustomizerInner({ settings, onChange, showNameChannel = true }: Props) {
+  const deferredSettings = useDeferredValue(settings);
   const updateTheme = (key: keyof WidgetTheme, value: string) => {
     onChange({
       ...settings,
@@ -189,7 +191,9 @@ export function WidgetCustomizer({ settings, onChange, showNameChannel = true }:
         ))}
       </div>
 
-      <WidgetPreview settings={settings} />
+      <WidgetPreview settings={deferredSettings} />
     </div>
   );
 }
+
+export const WidgetCustomizer = memo(WidgetCustomizerInner);

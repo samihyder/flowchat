@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import type { WidgetIconId, WidgetSettingsInput } from '@/lib/widget-theme';
 
 const ICON_SVGS: Record<WidgetIconId, string> = {
@@ -15,7 +16,7 @@ const ICON_SVGS: Record<WidgetIconId, string> = {
 
 type Props = { settings: WidgetSettingsInput };
 
-export function WidgetPreview({ settings }: Props) {
+export const WidgetPreview = memo(function WidgetPreview({ settings }: Props) {
   const t = settings.widgetTheme;
   const icon = ICON_SVGS[settings.widgetIcon];
 
@@ -93,4 +94,4 @@ export function WidgetPreview({ settings }: Props) {
       </div>
     </div>
   );
-}
+});

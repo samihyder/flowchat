@@ -16,7 +16,6 @@ import { PageHeader } from '@/components/ui/page-header';
 function DashboardPageContent() {
   const searchParams = useSearchParams();
   const inboxFilter = searchParams.get('inbox');
-  const viewFilter = searchParams.get('filter');
   const conversationParam = searchParams.get('conversation');
   const { token, accountId } = useAuthStore();
   const { lastMessageEvent, messageEventSeq, connected } = useWsStore();
@@ -27,18 +26,11 @@ function DashboardPageContent() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<ConversationFilters>({
     status: 'open',
-    filter: viewFilter === 'mine' ? 'mine' : '',
     priority: '',
     labelId: '',
     from: '',
     to: '',
   });
-
-  useEffect(() => {
-    if (viewFilter === 'mine') {
-      setFilters((f) => ({ ...f, filter: 'mine' }));
-    }
-  }, [viewFilter]);
 
   useEffect(() => {
     if (!token || !accountId) return;
@@ -52,7 +44,6 @@ function DashboardPageContent() {
       const res = await api.conversations.list(accountId, token, {
         inboxId: inboxFilter ?? undefined,
         status: filters.status,
-        filter: filters.filter || undefined,
         priority: filters.priority || undefined,
         labelId: filters.labelId || undefined,
         from: filters.from ? `${filters.from}T00:00:00.000Z` : undefined,
