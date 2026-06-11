@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore, type Availability } from '@/store/ws';
 import { useWebSocket } from '@/lib/useWebSocket';
@@ -45,7 +45,18 @@ function NavSection({ title, children }: { title: string; children: React.ReactN
   );
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardShellFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary-500 animate-pulse" />
+        <p className="text-sm text-gray-500">Loading workspace…</p>
+      </div>
+    </div>
+  );
+}
+
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -354,5 +365,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<DashboardShellFallback />}>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </Suspense>
   );
 }

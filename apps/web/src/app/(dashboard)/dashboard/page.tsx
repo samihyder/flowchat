@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore } from '@/store/ws';
@@ -13,7 +13,7 @@ import {
 } from '@/components/conversations/conversation-filter-bar';
 import { PageHeader } from '@/components/ui/page-header';
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const searchParams = useSearchParams();
   const inboxFilter = searchParams.get('inbox');
   const viewFilter = searchParams.get('filter');
@@ -155,5 +155,13 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-sm text-gray-400">Loading conversations…</div>}>
+      <DashboardPageContent />
+    </Suspense>
   );
 }
