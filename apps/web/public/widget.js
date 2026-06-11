@@ -452,7 +452,12 @@
     try {
       await loadAvailability();
       const res = await fetch(`${configUrl}/public/inboxes/${inboxId}/widget-config`);
-      const data = await res.json();
+      var data = {};
+      try {
+        data = await res.json();
+      } catch (_) {
+        throw new Error('Widget API returned an invalid response (HTTP ' + res.status + ')');
+      }
       if (res.ok && data.inbox) {
         if (typeof data.inbox.widgetTheme === 'string') {
           try { data.inbox.widgetTheme = JSON.parse(data.inbox.widgetTheme); } catch { /* keep */ }
@@ -462,12 +467,12 @@
         state.error = '';
         render();
       } else {
-        state.error = data.error || 'Widget configuration not found';
+        state.error = data.error || 'Widget configuration not found (HTTP ' + res.status + ')';
         render();
       }
     } catch (e) {
       console.error('[FlowChat] config error', e);
-      state.error = 'Could not load widget settings';
+      state.error = (e && e.message) ? e.message : 'Could not load widget settings';
       render();
     }
   }

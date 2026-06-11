@@ -81,7 +81,7 @@ export default function InboxesPage() {
     wsUrl: "${wsUrl}"
   };
 </script>
-<script src="${origin}/widget.js?v=6" async></script>`;
+<script src="${origin}/widget.js?v=7" async></script>`;
   };
 
   return (
