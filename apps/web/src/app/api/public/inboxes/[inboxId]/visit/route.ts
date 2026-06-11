@@ -1,7 +1,7 @@
-import { neon } from '@neondatabase/serverless';
 import { corsHeaders, optionsResponse } from '@/lib/cors';
 import { getClientIp } from '@/lib/request-ip';
 import { publishEvent } from '@/lib/redis';
+import { guardPublicInboxRequest } from '@/lib/public-inbox-guard';
 
 type Params = { params: Promise<{ inboxId: string }> };
 
@@ -11,22 +11,22 @@ export async function OPTIONS() {
 
 export async function POST(req: Request, { params }: Params) {
   const { inboxId } = await params;
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    return Response.json({ error: 'DATABASE_URL not configured' }, { status: 503, headers: corsHeaders() });
-  }
-
   const body = (await req.json().catch(() => ({}))) as {
     sourceId?: string;
     pageUrl?: string;
   };
 
-  const sql = neon(databaseUrl);
-  const inbox = await sql`
+  const guard = await guardPublicInboxRequest(req, inboxId, 'visit', body.sourceId);
+  if (!guard.ok) {
+    const headers = { ...corsHeaders(), ...(guard.response.headers as Headers) };
+    return new Response(guard.response.body, { status: guard.response.status, headers });
+  }
+  const sql = guard.sql;
+  const inboxRows = await sql`
     SELECT id, account_id as "accountId", name
     FROM inboxes WHERE id = ${inboxId}::uuid AND is_enabled = true LIMIT 1
   `;
-  const inboxRow = inbox[0] as { id: string; accountId: string; name: string } | undefined;
+  const inboxRow = (inboxRows as { id: string; accountId: string; name: string }[])[0];
   if (!inboxRow) {
     return Response.json({ error: 'Inbox not found' }, { status: 404, headers: corsHeaders() });
   }
@@ -37,14 +37,14 @@ export async function POST(req: Request, { params }: Params) {
 
   let shouldAlarm = false;
   if (sourceId) {
-    const recent = await sql`
+    const recent = (await sql`
       SELECT 1 FROM inbox_visits
       WHERE inbox_id = ${inboxId}::uuid
         AND source_id = ${sourceId}
         AND created_at > NOW() - INTERVAL '10 minutes'
       LIMIT 1
-    `;
-    shouldAlarm = !recent[0];
+    `) as unknown[];
+    shouldAlarm = recent.length === 0;
   }
 
   await sql`

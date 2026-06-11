@@ -15,6 +15,15 @@ export type VisitorOnlineEvent = {
   visitedAt: string;
 };
 
+export type MissedChatEvent = {
+  type: 'missed_chat';
+  accountId: string;
+  conversationId: string;
+  contactName: string;
+  inboxName: string;
+  minutesWaiting: number;
+};
+
 export type MessageCreatedEvent = {
   type: 'message_created';
   conversationId: string;
@@ -39,14 +48,21 @@ type WsStore = {
   messageEventSeq: number;
   lastVisitorEvent: VisitorOnlineEvent | null;
   visitorEventSeq: number;
+  lastMissedChatEvent: MissedChatEvent | null;
+  missedChatEventSeq: number;
   activeConversationId: string | null;
+  typingByConversation: Record<string, boolean>;
   setSocket: (socket: WebSocket | null) => void;
   setConnected: (v: boolean) => void;
   setPresence: (userId: string, availability: Availability) => void;
   sendPresence: (availability: Availability) => void;
   subscribeConversation: (conversationId: string) => void;
+  sendTyping: (conversationId: string) => void;
+  setTyping: (conversationId: string, isTyping: boolean) => void;
   pushMessageEvent: (event: MessageCreatedEvent) => void;
   pushVisitorEvent: (event: VisitorOnlineEvent) => void;
+  pushMissedChatEvent: (event: MissedChatEvent) => void;
+  clearMissedChatEvent: () => void;
 };
 
 export const useWsStore = create<WsStore>((set, get) => ({
@@ -57,7 +73,10 @@ export const useWsStore = create<WsStore>((set, get) => ({
   messageEventSeq: 0,
   lastVisitorEvent: null,
   visitorEventSeq: 0,
+  lastMissedChatEvent: null,
+  missedChatEventSeq: 0,
   activeConversationId: null,
+  typingByConversation: {},
 
   setSocket: (socket) => set({ socket }),
   setConnected: (connected) => set({ connected }),
@@ -79,6 +98,18 @@ export const useWsStore = create<WsStore>((set, get) => ({
     }
   },
 
+  sendTyping: (conversationId) => {
+    const { socket, connected } = get();
+    if (socket && connected) {
+      socket.send(JSON.stringify({ type: 'typing', conversationId }));
+    }
+  },
+
+  setTyping: (conversationId, isTyping) =>
+    set((s) => ({
+      typingByConversation: { ...s.typingByConversation, [conversationId]: isTyping },
+    })),
+
   pushMessageEvent: (event) =>
     set((s) => ({
       lastMessageEvent: event,
@@ -90,4 +121,12 @@ export const useWsStore = create<WsStore>((set, get) => ({
       lastVisitorEvent: event,
       visitorEventSeq: s.visitorEventSeq + 1,
     })),
+
+  pushMissedChatEvent: (event) =>
+    set((s) => ({
+      lastMissedChatEvent: event,
+      missedChatEventSeq: s.missedChatEventSeq + 1,
+    })),
+
+  clearMissedChatEvent: () => set({ lastMissedChatEvent: null }),
 }));

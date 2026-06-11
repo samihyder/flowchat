@@ -1,5 +1,10 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
+import { listConversations } from '@/lib/conversations-query';
+import { processMissedChats } from '@/lib/missed-chats';
+import { purgeExpiredVisitorData } from '@/lib/data-retention';
+import { parseAccountSettings } from '@/lib/account-settings';
+import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
 
@@ -17,84 +22,39 @@ export async function GET(req: Request, { params }: Params) {
   const url = new URL(req.url);
   const inboxId = url.searchParams.get('inboxId');
   const status = url.searchParams.get('status') ?? 'open';
+  const filter = url.searchParams.get('filter');
+  const priority = url.searchParams.get('priority');
+  const labelId = url.searchParams.get('labelId');
+  const from = url.searchParams.get('from');
+  const to = url.searchParams.get('to');
+
   const validStatuses = ['open', 'pending', 'resolved', 'snoozed'];
   const statusFilter = validStatuses.includes(status) ? status : 'open';
 
-  const sql = neon(databaseUrl);
+  const sql = neon(databaseUrl) as AppSql;
+  void processMissedChats(sql, accountId);
 
-  const agentScope =
-    auth.role === 'administrator'
-      ? null
-      : auth.userId;
+  const accountRow = await sql`SELECT settings FROM accounts WHERE id = ${accountId}::uuid LIMIT 1`;
+  const retention = parseAccountSettings(
+    (accountRow[0] as { settings: unknown } | undefined)?.settings
+  ).dataRetentionDays;
+  if (retention && retention >= 30) {
+    void purgeExpiredVisitorData(sql, accountId, retention);
+  }
 
-  const rows =
-    agentScope && inboxId
-      ? await sql`
-          SELECT c.id, c.inbox_id as "inboxId", c.contact_id as "contactId",
-                 c.status, c.last_message_at as "lastMessageAt",
-                 c.last_message_preview as "lastMessagePreview",
-                 c.unread_count as "unreadCount", c.created_at as "createdAt",
-                 ct.name as "contactName", ct.email as "contactEmail",
-                 i.name as "inboxName"
-          FROM conversations c
-          INNER JOIN contacts ct ON ct.id = c.contact_id
-          INNER JOIN inboxes i ON i.id = c.inbox_id
-          WHERE c.account_id = ${accountId}::uuid
-            AND c.status = ${statusFilter}
-            AND c.inbox_id = ${inboxId}::uuid
-            AND (
-              c.inbox_id IN (SELECT inbox_id FROM inbox_members WHERE user_id = ${agentScope}::uuid)
-              OR c.inbox_id IN (SELECT id FROM inboxes WHERE default_assignee_id = ${agentScope}::uuid)
-            )
-          ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
-        `
-      : agentScope && !inboxId
-        ? await sql`
-            SELECT c.id, c.inbox_id as "inboxId", c.contact_id as "contactId",
-                   c.status, c.last_message_at as "lastMessageAt",
-                   c.last_message_preview as "lastMessagePreview",
-                   c.unread_count as "unreadCount", c.created_at as "createdAt",
-                   ct.name as "contactName", ct.email as "contactEmail",
-                   i.name as "inboxName"
-            FROM conversations c
-            INNER JOIN contacts ct ON ct.id = c.contact_id
-            INNER JOIN inboxes i ON i.id = c.inbox_id
-            WHERE c.account_id = ${accountId}::uuid AND c.status = ${statusFilter}
-              AND (
-                c.inbox_id IN (SELECT inbox_id FROM inbox_members WHERE user_id = ${agentScope}::uuid)
-                OR c.inbox_id IN (SELECT id FROM inboxes WHERE default_assignee_id = ${agentScope}::uuid)
-              )
-            ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
-          `
-        : inboxId
-          ? await sql`
-              SELECT c.id, c.inbox_id as "inboxId", c.contact_id as "contactId",
-                     c.status, c.last_message_at as "lastMessageAt",
-                     c.last_message_preview as "lastMessagePreview",
-                     c.unread_count as "unreadCount", c.created_at as "createdAt",
-                     ct.name as "contactName", ct.email as "contactEmail",
-                     i.name as "inboxName"
-              FROM conversations c
-              INNER JOIN contacts ct ON ct.id = c.contact_id
-              INNER JOIN inboxes i ON i.id = c.inbox_id
-              WHERE c.account_id = ${accountId}::uuid
-                AND c.status = ${statusFilter}
-                AND c.inbox_id = ${inboxId}::uuid
-              ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
-            `
-          : await sql`
-              SELECT c.id, c.inbox_id as "inboxId", c.contact_id as "contactId",
-                     c.status, c.last_message_at as "lastMessageAt",
-                     c.last_message_preview as "lastMessagePreview",
-                     c.unread_count as "unreadCount", c.created_at as "createdAt",
-                     ct.name as "contactName", ct.email as "contactEmail",
-                     i.name as "inboxName"
-              FROM conversations c
-              INNER JOIN contacts ct ON ct.id = c.contact_id
-              INNER JOIN inboxes i ON i.id = c.inbox_id
-              WHERE c.account_id = ${accountId}::uuid AND c.status = ${statusFilter}
-              ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
-            `;
+  const rows = await listConversations(sql, {
+    accountId,
+    status: statusFilter,
+    inboxId,
+    assigneeId: filter === 'mine' ? auth.userId : null,
+    unassigned: filter === 'unassigned',
+    priority,
+    labelId,
+    from,
+    to,
+    agentUserId: auth.userId,
+    agentRole: auth.role,
+  });
 
   return Response.json({ conversations: rows });
 }

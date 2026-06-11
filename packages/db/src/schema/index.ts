@@ -10,3 +10,5 @@ export * from './contacts';
 export * from './contact_inboxes';
 export * from './conversations';
 export * from './messages';
+export * from './labels';
+export * from './analytics_exceptions';

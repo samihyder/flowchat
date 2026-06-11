@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
+import { parseInviteDomainsText } from '@/lib/invite-domain';
 
 const TIMEZONES = [
   'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -37,6 +38,8 @@ export default function AccountSettingsPage() {
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [inviteDomainsText, setInviteDomainsText] = useState('');
+  const [dataRetentionDays, setDataRetentionDays] = useState(365);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -46,6 +49,8 @@ export default function AccountSettingsPage() {
       setTimezone(res.account.timezone);
       setLocale(res.account.locale);
       setLogoUrl(res.account.logoUrl);
+      setInviteDomainsText((res.account.settings?.allowedInviteDomains ?? []).join('\n'));
+      setDataRetentionDays(res.account.settings?.dataRetentionDays ?? 365);
     }).catch(() => {});
   }, [token, accountId]);
 
@@ -56,7 +61,19 @@ export default function AccountSettingsPage() {
     setError('');
     setSuccess('');
     try {
-      const res = await api.account.update(accountId, { name, timezone, locale }, token);
+      const res = await api.account.update(
+        accountId,
+        {
+          name,
+          timezone,
+          locale,
+          settings: {
+            allowedInviteDomains: parseInviteDomainsText(inviteDomainsText),
+            dataRetentionDays,
+          },
+        },
+        token
+      );
       setSuccess('Settings saved.');
       setAuth(user, token, accountId, res.account.name);
     } catch (err: any) {
@@ -156,6 +173,38 @@ export default function AccountSettingsPage() {
                   <option key={l.value} value={l.value}>{l.label}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-gray-100 space-y-4">
+            <h3 className="text-sm font-semibold text-gray-900">Compliance & access</h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Allowed invite domains <span className="text-gray-400 font-normal">(one per line, empty = any work email)</span>
+              </label>
+              <textarea
+                value={inviteDomainsText}
+                onChange={(e) => setInviteDomainsText(e.target.value)}
+                rows={3}
+                placeholder="company.com"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Visitor data retention (days)
+              </label>
+              <input
+                type="number"
+                min={30}
+                max={3650}
+                value={dataRetentionDays}
+                onChange={(e) => setDataRetentionDays(Number(e.target.value) || 365)}
+                className="w-32 px-3 py-2 rounded-lg border border-gray-300 text-sm"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Inactive visitors are purged automatically (min 30 days). Export/delete via visitor GDPR API.
+              </p>
             </div>
           </div>
 

@@ -1,3 +1,6 @@
+import type { BusinessHours } from '@/lib/business-hours';
+import { DEFAULT_BUSINESS_HOURS } from '@/lib/business-hours';
+
 export type WidgetIconId = 'chat' | 'bubble' | 'headset' | 'message' | 'help' | 'wave';
 
 export type WidgetTheme = {
@@ -111,6 +114,14 @@ export type WidgetSettingsInput = {
   widgetColor: string;
   widgetIcon: WidgetIconId;
   widgetTheme: WidgetTheme;
+  allowedDomainsText: string;
+  offlineMessage: string;
+  privacyPolicyUrl: string;
+  requireConsent: boolean;
+  roundRobinEnabled: boolean;
+  useBusinessHours: boolean;
+  businessHours: BusinessHours;
+  missedChatMinutes: number;
 };
 
 export const emptyWidgetSettings = (): WidgetSettingsInput => ({
@@ -124,7 +135,22 @@ export const emptyWidgetSettings = (): WidgetSettingsInput => ({
   widgetColor: '#6366F1',
   widgetIcon: 'chat',
   widgetTheme: defaultWidgetTheme(),
+  allowedDomainsText: '',
+  offlineMessage: 'We are currently offline. Leave a message and we will get back to you soon.',
+  privacyPolicyUrl: '',
+  requireConsent: false,
+  roundRobinEnabled: false,
+  useBusinessHours: false,
+  businessHours: DEFAULT_BUSINESS_HOURS,
+  missedChatMinutes: 5,
 });
+
+export function parseDomainsText(text: string): string[] {
+  return text
+    .split(/[\n,]+/)
+    .map((d) => d.trim())
+    .filter(Boolean);
+}
 
 export function settingsFromInbox(inbox: {
   name: string;
@@ -137,6 +163,14 @@ export function settingsFromInbox(inbox: {
   widgetColor?: string | null;
   widgetIcon?: string | null;
   widgetTheme?: Partial<WidgetTheme> | null;
+  allowedDomains?: string[] | null;
+  offlineMessage?: string | null;
+  privacyPolicyUrl?: string | null;
+  requireConsent?: boolean;
+  roundRobinEnabled?: boolean;
+  useBusinessHours?: boolean;
+  businessHours?: BusinessHours | Record<string, unknown> | null;
+  missedChatMinutes?: number;
 }): WidgetSettingsInput {
   const primary = inbox.widgetColor ?? '#6366F1';
   return {
@@ -150,6 +184,16 @@ export function settingsFromInbox(inbox: {
     widgetColor: primary,
     widgetIcon: (inbox.widgetIcon as WidgetIconId) || 'chat',
     widgetTheme: mergeWidgetTheme(inbox.widgetTheme, primary),
+    allowedDomainsText: (inbox.allowedDomains ?? []).join('\n'),
+    offlineMessage:
+      inbox.offlineMessage ??
+      'We are currently offline. Leave a message and we will get back to you soon.',
+    privacyPolicyUrl: inbox.privacyPolicyUrl ?? '',
+    requireConsent: inbox.requireConsent ?? false,
+    roundRobinEnabled: inbox.roundRobinEnabled ?? false,
+    useBusinessHours: inbox.useBusinessHours ?? false,
+    businessHours: { ...DEFAULT_BUSINESS_HOURS, ...(inbox.businessHours as BusinessHours | undefined) },
+    missedChatMinutes: inbox.missedChatMinutes ?? 5,
   };
 }
 

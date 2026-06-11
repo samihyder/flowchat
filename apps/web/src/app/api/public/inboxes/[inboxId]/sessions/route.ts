@@ -1,9 +1,24 @@
-import { neon } from '@neondatabase/serverless';
 import { corsHeaders, optionsResponse } from '@/lib/cors';
 import { newVisitorToken } from '@/lib/conversations';
 import { getClientIp } from '@/lib/request-ip';
+import { guardPublicInboxRequest } from '@/lib/public-inbox-guard';
+import { pickRoundRobinAssignee } from '@/lib/assign';
+import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ inboxId: string }> };
+
+async function resolveAssignee(
+  sql: AppSql,
+  inboxId: string,
+  accountId: string,
+  roundRobinEnabled: boolean,
+  defaultAssigneeId: string | null
+) {
+  if (roundRobinEnabled) {
+    return pickRoundRobinAssignee(sql, inboxId, accountId);
+  }
+  return defaultAssigneeId;
+}
 
 export async function OPTIONS() {
   return optionsResponse();
@@ -11,11 +26,6 @@ export async function OPTIONS() {
 
 export async function POST(req: Request, { params }: Params) {
   const { inboxId } = await params;
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    return Response.json({ error: 'DATABASE_URL not configured' }, { status: 503, headers: corsHeaders() });
-  }
-
   const body = (await req.json()) as { sourceId?: string; name?: string; email?: string };
   const sourceId = body.sourceId?.trim();
   const name = body.name?.trim();
@@ -28,33 +38,51 @@ export async function POST(req: Request, { params }: Params) {
     return Response.json({ error: 'Name is required' }, { status: 400, headers: corsHeaders() });
   }
 
-  const sql = neon(databaseUrl);
+  const guard = await guardPublicInboxRequest(req, inboxId, 'session', sourceId);
+  if (!guard.ok) {
+    const headers = { ...corsHeaders(), ...(guard.response.headers as Headers) };
+    return new Response(guard.response.body, { status: guard.response.status, headers });
+  }
+
+  const sql = guard.sql;
   const clientIp = getClientIp(req);
-  const inboxes = await sql`
-    SELECT id, account_id as "accountId", default_assignee_id as "defaultAssigneeId"
+
+  const inboxes = (await sql`
+    SELECT id, account_id as "accountId", default_assignee_id as "defaultAssigneeId",
+           round_robin_enabled as "roundRobinEnabled"
     FROM inboxes
     WHERE id = ${inboxId}::uuid AND is_enabled = true LIMIT 1
-  `;
-  const inbox = inboxes[0] as { id: string; accountId: string; defaultAssigneeId: string | null } | undefined;
+  `) as {
+    id: string;
+    accountId: string;
+    defaultAssigneeId: string | null;
+    roundRobinEnabled: boolean;
+  }[];
+  const inbox = inboxes[0];
   if (!inbox) {
     return Response.json({ error: 'Inbox not found' }, { status: 404, headers: corsHeaders() });
   }
 
-  const existing = await sql`
-    SELECT ci.visitor_token as "visitorToken", c.id as "contactId", c.name, c.email
+  const existing = (await sql`
+    SELECT ci.visitor_token as "visitorToken", c.id as "contactId", c.name, c.email, c.is_blocked as "isBlocked"
     FROM contact_inboxes ci
     INNER JOIN contacts c ON c.id = ci.contact_id
     WHERE ci.inbox_id = ${inboxId}::uuid AND ci.source_id = ${sourceId}
     LIMIT 1
-  `;
-
-  if (existing[0]) {
-    const link = existing[0] as {
+  `) as {
       visitorToken: string;
       contactId: string;
       name: string;
       email: string | null;
-    };
+      isBlocked: boolean;
+    }[];
+
+  if (existing[0]) {
+    const link = existing[0];
+
+    if (link.isBlocked) {
+      return Response.json({ error: 'Access denied' }, { status: 403, headers: corsHeaders() });
+    }
 
     if (name !== link.name || (email && email !== link.email)) {
       await sql`
@@ -63,25 +91,32 @@ export async function POST(req: Request, { params }: Params) {
       `;
     }
 
-    let convRows = await sql`
+    let convRows = (await sql`
       SELECT id FROM conversations
       WHERE contact_id = ${link.contactId}::uuid
         AND inbox_id = ${inboxId}::uuid
         AND status = 'open'
       ORDER BY created_at DESC LIMIT 1
-    `;
+    `) as { id: string }[];
 
     if (!convRows[0]) {
-      convRows = await sql`
+      const assigneeId = await resolveAssignee(
+        sql,
+        inboxId,
+        inbox.accountId,
+        inbox.roundRobinEnabled,
+        inbox.defaultAssigneeId
+      );
+      convRows = (await sql`
         INSERT INTO conversations (account_id, inbox_id, contact_id, assignee_id)
         VALUES (
           ${inbox.accountId}::uuid,
           ${inboxId}::uuid,
           ${link.contactId}::uuid,
-          ${inbox.defaultAssigneeId}::uuid
+          ${assigneeId}::uuid
         )
         RETURNING id
-      `;
+      `) as { id: string }[];
     }
 
     if (clientIp) {
@@ -93,7 +128,7 @@ export async function POST(req: Request, { params }: Params) {
 
     return Response.json(
       {
-        conversationId: (convRows[0] as { id: string }).id,
+        conversationId: convRows[0]!.id,
         visitorToken: link.visitorToken,
         contact: { id: link.contactId, name },
       },
@@ -101,12 +136,12 @@ export async function POST(req: Request, { params }: Params) {
     );
   }
 
-  const contactRows = await sql`
+  const contactRows = (await sql`
     INSERT INTO contacts (account_id, name, email, type, last_activity_at)
     VALUES (${inbox.accountId}::uuid, ${name}, ${email}, 'visitor', NOW())
     RETURNING id, name
-  `;
-  const contact = contactRows[0] as { id: string; name: string } | undefined;
+  `) as { id: string; name: string }[];
+  const contact = contactRows[0];
   if (!contact) {
     return Response.json({ error: 'Failed to create contact' }, { status: 500, headers: corsHeaders() });
   }
@@ -124,20 +159,28 @@ export async function POST(req: Request, { params }: Params) {
     )
   `;
 
-  const convRows = await sql`
+  const assigneeId = await resolveAssignee(
+    sql,
+    inboxId,
+    inbox.accountId,
+    inbox.roundRobinEnabled,
+    inbox.defaultAssigneeId
+  );
+
+  const convRows = (await sql`
     INSERT INTO conversations (account_id, inbox_id, contact_id, assignee_id)
     VALUES (
       ${inbox.accountId}::uuid,
       ${inboxId}::uuid,
       ${contact.id}::uuid,
-      ${inbox.defaultAssigneeId}::uuid
+      ${assigneeId}::uuid
     )
     RETURNING id
-  `;
+  `) as { id: string }[];
 
   return Response.json(
     {
-      conversationId: (convRows[0] as { id: string }).id,
+      conversationId: convRows[0]!.id,
       visitorToken,
       contact: { id: contact.id, name: contact.name },
     },

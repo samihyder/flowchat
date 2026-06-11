@@ -31,6 +31,14 @@ export async function PATCH(req: Request, { params }: Params) {
     widgetTheme?: Record<string, string>;
     websiteUrl?: string | null;
     defaultAssigneeId?: string;
+    allowedDomains?: string[];
+    businessHours?: Record<string, unknown> | null;
+    offlineMessage?: string | null;
+    privacyPolicyUrl?: string | null;
+    requireConsent?: boolean;
+    roundRobinEnabled?: boolean;
+    useBusinessHours?: boolean;
+    missedChatMinutes?: number;
   };
 
   const sql = neon(databaseUrl);
@@ -66,13 +74,25 @@ export async function PATCH(req: Request, { params }: Params) {
       widget_theme = COALESCE(${body.widgetTheme ? JSON.stringify(theme) : null}::jsonb, widget_theme),
       website_url = COALESCE(${body.websiteUrl !== undefined ? body.websiteUrl : null}, website_url),
       default_assignee_id = COALESCE(${body.defaultAssigneeId !== undefined ? body.defaultAssigneeId : null}::uuid, default_assignee_id),
+      allowed_domains = COALESCE(${body.allowedDomains ? JSON.stringify(body.allowedDomains) : null}::jsonb, allowed_domains),
+      business_hours = COALESCE(${body.businessHours !== undefined ? JSON.stringify(body.businessHours) : null}::jsonb, business_hours),
+      offline_message = COALESCE(${body.offlineMessage !== undefined ? body.offlineMessage : null}, offline_message),
+      privacy_policy_url = COALESCE(${body.privacyPolicyUrl !== undefined ? body.privacyPolicyUrl : null}, privacy_policy_url),
+      require_consent = COALESCE(${body.requireConsent ?? null}, require_consent),
+      round_robin_enabled = COALESCE(${body.roundRobinEnabled ?? null}, round_robin_enabled),
+      use_business_hours = COALESCE(${body.useBusinessHours ?? null}, use_business_hours),
+      missed_chat_minutes = COALESCE(${body.missedChatMinutes ?? null}, missed_chat_minutes),
       updated_at = NOW()
     WHERE id = ${inboxId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, channel_type as "channelType", widget_color as "widgetColor",
               widget_icon as "widgetIcon", widget_theme as "widgetTheme",
               greeting_message as "greetingMessage", welcome_title as "welcomeTitle",
               welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
-              default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled"
+              default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled",
+              allowed_domains as "allowedDomains", business_hours as "businessHours",
+              offline_message as "offlineMessage", privacy_policy_url as "privacyPolicyUrl",
+              require_consent as "requireConsent", round_robin_enabled as "roundRobinEnabled",
+              use_business_hours as "useBusinessHours", missed_chat_minutes as "missedChatMinutes"
   `;
 
   const inbox = rows[0];

@@ -1,6 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 import { corsHeaders, optionsResponse } from '@/lib/cors';
 import { insertMessage } from '@/lib/conversations';
+import { guardPublicInboxRequest } from '@/lib/public-inbox-guard';
+import { maybeSendOfflineAutoReply } from '@/lib/offline-reply';
+import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ conversationId: string }> };
 
@@ -9,13 +12,21 @@ async function resolveVisitor(conversationId: string, visitorToken: string) {
   if (!databaseUrl) return null;
   const sql = neon(databaseUrl);
   const rows = await sql`
-    SELECT c.id as "conversationId", c.account_id as "accountId", c.contact_id as "contactId"
+    SELECT c.id as "conversationId", c.account_id as "accountId", c.contact_id as "contactId",
+           c.inbox_id as "inboxId", ct.is_blocked as "isBlocked"
     FROM conversations c
     INNER JOIN contact_inboxes ci ON ci.contact_id = c.contact_id AND ci.inbox_id = c.inbox_id
+    INNER JOIN contacts ct ON ct.id = c.contact_id
     WHERE c.id = ${conversationId}::uuid AND ci.visitor_token = ${visitorToken}
     LIMIT 1
   `;
-  return rows[0] as { conversationId: string; accountId: string; contactId: string } | undefined;
+  return rows[0] as {
+    conversationId: string;
+    accountId: string;
+    contactId: string;
+    inboxId: string;
+    isBlocked: boolean;
+  } | undefined;
 }
 
 export async function OPTIONS() {
@@ -67,6 +78,15 @@ export async function POST(req: Request, { params }: Params) {
   if (!ctx) {
     return Response.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders() });
   }
+  if (ctx.isBlocked) {
+    return Response.json({ error: 'Access denied' }, { status: 403, headers: corsHeaders() });
+  }
+
+  const guard = await guardPublicInboxRequest(req, ctx.inboxId, 'message');
+  if (!guard.ok) {
+    const headers = { ...corsHeaders(), ...(guard.response.headers as Headers) };
+    return new Response(guard.response.body, { status: guard.response.status, headers });
+  }
 
   const body = (await req.json()) as { content?: string };
   if (!body.content?.trim()) {
@@ -81,6 +101,9 @@ export async function POST(req: Request, { params }: Params) {
     senderId: ctx.contactId,
     incrementUnread: true,
   });
+
+  const sql = neon(process.env.DATABASE_URL!) as AppSql;
+  void maybeSendOfflineAutoReply(sql, conversationId, ctx.accountId);
 
   return Response.json({ message }, { status: 201, headers: corsHeaders() });
 }

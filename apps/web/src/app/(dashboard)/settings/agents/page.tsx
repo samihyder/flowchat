@@ -36,6 +36,9 @@ export default function AgentsPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [inviteUrl, setInviteUrl] = useState('');
+  const [inboxes, setInboxes] = useState<{ id: string; name: string }[]>([]);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [approveInboxIds, setApproveInboxIds] = useState<string[]>([]);
 
   const fetchAgents = async () => {
     if (!token || !accountId) {
@@ -43,8 +46,12 @@ export default function AgentsPage() {
       return;
     }
     try {
-      const res = await api.agents.list(accountId, token);
-      setAgents(res.agents);
+      const [agentRes, inboxRes] = await Promise.all([
+        api.agents.list(accountId, token),
+        api.inboxes.list(accountId, token),
+      ]);
+      setAgents(agentRes.agents);
+      setInboxes(inboxRes.inboxes.map((i) => ({ id: i.id, name: i.name })));
     } finally {
       setLoading(false);
     }
@@ -72,11 +79,27 @@ export default function AgentsPage() {
     }
   };
 
-  const handleApprove = async (userId: string) => {
-    if (!token || !accountId) return;
+  const startApprove = (userId: string) => {
+    setApprovingId(userId);
+    setApproveInboxIds(inboxes.map((i) => i.id));
+    setError('');
+  };
+
+  const handleApprove = async () => {
+    if (!token || !accountId || !approvingId) return;
+    if (approveInboxIds.length === 0) {
+      setError('Select at least one inbox for this agent.');
+      return;
+    }
     try {
-      await api.agents.update(accountId, userId, { membershipStatus: 'active' }, token);
-      setSuccess('Agent approved. They can now access assigned websites.');
+      await api.agents.update(
+        accountId,
+        approvingId,
+        { membershipStatus: 'active', inboxIds: approveInboxIds },
+        token
+      );
+      setSuccess('Agent approved with inbox access.');
+      setApprovingId(null);
       fetchAgents();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Approve failed');
@@ -208,7 +231,7 @@ export default function AgentsPage() {
                   <td className="px-4 py-3 text-right space-x-2">
                     {agent.membershipStatus === 'pending' && agent.userId !== user?.id && (
                       <button
-                        onClick={() => handleApprove(agent.userId)}
+                        onClick={() => startApprove(agent.userId)}
                         className="text-xs text-green-600 hover:text-green-800 font-medium"
                       >
                         Approve
@@ -229,6 +252,39 @@ export default function AgentsPage() {
           </table>
         )}
       </Card>
+
+      {approvingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Approve agent</h3>
+            <p className="text-xs text-gray-500 mb-4">Choose which websites (inboxes) this agent can access.</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto mb-4">
+              {inboxes.map((inbox) => (
+                <label key={inbox.id} className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={approveInboxIds.includes(inbox.id)}
+                    onChange={(e) => {
+                      setApproveInboxIds((prev) =>
+                        e.target.checked ? [...prev, inbox.id] : prev.filter((id) => id !== inbox.id)
+                      );
+                    }}
+                  />
+                  {inbox.name}
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="secondary" onClick={() => setApprovingId(null)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleApprove}>
+                Approve access
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

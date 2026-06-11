@@ -6,8 +6,10 @@ import { api, type Inbox } from '@/lib/api';
 import { PRODUCTION_WS_URL } from '@/lib/config';
 import { ensureWorkspace } from '@/lib/workspace';
 import { WidgetCustomizer } from '@/components/inboxes/widget-customizer';
+import { BusinessHoursEditor } from '@/components/inboxes/business-hours-editor';
 import {
   emptyWidgetSettings,
+  parseDomainsText,
   settingsFromInbox,
   type WidgetSettingsInput,
 } from '@/lib/widget-theme';
@@ -81,7 +83,98 @@ export default function InboxesPage() {
     widgetColor: s.widgetColor,
     widgetIcon: s.widgetIcon,
     widgetTheme: s.widgetTheme,
+    allowedDomains: parseDomainsText(s.allowedDomainsText),
+    offlineMessage: s.offlineMessage.trim() || null,
+    privacyPolicyUrl: s.privacyPolicyUrl.trim() || null,
+    requireConsent: s.requireConsent,
+    roundRobinEnabled: s.roundRobinEnabled,
+    useBusinessHours: s.useBusinessHours,
+    businessHours: s.businessHours,
+    missedChatMinutes: s.missedChatMinutes,
   });
+
+  const TrustFields = ({
+    settings,
+    onChange,
+  }: {
+    settings: WidgetSettingsInput;
+    onChange: (s: WidgetSettingsInput) => void;
+  }) => (
+    <div className="space-y-4 pt-2 border-t border-gray-100">
+      <h4 className="text-sm font-semibold text-gray-900">Security & availability</h4>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+          Allowed domains <span className="text-gray-400">(one per line, empty = allow all)</span>
+        </label>
+        <textarea
+          value={settings.allowedDomainsText}
+          onChange={(e) => onChange({ ...settings, allowedDomainsText: e.target.value })}
+          rows={3}
+          placeholder="example.com&#10;www.example.com"
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1.5">Offline message</label>
+        <textarea
+          value={settings.offlineMessage}
+          onChange={(e) => onChange({ ...settings, offlineMessage: e.target.value })}
+          rows={2}
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
+        />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1.5">Privacy policy URL</label>
+          <input
+            value={settings.privacyPolicyUrl}
+            onChange={(e) => onChange({ ...settings, privacyPolicyUrl: e.target.value })}
+            placeholder="https://example.com/privacy"
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
+          />
+        </div>
+        <div className="flex flex-col gap-3 justify-center">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={settings.requireConsent}
+              onChange={(e) => onChange({ ...settings, requireConsent: e.target.checked })}
+            />
+            Require pre-chat consent
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={settings.roundRobinEnabled}
+              onChange={(e) => onChange({ ...settings, roundRobinEnabled: e.target.checked })}
+            />
+            Round-robin assignment
+          </label>
+        </div>
+      </div>
+      <BusinessHoursEditor
+        enabled={settings.useBusinessHours}
+        hours={settings.businessHours}
+        onEnabledChange={(useBusinessHours) => onChange({ ...settings, useBusinessHours })}
+        onChange={(businessHours) => onChange({ ...settings, businessHours })}
+      />
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+          Missed-chat alert threshold (minutes)
+        </label>
+        <input
+          type="number"
+          min={1}
+          max={120}
+          value={settings.missedChatMinutes}
+          onChange={(e) =>
+            onChange({ ...settings, missedChatMinutes: Math.max(1, Number(e.target.value) || 5) })
+          }
+          className="w-32 px-3 py-2 rounded-lg border border-gray-300 text-sm"
+        />
+      </div>
+    </div>
+  );
 
   const AgentFields = ({
     settings,
@@ -210,7 +303,7 @@ export default function InboxesPage() {
     wsUrl: "${wsUrl}"
   };
 </script>
-<script src="${origin}/widget.js?v=5" async></script>`;
+<script src="${origin}/widget.js?v=6" async></script>`;
   };
 
   return (
@@ -226,6 +319,7 @@ export default function InboxesPage() {
         <h3 className="text-sm font-semibold text-gray-900 mb-4">Create inbox</h3>
         <form onSubmit={handleCreate} className="space-y-4">
           <AgentFields settings={createSettings} onChange={setCreateSettings} />
+          <TrustFields settings={createSettings} onChange={setCreateSettings} />
           <WidgetCustomizer settings={createSettings} onChange={setCreateSettings} />
           <button
             type="submit"
@@ -300,6 +394,7 @@ export default function InboxesPage() {
                   <form onSubmit={handleEdit} className="mt-4 pt-4 border-t border-gray-100 space-y-4">
                     <h4 className="text-sm font-semibold text-gray-900">Edit widget</h4>
                     <AgentFields settings={editSettings} onChange={setEditSettings} />
+                    <TrustFields settings={editSettings} onChange={setEditSettings} />
                     <WidgetCustomizer
                       settings={editSettings}
                       onChange={setEditSettings}

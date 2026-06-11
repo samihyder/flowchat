@@ -24,7 +24,11 @@ export async function GET(req: Request, { params }: Params) {
            widget_icon as "widgetIcon", widget_theme as "widgetTheme",
            greeting_message as "greetingMessage", welcome_title as "welcomeTitle",
            welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
-           default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled"
+           default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled",
+           allowed_domains as "allowedDomains", business_hours as "businessHours",
+           offline_message as "offlineMessage", privacy_policy_url as "privacyPolicyUrl",
+           require_consent as "requireConsent", round_robin_enabled as "roundRobinEnabled",
+           use_business_hours as "useBusinessHours", missed_chat_minutes as "missedChatMinutes"
     FROM inboxes
     WHERE account_id = ${accountId}::uuid AND is_enabled = true
     ORDER BY created_at ASC

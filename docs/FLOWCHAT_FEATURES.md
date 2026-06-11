@@ -49,6 +49,9 @@ FlowChat helps teams communicate with customers, automate repetitive support and
 - File and media attachments where supported.
 - Customer satisfaction collection support.
 
+**Industry-standard chat module (Sprints 4–5, gate before CRM):**  
+See [chat-module-standard.md](chat-module-standard.md) — lifecycle, messaging, notifications, business hours, domain allowlist, GDPR, CSAT, FRT KPIs, webhooks, search, audit log, and agent/visitor UX standards must be complete before Sprint 6 (CRM) begins.
+
 ### Contact And CRM Foundations
 
 - Contact records with email, phone, name, identifiers, custom attributes, and conversation history.

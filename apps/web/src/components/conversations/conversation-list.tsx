@@ -58,6 +58,25 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
               <span className="text-sm font-medium text-gray-900 truncate">{conv.contactName}</span>
               <span className="text-xs text-gray-400 shrink-0">{formatTime(conv.lastMessageAt)}</span>
             </div>
+            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+              {conv.priority && conv.priority !== 'medium' && (
+                <span className="text-[10px] uppercase font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
+                  {conv.priority}
+                </span>
+              )}
+              {conv.assigneeName && (
+                <span className="text-[10px] text-gray-500">→ {conv.assigneeName}</span>
+              )}
+              {conv.labels?.slice(0, 2).map((l) => (
+                <span
+                  key={l.id}
+                  className="text-[10px] px-1.5 py-0.5 rounded text-white"
+                  style={{ backgroundColor: l.color }}
+                >
+                  {l.name}
+                </span>
+              ))}
+            </div>
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs text-gray-500 truncate">
                 {conv.lastMessagePreview || 'No messages yet'}

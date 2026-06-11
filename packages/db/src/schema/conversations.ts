@@ -10,12 +10,20 @@ import { accounts } from './accounts';
 import { inboxes } from './inboxes';
 import { contacts } from './contacts';
 import { users } from './users';
+import { teams } from './teams';
 
 export const conversationStatusEnum = pgEnum('conversation_status', [
   'open',
   'pending',
   'resolved',
   'snoozed',
+]);
+
+export const conversationPriorityEnum = pgEnum('conversation_priority', [
+  'urgent',
+  'high',
+  'medium',
+  'low',
 ]);
 
 export const conversations = pgTable('conversations', {
@@ -30,7 +38,12 @@ export const conversations = pgTable('conversations', {
     .notNull()
     .references(() => contacts.id, { onDelete: 'cascade' }),
   status: conversationStatusEnum('status').notNull().default('open'),
+  priority: conversationPriorityEnum('priority').notNull().default('medium'),
   assigneeId: uuid('assignee_id').references(() => users.id, { onDelete: 'set null' }),
+  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'set null' }),
+  snoozedUntil: timestamp('snoozed_until', { withTimezone: true }),
+  awaitingReplySince: timestamp('awaiting_reply_since', { withTimezone: true }),
+  missedAlertSentAt: timestamp('missed_alert_sent_at', { withTimezone: true }),
   lastMessageAt: timestamp('last_message_at', { withTimezone: true }),
   lastMessagePreview: text('last_message_preview'),
   unreadCount: integer('unread_count').notNull().default(0),

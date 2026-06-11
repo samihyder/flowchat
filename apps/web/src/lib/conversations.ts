@@ -1,5 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { publishEvent } from '@/lib/redis';
+import { updateReplyTracking } from '@/lib/missed-chats';
+import type { AppSql } from '@/lib/db-sql';
 
 export type SerializedMessage = {
   id: string;
@@ -48,6 +50,8 @@ export async function insertMessage(params: {
   };
 
   if (!message) throw new Error('Failed to create message');
+
+  await updateReplyTracking(sql as AppSql, params.conversationId, params.senderType);
 
   if (params.incrementUnread) {
     await sql`

@@ -37,28 +37,71 @@ export async function GET(req: Request, { params }: Params) {
         WHERE inbox_id = ${inboxId}::uuid
           AND created_at >= ${fromDate.toISOString()}::timestamptz
           AND created_at <= ${toDate.toISOString()}::timestamptz
+          AND NOT EXISTS (
+            SELECT 1 FROM inbox_analytics_exceptions e
+            WHERE e.inbox_id = ${inboxId}::uuid
+              AND (
+                (e.exception_type = 'ip' AND ip_address IS NOT NULL AND e.value = ip_address)
+                OR (e.exception_type = 'machine' AND source_id IS NOT NULL AND e.value = source_id)
+              )
+          )
       `,
       sql`
         SELECT COUNT(DISTINCT COALESCE(source_id, ip_address))::int as count FROM inbox_visits
         WHERE inbox_id = ${inboxId}::uuid
           AND created_at >= ${fromDate.toISOString()}::timestamptz
           AND created_at <= ${toDate.toISOString()}::timestamptz
+          AND NOT EXISTS (
+            SELECT 1 FROM inbox_analytics_exceptions e
+            WHERE e.inbox_id = ${inboxId}::uuid
+              AND (
+                (e.exception_type = 'ip' AND ip_address IS NOT NULL AND e.value = ip_address)
+                OR (e.exception_type = 'machine' AND source_id IS NOT NULL AND e.value = source_id)
+              )
+          )
       `,
       sql`
-        SELECT COUNT(*)::int as count FROM conversations
-        WHERE inbox_id = ${inboxId}::uuid
-          AND created_at >= ${fromDate.toISOString()}::timestamptz
-          AND created_at <= ${toDate.toISOString()}::timestamptz
+        SELECT COUNT(*)::int as count FROM conversations c
+        WHERE c.inbox_id = ${inboxId}::uuid
+          AND c.created_at >= ${fromDate.toISOString()}::timestamptz
+          AND c.created_at <= ${toDate.toISOString()}::timestamptz
+          AND NOT EXISTS (
+            SELECT 1 FROM inbox_analytics_exceptions e
+            INNER JOIN contact_inboxes ci ON ci.contact_id = c.contact_id AND ci.inbox_id = c.inbox_id
+            WHERE e.inbox_id = ${inboxId}::uuid
+              AND (
+                (e.exception_type = 'ip' AND ci.last_ip_address IS NOT NULL AND e.value = ci.last_ip_address)
+                OR (e.exception_type = 'machine' AND ci.source_id IS NOT NULL AND e.value = ci.source_id)
+              )
+          )
       `,
       sql`
-        SELECT COUNT(*)::int as count FROM conversations
-        WHERE inbox_id = ${inboxId}::uuid AND status = 'open'
+        SELECT COUNT(*)::int as count FROM conversations c
+        WHERE c.inbox_id = ${inboxId}::uuid AND c.status = 'open'
+          AND NOT EXISTS (
+            SELECT 1 FROM inbox_analytics_exceptions e
+            INNER JOIN contact_inboxes ci ON ci.contact_id = c.contact_id AND ci.inbox_id = c.inbox_id
+            WHERE e.inbox_id = ${inboxId}::uuid
+              AND (
+                (e.exception_type = 'ip' AND ci.last_ip_address IS NOT NULL AND e.value = ci.last_ip_address)
+                OR (e.exception_type = 'machine' AND ci.source_id IS NOT NULL AND e.value = ci.source_id)
+              )
+          )
       `,
       sql`
-        SELECT COUNT(*)::int as count FROM conversations
-        WHERE inbox_id = ${inboxId}::uuid AND status = 'resolved'
-          AND updated_at >= ${fromDate.toISOString()}::timestamptz
-          AND updated_at <= ${toDate.toISOString()}::timestamptz
+        SELECT COUNT(*)::int as count FROM conversations c
+        WHERE c.inbox_id = ${inboxId}::uuid AND c.status = 'resolved'
+          AND c.updated_at >= ${fromDate.toISOString()}::timestamptz
+          AND c.updated_at <= ${toDate.toISOString()}::timestamptz
+          AND NOT EXISTS (
+            SELECT 1 FROM inbox_analytics_exceptions e
+            INNER JOIN contact_inboxes ci ON ci.contact_id = c.contact_id AND ci.inbox_id = c.inbox_id
+            WHERE e.inbox_id = ${inboxId}::uuid
+              AND (
+                (e.exception_type = 'ip' AND ci.last_ip_address IS NOT NULL AND e.value = ci.last_ip_address)
+                OR (e.exception_type = 'machine' AND ci.source_id IS NOT NULL AND e.value = ci.source_id)
+              )
+          )
       `,
       sql`
         SELECT COUNT(*)::int as count FROM messages m
@@ -66,12 +109,30 @@ export async function GET(req: Request, { params }: Params) {
         WHERE c.inbox_id = ${inboxId}::uuid
           AND m.created_at >= ${fromDate.toISOString()}::timestamptz
           AND m.created_at <= ${toDate.toISOString()}::timestamptz
+          AND NOT EXISTS (
+            SELECT 1 FROM inbox_analytics_exceptions e
+            INNER JOIN contact_inboxes ci ON ci.contact_id = c.contact_id AND ci.inbox_id = c.inbox_id
+            WHERE e.inbox_id = ${inboxId}::uuid
+              AND (
+                (e.exception_type = 'ip' AND ci.last_ip_address IS NOT NULL AND e.value = ci.last_ip_address)
+                OR (e.exception_type = 'machine' AND ci.source_id IS NOT NULL AND e.value = ci.source_id)
+              )
+          )
       `,
       sql`
-        SELECT COUNT(*)::int as count FROM conversations
-        WHERE inbox_id = ${inboxId}::uuid
-          AND created_at >= ${fromDate.toISOString()}::timestamptz
-          AND created_at <= ${toDate.toISOString()}::timestamptz
+        SELECT COUNT(*)::int as count FROM conversations c
+        WHERE c.inbox_id = ${inboxId}::uuid
+          AND c.created_at >= ${fromDate.toISOString()}::timestamptz
+          AND c.created_at <= ${toDate.toISOString()}::timestamptz
+          AND NOT EXISTS (
+            SELECT 1 FROM inbox_analytics_exceptions e
+            INNER JOIN contact_inboxes ci ON ci.contact_id = c.contact_id AND ci.inbox_id = c.inbox_id
+            WHERE e.inbox_id = ${inboxId}::uuid
+              AND (
+                (e.exception_type = 'ip' AND ci.last_ip_address IS NOT NULL AND e.value = ci.last_ip_address)
+                OR (e.exception_type = 'machine' AND ci.source_id IS NOT NULL AND e.value = ci.source_id)
+              )
+          )
       `,
     ]);
 
@@ -87,17 +148,36 @@ export async function GET(req: Request, { params }: Params) {
     ) AS d(day)
     LEFT JOIN (
       SELECT DATE(created_at) as day, COUNT(*) as visits
-      FROM inbox_visits WHERE inbox_id = ${inboxId}::uuid
+      FROM inbox_visits
+      WHERE inbox_id = ${inboxId}::uuid
         AND created_at >= ${fromDate.toISOString()}::timestamptz
         AND created_at <= ${toDate.toISOString()}::timestamptz
+        AND NOT EXISTS (
+          SELECT 1 FROM inbox_analytics_exceptions e
+          WHERE e.inbox_id = ${inboxId}::uuid
+            AND (
+              (e.exception_type = 'ip' AND ip_address IS NOT NULL AND e.value = ip_address)
+              OR (e.exception_type = 'machine' AND source_id IS NOT NULL AND e.value = source_id)
+            )
+        )
       GROUP BY DATE(created_at)
     ) v ON v.day = d.day
     LEFT JOIN (
-      SELECT DATE(created_at) as day, COUNT(*) as conversations
-      FROM conversations WHERE inbox_id = ${inboxId}::uuid
-        AND created_at >= ${fromDate.toISOString()}::timestamptz
-        AND created_at <= ${toDate.toISOString()}::timestamptz
-      GROUP BY DATE(created_at)
+      SELECT DATE(c.created_at) as day, COUNT(*) as conversations
+      FROM conversations c
+      WHERE c.inbox_id = ${inboxId}::uuid
+        AND c.created_at >= ${fromDate.toISOString()}::timestamptz
+        AND c.created_at <= ${toDate.toISOString()}::timestamptz
+        AND NOT EXISTS (
+          SELECT 1 FROM inbox_analytics_exceptions e
+          INNER JOIN contact_inboxes ci ON ci.contact_id = c.contact_id AND ci.inbox_id = c.inbox_id
+          WHERE e.inbox_id = ${inboxId}::uuid
+            AND (
+              (e.exception_type = 'ip' AND ci.last_ip_address IS NOT NULL AND e.value = ci.last_ip_address)
+              OR (e.exception_type = 'machine' AND ci.source_id IS NOT NULL AND e.value = ci.source_id)
+            )
+        )
+      GROUP BY DATE(c.created_at)
     ) c ON c.day = d.day
     LEFT JOIN (
       SELECT DATE(m.created_at) as day, COUNT(*) as messages
@@ -105,6 +185,15 @@ export async function GET(req: Request, { params }: Params) {
       WHERE cv.inbox_id = ${inboxId}::uuid
         AND m.created_at >= ${fromDate.toISOString()}::timestamptz
         AND m.created_at <= ${toDate.toISOString()}::timestamptz
+        AND NOT EXISTS (
+          SELECT 1 FROM inbox_analytics_exceptions e
+          INNER JOIN contact_inboxes ci ON ci.contact_id = cv.contact_id AND ci.inbox_id = cv.inbox_id
+          WHERE e.inbox_id = ${inboxId}::uuid
+            AND (
+              (e.exception_type = 'ip' AND ci.last_ip_address IS NOT NULL AND e.value = ci.last_ip_address)
+              OR (e.exception_type = 'machine' AND ci.source_id IS NOT NULL AND e.value = ci.source_id)
+            )
+        )
       GROUP BY DATE(m.created_at)
     ) m ON m.day = d.day
     ORDER BY d.day ASC
@@ -112,7 +201,8 @@ export async function GET(req: Request, { params }: Params) {
 
   const activeChats = await sql`
     SELECT c.id as "conversationId", ct.name as "contactName", ct.email as "contactEmail",
-           ci.last_ip_address as "ipAddress", c.created_at as "startedAt",
+           ci.last_ip_address as "ipAddress", ci.source_id as "sourceId",
+           c.created_at as "startedAt",
            c.last_message_at as "lastMessageAt", c.unread_count as "unreadCount",
            u.name as "assigneeName", c.assignee_id as "assigneeId"
     FROM conversations c
@@ -120,6 +210,14 @@ export async function GET(req: Request, { params }: Params) {
     LEFT JOIN contact_inboxes ci ON ci.contact_id = c.contact_id AND ci.inbox_id = c.inbox_id
     LEFT JOIN users u ON u.id = c.assignee_id
     WHERE c.inbox_id = ${inboxId}::uuid AND c.status = 'open'
+      AND NOT EXISTS (
+        SELECT 1 FROM inbox_analytics_exceptions e
+        WHERE e.inbox_id = ${inboxId}::uuid
+          AND (
+            (e.exception_type = 'ip' AND ci.last_ip_address IS NOT NULL AND e.value = ci.last_ip_address)
+            OR (e.exception_type = 'machine' AND ci.source_id IS NOT NULL AND e.value = ci.source_id)
+          )
+      )
     ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
     LIMIT 50
   `;
@@ -131,8 +229,23 @@ export async function GET(req: Request, { params }: Params) {
     WHERE inbox_id = ${inboxId}::uuid
       AND created_at >= ${fromDate.toISOString()}::timestamptz
       AND created_at <= ${toDate.toISOString()}::timestamptz
+      AND NOT EXISTS (
+        SELECT 1 FROM inbox_analytics_exceptions e
+        WHERE e.inbox_id = ${inboxId}::uuid
+          AND (
+            (e.exception_type = 'ip' AND ip_address IS NOT NULL AND e.value = ip_address)
+            OR (e.exception_type = 'machine' AND source_id IS NOT NULL AND e.value = source_id)
+          )
+      )
     ORDER BY created_at DESC
     LIMIT 100
+  `;
+
+  const exceptionRows = await sql`
+    SELECT id, exception_type as "type", value, label, created_at as "createdAt"
+    FROM inbox_analytics_exceptions
+    WHERE inbox_id = ${inboxId}::uuid
+    ORDER BY created_at DESC
   `;
 
   const assignee = inboxRows[0].defaultAssigneeId
@@ -157,5 +270,6 @@ export async function GET(req: Request, { params }: Params) {
     daily,
     activeChats,
     recentVisits,
+    exceptions: exceptionRows,
   });
 }

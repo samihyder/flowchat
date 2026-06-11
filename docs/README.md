@@ -8,6 +8,8 @@
 
 | File | Description |
 |---|---|
+| [sprints.md](sprints.md) | Sprint plan — Phases 1–8, story points, definitions of done |
+| [chat-module-standard.md](chat-module-standard.md) | Industry-standard web chat checklist — **gate before CRM (Sprint 6)** |
 | [features.md](features.md) | Complete feature specification — channels, conversations, AI, reports, auth, API |
 | [branding.md](branding.md) | Color palette, typography, spacing, motion — full design system |
 | [tech-stack.md](tech-stack.md) | Recommended modern tech stack with rationale |

@@ -34,6 +34,24 @@
 
 ## 2. Conversations
 
+> **Chat module gate:** Web live chat must meet the [Industry Standard Chat Module](chat-module-standard.md) checklist (Sprints 4–5) before CRM features (Sprint 6) begin.
+
+### Industry standard baseline (Sprints 4–5, pre-CRM)
+
+**Lifecycle & ops (Sprint 4)**
+- Full status workflow, priority, labels, snooze, filters, typing indicator
+- Agent notifications (new message + missed chat), business hours, offline mode
+- Widget domain allowlist, API rate limits, GDPR baseline, block visitor
+- Tenant access: inbox assignment on approve, invite email delivery
+
+**Messaging & quality (Sprint 5)**
+- Attachments, private notes, canned responses, read receipts, @mentions
+- Visitor context sidebar, agent collision indicator, custom pre-chat fields
+- CSAT, FRT/resolution KPIs, conversation search, webhooks, audit log
+- Message pagination, idempotent send, proactive triggers (should), email fallback (should)
+
+See [sprints.md](sprints.md) for full story breakdown.
+
 ### Lifecycle & Status
 - `open` → `pending` → `resolved` → `snoozed`
 - Priority tiers: `urgent` | `high` | `medium` | `low`

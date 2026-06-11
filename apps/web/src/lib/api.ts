@@ -36,6 +36,14 @@ export type Inbox = {
   welcomeTagline?: string | null;
   websiteUrl?: string | null;
   defaultAssigneeId?: string | null;
+  allowedDomains?: string[];
+  businessHours?: Record<string, unknown> | null;
+  offlineMessage?: string | null;
+  privacyPolicyUrl?: string | null;
+  requireConsent?: boolean;
+  roundRobinEnabled?: boolean;
+  useBusinessHours?: boolean;
+  missedChatMinutes?: number;
   isEnabled: boolean;
 };
 
@@ -58,11 +66,13 @@ export type InboxAnalytics = {
     chatsStarted: number;
   };
   daily: { date: string; visits: number; conversations: number; messages: number }[];
+  exceptions?: AnalyticsException[];
   activeChats: {
     conversationId: string;
     contactName: string;
     contactEmail: string | null;
     ipAddress: string | null;
+    sourceId?: string | null;
     startedAt: string;
     lastMessageAt: string | null;
     unreadCount: number;
@@ -78,11 +88,26 @@ export type InboxAnalytics = {
   }[];
 };
 
+export type Label = { id: string; name: string; color: string };
+
+export type AnalyticsException = {
+  id: string;
+  type: 'ip' | 'machine';
+  value: string;
+  label: string | null;
+  createdAt: string;
+};
+
 export type Conversation = {
   id: string;
   inboxId: string;
   contactId: string;
-  status: string;
+  status: 'open' | 'pending' | 'resolved' | 'snoozed';
+  priority?: 'urgent' | 'high' | 'medium' | 'low';
+  assigneeId?: string | null;
+  assigneeName?: string | null;
+  snoozedUntil?: string | null;
+  labels?: Label[];
   lastMessageAt: string | null;
   lastMessagePreview: string | null;
   unreadCount: number;
@@ -230,13 +255,38 @@ export const api = {
 
   account: {
     get: (accountId: string, token: string) =>
-      request<{ account: { id: string; name: string; timezone: string; locale: string; logoUrl: string | null; slug: string } }>(
-        `/accounts/${accountId}`, { token }
-      ),
-    update: (accountId: string, body: { name?: string; timezone?: string; locale?: string; logoUrl?: string | null }, token: string) =>
-      request<{ account: { id: string; name: string; timezone: string; locale: string; logoUrl: string | null } }>(
-        `/accounts/${accountId}`, { method: 'PATCH', body, token }
-      ),
+      request<{
+        account: {
+          id: string;
+          name: string;
+          timezone: string;
+          locale: string;
+          logoUrl: string | null;
+          slug: string;
+          settings?: { allowedInviteDomains?: string[]; dataRetentionDays?: number };
+        };
+      }>(`/accounts/${accountId}`, { token }),
+    update: (
+      accountId: string,
+      body: {
+        name?: string;
+        timezone?: string;
+        locale?: string;
+        logoUrl?: string | null;
+        settings?: { allowedInviteDomains?: string[]; dataRetentionDays?: number };
+      },
+      token: string
+    ) =>
+      request<{
+        account: {
+          id: string;
+          name: string;
+          timezone: string;
+          locale: string;
+          logoUrl: string | null;
+          settings?: { allowedInviteDomains?: string[]; dataRetentionDays?: number };
+        };
+      }>(`/accounts/${accountId}`, { method: 'PATCH', body, token }),
     getLogoUploadUrl: (accountId: string, token: string) =>
       request<{ uploadUrl: string; publicUrl: string }>(
         `/accounts/${accountId}/logo-upload-url`, { method: 'POST', token }
@@ -289,6 +339,14 @@ export const api = {
         widgetTheme?: WidgetTheme;
         websiteUrl?: string | null;
         defaultAssigneeId?: string;
+        allowedDomains?: string[];
+        businessHours?: Record<string, unknown> | null;
+        offlineMessage?: string | null;
+        privacyPolicyUrl?: string | null;
+        requireConsent?: boolean;
+        roundRobinEnabled?: boolean;
+        useBusinessHours?: boolean;
+        missedChatMinutes?: number;
         isEnabled?: boolean;
       },
       token: string
@@ -315,13 +373,57 @@ export const api = {
         { token }
       );
     },
+    addAnalyticsException: (
+      accountId: string,
+      inboxId: string,
+      body: { type: 'ip' | 'machine'; value: string; label?: string },
+      token: string
+    ) =>
+      request<{ exception: AnalyticsException }>(
+        `/accounts/${accountId}/inboxes/${inboxId}/analytics/exceptions`,
+        { method: 'POST', body, token }
+      ),
+    removeAnalyticsException: (
+      accountId: string,
+      inboxId: string,
+      exceptionId: string,
+      token: string
+    ) =>
+      request<{ ok: boolean }>(
+        `/accounts/${accountId}/inboxes/${inboxId}/analytics/exceptions/${exceptionId}`,
+        { method: 'DELETE', token }
+      ),
+  },
+
+  labels: {
+    list: (accountId: string, token: string) =>
+      request<{ labels: Label[] }>(`/accounts/${accountId}/labels`, { token }),
+    create: (accountId: string, body: { name: string; color?: string }, token: string) =>
+      request<{ label: Label }>(`/accounts/${accountId}/labels`, { method: 'POST', body, token }),
   },
 
   conversations: {
-    list: (accountId: string, token: string, params?: { inboxId?: string; status?: string }) => {
+    list: (
+      accountId: string,
+      token: string,
+      params?: {
+        inboxId?: string;
+        status?: string;
+        filter?: 'mine' | 'unassigned';
+        priority?: string;
+        labelId?: string;
+        from?: string;
+        to?: string;
+      }
+    ) => {
       const qs = new URLSearchParams();
       if (params?.inboxId) qs.set('inboxId', params.inboxId);
       if (params?.status) qs.set('status', params.status);
+      if (params?.filter) qs.set('filter', params.filter);
+      if (params?.priority) qs.set('priority', params.priority);
+      if (params?.labelId) qs.set('labelId', params.labelId);
+      if (params?.from) qs.set('from', params.from);
+      if (params?.to) qs.set('to', params.to);
       const query = qs.toString();
       return request<{ conversations: Conversation[] }>(
         `/accounts/${accountId}/conversations${query ? `?${query}` : ''}`,
@@ -356,6 +458,25 @@ export const api = {
       request<{ conversation: Conversation }>(
         `/accounts/${accountId}/conversations/${conversationId}`,
         { method: 'PATCH', body: { status }, token }
+      ),
+
+    update: (
+      accountId: string,
+      conversationId: string,
+      body: {
+        status?: 'open' | 'pending' | 'resolved' | 'snoozed';
+        assigneeId?: string | null;
+        priority?: 'urgent' | 'high' | 'medium' | 'low';
+        snoozedUntil?: string | null;
+        labelIds?: string[];
+        blockContact?: boolean;
+        blockIp?: boolean;
+      },
+      token: string
+    ) =>
+      request<{ conversation: Conversation }>(
+        `/accounts/${accountId}/conversations/${conversationId}`,
+        { method: 'PATCH', body, token }
       ),
   },
 

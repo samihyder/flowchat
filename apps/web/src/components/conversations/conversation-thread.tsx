@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, type ChatMessage, type Conversation } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore } from '@/store/ws';
+import { ConversationActions } from '@/components/conversations/conversation-actions';
 
 function formatMessageTime(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -25,7 +26,9 @@ type Props = {
 
 export function ConversationThread({ conversation, onConversationUpdate }: Props) {
   const { token, accountId, user } = useAuthStore();
-  const { subscribeConversation, lastMessageEvent, messageEventSeq, connected } = useWsStore();
+  const { subscribeConversation, lastMessageEvent, messageEventSeq, connected, sendTyping, typingByConversation } =
+    useWsStore();
+  const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -143,6 +146,8 @@ export function ConversationThread({ conversation, onConversationUpdate }: Props
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
+      <ConversationActions conversation={conversation} onUpdated={() => onConversationUpdate?.()} />
+
       <header className="px-5 py-3 border-b border-gray-200 bg-white flex items-center justify-between shrink-0">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-gray-900 truncate">{conversation.contactName}</h2>
@@ -162,6 +167,9 @@ export function ConversationThread({ conversation, onConversationUpdate }: Props
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+        {conversation && typingByConversation[conversation.id] && (
+          <p className="text-xs text-gray-400 italic px-1">Visitor is typing…</p>
+        )}
         {loading ? (
           <p className="text-sm text-gray-400 text-center py-8">Loading messages…</p>
         ) : messages.length === 0 ? (
@@ -211,7 +219,14 @@ export function ConversationThread({ conversation, onConversationUpdate }: Props
         <form onSubmit={handleSend} className="p-4 border-t border-gray-200 bg-white flex gap-2 shrink-0">
           <input
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              if (conversation && connected) {
+                sendTyping(conversation.id);
+                if (typingTimeout.current) clearTimeout(typingTimeout.current);
+                typingTimeout.current = setTimeout(() => {}, 2000);
+              }
+            }}
             placeholder="Type your reply…"
             className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/25 focus:border-primary-500"
           />

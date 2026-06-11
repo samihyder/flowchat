@@ -2,13 +2,26 @@
 
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { useWsStore, type MessageCreatedEvent, type VisitorOnlineEvent } from '@/store/ws';
+import {
+  useWsStore,
+  type MessageCreatedEvent,
+  type MissedChatEvent,
+  type VisitorOnlineEvent,
+} from '@/store/ws';
 import { getWsUrl } from '@/lib/config';
 
 export function useWebSocket() {
   const { token, accountId } = useAuthStore();
-  const { setSocket, setConnected, setPresence, pushMessageEvent, pushVisitorEvent, subscribeConversation } =
-    useWsStore();
+  const {
+    setSocket,
+    setConnected,
+    setPresence,
+    pushMessageEvent,
+    pushVisitorEvent,
+    pushMissedChatEvent,
+    subscribeConversation,
+    setTyping,
+  } = useWsStore();
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -55,6 +68,14 @@ export function useWebSocket() {
           }
           if (msg['type'] === 'visitor_online') {
             pushVisitorEvent(msg as VisitorOnlineEvent);
+          }
+          if (msg['type'] === 'missed_chat') {
+            pushMissedChatEvent(msg as MissedChatEvent);
+          }
+          if (msg['type'] === 'typing' && msg['conversationId']) {
+            const cid = msg['conversationId'] as string;
+            setTyping(cid, true);
+            setTimeout(() => setTyping(cid, false), 3000);
           }
         } catch { /* ignore */ }
       };

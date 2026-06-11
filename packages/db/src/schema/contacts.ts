@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, pgEnum, boolean } from 'drizzle-orm/pg-core';
 import { accounts } from './accounts';
 
 export const contactTypeEnum = pgEnum('contact_type', ['visitor', 'lead', 'customer']);
@@ -14,6 +14,8 @@ export const contacts = pgTable('contacts', {
   type: contactTypeEnum('type').notNull().default('visitor'),
   avatarUrl: text('avatar_url'),
   lastActivityAt: timestamp('last_activity_at', { withTimezone: true }),
+  isBlocked: boolean('is_blocked').notNull().default(false),
+  blockedAt: timestamp('blocked_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

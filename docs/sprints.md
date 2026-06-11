@@ -10,7 +10,8 @@
 | Phase | Sprints | Theme | Deliverable |
 |---|---|---|---|
 | 1 — Foundation | 1 – 3 | Monorepo, auth, first inbox | Agents can receive web chats |
-| 2 — Core Conversations | 4 – 6 | Full conversation lifecycle, contacts | Working help-desk MVP |
+| 2 — Industry-Standard Chat | 4 – 5 | Lifecycle, messaging, trust, ops KPIs | **Chat module complete** (gate before CRM) |
+| 2b — CRM | 6 | Contacts, companies, attributes | CRM on top of finished chat |
 | 3 — Multi-channel | 7 – 9 | Email, WhatsApp, social channels | Omnichannel inbox |
 | 4 — Automation & AI | 10 – 12 | Rules, macros, AI copilot | Intelligent routing + suggestions |
 | 5 — Knowledge & Campaigns | 13 – 14 | Help center, campaigns | Self-service + outbound |
@@ -100,52 +101,118 @@
 
 ---
 
-## Phase 2 — Core Conversations
+## Phase 2 — Industry-Standard Chat Module
+
+> **Gate:** Sprint 6 (CRM) does **not** start until the [Chat Module Definition of Done](chat-module-standard.md) is satisfied.  
+> Sprints 4–5 together deliver a web live-chat product comparable to mid-tier tools (Crisp, LiveChat, Zendesk Chat).  
+> Expanded scope (~65–70 pts each) may run as **3-week sprints** or split into 4A/4B if velocity is 40 pts.
+
+See also: [chat-module-standard.md](chat-module-standard.md) — full checklist and acceptance criteria.
 
 ---
 
-### Sprint 4 · 2026-07-27 → 2026-08-09
-**Goal:** Full conversation lifecycle — assignment, status, priority, labels, snooze.
+### Sprint 4 · 2026-07-27 → 2026-08-16 *(extended)*
+**Goal:** Conversation lifecycle + platform trust (security, compliance, notifications, tenant access).
 
-#### Stories
+#### Lifecycle & routing
 
 | # | Story | Points | Priority |
 |---|---|---|---|
-| S4-1 | Conversation assignment — assign to agent, assign to team, auto-assignment (round-robin) | 8 | Must |
-| S4-2 | Conversation status — open → resolved → pending → snoozed, status badge in UI | 5 | Must |
-| S4-3 | Priority tiers — urgent/high/medium/low, colour-coded, filter by priority | 3 | Must |
-| S4-4 | Labels/tags — create labels, assign multi-label to conversation, filter by label | 5 | Must |
-| S4-5 | Snooze — pick wake-up time, auto-reopen job (BullMQ), snoozed list view | 5 | Must |
-| S4-6 | Conversation filters — status, assignee, team, inbox, label, priority, date range | 5 | Should |
-| S4-7 | Bulk actions — select multiple conversations, bulk assign / resolve / label / delete | 5 | Should |
-| S4-8 | Typing indicator — agent and visitor typing shown in real time via WebSocket | 2 | Should |
+| S4-1 | Conversation assignment — assign/reassign agent, assign to team, round-robin auto-assignment | 8 | Must |
+| S4-2 | Conversation status — open / pending / resolved / snoozed, badges, list views per status | 5 | Must |
+| S4-3 | Priority tiers — urgent / high / medium / low, colour-coded, filter by priority | 3 | Must |
+| S4-4 | Labels/tags — create labels, multi-label on conversation, filter by label | 5 | Must |
+| S4-5 | Snooze — wake-up time picker, auto-reopen job (BullMQ), snoozed inbox view | 5 | Must |
+| S4-6 | Conversation filters — status, assignee, team, inbox, label, priority, date range | 5 | Must |
+| S4-7 | Typing indicator — agent and visitor typing in real time via WebSocket | 2 | Must |
+| S4-8 | “Mine” / assignee views — dashboard filters for assigned-to-me and unassigned queues | 3 | Must |
 
-**Sprint total: 38 pts**
+#### Notifications & availability
+
+| # | Story | Points | Priority |
+|---|---|---|---|
+| S4-9 | Agent message alerts — tab badge, sound on new visitor message, mute toggle | 5 | Must |
+| S4-10 | Missed-chat alerts — email/in-app when no agent reply within configurable threshold | 5 | Must |
+| S4-11 | Business hours — per-inbox schedule + timezone, widget online/away/offline state | 8 | Must |
+| S4-12 | Offline behaviour — offline auto-reply, queue message or email-capture when agents unavailable | 5 | Must |
+
+#### Security, compliance & multi-tenant
+
+| # | Story | Points | Priority |
+|---|---|---|---|
+| S4-13 | Widget domain allowlist — approved domains per inbox; block unauthorized embed origins | 5 | Must |
+| S4-14 | Public API hardening — rate limits on visit/session/message (per IP + sourceId); optional Turnstile | 5 | Must |
+| S4-15 | GDPR baseline — pre-chat consent + privacy link, data retention setting, export/delete visitor data | 8 | Must |
+| S4-16 | Block visitor — block by IP or contact; blocked visitors cannot start/send messages | 3 | Must |
+| S4-17 | Tenant access completion — inbox picker on agent approve; invite email via Resend (not copy-paste only) | 5 | Must |
+| S4-18 | Optional workspace email domain allowlist — restrict agent invites to `@company.com` patterns | 3 | Should |
+| S4-19 | Analytics exclusions — per-inbox IP and machine (browser source ID) exceptions; excluded traffic omitted from stats | 3 | Must |
+
+**Sprint 4 total: ~73 pts (Must: ~68)**
+
+#### Definition of Done (Sprint 4)
+- [x] Agent can assign, snooze, label, and filter conversations
+- [x] Widget respects business hours and shows honest availability
+- [x] Widget only loads on allowlisted domains; public APIs are rate-limited
+- [x] New messages alert agents; missed chats escalate
+- [x] Admin can approve agents and assign specific websites/inboxes
+- [x] Admin can exclude office IPs and test machines from analytics metrics
 
 ---
 
-### Sprint 5 · 2026-08-10 → 2026-08-23
-**Goal:** Rich messaging — attachments, private notes, canned responses, read receipts.
+### Sprint 5 · 2026-08-17 → 2026-09-06 *(extended)*
+**Goal:** Rich messaging + agent/visitor experience standards + integrations KPIs (completes chat module).
 
-#### Stories
+#### Rich messaging
 
 | # | Story | Points | Priority |
 |---|---|---|---|
 | S5-1 | File attachments — upload to R2, pre-signed URLs, image preview in thread (max 15) | 8 | Must |
-| S5-2 | Private notes — internal messages flagged visually, not sent to visitor | 3 | Must |
-| S5-3 | Message edit & delete — edit within 15 min, soft-delete with activity log entry | 3 | Must |
-| S5-4 | Read receipts — delivered/read status icons, real-time update via WS | 3 | Should |
-| S5-5 | Draft persistence — save draft per conversation in localStorage + API | 3 | Should |
-| S5-6 | Canned responses — create/search/insert snippets, shortcut `/<keyword>` in composer | 5 | Must |
-| S5-7 | Conversation merge — merge two conversations into one, activity log entry | 5 | Should |
-| S5-8 | Transcript export — generate plain-text email transcript, send to address | 3 | Should |
-| S5-9 | Mention agents — `@agent` in private notes, notification triggered | 5 | Must |
+| S5-2 | Private notes — internal messages, visually distinct, never sent to visitor | 3 | Must |
+| S5-3 | Message edit & delete — edit within 15 min, soft-delete with audit entry | 3 | Must |
+| S5-4 | Read receipts — delivered/read icons, real-time via WS | 3 | Must |
+| S5-5 | Draft persistence — draft per conversation (API + localStorage fallback) | 3 | Should |
+| S5-6 | Canned responses — create/search/insert, `/<keyword>` shortcut in composer | 5 | Must |
+| S5-7 | Mention agents — `@agent` in private notes triggers notification | 5 | Must |
+| S5-8 | Conversation merge — merge two threads, activity log entry | 5 | Should |
+| S5-9 | Transcript export — plain-text export + email transcript to address | 3 | Should |
+| S5-10 | Bulk actions — multi-select assign / resolve / label | 5 | Should |
 
-**Sprint total: 38 pts**
+#### Agent & visitor experience (industry standard)
+
+| # | Story | Points | Priority |
+|---|---|---|---|
+| S5-11 | Visitor context sidebar — page URL, referrer, geo (coarse), device, visit count, past chats | 5 | Must |
+| S5-12 | Agent collision indicator — “Agent X is viewing this conversation” via WS presence | 3 | Must |
+| S5-13 | Custom pre-chat fields — configurable fields per inbox (text, select, required flags) | 5 | Must |
+| S5-14 | Proactive chat triggers — time-on-page / URL rules, dismiss + frequency cap | 5 | Should |
+| S5-15 | Message reliability — cursor pagination for long threads; idempotent send (no duplicates on retry) | 5 | Must |
+| S5-16 | Email fallback — unanswered/offline chat routes to agent email or capture form | 5 | Should |
+
+#### Quality, search & integrations
+
+| # | Story | Points | Priority |
+|---|---|---|---|
+| S5-17 | Post-chat CSAT — star rating after resolve, optional comment, per-inbox toggle | 5 | Must |
+| S5-18 | Support KPIs — FRT, resolution time, missed/unanswered rate in analytics dashboard | 5 | Must |
+| S5-19 | Conversation search — search contact name, email, message body, conversation ID | 5 | Must |
+| S5-20 | Webhooks — `conversation.created`, `message.created`, `conversation.resolved` + HMAC signing | 8 | Must |
+| S5-21 | Agent action audit log — assign, resolve, approve agent, settings changes (who/when/what) | 5 | Must |
+
+**Sprint 5 total: ~87 pts (Must: ~68)**
+
+#### Definition of Done (Sprint 5 — **Chat Module Complete**)
+- [ ] All items in [chat-module-standard.md](chat-module-standard.md) marked **Must** are shipped
+- [ ] Attachments, notes, canned replies, and CSAT work end-to-end
+- [ ] FRT and resolution metrics visible per inbox/agent
+- [ ] Webhooks deliver signed events to customer endpoints
+- [ ] Conversation search returns results in &lt; 500 ms for typical accounts
+- [ ] **No CRM sprint work begins until this checklist is signed off**
 
 ---
 
-### Sprint 6 · 2026-08-24 → 2026-09-06
+### Sprint 6 · 2026-09-07 → 2026-09-20
+**Prerequisite:** [Chat Module Definition of Done](chat-module-standard.md) ✅  
 **Goal:** Contact management, CRM basics, conversation participants.
 
 #### Stories
@@ -168,9 +235,11 @@
 
 ## Phase 3 — Multi-channel
 
+> Phase 3+ sprint dates follow Phase 2 extension (+2 weeks from original plan).
+
 ---
 
-### Sprint 7 · 2026-09-07 → 2026-09-20
+### Sprint 7 · 2026-09-21 → 2026-10-04
 **Goal:** Email channel — inbound email → conversation, outbound reply via SMTP.
 
 #### Stories
@@ -189,7 +258,7 @@
 
 ---
 
-### Sprint 8 · 2026-09-21 → 2026-10-04
+### Sprint 8 · 2026-10-05 → 2026-10-18
 **Goal:** WhatsApp Cloud API channel — receive and send messages, templates.
 
 #### Stories
@@ -499,4 +568,4 @@
 
 ---
 
-*Last updated: 2026-06-01 · 20 sprints · ~40 weeks · Target launch: 2027-03-29*
+*Last updated: 2026-06-05 · 20 sprints · Phase 2 Sprints 4–5 expanded for industry-standard chat gate before CRM · Target launch: 2027-03-29*

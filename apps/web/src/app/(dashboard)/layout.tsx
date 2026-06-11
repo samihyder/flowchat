@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore, type Availability } from '@/store/ws';
 import { useWebSocket } from '@/lib/useWebSocket';
 import { useVisitorAlarm } from '@/lib/useVisitorAlarm';
+import { useMessageAlert } from '@/lib/useMessageAlert';
+import { isMessageAlertMuted, setMessageAlertMuted } from '@/lib/message-alert';
 import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
 import { api } from '@/lib/api';
 
@@ -46,16 +48,38 @@ function NavSection({ title, children }: { title: string; children: React.ReactN
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const listFilter = searchParams.get('filter');
   const { user, token, accountId, accountName, clearAuth } = useAuthStore();
   const { ready: authReady } = useAuthBootstrap();
-  const { sendPresence, presence } = useWsStore();
+  const { sendPresence, presence, lastMissedChatEvent, missedChatEventSeq, clearMissedChatEvent } =
+    useWsStore();
   const [showAvailability, setShowAvailability] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [inboxes, setInboxes] = useState<Inbox[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [messageMuted, setMessageMuted] = useState(true);
 
   useWebSocket();
   const { alert: visitorAlert, muted: alarmMuted, toggleMute: toggleAlarm } = useVisitorAlarm();
+  useMessageAlert();
+
+  useEffect(() => {
+    setMessageMuted(isMessageAlertMuted());
+  }, []);
+
+  useEffect(() => {
+    if (!token || !accountId) return;
+    const run = () => {
+      fetch(`/api/accounts/${accountId}/missed-chats`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    };
+    run();
+    const interval = setInterval(run, 60_000);
+    return () => clearInterval(interval);
+  }, [token, accountId]);
 
   useEffect(() => {
     if (!authReady) return;
@@ -125,19 +149,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             Analytics
           </Link>
-          {conversationLinks.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-                pathname === '/dashboard' && !item.href.includes('?filter')
-                  ? 'bg-primary-50 text-primary-700 font-medium'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {conversationLinks.map((item) => {
+            const isMine = item.href.includes('filter=mine');
+            const active =
+              pathname === '/dashboard' &&
+              (isMine ? listFilter === 'mine' : !listFilter && !searchParams.get('inbox'));
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
+                  active ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </NavSection>
 
         <NavSection title="Inboxes">
@@ -228,6 +256,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <button
             type="button"
+            onClick={() => {
+              const next = !messageMuted;
+              setMessageAlertMuted(next);
+              setMessageMuted(next);
+            }}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+            title={messageMuted ? 'Unmute message sounds' : 'Mute message sounds'}
+          >
+            {messageMuted ? '🔕' : '🔔'}
+          </button>
+          <button
+            type="button"
             onClick={() => { clearAuth(); router.push('/sign-in'); }}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"
             title="Sign out"
@@ -261,6 +301,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 min-h-screen">
+        {lastMissedChatEvent && (
+          <div className="bg-red-600 text-white px-4 py-2.5 text-sm font-medium flex items-center justify-between gap-3 shrink-0">
+            <span>
+              Missed chat: {lastMissedChatEvent.contactName} on {lastMissedChatEvent.inboxName} (
+              {lastMissedChatEvent.minutesWaiting}m waiting)
+            </span>
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                href={`/dashboard?conversation=${lastMissedChatEvent.conversationId}` as Route}
+                className="text-xs underline"
+                onClick={() => clearMissedChatEvent()}
+              >
+                Open
+              </Link>
+              <button type="button" onClick={() => clearMissedChatEvent()} className="text-xs underline">
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
         {visitorAlert && (
           <div className="bg-amber-500 text-white px-4 py-2.5 text-sm font-medium flex items-center justify-between gap-3 shrink-0 animate-pulse">
             <span>

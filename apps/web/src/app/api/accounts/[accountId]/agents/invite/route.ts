@@ -1,6 +1,10 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { createId } from '@paralleldrive/cuid2';
+import { sendAgentInviteEmail } from '@/lib/email';
+import { isInviteEmailAllowed } from '@/lib/invite-domain';
+import { parseAccountSettings } from '@/lib/account-settings';
+import { isWorkEmail, WORK_EMAIL_MESSAGE } from '@/lib/email-domain';
 
 type Params = { params: Promise<{ accountId: string }> };
 
@@ -27,8 +31,21 @@ export async function POST(req: Request, { params }: Params) {
   if (!email) {
     return Response.json({ error: 'Email is required' }, { status: 400 });
   }
+  if (!isWorkEmail(email)) {
+    return Response.json({ error: WORK_EMAIL_MESSAGE }, { status: 400 });
+  }
 
   const sql = neon(databaseUrl);
+
+  const accountRows = await sql`SELECT settings FROM accounts WHERE id = ${accountId}::uuid LIMIT 1`;
+  const settings = parseAccountSettings((accountRows[0] as { settings: unknown } | undefined)?.settings);
+  const allowed = settings.allowedInviteDomains ?? [];
+  if (allowed.length > 0 && !isInviteEmailAllowed(email, allowed)) {
+    return Response.json(
+      { error: `Invites are restricted to: ${allowed.map((d) => `@${d}`).join(', ')}` },
+      { status: 400 }
+    );
+  }
 
   const users = await sql`
     SELECT id, name, email FROM users WHERE LOWER(email) = ${email} LIMIT 1
@@ -79,9 +96,15 @@ export async function POST(req: Request, { params }: Params) {
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
   const inviteUrl = `${origin.replace(/\/$/, '')}/accept-invite?token=${inviteToken}`;
 
+  const accounts = await sql`SELECT name FROM accounts WHERE id = ${accountId}::uuid LIMIT 1`;
+  const workspaceName = (accounts[0] as { name: string } | undefined)?.name ?? 'your workspace';
+  const emailed = await sendAgentInviteEmail(email, inviteUrl, workspaceName);
+
   return Response.json(
     {
-      message: 'Invite created. Share this link with the agent.',
+      message: emailed
+        ? 'Invite email sent. The agent can also use the link below.'
+        : 'Invite created. Share this link with the agent (email not configured).',
       inviteUrl,
       agent: { email, role, membershipStatus: 'invited' },
     },

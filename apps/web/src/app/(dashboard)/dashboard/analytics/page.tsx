@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type Inbox, type InboxAnalytics } from '@/lib/api';
+import { AnalyticsExceptionsPanel } from '@/components/analytics/analytics-exceptions-panel';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
@@ -58,7 +59,7 @@ const statCards: { key: keyof InboxAnalytics['summary']; label: string }[] = [
 ];
 
 export default function AnalyticsPage() {
-  const { token, accountId } = useAuthStore();
+  const { token, accountId, user } = useAuthStore();
   const [inboxes, setInboxes] = useState<Inbox[]>([]);
   const [inboxId, setInboxId] = useState('');
   const [preset, setPreset] = useState<DatePreset>('30d');
@@ -68,6 +69,8 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!token || !accountId) {
@@ -83,6 +86,17 @@ export default function AnalyticsPage() {
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, [token, accountId]);
+
+  useEffect(() => {
+    if (!token || !accountId || !user) return;
+    api.agents
+      .list(accountId, token)
+      .then((r) => {
+        const me = r.agents.find((a) => a.userId === user.id);
+        setIsAdmin(me?.role === 'administrator');
+      })
+      .catch(() => setIsAdmin(false));
+  }, [token, accountId, user]);
 
   const range = useMemo(() => {
     if (preset === 'custom' && customFrom && customTo) {
@@ -103,7 +117,17 @@ export default function AnalyticsPage() {
       .then(setAnalytics)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoadingData(false));
-  }, [token, accountId, inboxId, range.from, range.to]);
+  }, [token, accountId, inboxId, range.from, range.to, refreshKey]);
+
+  const addException = async (type: 'ip' | 'machine', value: string, label?: string) => {
+    if (!token || !accountId || !inboxId || !isAdmin || !value) return;
+    try {
+      await api.inboxes.addAnalyticsException(accountId, inboxId, { type, value, label }, token);
+      setRefreshKey((k) => k + 1);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to add exclusion');
+    }
+  };
 
   const maxDaily = Math.max(...(analytics?.daily.map((d) => d.visits) ?? [1]), 1);
 
@@ -208,6 +232,17 @@ export default function AnalyticsPage() {
               </p>
             )}
 
+            {token && accountId && inboxId && (
+              <AnalyticsExceptionsPanel
+                accountId={accountId}
+                inboxId={inboxId}
+                token={token}
+                isAdmin={isAdmin}
+                exceptions={analytics.exceptions ?? []}
+                onChange={() => setRefreshKey((k) => k + 1)}
+              />
+            )}
+
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {statCards.map(({ key, label }) => (
                 <Card key={key}>
@@ -260,6 +295,7 @@ export default function AnalyticsPage() {
                       <tr className="border-b border-gray-100 text-left text-xs text-gray-500">
                         <th className="px-5 py-3 font-medium">Contact</th>
                         <th className="px-5 py-3 font-medium">IP address</th>
+                        <th className="px-5 py-3 font-medium">Machine ID</th>
                         <th className="px-5 py-3 font-medium">Assignee</th>
                         <th className="px-5 py-3 font-medium">Started</th>
                         <th className="px-5 py-3 font-medium">Unread</th>
@@ -275,7 +311,28 @@ export default function AnalyticsPage() {
                             )}
                           </td>
                           <td className="px-5 py-3 font-mono text-xs text-gray-600">
-                            {chat.ipAddress ?? '—'}
+                            <span>{chat.ipAddress ?? '—'}</span>
+                            {isAdmin && chat.ipAddress && (
+                              <button
+                                type="button"
+                                onClick={() => addException('ip', chat.ipAddress!)}
+                                className="block text-[10px] text-primary-600 hover:underline mt-0.5"
+                              >
+                                Exclude IP
+                              </button>
+                            )}
+                          </td>
+                          <td className="px-5 py-3 font-mono text-xs text-gray-500 max-w-[120px] truncate">
+                            <span title={chat.sourceId ?? undefined}>{chat.sourceId ?? '—'}</span>
+                            {isAdmin && chat.sourceId && (
+                              <button
+                                type="button"
+                                onClick={() => addException('machine', chat.sourceId!)}
+                                className="block text-[10px] text-primary-600 hover:underline mt-0.5"
+                              >
+                                Exclude machine
+                              </button>
+                            )}
                           </td>
                           <td className="px-5 py-3 text-gray-600">{chat.assigneeName ?? 'Unassigned'}</td>
                           <td className="px-5 py-3 text-gray-500 text-xs">
@@ -301,6 +358,7 @@ export default function AnalyticsPage() {
                       <tr className="border-b border-gray-100 text-left text-xs text-gray-500">
                         <th className="px-5 py-3 font-medium">Time</th>
                         <th className="px-5 py-3 font-medium">IP address</th>
+                        <th className="px-5 py-3 font-medium">Machine ID</th>
                         <th className="px-5 py-3 font-medium">Page</th>
                         <th className="px-5 py-3 font-medium">User agent</th>
                       </tr>
@@ -312,7 +370,28 @@ export default function AnalyticsPage() {
                             {formatDate(visit.visitedAt)}
                           </td>
                           <td className="px-5 py-3 font-mono text-xs text-gray-600">
-                            {visit.ipAddress ?? '—'}
+                            <span>{visit.ipAddress ?? '—'}</span>
+                            {isAdmin && visit.ipAddress && (
+                              <button
+                                type="button"
+                                onClick={() => addException('ip', visit.ipAddress!)}
+                                className="block text-[10px] text-primary-600 hover:underline mt-0.5"
+                              >
+                                Exclude IP
+                              </button>
+                            )}
+                          </td>
+                          <td className="px-5 py-3 font-mono text-xs text-gray-500 max-w-[100px] truncate">
+                            <span title={visit.sourceId ?? undefined}>{visit.sourceId ?? '—'}</span>
+                            {isAdmin && visit.sourceId && (
+                              <button
+                                type="button"
+                                onClick={() => addException('machine', visit.sourceId!)}
+                                className="block text-[10px] text-primary-600 hover:underline mt-0.5"
+                              >
+                                Exclude
+                              </button>
+                            )}
                           </td>
                           <td className="px-5 py-3 text-xs text-gray-600 max-w-[200px] truncate">
                             {visit.pageUrl ?? '—'}

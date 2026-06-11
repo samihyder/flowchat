@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, boolean, timestamp, pgEnum, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, boolean, timestamp, pgEnum, jsonb, integer } from 'drizzle-orm/pg-core';
 import { accounts } from './accounts';
 import { users } from './users';
 
@@ -29,6 +29,14 @@ export const inboxes = pgTable('inboxes', {
   widgetTheme: jsonb('widget_theme'),
   websiteUrl: varchar('website_url', { length: 500 }),
   defaultAssigneeId: uuid('default_assignee_id').references(() => users.id, { onDelete: 'set null' }),
+  allowedDomains: jsonb('allowed_domains').$type<string[]>().default([]),
+  businessHours: jsonb('business_hours'),
+  offlineMessage: text('offline_message'),
+  privacyPolicyUrl: text('privacy_policy_url'),
+  requireConsent: boolean('require_consent').notNull().default(false),
+  roundRobinEnabled: boolean('round_robin_enabled').notNull().default(false),
+  useBusinessHours: boolean('use_business_hours').notNull().default(false),
+  missedChatMinutes: integer('missed_chat_minutes').notNull().default(5),
   isEnabled: boolean('is_enabled').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

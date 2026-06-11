@@ -4,20 +4,46 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore } from '@/store/ws';
-import { api, type Conversation } from '@/lib/api';
+import { api, type Conversation, type Label } from '@/lib/api';
 import { ConversationList } from '@/components/conversations/conversation-list';
 import { ConversationThread } from '@/components/conversations/conversation-thread';
+import {
+  ConversationFilterBar,
+  type ConversationFilters,
+} from '@/components/conversations/conversation-filter-bar';
 import { PageHeader } from '@/components/ui/page-header';
 
 export default function DashboardPage() {
   const searchParams = useSearchParams();
   const inboxFilter = searchParams.get('inbox');
+  const viewFilter = searchParams.get('filter');
+  const conversationParam = searchParams.get('conversation');
   const { token, accountId } = useAuthStore();
   const { lastMessageEvent, messageEventSeq, connected } = useWsStore();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [labels, setLabels] = useState<Label[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<ConversationFilters>({
+    status: 'open',
+    filter: viewFilter === 'mine' ? 'mine' : '',
+    priority: '',
+    labelId: '',
+    from: '',
+    to: '',
+  });
+
+  useEffect(() => {
+    if (viewFilter === 'mine') {
+      setFilters((f) => ({ ...f, filter: 'mine' }));
+    }
+  }, [viewFilter]);
+
+  useEffect(() => {
+    if (!token || !accountId) return;
+    api.labels.list(accountId, token).then((r) => setLabels(r.labels)).catch(() => {});
+  }, [token, accountId]);
 
   const fetchConversations = useCallback(async () => {
     if (!token || !accountId) return;
@@ -25,7 +51,12 @@ export default function DashboardPage() {
     try {
       const res = await api.conversations.list(accountId, token, {
         inboxId: inboxFilter ?? undefined,
-        status: 'open',
+        status: filters.status,
+        filter: filters.filter || undefined,
+        priority: filters.priority || undefined,
+        labelId: filters.labelId || undefined,
+        from: filters.from ? `${filters.from}T00:00:00.000Z` : undefined,
+        to: filters.to ? `${filters.to}T23:59:59.999Z` : undefined,
       });
       setConversations(res.conversations);
     } catch {
@@ -33,13 +64,16 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, accountId, inboxFilter]);
+  }, [token, accountId, inboxFilter, filters]);
 
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations]);
 
-  // Poll conversation list as fallback when WebSocket is down
+  useEffect(() => {
+    if (conversationParam) setSelectedId(conversationParam);
+  }, [conversationParam]);
+
   useEffect(() => {
     if (!token || !accountId || connected) return;
     const interval = setInterval(fetchConversations, 4000);
@@ -72,18 +106,21 @@ export default function DashboardPage() {
     [conversations, selectedId]
   );
 
-  const handleSelect = (id: string) => {
+  const handleSelect = async (id: string) => {
     setSelectedId(id);
     setConversations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
     );
+    if (token && accountId) {
+      api.conversations.get(accountId, id, token).catch(() => {});
+    }
   };
 
   return (
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <PageHeader
         title="Conversations"
-        description={inboxFilter ? 'Filtered by inbox' : 'All open conversations'}
+        description={inboxFilter ? 'Filtered by inbox' : 'Manage live chats'}
       />
 
       <div className="flex-1 flex min-h-0">
@@ -92,6 +129,7 @@ export default function DashboardPage() {
             selectedId ? 'hidden md:flex' : 'flex'
           }`}
         >
+          <ConversationFilterBar filters={filters} labels={labels} onChange={setFilters} />
           <ConversationList
             conversations={conversations}
             selectedId={selectedId}

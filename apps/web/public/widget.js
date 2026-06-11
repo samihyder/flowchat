@@ -69,6 +69,10 @@
     prechatDone: false,
     sending: false,
     error: '',
+    availability: null,
+    consentGiven: false,
+    agentTyping: false,
+    typingTimer: null,
   };
 
   function saveSession() {
@@ -318,26 +322,53 @@
     }).join('');
   }
 
+  function isChatAvailable() {
+    return !state.availability || state.availability.available !== false;
+  }
+
+  function offlineHtml() {
+    const msg = state.availability?.offlineMessage || 'We are currently offline. Please try again later.';
+    return `<div id="fc-home"><p style="padding:24px 16px;text-align:center;color:#6b7280;font-size:14px;line-height:1.5">${escapeHtml(msg)}</p></div>`;
+  }
+
   function renderBody() {
+    const offline = state.availability && !isChatAvailable();
     if (state.view === 'home' && !state.prechatDone) {
+      const offlineNote = offline
+        ? `<p style="font-size:13px;color:#b45309;background:#fffbeb;border-radius:8px;padding:10px 12px;margin-bottom:16px">${escapeHtml(state.availability.offlineMessage || 'We are away — leave a message and we will reply by email.')}</p>`
+        : '';
       return `<div id="fc-home">
         <div class="fc-avatar">${launcherIconSvg()}</div>
         <h4>${escapeHtml(state.inbox?.welcomeTitle || state.inbox?.name || 'Chat with us')}</h4>
         <p>${escapeHtml(state.inbox?.welcomeTagline || 'We typically reply in a few minutes')}</p>
-        <button type="button" class="fc-cta" id="fc-start-home">Start conversation</button>
+        ${offlineNote}
+        <button type="button" class="fc-cta" id="fc-start-home">${offline ? 'Leave a message' : 'Start conversation'}</button>
       </div>`;
     }
     if (!state.prechatDone) {
+      const consent = state.availability?.requireConsent
+        ? `<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--fc-label-text);margin-bottom:12px">
+            <input type="checkbox" id="fc-consent" ${state.consentGiven ? 'checked' : ''} />
+            <span>I agree to the processing of my data${
+              state.availability?.privacyPolicyUrl
+                ? ` per the <a href="${escapeHtml(state.availability.privacyPolicyUrl)}" target="_blank" rel="noopener">privacy policy</a>`
+                : ''
+            }.</span>
+          </label>`
+        : '';
       return `<div id="fc-prechat">
         <label for="fc-name">Your name</label>
         <input id="fc-name" placeholder="Enter your name" required autocomplete="name" />
         <label for="fc-email">Email <span style="font-weight:400;color:var(--fc-input-placeholder)">(optional)</span></label>
         <input id="fc-email" type="email" placeholder="you@company.com" autocomplete="email" />
+        ${consent}
         <button type="button" id="fc-start" ${state.sending ? 'disabled' : ''}>${state.sending ? 'Connecting…' : 'Start chat'}</button>
       </div>`;
     }
+    const typing = state.agentTyping ? '<p id="fc-typing" style="font-size:12px;color:#9ca3af;font-style:italic;padding:0 16px">Agent is typing…</p>' : '';
     return `
       <div id="fc-messages">${renderMessages()}</div>
+      ${typing}
       <form id="fc-composer">
         <input id="fc-input" placeholder="Type your message…" autocomplete="off" />
         <button type="submit" id="fc-send" ${state.sending ? 'disabled' : ''}>Send</button>
@@ -360,7 +391,11 @@
         <div id="fc-header">
           <div id="fc-header-text">
             <h3>${escapeHtml(state.inbox?.welcomeTitle || state.inbox?.name || 'Chat with us')}</h3>
-            <p>${escapeHtml(state.inbox?.welcomeTagline || 'We reply quickly')}</p>
+            <p>${escapeHtml(
+              state.availability && !isChatAvailable()
+                ? (state.availability.offlineMessage || 'We are currently away')
+                : (state.inbox?.welcomeTagline || 'We reply quickly')
+            )}</p>
           </div>
           <button id="fc-close" aria-label="Close chat">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -378,10 +413,14 @@
     document.getElementById('fc-close')?.addEventListener('click', close);
     document.getElementById('fc-start-home')?.addEventListener('click', () => { state.view = 'prechat'; render(); });
     document.getElementById('fc-start')?.addEventListener('click', startChat);
+    document.getElementById('fc-consent')?.addEventListener('change', (e) => {
+      state.consentGiven = e.target.checked;
+    });
     document.getElementById('fc-composer')?.addEventListener('submit', (e) => { e.preventDefault(); sendMessage(); });
     document.getElementById('fc-input')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
+    document.getElementById('fc-input')?.addEventListener('input', sendTyping);
 
     scrollMessages();
   }
@@ -400,9 +439,18 @@
     render();
   }
 
+  async function loadAvailability() {
+    try {
+      const res = await fetch(`${apiUrl}/public/inboxes/${inboxId}/availability`);
+      const data = await res.json();
+      if (res.ok) state.availability = data;
+    } catch (_) {}
+  }
+
   async function loadConfig(force) {
     if (state.configLoaded && !force) return;
     try {
+      await loadAvailability();
       const res = await fetch(`${configUrl}/public/inboxes/${inboxId}/widget-config`);
       const data = await res.json();
       if (res.ok && data.inbox) {
@@ -428,6 +476,11 @@
     const name = document.getElementById('fc-name')?.value?.trim();
     const email = document.getElementById('fc-email')?.value?.trim() || '';
     if (!name) return;
+    if (state.availability?.requireConsent && !state.consentGiven) {
+      state.error = 'Please accept the privacy consent to continue.';
+      render();
+      return;
+    }
 
     state.sending = true;
     state.error = '';
@@ -597,6 +650,16 @@
       try {
         const msg = JSON.parse(ev.data);
         if (msg.type === 'message_created' && msg.message) appendMessage(msg.message);
+        if (msg.type === 'typing' && msg.senderType === 'agent') {
+          state.agentTyping = true;
+          render();
+          if (state.typingTimer) clearTimeout(state.typingTimer);
+          state.typingTimer = setTimeout(function () {
+            state.agentTyping = false;
+            var el = document.getElementById('fc-typing');
+            if (el) el.remove();
+          }, 3000);
+        }
       } catch (_) {}
     };
 
@@ -610,6 +673,11 @@
         setTimeout(connectWs, 2000);
       }
     };
+  }
+
+  function sendTyping() {
+    if (!state.ws || state.ws.readyState !== WebSocket.OPEN || !state.conversationId) return;
+    state.ws.send(JSON.stringify({ type: 'typing', conversationId: state.conversationId }));
   }
 
   function startPolling() {
