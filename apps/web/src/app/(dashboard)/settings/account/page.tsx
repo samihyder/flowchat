@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { parseInviteDomainsText } from '@/lib/invite-domain';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { labelClass, selectClass } from '@/components/ui/form-field';
 
 const TIMEZONES = [
   'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -139,23 +142,14 @@ export default function AccountSettingsPage() {
       <div className="bg-white border border-gray-200 rounded-xl p-5">
         <form onSubmit={handleSave} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Workspace name</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
-            />
+            <label className={`${labelClass} text-sm`}>Workspace name</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Timezone</label>
-              <select
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
-              >
+              <label className={`${labelClass} text-sm`}>Timezone</label>
+              <select value={timezone} onChange={(e) => setTimezone(e.target.value)} className={selectClass}>
                 {TIMEZONES.map((tz) => (
                   <option key={tz} value={tz}>{tz}</option>
                 ))}
@@ -163,12 +157,8 @@ export default function AccountSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Language</label>
-              <select
-                value={locale}
-                onChange={(e) => setLocale(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
-              >
+              <label className={`${labelClass} text-sm`}>Language</label>
+              <select value={locale} onChange={(e) => setLocale(e.target.value)} className={selectClass}>
                 {LOCALES.map((l) => (
                   <option key={l.value} value={l.value}>{l.label}</option>
                 ))}
@@ -179,28 +169,26 @@ export default function AccountSettingsPage() {
           <div className="pt-4 border-t border-gray-100 space-y-4">
             <h3 className="text-sm font-semibold text-gray-900">Compliance & access</h3>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Allowed invite domains <span className="text-gray-400 font-normal">(one per line, empty = any work email)</span>
+              <label className={`${labelClass} text-sm`}>
+                Allowed invite domains{' '}
+                <span className="font-normal text-gray-400">(one per line, empty = any work email)</span>
               </label>
-              <textarea
+              <Textarea
                 value={inviteDomainsText}
                 onChange={(e) => setInviteDomainsText(e.target.value)}
                 rows={3}
                 placeholder="company.com"
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm font-mono"
+                className="font-mono"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Visitor data retention (days)
-              </label>
-              <input
+            <div className="max-w-xs">
+              <label className={`${labelClass} text-sm`}>Visitor data retention (days)</label>
+              <Input
                 type="number"
                 min={30}
                 max={3650}
                 value={dataRetentionDays}
                 onChange={(e) => setDataRetentionDays(Number(e.target.value) || 365)}
-                className="w-32 px-3 py-2 rounded-lg border border-gray-300 text-sm"
               />
               <p className="text-xs text-gray-400 mt-1">
                 Inactive visitors are purged automatically (min 30 days). Export/delete via visitor GDPR API.

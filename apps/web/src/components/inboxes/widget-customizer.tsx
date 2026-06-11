@@ -8,6 +8,8 @@ import {
   type WidgetTheme,
 } from '@/lib/widget-theme';
 import { WidgetPreview } from '@/components/inboxes/widget-preview';
+import { Input } from '@/components/ui/input';
+import { labelClass, selectClass } from '@/components/ui/form-field';
 
 const ICON_SVGS: Record<WidgetIconId, string> = {
   chat: '<path fill="currentColor" d="M8 10h8M8 14h5M20 6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2v3l4-3h6a2 2 0 0 0 2-2V6z"/>',
@@ -37,18 +39,18 @@ function ColorField({
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <label className={labelClass}>{label}</label>
       <div className="flex items-center gap-2">
         <input
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-9 h-9 rounded-lg border border-gray-200 cursor-pointer shrink-0"
+          className="size-9 rounded-lg border border-gray-200 cursor-pointer shrink-0 focus:outline-none focus:ring-2 focus:ring-primary-500/25"
         />
-        <input
+        <Input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 px-2 py-1.5 rounded-lg border border-gray-300 text-xs font-mono"
+          className="flex-1 py-1.5 text-xs font-mono"
         />
       </div>
     </div>
@@ -70,21 +72,20 @@ export function WidgetCustomizer({ settings, onChange, showNameChannel = true }:
       {showNameChannel && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">Name</label>
-            <input
+            <label className={labelClass}>Name</label>
+            <Input
               value={settings.name}
               onChange={(e) => onChange({ ...settings, name: e.target.value })}
               placeholder="Website Support"
               required
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5">Channel</label>
+            <label className={labelClass}>Channel</label>
             <select
               value={settings.channelType}
               onChange={(e) => onChange({ ...settings, channelType: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm bg-white"
+              className={selectClass}
             >
               <option value="web_widget">Website Live Chat</option>
             </select>
@@ -93,29 +94,26 @@ export function WidgetCustomizer({ settings, onChange, showNameChannel = true }:
       )}
 
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1.5">Greeting message</label>
-        <input
+        <label className={labelClass}>Greeting message</label>
+        <Input
           value={settings.greetingMessage}
           onChange={(e) => onChange({ ...settings, greetingMessage: e.target.value })}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">Header title</label>
-          <input
+          <label className={labelClass}>Header title</label>
+          <Input
             value={settings.welcomeTitle}
             onChange={(e) => onChange({ ...settings, welcomeTitle: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1.5">Header subtitle</label>
-          <input
+          <label className={labelClass}>Header subtitle</label>
+          <Input
             value={settings.welcomeTagline}
             onChange={(e) => onChange({ ...settings, welcomeTagline: e.target.value })}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
           />
         </div>
       </div>
@@ -147,7 +145,7 @@ export function WidgetCustomizer({ settings, onChange, showNameChannel = true }:
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1.5">Primary color (quick apply)</label>
+        <label className={labelClass}>Primary color (quick apply)</label>
         <div className="flex items-center gap-3">
           <input
             type="color"
@@ -166,7 +164,7 @@ export function WidgetCustomizer({ settings, onChange, showNameChannel = true }:
                 },
               });
             }}
-            className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer"
+            className="size-10 rounded-lg border border-gray-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/25"
           />
           <span className="text-sm text-gray-500 font-mono">{settings.widgetColor}</span>
         </div>

@@ -5,6 +5,7 @@ import {
   type BusinessHours,
   type DaySchedule,
 } from '@/lib/business-hours';
+import { checkboxClass, fieldClass } from '@/components/ui/form-field';
 
 const DAYS: { key: keyof BusinessHours; label: string }[] = [
   { key: 'mon', label: 'Mon' },
@@ -32,9 +33,10 @@ export function BusinessHoursEditor({ enabled, hours, onEnabledChange, onChange 
 
   return (
     <div className="space-y-3">
-      <label className="flex items-center gap-2 text-sm text-gray-700">
+      <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
         <input
           type="checkbox"
+          className={checkboxClass}
           checked={enabled}
           onChange={(e) => onEnabledChange(e.target.checked)}
         />
@@ -61,7 +63,7 @@ export function BusinessHoursEditor({ enabled, hours, onEnabledChange, onChange 
                       value={value[key].open}
                       disabled={!value[key].enabled}
                       onChange={(e) => updateDay(key, { open: e.target.value })}
-                      className="border border-gray-200 rounded px-2 py-1"
+                      className={`${fieldClass} w-auto py-1 px-2 text-xs`}
                     />
                   </td>
                   <td className="px-3 py-2">
@@ -70,12 +72,13 @@ export function BusinessHoursEditor({ enabled, hours, onEnabledChange, onChange 
                       value={value[key].close}
                       disabled={!value[key].enabled}
                       onChange={(e) => updateDay(key, { close: e.target.value })}
-                      className="border border-gray-200 rounded px-2 py-1"
+                      className={`${fieldClass} w-auto py-1 px-2 text-xs`}
                     />
                   </td>
                   <td className="px-3 py-2">
                     <input
                       type="checkbox"
+                      className={checkboxClass}
                       checked={value[key].enabled}
                       onChange={(e) => updateDay(key, { enabled: e.target.checked })}
                     />
