@@ -7,6 +7,13 @@ export type AccountSettings = {
   crmExportEnabled?: boolean;
   crmImportAllowedUserIds?: string[];
   crmExportAllowedUserIds?: string[];
+  /** Marketing email sender display name */
+  marketingFromName?: string;
+  /** Marketing from email (must match verified Resend domain) */
+  marketingFromEmail?: string;
+  marketingReplyTo?: string;
+  /** CAN-SPAM physical mailing address */
+  marketingPhysicalAddress?: string;
 };
 
 function parseStringArray(raw: unknown): string[] | undefined {
@@ -25,6 +32,11 @@ export function parseAccountSettings(raw: unknown): AccountSettings {
     crmExportEnabled: typeof s.crmExportEnabled === 'boolean' ? s.crmExportEnabled : undefined,
     crmImportAllowedUserIds: parseStringArray(s.crmImportAllowedUserIds),
     crmExportAllowedUserIds: parseStringArray(s.crmExportAllowedUserIds),
+    marketingFromName: typeof s.marketingFromName === 'string' ? s.marketingFromName : undefined,
+    marketingFromEmail: typeof s.marketingFromEmail === 'string' ? s.marketingFromEmail : undefined,
+    marketingReplyTo: typeof s.marketingReplyTo === 'string' ? s.marketingReplyTo : undefined,
+    marketingPhysicalAddress:
+      typeof s.marketingPhysicalAddress === 'string' ? s.marketingPhysicalAddress : undefined,
   };
 }
 

@@ -155,6 +155,39 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           </Link>
         </NavSection>
 
+        <NavSection title="Marketing">
+          <Link
+            href={'/dashboard/marketing/campaigns' as Route}
+            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
+              pathname.startsWith('/dashboard/marketing/campaigns')
+                ? 'bg-primary-50 text-primary-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Campaigns
+          </Link>
+          <Link
+            href={'/dashboard/marketing/segments' as Route}
+            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
+              pathname.startsWith('/dashboard/marketing/segments')
+                ? 'bg-primary-50 text-primary-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Segments
+          </Link>
+          <Link
+            href={'/dashboard/marketing/templates' as Route}
+            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
+              pathname.startsWith('/dashboard/marketing/templates')
+                ? 'bg-primary-50 text-primary-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Templates
+          </Link>
+        </NavSection>
+
         <NavSection title="Conversations">
           <Link
             href={'/dashboard' as Route}

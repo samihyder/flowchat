@@ -174,6 +174,10 @@ export type AccountCrmSettings = {
   crmExportEnabled?: boolean;
   crmImportAllowedUserIds?: string[];
   crmExportAllowedUserIds?: string[];
+  marketingFromName?: string;
+  marketingFromEmail?: string;
+  marketingReplyTo?: string;
+  marketingPhysicalAddress?: string;
 };
 
 export type CustomAttributeDefinition = {
@@ -240,6 +244,68 @@ export type ImportJob = {
   importedCount?: number;
   skippedCount?: number;
   errors?: { row: number; message: string }[];
+};
+
+export type MarketingSegment = {
+  id: string;
+  name: string;
+  segmentType: 'static' | 'dynamic';
+  filters: Record<string, unknown>;
+  contactCount?: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EmailTemplate = {
+  id: string;
+  name: string;
+  subject: string;
+  htmlBody?: string;
+  textBody?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type CampaignRates = {
+  openRate: number;
+  clickRate: number;
+  bounceRate: number;
+  unsubscribeRate: number;
+  deliveryRate: number;
+  complaintRate: number;
+};
+
+export type EmailCampaign = {
+  id: string;
+  name: string;
+  subject: string;
+  status: string;
+  templateId: string | null;
+  segmentId: string | null;
+  segmentName?: string | null;
+  totalRecipients: number;
+  sentCount: number;
+  deliveredCount: number;
+  openedCount: number;
+  clickedCount: number;
+  bouncedCount: number;
+  complainedCount: number;
+  unsubscribedCount: number;
+  failedCount: number;
+  scheduledAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  rates?: CampaignRates;
+};
+
+export type ContactEmailEvent = {
+  id: string;
+  eventType: string;
+  subject: string | null;
+  campaignId: string | null;
+  campaignName?: string | null;
+  createdAt: string;
 };
 
 type RequestOptions = {
@@ -395,6 +461,10 @@ export const api = {
         settings?: AccountCrmSettings & {
           allowedInviteDomains?: string[];
           dataRetentionDays?: number;
+          marketingFromName?: string;
+          marketingFromEmail?: string;
+          marketingReplyTo?: string;
+          marketingPhysicalAddress?: string;
         };
       },
       token: string
@@ -856,6 +926,74 @@ export const api = {
         throw new Error((data as { error?: string }).error ?? 'Export failed');
       }
       return res.blob();
+    },
+
+    listEmailEvents: (accountId: string, contactId: string, token: string) =>
+      request<{ events: ContactEmailEvent[] }>(
+        `/accounts/${accountId}/contacts/${contactId}/email-events`,
+        { token }
+      ),
+  },
+
+  marketing: {
+    segments: {
+      list: (accountId: string, token: string) =>
+        request<{ segments: MarketingSegment[] }>(`/accounts/${accountId}/marketing/segments`, { token }),
+      create: (
+        accountId: string,
+        body: { name: string; segmentType?: string; filters?: Record<string, unknown> },
+        token: string
+      ) =>
+        request<{ segment: MarketingSegment }>(`/accounts/${accountId}/marketing/segments`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+    },
+
+    templates: {
+      list: (accountId: string, token: string) =>
+        request<{ templates: EmailTemplate[] }>(`/accounts/${accountId}/marketing/templates`, { token }),
+      create: (
+        accountId: string,
+        body: { name: string; subject: string; htmlBody: string; textBody?: string },
+        token: string
+      ) =>
+        request<{ template: EmailTemplate }>(`/accounts/${accountId}/marketing/templates`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+    },
+
+    campaigns: {
+      list: (accountId: string, token: string) =>
+        request<{ campaigns: EmailCampaign[] }>(`/accounts/${accountId}/marketing/campaigns`, { token }),
+      get: (accountId: string, campaignId: string, token: string) =>
+        request<{
+          campaign: EmailCampaign;
+          statusBreakdown: { status: string; count: number }[];
+        }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}`, { token }),
+      create: (
+        accountId: string,
+        body: { name: string; subject: string; templateId?: string; segmentId?: string },
+        token: string
+      ) =>
+        request<{ campaign: EmailCampaign }>(`/accounts/${accountId}/marketing/campaigns`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+      send: (accountId: string, campaignId: string, token: string) =>
+        request<{ totalRecipients: number; done: boolean; processed: number }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/send`,
+          { method: 'POST', token }
+        ),
+      process: (accountId: string, campaignId: string, token: string) =>
+        request<{ done: boolean; processed: number }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/process`,
+          { method: 'POST', token }
+        ),
     },
   },
 

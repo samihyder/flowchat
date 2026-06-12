@@ -1,0 +1,233 @@
+import type { AppSql } from '@/lib/db-sql';
+import { getAccountSettings } from '@/lib/account-settings-db';
+import { applyMergeTags } from '@/lib/marketing/merge-tags';
+import { sendMarketingEmail } from '@/lib/marketing/email-send';
+import { resolveSegmentContacts } from '@/lib/marketing/segments';
+
+export async function prepareCampaignSend(sql: AppSql, accountId: string, campaignId: string) {
+  const campaigns = await sql`
+    SELECT id, segment_id as "segmentId", template_id as "templateId", subject, status
+    FROM email_campaigns
+    WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid
+    LIMIT 1
+  `;
+  const campaign = campaigns[0] as
+    | { segmentId: string | null; templateId: string | null; subject: string; status: string }
+    | undefined;
+  if (!campaign) throw new Error('Campaign not found');
+  if (!campaign.segmentId || !campaign.templateId) {
+    throw new Error('Campaign requires a segment and template');
+  }
+  if (campaign.status !== 'draft' && campaign.status !== 'scheduled') {
+    throw new Error('Campaign cannot be sent in current status');
+  }
+
+  const templates = await sql`
+    SELECT subject, html_body as "htmlBody", text_body as "textBody"
+    FROM email_templates WHERE id = ${campaign.templateId}::uuid AND account_id = ${accountId}::uuid
+    LIMIT 1
+  `;
+  if (!templates[0]) throw new Error('Template not found');
+
+  const contacts = await resolveSegmentContacts(sql, accountId, campaign.segmentId);
+  await sql`DELETE FROM email_campaign_recipients WHERE campaign_id = ${campaignId}::uuid`;
+
+  for (const c of contacts) {
+    await sql`
+      INSERT INTO email_campaign_recipients (campaign_id, contact_id, email, status)
+      VALUES (${campaignId}::uuid, ${c.id}::uuid, ${c.email}, 'queued')
+    `;
+  }
+
+  await sql`
+    UPDATE email_campaigns SET
+      status = 'sending',
+      started_at = NOW(),
+      total_recipients = ${contacts.length},
+      sent_count = 0,
+      delivered_count = 0,
+      opened_count = 0,
+      clicked_count = 0,
+      bounced_count = 0,
+      complained_count = 0,
+      unsubscribed_count = 0,
+      failed_count = 0,
+      updated_at = NOW()
+    WHERE id = ${campaignId}::uuid
+  `;
+
+  return { totalRecipients: contacts.length };
+}
+
+export async function processCampaignBatch(
+  sql: AppSql,
+  accountId: string,
+  campaignId: string,
+  batchSize = 25
+): Promise<{ done: boolean; processed: number }> {
+  const settings = await getAccountSettings(sql, accountId);
+
+  const campaigns = await sql`
+    SELECT c.id, c.subject, c.template_id as "templateId", t.html_body as "htmlBody", t.text_body as "textBody"
+    FROM email_campaigns c
+    LEFT JOIN email_templates t ON t.id = c.template_id
+    WHERE c.id = ${campaignId}::uuid AND c.account_id = ${accountId}::uuid
+    LIMIT 1
+  `;
+  const campaign = campaigns[0] as
+    | { subject: string; htmlBody: string; textBody: string | null }
+    | undefined;
+  if (!campaign?.htmlBody) throw new Error('Campaign not found');
+
+  const recipients = await sql`
+    SELECT r.id, r.contact_id as "contactId", r.email,
+           c.name, c.phone, c.type, c.custom_attributes as "customAttributes"
+    FROM email_campaign_recipients r
+    LEFT JOIN contacts c ON c.id = r.contact_id
+    WHERE r.campaign_id = ${campaignId}::uuid AND r.status = 'queued'
+    LIMIT ${batchSize}
+  `;
+
+  let processed = 0;
+  for (const row of recipients as {
+    id: string;
+    contactId: string | null;
+    email: string;
+    name: string | null;
+    phone: string | null;
+    type: string | null;
+    customAttributes: Record<string, unknown> | null;
+  }[]) {
+    if (!row.contactId) {
+      await sql`
+        UPDATE email_campaign_recipients SET status = 'skipped', error_message = 'Missing contact'
+        WHERE id = ${row.id}::uuid
+      `;
+      processed++;
+      continue;
+    }
+
+    const subject = applyMergeTags(campaign.subject, {
+      name: row.name ?? 'there',
+      email: row.email,
+      phone: row.phone,
+      type: row.type ?? undefined,
+      customAttributes: row.customAttributes ?? {},
+    });
+    const html = applyMergeTags(campaign.htmlBody, {
+      name: row.name ?? 'there',
+      email: row.email,
+      phone: row.phone,
+      type: row.type ?? undefined,
+      customAttributes: row.customAttributes ?? {},
+    });
+    const text = campaign.textBody
+      ? applyMergeTags(campaign.textBody, {
+          name: row.name ?? 'there',
+          email: row.email,
+          phone: row.phone,
+          type: row.type ?? undefined,
+          customAttributes: row.customAttributes ?? {},
+        })
+      : undefined;
+
+    const result = await sendMarketingEmail(sql, accountId, row.contactId, settings, {
+      to: row.email,
+      subject,
+      html,
+      text,
+    });
+
+    if (result.ok) {
+      await sql`
+        UPDATE email_campaign_recipients SET
+          status = 'sent',
+          resend_message_id = ${result.messageId},
+          sent_at = NOW()
+        WHERE id = ${row.id}::uuid
+      `;
+      await sql`
+        INSERT INTO contact_email_events (account_id, contact_id, campaign_id, event_type, subject, metadata)
+        VALUES (
+          ${accountId}::uuid,
+          ${row.contactId}::uuid,
+          ${campaignId}::uuid,
+          'sent',
+          ${subject},
+          ${JSON.stringify({ resendMessageId: result.messageId })}::jsonb
+        )
+      `;
+      await sql`
+        UPDATE email_campaigns SET sent_count = sent_count + 1, updated_at = NOW()
+        WHERE id = ${campaignId}::uuid
+      `;
+    } else {
+      await sql`
+        UPDATE email_campaign_recipients SET
+          status = 'failed',
+          error_message = ${result.error}
+        WHERE id = ${row.id}::uuid
+      `;
+      await sql`
+        UPDATE email_campaigns SET failed_count = failed_count + 1, updated_at = NOW()
+        WHERE id = ${campaignId}::uuid
+      `;
+    }
+    processed++;
+  }
+
+  const remaining = await sql`
+    SELECT COUNT(*)::int as count FROM email_campaign_recipients
+    WHERE campaign_id = ${campaignId}::uuid AND status = 'queued'
+  `;
+  const left = (remaining[0] as { count: number }).count;
+  const done = left === 0;
+
+  if (done) {
+    await sql`
+      UPDATE email_campaigns SET status = 'sent', completed_at = NOW(), updated_at = NOW()
+      WHERE id = ${campaignId}::uuid
+    `;
+    await refreshCampaignStats(sql, campaignId);
+  }
+
+  return { done, processed };
+}
+
+export async function refreshCampaignStats(sql: AppSql, campaignId: string) {
+  await sql`
+    UPDATE email_campaigns SET
+      delivered_count = (SELECT COUNT(*)::int FROM email_campaign_recipients WHERE campaign_id = ${campaignId}::uuid AND status IN ('delivered','opened','clicked')),
+      opened_count = (SELECT COUNT(*)::int FROM email_campaign_recipients WHERE campaign_id = ${campaignId}::uuid AND opened_at IS NOT NULL),
+      clicked_count = (SELECT COUNT(*)::int FROM email_campaign_recipients WHERE campaign_id = ${campaignId}::uuid AND clicked_at IS NOT NULL),
+      bounced_count = (SELECT COUNT(*)::int FROM email_campaign_recipients WHERE campaign_id = ${campaignId}::uuid AND status = 'bounced'),
+      complained_count = (SELECT COUNT(*)::int FROM email_campaign_recipients WHERE campaign_id = ${campaignId}::uuid AND status = 'complained'),
+      failed_count = (SELECT COUNT(*)::int FROM email_campaign_recipients WHERE campaign_id = ${campaignId}::uuid AND status = 'failed'),
+      updated_at = NOW()
+    WHERE id = ${campaignId}::uuid
+  `;
+}
+
+export function campaignRates(campaign: {
+  totalRecipients: number;
+  sentCount: number;
+  deliveredCount: number;
+  openedCount: number;
+  clickedCount: number;
+  bouncedCount: number;
+  complainedCount: number;
+  unsubscribedCount: number;
+  failedCount: number;
+}) {
+  const sent = campaign.sentCount || 0;
+  const delivered = campaign.deliveredCount || sent;
+  const pct = (n: number, base: number) => (base > 0 ? Math.round((n / base) * 1000) / 10 : 0);
+  return {
+    openRate: pct(campaign.openedCount, delivered),
+    clickRate: pct(campaign.clickedCount, delivered),
+    bounceRate: pct(campaign.bouncedCount, sent),
+    unsubscribeRate: pct(campaign.unsubscribedCount, delivered),
+    deliveryRate: pct(delivered, sent),
+    complaintRate: pct(campaign.complainedCount, sent),
+  };
+}
