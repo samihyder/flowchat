@@ -178,6 +178,41 @@ export type AccountCrmSettings = {
   marketingFromEmail?: string;
   marketingReplyTo?: string;
   marketingPhysicalAddress?: string;
+  marketingDoubleOptIn?: boolean;
+};
+
+export type MarketingSender = {
+  id: string;
+  label: string;
+  fromName: string;
+  fromEmail: string;
+  replyTo: string | null;
+  physicalAddress: string | null;
+  isDefault: boolean;
+  domainStatus: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MarketingWorkflowStep = {
+  id: string;
+  stepOrder: number;
+  stepType: string;
+  config: Record<string, unknown>;
+};
+
+export type MarketingWorkflow = {
+  id: string;
+  name: string;
+  triggerType: string;
+  triggerConfig: Record<string, unknown>;
+  senderId: string | null;
+  enabled: boolean;
+  allowReentry: boolean;
+  activeEnrollments: number;
+  steps: MarketingWorkflowStep[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CustomAttributeDefinition = {
@@ -465,6 +500,7 @@ export const api = {
           marketingFromEmail?: string;
           marketingReplyTo?: string;
           marketingPhysicalAddress?: string;
+          marketingDoubleOptIn?: boolean;
         };
       },
       token: string
@@ -936,6 +972,51 @@ export const api = {
   },
 
   marketing: {
+    senders: {
+      list: (accountId: string, token: string) =>
+        request<{ senders: MarketingSender[] }>(`/accounts/${accountId}/marketing/senders`, { token }),
+      create: (
+        accountId: string,
+        body: {
+          label: string;
+          fromName: string;
+          fromEmail: string;
+          replyTo?: string;
+          physicalAddress?: string;
+          isDefault?: boolean;
+        },
+        token: string
+      ) =>
+        request<{ sender: MarketingSender }>(`/accounts/${accountId}/marketing/senders`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+      update: (
+        accountId: string,
+        senderId: string,
+        body: Partial<{
+          label: string;
+          fromName: string;
+          fromEmail: string;
+          replyTo: string | null;
+          physicalAddress: string | null;
+          isDefault: boolean;
+        }>,
+        token: string
+      ) =>
+        request<{ sender: MarketingSender }>(`/accounts/${accountId}/marketing/senders/${senderId}`, {
+          method: 'PATCH',
+          body,
+          token,
+        }),
+      delete: (accountId: string, senderId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/senders/${senderId}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+
     segments: {
       list: (accountId: string, token: string) =>
         request<{ segments: MarketingSegment[] }>(`/accounts/${accountId}/marketing/segments`, { token }),
@@ -964,6 +1045,16 @@ export const api = {
           body,
           token,
         }),
+      testSend: (
+        accountId: string,
+        templateId: string,
+        body: { to?: string; senderId?: string },
+        token: string
+      ) =>
+        request<{ ok: boolean; sentTo: string }>(
+          `/accounts/${accountId}/marketing/templates/${templateId}/test-send`,
+          { method: 'POST', body, token }
+        ),
     },
 
     campaigns: {
@@ -976,7 +1067,7 @@ export const api = {
         }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}`, { token }),
       create: (
         accountId: string,
-        body: { name: string; subject: string; templateId?: string; segmentId?: string },
+        body: { name: string; subject: string; templateId?: string; segmentId?: string; senderId?: string },
         token: string
       ) =>
         request<{ campaign: EmailCampaign }>(`/accounts/${accountId}/marketing/campaigns`, {
@@ -994,6 +1085,39 @@ export const api = {
           `/accounts/${accountId}/marketing/campaigns/${campaignId}/process`,
           { method: 'POST', token }
         ),
+    },
+
+    workflows: {
+      list: (accountId: string, token: string) =>
+        request<{ workflows: MarketingWorkflow[] }>(`/accounts/${accountId}/marketing/workflows`, { token }),
+      create: (
+        accountId: string,
+        body: {
+          name: string;
+          triggerType?: string;
+          triggerConfig?: Record<string, unknown>;
+          senderId?: string;
+          allowReentry?: boolean;
+          steps?: { stepType: string; config: Record<string, unknown> }[];
+        },
+        token: string
+      ) =>
+        request<{ workflowId: string }>(`/accounts/${accountId}/marketing/workflows`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+      enroll: (accountId: string, workflowId: string, contactId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/workflows/${workflowId}/enroll`, {
+          method: 'POST',
+          body: { contactId },
+          token,
+        }),
+      process: (accountId: string, token: string) =>
+        request<{ processed: number }>(`/accounts/${accountId}/marketing/workflows/process`, {
+          method: 'POST',
+          token,
+        }),
     },
   },
 

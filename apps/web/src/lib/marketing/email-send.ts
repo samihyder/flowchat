@@ -1,23 +1,14 @@
 import type { AccountSettings } from '@/lib/account-settings';
 import { getOrCreateUnsubscribeToken, unsubscribeUrl } from '@/lib/marketing/unsubscribe';
+import { getMarketingSender, senderFromHeader, type SenderIdentity } from '@/lib/marketing/senders';
 import type { AppSql } from '@/lib/db-sql';
 
 export type MarketingSendResult =
   | { ok: true; messageId: string }
   | { ok: false; error: string };
 
-function marketingFrom(settings: AccountSettings): string {
-  const name = settings.marketingFromName?.trim() || 'FlowChat';
-  const email =
-    settings.marketingFromEmail?.trim() ||
-    process.env.RESEND_FROM_EMAIL?.match(/<([^>]+)>/)?.[1] ||
-    process.env.RESEND_FROM_EMAIL ||
-    'onboarding@resend.dev';
-  return `${name} <${email}>`;
-}
-
-function complianceFooter(settings: AccountSettings, unsubscribeLink: string): string {
-  const address = settings.marketingPhysicalAddress?.trim() || 'FlowChat';
+function complianceFooter(physicalAddress: string | undefined, unsubscribeLink: string): string {
+  const address = physicalAddress?.trim() || 'FlowChat';
   return `
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0" />
     <p style="font-size:12px;color:#6b7280;line-height:1.5">
@@ -37,14 +28,25 @@ export async function sendMarketingEmail(
     subject: string;
     html: string;
     text?: string;
+    sender?: SenderIdentity;
+    senderId?: string | null;
+    skipComplianceFooter?: boolean;
+    /** Test sends skip unsubscribe token persistence */
+    isTest?: boolean;
   }
 ): Promise<MarketingSendResult> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { ok: false, error: 'RESEND_API_KEY not configured' };
 
-  const token = await getOrCreateUnsubscribeToken(sql, accountId, contactId);
-  const unsub = unsubscribeUrl(token);
-  const html = `${opts.html}${complianceFooter(settings, unsub)}`;
+  const sender =
+    opts.sender ?? (await getMarketingSender(sql, accountId, settings, opts.senderId));
+
+  const unsub = opts.isTest
+    ? '#'
+    : unsubscribeUrl(await getOrCreateUnsubscribeToken(sql, accountId, contactId));
+  const html = opts.skipComplianceFooter
+    ? opts.html
+    : `${opts.html}${complianceFooter(sender.physicalAddress, unsub)}`;
   const text =
     opts.text ??
     html
@@ -52,10 +54,13 @@ export async function sendMarketingEmail(
       .replace(/\s+/g, ' ')
       .trim();
 
-  const headers: Record<string, string> = {
-    'List-Unsubscribe': `<${unsub}>`,
-    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-  };
+  const headers: Record<string, string> =
+    opts.skipComplianceFooter || opts.isTest
+      ? {}
+      : {
+          'List-Unsubscribe': `<${unsub}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        };
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -65,13 +70,13 @@ export async function sendMarketingEmail(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: marketingFrom(settings),
-        reply_to: settings.marketingReplyTo?.trim() || undefined,
+        from: senderFromHeader(sender),
+        reply_to: sender.replyTo || undefined,
         to: [opts.to],
         subject: opts.subject,
         html,
         text,
-        headers,
+        headers: Object.keys(headers).length ? headers : undefined,
       }),
     });
 

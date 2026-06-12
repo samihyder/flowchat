@@ -72,6 +72,7 @@ export async function POST(req: Request, { params }: Params) {
     subject?: string;
     templateId?: string;
     segmentId?: string;
+    senderId?: string;
   };
   if (!body.name?.trim() || !body.subject?.trim()) {
     return Response.json({ error: 'Name and subject are required' }, { status: 400 });
@@ -79,13 +80,14 @@ export async function POST(req: Request, { params }: Params) {
 
   const sql = neon(process.env.DATABASE_URL!);
   const rows = await sql`
-    INSERT INTO email_campaigns (account_id, name, subject, template_id, segment_id, created_by)
+    INSERT INTO email_campaigns (account_id, name, subject, template_id, segment_id, sender_id, created_by)
     VALUES (
       ${accountId}::uuid,
       ${body.name.trim()},
       ${body.subject.trim()},
       ${body.templateId ?? null}::uuid,
       ${body.segmentId ?? null}::uuid,
+      ${body.senderId ?? null}::uuid,
       ${auth.userId}::uuid
     )
     RETURNING id, name, subject, status, template_id as "templateId", segment_id as "segmentId",

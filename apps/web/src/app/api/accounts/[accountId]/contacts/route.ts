@@ -3,6 +3,8 @@ import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
 import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-attributes';
 import { listContacts } from '@/lib/contacts-query';
+import { getAccountSettings } from '@/lib/account-settings-db';
+import { sendDoubleOptInEmail } from '@/lib/marketing/double-opt-in';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -129,6 +131,17 @@ export async function POST(req: Request, { params }: Params) {
         WHERE EXISTS (SELECT 1 FROM labels WHERE id = ${labelId}::uuid AND account_id = ${accountId}::uuid)
         ON CONFLICT DO NOTHING
       `;
+    }
+  }
+
+  const email = body.email?.trim();
+  if (contact && email) {
+    const settings = await getAccountSettings(sql, accountId);
+    if (settings.marketingDoubleOptIn) {
+      await sendDoubleOptInEmail(sql, accountId, contact.id, settings, {
+        to: email,
+        name,
+      });
     }
   }
 

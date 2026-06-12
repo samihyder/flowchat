@@ -5,7 +5,7 @@ import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { api, type EmailTemplate, type MarketingSegment } from '@/lib/api';
+import { api, type EmailTemplate, type MarketingSegment, type MarketingSender } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -16,8 +16,10 @@ export default function NewCampaignPage() {
   const [subject, setSubject] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [segmentId, setSegmentId] = useState('');
+  const [senderId, setSenderId] = useState('');
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [segments, setSegments] = useState<MarketingSegment[]>([]);
+  const [senders, setSenders] = useState<MarketingSender[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -25,9 +27,13 @@ export default function NewCampaignPage() {
     Promise.all([
       api.marketing.templates.list(accountId, token),
       api.marketing.segments.list(accountId, token),
-    ]).then(([t, s]) => {
+      api.marketing.senders.list(accountId, token),
+    ]).then(([t, s, snd]) => {
       setTemplates(t.templates);
       setSegments(s.segments);
+      setSenders(snd.senders);
+      const def = snd.senders.find((x) => x.isDefault);
+      if (def) setSenderId(def.id);
     });
   }, [token, accountId]);
 
@@ -38,7 +44,13 @@ export default function NewCampaignPage() {
     try {
       const res = await api.marketing.campaigns.create(
         accountId,
-        { name: name.trim(), subject: subject.trim(), templateId: templateId || undefined, segmentId: segmentId || undefined },
+        {
+          name: name.trim(),
+          subject: subject.trim(),
+          templateId: templateId || undefined,
+          segmentId: segmentId || undefined,
+          senderId: senderId || undefined,
+        },
         token
       );
       router.push(`/dashboard/marketing/campaigns/${res.campaign.id}` as Route);
@@ -66,6 +78,18 @@ export default function NewCampaignPage() {
           {templates.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
+            </option>
+          ))}
+        </select>
+        <select
+          value={senderId}
+          onChange={(e) => setSenderId(e.target.value)}
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"
+        >
+          <option value="">Default sender</option>
+          {senders.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.label} — {s.fromEmail}
             </option>
           ))}
         </select>

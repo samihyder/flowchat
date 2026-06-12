@@ -186,6 +186,16 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           >
             Templates
           </Link>
+          <Link
+            href={'/dashboard/marketing/workflows' as Route}
+            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
+              pathname.startsWith('/dashboard/marketing/workflows')
+                ? 'bg-primary-50 text-primary-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Workflows
+          </Link>
         </NavSection>
 
         <NavSection title="Conversations">

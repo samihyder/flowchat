@@ -68,14 +68,15 @@ export async function processCampaignBatch(
   const settings = await getAccountSettings(sql, accountId);
 
   const campaigns = await sql`
-    SELECT c.id, c.subject, c.template_id as "templateId", t.html_body as "htmlBody", t.text_body as "textBody"
+    SELECT c.id, c.subject, c.sender_id as "senderId", c.template_id as "templateId",
+           t.html_body as "htmlBody", t.text_body as "textBody"
     FROM email_campaigns c
     LEFT JOIN email_templates t ON t.id = c.template_id
     WHERE c.id = ${campaignId}::uuid AND c.account_id = ${accountId}::uuid
     LIMIT 1
   `;
   const campaign = campaigns[0] as
-    | { subject: string; htmlBody: string; textBody: string | null }
+    | { subject: string; senderId: string | null; htmlBody: string; textBody: string | null }
     | undefined;
   if (!campaign?.htmlBody) throw new Error('Campaign not found');
 
@@ -136,6 +137,7 @@ export async function processCampaignBatch(
       subject,
       html,
       text,
+      senderId: campaign.senderId,
     });
 
     if (result.ok) {

@@ -14,6 +14,8 @@ export type AccountSettings = {
   marketingReplyTo?: string;
   /** CAN-SPAM physical mailing address */
   marketingPhysicalAddress?: string;
+  /** When true, new contacts must confirm before marketing sends */
+  marketingDoubleOptIn?: boolean;
 };
 
 function parseStringArray(raw: unknown): string[] | undefined {
@@ -37,6 +39,8 @@ export function parseAccountSettings(raw: unknown): AccountSettings {
     marketingReplyTo: typeof s.marketingReplyTo === 'string' ? s.marketingReplyTo : undefined,
     marketingPhysicalAddress:
       typeof s.marketingPhysicalAddress === 'string' ? s.marketingPhysicalAddress : undefined,
+    marketingDoubleOptIn:
+      typeof s.marketingDoubleOptIn === 'boolean' ? s.marketingDoubleOptIn : undefined,
   };
 }
 
