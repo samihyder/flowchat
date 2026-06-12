@@ -168,6 +168,48 @@ export type VisitorContext = {
 
 export type CannedResponse = { id: string; shortcut: string; title: string; content: string };
 
+export type AccountCrmSettings = {
+  crmImportEnabled?: boolean;
+  crmExportEnabled?: boolean;
+  crmImportAllowedUserIds?: string[];
+  crmExportAllowedUserIds?: string[];
+};
+
+export type Contact = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  type: 'visitor' | 'lead' | 'customer';
+  lastActivityAt: string | null;
+  isBlocked: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ContactNote = {
+  id: string;
+  content: string;
+  authorName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ContactDetail = Contact & {
+  avatarUrl: string | null;
+  blockedAt: string | null;
+  labels: Label[];
+  conversations: {
+    id: string;
+    status: string;
+    inboxId: string;
+    inboxName: string;
+    lastMessageAt: string | null;
+    createdAt: string;
+  }[];
+  notes: ContactNote[];
+};
+
 type RequestOptions = {
   method?: string;
   body?: unknown;
@@ -305,7 +347,10 @@ export const api = {
           locale: string;
           logoUrl: string | null;
           slug: string;
-          settings?: { allowedInviteDomains?: string[]; dataRetentionDays?: number };
+          settings?: AccountCrmSettings & {
+            allowedInviteDomains?: string[];
+            dataRetentionDays?: number;
+          };
         };
       }>(`/accounts/${accountId}`, { token }),
     update: (
@@ -315,7 +360,10 @@ export const api = {
         timezone?: string;
         locale?: string;
         logoUrl?: string | null;
-        settings?: { allowedInviteDomains?: string[]; dataRetentionDays?: number };
+        settings?: AccountCrmSettings & {
+          allowedInviteDomains?: string[];
+          dataRetentionDays?: number;
+        };
       },
       token: string
     ) =>
@@ -326,7 +374,10 @@ export const api = {
           timezone: string;
           locale: string;
           logoUrl: string | null;
-          settings?: { allowedInviteDomains?: string[]; dataRetentionDays?: number };
+          settings?: AccountCrmSettings & {
+            allowedInviteDomains?: string[];
+            dataRetentionDays?: number;
+          };
         };
       }>(`/accounts/${accountId}`, { method: 'PATCH', body, token }),
     getLogoUploadUrl: (accountId: string, token: string) =>
@@ -585,6 +636,118 @@ export const api = {
       ),
   },
 
+  contacts: {
+    list: (
+      accountId: string,
+      token: string,
+      params?: { q?: string; type?: string; sort?: string; order?: string; limit?: number; offset?: number }
+    ) => {
+      const qs = new URLSearchParams();
+      if (params?.q) qs.set('q', params.q);
+      if (params?.type) qs.set('type', params.type);
+      if (params?.sort) qs.set('sort', params.sort);
+      if (params?.order) qs.set('order', params.order);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      if (params?.offset) qs.set('offset', String(params.offset));
+      const query = qs.toString();
+      return request<{ contacts: Contact[]; total: number }>(
+        `/accounts/${accountId}/contacts${query ? `?${query}` : ''}`,
+        { token }
+      );
+    },
+
+    get: (accountId: string, contactId: string, token: string) =>
+      request<{ contact: ContactDetail; labels: Label[]; conversations: ContactDetail['conversations']; notes: ContactNote[] }>(
+        `/accounts/${accountId}/contacts/${contactId}`,
+        { token }
+      ),
+
+    create: (
+      accountId: string,
+      body: { name: string; email?: string | null; phone?: string | null; type?: string; labelIds?: string[] },
+      token: string
+    ) => request<{ contact: Contact }>(`/accounts/${accountId}/contacts`, { method: 'POST', body, token }),
+
+    update: (
+      accountId: string,
+      contactId: string,
+      body: { name?: string; email?: string | null; phone?: string | null; type?: string; labelIds?: string[] },
+      token: string
+    ) =>
+      request<{ contact: Contact }>(`/accounts/${accountId}/contacts/${contactId}`, {
+        method: 'PATCH',
+        body,
+        token,
+      }),
+
+    remove: (accountId: string, contactId: string, token: string) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/contacts/${contactId}`, { method: 'DELETE', token }),
+
+    addNote: (accountId: string, contactId: string, content: string, token: string) =>
+      request<{ note: ContactNote }>(`/accounts/${accountId}/contacts/${contactId}/notes`, {
+        method: 'POST',
+        body: { content },
+        token,
+      }),
+
+    updateNote: (accountId: string, contactId: string, noteId: string, content: string, token: string) =>
+      request<{ note: ContactNote }>(`/accounts/${accountId}/contacts/${contactId}/notes/${noteId}`, {
+        method: 'PATCH',
+        body: { content },
+        token,
+      }),
+
+    deleteNote: (accountId: string, contactId: string, noteId: string, token: string) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/contacts/${contactId}/notes/${noteId}`, {
+        method: 'DELETE',
+        token,
+      }),
+
+    access: (accountId: string, token: string) =>
+      request<{
+        importEnabled: boolean;
+        exportEnabled: boolean;
+        canImport: boolean;
+        canExport: boolean;
+        isAdmin: boolean;
+      }>(`/accounts/${accountId}/contacts/access`, { token }),
+
+    importCsv: async (accountId: string, file: File, token: string) => {
+      const form = new FormData();
+      form.append('file', file);
+      const apiUrl = (await import('@/lib/config')).getApiUrl();
+      const res = await fetch(`${apiUrl}/accounts/${accountId}/contacts/import`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Import failed');
+      return data as { imported: number; skipped: number; errors: { row: number; message: string }[] };
+    },
+
+    exportCsv: async (
+      accountId: string,
+      token: string,
+      params?: { q?: string; type?: string }
+    ) => {
+      const qs = new URLSearchParams();
+      if (params?.q) qs.set('q', params.q);
+      if (params?.type) qs.set('type', params.type);
+      const query = qs.toString();
+      const apiUrl = (await import('@/lib/config')).getApiUrl();
+      const res = await fetch(
+        `${apiUrl}/accounts/${accountId}/contacts/export${query ? `?${query}` : ''}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? 'Export failed');
+      }
+      return res.blob();
+    },
+  },
+
   search: {
     conversations: (accountId: string, q: string, token: string) =>
       request<{
@@ -630,6 +793,34 @@ export const api = {
         `/accounts/${accountId}/webhooks`,
         { method: 'POST', body, token }
       ),
+  },
+
+  apiKeys: {
+    list: (accountId: string, token: string) =>
+      request<{
+        apiKeys: {
+          id: string;
+          name: string;
+          keyPrefix: string;
+          scopes: string[];
+          enabled: boolean;
+          createdAt: string;
+          lastUsedAt: string | null;
+        }[];
+      }>(`/accounts/${accountId}/api-keys`, { token }),
+
+    create: (
+      accountId: string,
+      body: { name?: string; scopes?: string[] },
+      token: string
+    ) =>
+      request<{
+        apiKey: { id: string; name: string; keyPrefix: string; scopes: string[] };
+        secret: string;
+      }>(`/accounts/${accountId}/api-keys`, { method: 'POST', body, token }),
+
+    remove: (accountId: string, keyId: string, token: string) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/api-keys/${keyId}`, { method: 'DELETE', token }),
   },
 
   auditLogs: {

@@ -4,7 +4,10 @@ import type { AppSql } from '@/lib/db-sql';
 export type WebhookEvent =
   | 'conversation.created'
   | 'message.created'
-  | 'conversation.resolved';
+  | 'conversation.resolved'
+  | 'contact.created'
+  | 'contact.updated'
+  | 'contact.deleted';
 
 export async function dispatchWebhooks(
   sql: AppSql,

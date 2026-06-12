@@ -9,6 +9,7 @@ const settingsNav: { label: string; href: Route }[] = [
   { label: 'Account', href: '/settings/account' },
   { label: 'Inboxes', href: '/settings/inboxes' },
   { label: 'Labels', href: '/settings/labels' as Route },
+  { label: 'CRM', href: '/settings/crm' as Route },
   { label: 'Agents', href: '/settings/agents' },
   { label: 'Teams', href: '/settings/teams' },
   { label: 'Security', href: '/settings/security' },

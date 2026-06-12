@@ -226,6 +226,8 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 | S6-2 | Contact profile page — all fields, conversation history, notes, labels | 5 | Must |
 | S6-3 | Contact create / edit / delete — full CRUD with validation | 3 | Must |
 | S6-4 | Contact import — CSV upload, field mapping, background job (BullMQ), error report | 8 | Must |
+| S6-4b | Import/export governance — Settings toggles enable CSV import/export; per-agent allowlist (admins always when enabled) | 3 | Must |
+| S6-4c | CRM integrations API — API keys for inbound contact sync; webhooks for outbound `contact.created/updated/deleted`; `externalId` upsert | 5 | Must |
 | S6-5 | Contact export — CSV download with filters applied | 3 | Should |
 | S6-6 | Contact merge — identify duplicates, confirm merge, redirect conversations | 5 | Should |
 | S6-7 | Contact notes — add/edit/delete timestamped notes on contact | 3 | Must |
@@ -264,6 +266,8 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 **Sprint 6 total: ~108 pts (Must: ~88 · CRM ~24 + Email ~64)**
 
 #### Definition of Done (Sprint 6)
+- [ ] Admin can enable/disable CSV import and export in Settings → CRM and assign which agents may use each
+- [ ] Admin can create API keys and webhooks in Settings → Integrations for two-way contact sync with external CRMs
 - [ ] Admin can import contacts and build static + dynamic segments
 - [ ] Admin can create HTML templates with merge tags and send a test email
 - [ ] Admin can run a broadcast campaign to a segment; recipients receive mail from verified domain

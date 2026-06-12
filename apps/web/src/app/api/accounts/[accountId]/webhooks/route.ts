@@ -6,7 +6,14 @@ import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
 
-const VALID_EVENTS = ['conversation.created', 'message.created', 'conversation.resolved'];
+const VALID_EVENTS = [
+  'conversation.created',
+  'message.created',
+  'conversation.resolved',
+  'contact.created',
+  'contact.updated',
+  'contact.deleted',
+];
 
 export async function GET(req: Request, { params }: Params) {
   const { accountId } = await params;

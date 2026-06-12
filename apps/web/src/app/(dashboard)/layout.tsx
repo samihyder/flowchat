@@ -142,6 +142,19 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       </div>
 
       <nav className="flex-1 overflow-y-auto p-3 space-y-5">
+        <NavSection title="CRM">
+          <Link
+            href={'/dashboard/contacts' as Route}
+            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
+              pathname.startsWith('/dashboard/contacts')
+                ? 'bg-primary-50 text-primary-700 font-medium'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Contacts
+          </Link>
+        </NavSection>
+
         <NavSection title="Conversations">
           <Link
             href={'/dashboard' as Route}

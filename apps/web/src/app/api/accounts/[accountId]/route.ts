@@ -44,7 +44,14 @@ export async function PATCH(req: Request, { params }: Params) {
     timezone?: string;
     locale?: string;
     logoUrl?: string | null;
-    settings?: { allowedInviteDomains?: string[]; dataRetentionDays?: number };
+    settings?: {
+      allowedInviteDomains?: string[];
+      dataRetentionDays?: number;
+      crmImportEnabled?: boolean;
+      crmExportEnabled?: boolean;
+      crmImportAllowedUserIds?: string[];
+      crmExportAllowedUserIds?: string[];
+    };
   };
 
   const databaseUrl = process.env.DATABASE_URL;
