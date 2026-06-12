@@ -1,4 +1,5 @@
 import type { BusinessHours } from '@/lib/business-hours';
+import type { PreChatField } from '@/lib/api';
 import { DEFAULT_BUSINESS_HOURS } from '@/lib/business-hours';
 
 export type WidgetIconId = 'chat' | 'bubble' | 'headset' | 'message' | 'help' | 'wave';
@@ -122,6 +123,8 @@ export type WidgetSettingsInput = {
   useBusinessHours: boolean;
   businessHours: BusinessHours;
   missedChatMinutes: number;
+  csatEnabled: boolean;
+  preChatFields: PreChatField[];
 };
 
 export const emptyWidgetSettings = (): WidgetSettingsInput => ({
@@ -143,6 +146,8 @@ export const emptyWidgetSettings = (): WidgetSettingsInput => ({
   useBusinessHours: false,
   businessHours: DEFAULT_BUSINESS_HOURS,
   missedChatMinutes: 5,
+  csatEnabled: false,
+  preChatFields: [],
 });
 
 export function parseDomainsText(text: string): string[] {
@@ -171,6 +176,8 @@ export function settingsFromInbox(inbox: {
   useBusinessHours?: boolean;
   businessHours?: BusinessHours | Record<string, unknown> | null;
   missedChatMinutes?: number;
+  csatEnabled?: boolean;
+  preChatFields?: PreChatField[] | null;
 }): WidgetSettingsInput {
   const primary = inbox.widgetColor ?? '#6366F1';
   return {
@@ -194,6 +201,8 @@ export function settingsFromInbox(inbox: {
     useBusinessHours: inbox.useBusinessHours ?? false,
     businessHours: { ...DEFAULT_BUSINESS_HOURS, ...(inbox.businessHours as BusinessHours | undefined) },
     missedChatMinutes: inbox.missedChatMinutes ?? 5,
+    csatEnabled: inbox.csatEnabled ?? false,
+    preChatFields: (inbox.preChatFields as PreChatField[] | undefined) ?? [],
   };
 }
 

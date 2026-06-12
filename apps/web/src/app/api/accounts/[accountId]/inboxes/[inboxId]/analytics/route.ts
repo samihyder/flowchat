@@ -252,6 +252,43 @@ export async function GET(req: Request, { params }: Params) {
     ? await sql`SELECT name FROM users WHERE id = ${inboxRows[0].defaultAssigneeId}::uuid LIMIT 1`
     : [];
 
+  const [kpiRow, csatRow, missedRow] = await Promise.all([
+    sql`
+      SELECT
+        AVG(EXTRACT(EPOCH FROM (first_response_at - created_at)) / 60)
+          FILTER (WHERE first_response_at IS NOT NULL
+            AND created_at >= ${fromDate.toISOString()}::timestamptz
+            AND created_at <= ${toDate.toISOString()}::timestamptz) as "avgFrt",
+        AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 60)
+          FILTER (WHERE resolved_at IS NOT NULL
+            AND resolved_at >= ${fromDate.toISOString()}::timestamptz
+            AND resolved_at <= ${toDate.toISOString()}::timestamptz) as "avgResolution"
+      FROM conversations
+      WHERE inbox_id = ${inboxId}::uuid
+    `,
+    sql`
+      SELECT AVG(score)::float as avg FROM csat_responses
+      WHERE inbox_id = ${inboxId}::uuid
+        AND submitted_at >= ${fromDate.toISOString()}::timestamptz
+        AND submitted_at <= ${toDate.toISOString()}::timestamptz
+    `,
+    sql`
+      SELECT
+        COUNT(*) FILTER (WHERE missed_alert_sent_at IS NOT NULL)::int as missed,
+        COUNT(*)::int as total
+      FROM conversations
+      WHERE inbox_id = ${inboxId}::uuid
+        AND created_at >= ${fromDate.toISOString()}::timestamptz
+        AND created_at <= ${toDate.toISOString()}::timestamptz
+    `,
+  ]);
+
+  const avgFrt = (kpiRow[0] as { avgFrt: number | null } | undefined)?.avgFrt;
+  const avgResolution = (kpiRow[0] as { avgResolution: number | null } | undefined)?.avgResolution;
+  const csatAverage = (csatRow[0] as { avg: number | null } | undefined)?.avg;
+  const missed = (missedRow[0] as { missed: number; total: number } | undefined)?.missed ?? 0;
+  const totalConv = (missedRow[0] as { missed: number; total: number } | undefined)?.total ?? 0;
+
   return Response.json({
     inbox: {
       ...inboxRows[0],
@@ -266,6 +303,10 @@ export async function GET(req: Request, { params }: Params) {
       resolvedConversations: (resolvedConvs[0] as { count: number }).count,
       totalMessages: (messages[0] as { count: number }).count,
       chatsStarted: (chatsStarted[0] as { count: number }).count,
+      avgFirstResponseMinutes: avgFrt != null ? Math.round(avgFrt) : null,
+      avgResolutionMinutes: avgResolution != null ? Math.round(avgResolution) : null,
+      missedChatRate: totalConv > 0 ? Math.round((missed / totalConv) * 100) : null,
+      csatAverage: csatAverage != null ? Math.round(csatAverage * 10) / 10 : null,
     },
     daily,
     activeChats,

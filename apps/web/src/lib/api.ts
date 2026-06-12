@@ -44,6 +44,8 @@ export type Inbox = {
   roundRobinEnabled?: boolean;
   useBusinessHours?: boolean;
   missedChatMinutes?: number;
+  csatEnabled?: boolean;
+  preChatFields?: PreChatField[];
   isEnabled: boolean;
 };
 
@@ -64,6 +66,10 @@ export type InboxAnalytics = {
     resolvedConversations: number;
     totalMessages: number;
     chatsStarted: number;
+    avgFirstResponseMinutes?: number | null;
+    avgResolutionMinutes?: number | null;
+    missedChatRate?: number | null;
+    csatAverage?: number | null;
   };
   daily: { date: string; visits: number; conversations: number; messages: number }[];
   exceptions?: AnalyticsException[];
@@ -117,14 +123,50 @@ export type Conversation = {
   inboxName: string;
 };
 
+export type MessageAttachment = {
+  id: string;
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+  publicUrl: string | null;
+};
+
 export type ChatMessage = {
   id: string;
   conversationId: string;
   content: string;
   senderType: 'contact' | 'agent' | 'system';
   senderId: string | null;
+  isPrivate?: boolean;
+  clientMessageId?: string | null;
+  editedAt?: string | null;
+  deletedAt?: string | null;
+  readAt?: string | null;
+  attachments?: MessageAttachment[];
   createdAt: string;
 };
+
+export type PreChatField = {
+  id: string;
+  label: string;
+  type: 'text' | 'select';
+  required?: boolean;
+  options?: string[];
+};
+
+export type VisitorContext = {
+  pageUrl: string | null;
+  referrer: string | null;
+  ipAddress: string | null;
+  device: string;
+  browser: string;
+  visitCount: number;
+  preChatData: Record<string, string>;
+  pastChats: { id: string; status: string; createdAt: string; lastMessageAt: string | null }[];
+  lastSeenAt: string | null;
+};
+
+export type CannedResponse = { id: string; shortcut: string; title: string; content: string };
 
 type RequestOptions = {
   method?: string;
@@ -347,6 +389,8 @@ export const api = {
         roundRobinEnabled?: boolean;
         useBusinessHours?: boolean;
         missedChatMinutes?: number;
+        csatEnabled?: boolean;
+        preChatFields?: PreChatField[];
         isEnabled?: boolean;
       },
       token: string
@@ -437,16 +481,77 @@ export const api = {
         { token }
       ),
 
-    listMessages: (accountId: string, conversationId: string, token: string) =>
-      request<{ messages: ChatMessage[] }>(
-        `/accounts/${accountId}/conversations/${conversationId}/messages`,
+    listMessages: (
+      accountId: string,
+      conversationId: string,
+      token: string,
+      params?: { before?: string; limit?: number }
+    ) => {
+      const qs = new URLSearchParams();
+      if (params?.before) qs.set('before', params.before);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const query = qs.toString();
+      return request<{ messages: ChatMessage[]; nextCursor: string | null }>(
+        `/accounts/${accountId}/conversations/${conversationId}/messages${query ? `?${query}` : ''}`,
         { token }
-      ),
+      );
+    },
 
-    sendMessage: (accountId: string, conversationId: string, content: string, token: string) =>
+    sendMessage: (
+      accountId: string,
+      conversationId: string,
+      body: {
+        content: string;
+        isPrivate?: boolean;
+        clientMessageId?: string;
+        attachments?: {
+          storageKey: string;
+          filename: string;
+          contentType: string;
+          sizeBytes: number;
+          publicUrl?: string | null;
+        }[];
+      },
+      token: string
+    ) =>
       request<{ message: ChatMessage }>(
         `/accounts/${accountId}/conversations/${conversationId}/messages`,
-        { method: 'POST', body: { content }, token }
+        { method: 'POST', body, token }
+      ),
+
+    editMessage: (
+      accountId: string,
+      conversationId: string,
+      messageId: string,
+      content: string,
+      token: string
+    ) =>
+      request<{ message: ChatMessage }>(
+        `/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}`,
+        { method: 'PATCH', body: { content }, token }
+      ),
+
+    deleteMessage: (accountId: string, conversationId: string, messageId: string, token: string) =>
+      request<{ message: ChatMessage }>(
+        `/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}`,
+        { method: 'DELETE', token }
+      ),
+
+    attachmentUploadUrl: (
+      accountId: string,
+      conversationId: string,
+      body: { filename: string; contentType: string; sizeBytes: number },
+      token: string
+    ) =>
+      request<{ uploadUrl: string; publicUrl: string | null; storageKey: string }>(
+        `/accounts/${accountId}/conversations/${conversationId}/attachments/upload-url`,
+        { method: 'POST', body, token }
+      ),
+
+    visitorContext: (accountId: string, conversationId: string, token: string) =>
+      request<{ context: VisitorContext }>(
+        `/accounts/${accountId}/conversations/${conversationId}/visitor-context`,
+        { token }
       ),
 
     updateStatus: (
@@ -478,6 +583,69 @@ export const api = {
         `/accounts/${accountId}/conversations/${conversationId}`,
         { method: 'PATCH', body, token }
       ),
+  },
+
+  search: {
+    conversations: (accountId: string, q: string, token: string) =>
+      request<{
+        results: {
+          id: string;
+          status: string;
+          lastMessageAt: string | null;
+          contactName: string;
+          contactEmail: string | null;
+          inboxName: string;
+        }[];
+      }>(`/accounts/${accountId}/search?q=${encodeURIComponent(q)}`, { token }),
+  },
+
+  cannedResponses: {
+    list: (accountId: string, token: string, q?: string) => {
+      const qs = q ? `?q=${encodeURIComponent(q)}` : '';
+      return request<{ responses: CannedResponse[] }>(
+        `/accounts/${accountId}/canned-responses${qs}`,
+        { token }
+      );
+    },
+    create: (
+      accountId: string,
+      body: { shortcut: string; title: string; content: string },
+      token: string
+    ) =>
+      request<{ response: CannedResponse }>(`/accounts/${accountId}/canned-responses`, {
+        method: 'POST',
+        body,
+        token,
+      }),
+  },
+
+  webhooks: {
+    list: (accountId: string, token: string) =>
+      request<{ webhooks: { id: string; url: string; events: string[]; enabled: boolean }[] }>(
+        `/accounts/${accountId}/webhooks`,
+        { token }
+      ),
+    create: (accountId: string, body: { url: string; events?: string[] }, token: string) =>
+      request<{ webhook: { id: string; url: string; secret: string; events: string[] } }>(
+        `/accounts/${accountId}/webhooks`,
+        { method: 'POST', body, token }
+      ),
+  },
+
+  auditLogs: {
+    list: (accountId: string, token: string) =>
+      request<{
+        logs: {
+          id: string;
+          action: string;
+          resourceType: string;
+          resourceId: string | null;
+          metadata: Record<string, unknown>;
+          createdAt: string;
+          actorName: string | null;
+          actorEmail: string | null;
+        }[];
+      }>(`/accounts/${accountId}/audit-logs`, { token }),
   },
 
   teams: {

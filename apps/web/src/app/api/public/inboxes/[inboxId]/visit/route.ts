@@ -14,6 +14,7 @@ export async function POST(req: Request, { params }: Params) {
   const body = (await req.json().catch(() => ({}))) as {
     sourceId?: string;
     pageUrl?: string;
+    referrer?: string;
   };
 
   const guard = await guardPublicInboxRequest(req, inboxId, 'visit', body.sourceId);
@@ -47,14 +48,17 @@ export async function POST(req: Request, { params }: Params) {
     shouldAlarm = recent.length === 0;
   }
 
+  const referrer = body.referrer ?? req.headers.get('referer');
+
   await sql`
-    INSERT INTO inbox_visits (inbox_id, ip_address, user_agent, source_id, page_url)
+    INSERT INTO inbox_visits (inbox_id, ip_address, user_agent, source_id, page_url, referrer)
     VALUES (
       ${inboxId}::uuid,
       ${ip},
       ${userAgent},
       ${body.sourceId ?? null},
-      ${body.pageUrl ?? null}
+      ${body.pageUrl ?? null},
+      ${referrer}
     )
   `;
 

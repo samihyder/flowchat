@@ -47,6 +47,9 @@ export const conversations = pgTable('conversations', {
   lastMessageAt: timestamp('last_message_at', { withTimezone: true }),
   lastMessagePreview: text('last_message_preview'),
   unreadCount: integer('unread_count').notNull().default(0),
+  firstResponseAt: timestamp('first_response_at', { withTimezone: true }),
+  firstResponseBy: uuid('first_response_by').references(() => users.id, { onDelete: 'set null' }),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

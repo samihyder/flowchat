@@ -24,6 +24,24 @@ type ClientMeta =
   | { kind: 'visitor'; conversationId: string; accountId: string; contactId: string };
 
 const clientMeta = new WeakMap<WebSocket, ClientMeta>();
+const wsActiveConversation = new WeakMap<WebSocket, string>();
+const conversationViewers = new Map<string, Map<string, { userId: string; userName: string }>>();
+
+function broadcastViewers(conversationId: string) {
+  const viewers = [...(conversationViewers.get(conversationId)?.values() ?? [])];
+  const payload = { type: 'conversation_viewers', conversationId, viewers };
+  const message = JSON.stringify(payload);
+  rooms.broadcast(`conversation:${conversationId}`, message);
+  publisher.publish(`conversation:${conversationId}`, message);
+}
+
+function removeViewer(conversationId: string, userId: string) {
+  const map = conversationViewers.get(conversationId);
+  if (!map) return;
+  map.delete(userId);
+  if (map.size === 0) conversationViewers.delete(conversationId);
+  broadcastViewers(conversationId);
+}
 
 function parseQuery(req: IncomingMessage) {
   const url = new URL(req.url ?? '/', 'http://localhost');
@@ -104,8 +122,17 @@ wss.on('connection', async (ws, req) => {
 
       case 'subscribe_conversation': {
         const cid = msg['conversationId'] as string | undefined;
+        const userName = (msg['userName'] as string | undefined) || 'Agent';
         if (cid && meta.kind === 'agent') {
+          const prev = wsActiveConversation.get(ws);
+          if (prev && prev !== cid) {
+            removeViewer(prev, meta.userId);
+          }
+          wsActiveConversation.set(ws, cid);
           rooms.join(`conversation:${cid}`, ws);
+          if (!conversationViewers.has(cid)) conversationViewers.set(cid, new Map());
+          conversationViewers.get(cid)!.set(meta.userId, { userId: meta.userId, userName });
+          broadcastViewers(cid);
           ws.send(JSON.stringify({ type: 'subscribed', conversationId: cid }));
         }
         break;
@@ -144,8 +171,13 @@ wss.on('connection', async (ws, req) => {
   });
 
   ws.on('close', async () => {
-    rooms.leaveAll(ws);
+    const activeCid = wsActiveConversation.get(ws);
     const meta = clientMeta.get(ws);
+    if (activeCid && meta?.kind === 'agent') {
+      removeViewer(activeCid, meta.userId);
+    }
+    wsActiveConversation.delete(ws);
+    rooms.leaveAll(ws);
     if (meta?.kind === 'agent') {
       await setAvailability(meta.userId, meta.accountId, 'offline');
       broadcastAccount(meta.accountId, {

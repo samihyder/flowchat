@@ -21,6 +21,7 @@ export function useWebSocket() {
     pushMissedChatEvent,
     subscribeConversation,
     setTyping,
+    setViewers,
   } = useWsStore();
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pingTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -63,8 +64,17 @@ export function useWebSocket() {
           if (msg['type'] === 'presence_updated') {
             setPresence(msg['userId'] as string, msg['availability'] as 'online' | 'busy' | 'offline');
           }
-          if (msg['type'] === 'message_created') {
+          if (msg['type'] === 'message_created' || msg['type'] === 'message_updated') {
             pushMessageEvent(msg as MessageCreatedEvent);
+          }
+          if (msg['type'] === 'conversation_viewers' && msg['conversationId']) {
+            setViewers(
+              msg['conversationId'] as string,
+              (msg['viewers'] as { userId: string; userName: string }[]) ?? []
+            );
+          }
+          if (msg['type'] === 'messages_read' && msg['conversationId']) {
+            // Thread refetches read state on next poll; no-op here
           }
           if (msg['type'] === 'visitor_online') {
             pushVisitorEvent(msg as VisitorOnlineEvent);
@@ -100,5 +110,5 @@ export function useWebSocket() {
       if (pingTimer.current) clearInterval(pingTimer.current);
       socketRef.current?.close();
     };
-  }, [token, accountId, setSocket, setConnected, setPresence, pushMessageEvent, subscribeConversation]);
+  }, [token, accountId, setSocket, setConnected, setPresence, pushMessageEvent, subscribeConversation, setViewers]);
 }

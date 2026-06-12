@@ -49,13 +49,17 @@ function formatShortDate(date: string) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-const statCards: { key: keyof InboxAnalytics['summary']; label: string }[] = [
+const statCards: { key: keyof InboxAnalytics['summary']; label: string; suffix?: string }[] = [
   { key: 'totalVisits', label: 'Page visits' },
   { key: 'uniqueVisitors', label: 'Unique visitors' },
   { key: 'chatsStarted', label: 'Chats started' },
   { key: 'totalMessages', label: 'Messages' },
   { key: 'openConversations', label: 'Open chats' },
   { key: 'resolvedConversations', label: 'Resolved' },
+  { key: 'avgFirstResponseMinutes', label: 'Avg first response', suffix: ' min' },
+  { key: 'avgResolutionMinutes', label: 'Avg resolution', suffix: ' min' },
+  { key: 'missedChatRate', label: 'Missed chat rate', suffix: '%' },
+  { key: 'csatAverage', label: 'CSAT average', suffix: ' ★' },
 ];
 
 export default function AnalyticsPage() {
@@ -244,14 +248,18 @@ export default function AnalyticsPage() {
             )}
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {statCards.map(({ key, label }) => (
-                <Card key={key}>
-                  <CardBody className="py-4">
-                    <p className="text-2xl font-bold text-gray-900">{analytics.summary[key]}</p>
-                    <p className="text-xs text-gray-500 mt-1">{label}</p>
-                  </CardBody>
-                </Card>
-              ))}
+              {statCards.map(({ key, label, suffix }) => {
+                const val = analytics.summary[key];
+                const display = val == null ? '—' : `${val}${suffix ?? ''}`;
+                return (
+                  <Card key={key}>
+                    <CardBody className="py-4">
+                      <p className="text-2xl font-bold text-gray-900">{display}</p>
+                      <p className="text-xs text-gray-500 mt-1">{label}</p>
+                    </CardBody>
+                  </Card>
+                );
+              })}
             </div>
 
             <Card>

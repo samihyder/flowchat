@@ -155,7 +155,8 @@ Use this before starting Sprint 6:
 
 ### Explicitly out of scope (Phase 3+)
 - Email / WhatsApp / social channels  
-- CRM contact list, import, companies (Sprint 6+)  
+- CRM contact list, import, email marketing automation (Sprint 6)
+- Companies entity (Sprint 17+)  
 - Automation rules engine  
 - AI reply suggestions / chatbot  
 - SAML SSO (Enterprise phase)  

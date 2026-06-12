@@ -1,11 +1,18 @@
 import { neon } from '@neondatabase/serverless';
 import { corsHeaders, optionsResponse } from '@/lib/cors';
-import { insertMessage } from '@/lib/conversations';
+import {
+  insertMessage,
+  loadMessageAttachments,
+  markMessagesRead,
+  serializeMessage,
+} from '@/lib/conversations';
 import { guardPublicInboxRequest } from '@/lib/public-inbox-guard';
 import { maybeSendOfflineAutoReply } from '@/lib/offline-reply';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ conversationId: string }> };
+
+const DEFAULT_LIMIT = 50;
 
 async function resolveVisitor(conversationId: string, visitorToken: string) {
   const databaseUrl = process.env.DATABASE_URL;
@@ -50,21 +57,62 @@ export async function GET(req: Request, { params }: Params) {
     return Response.json({ error: 'DATABASE_URL not configured' }, { status: 503, headers: corsHeaders() });
   }
 
-  const sql = neon(databaseUrl);
-  const rows = await sql`
-    SELECT id, conversation_id as "conversationId", content,
-           sender_type as "senderType", sender_id as "senderId",
-           created_at as "createdAt"
-    FROM messages WHERE conversation_id = ${conversationId}::uuid
-    ORDER BY created_at ASC
-  `;
+  const url = new URL(req.url);
+  const before = url.searchParams.get('before');
+  const limit = Math.min(Number(url.searchParams.get('limit') ?? DEFAULT_LIMIT), 100);
 
-  const messages = rows.map((m) => ({
-    ...m,
-    createdAt: new Date((m as { createdAt: Date | string }).createdAt).toISOString(),
-  }));
+  const sql = neon(databaseUrl) as AppSql;
+  let rows;
+  if (before) {
+    const [cursorAt, cursorId] = before.split('|');
+    rows = await sql`
+      SELECT m.id, m.conversation_id as "conversationId", m.content,
+             m.sender_type as "senderType", m.sender_id as "senderId",
+             m.is_private as "isPrivate", m.client_message_id as "clientMessageId",
+             m.edited_at as "editedAt", m.deleted_at as "deletedAt",
+             m.created_at as "createdAt",
+             r.read_at as "readAt"
+      FROM messages m
+      LEFT JOIN message_reads r ON r.message_id = m.id
+        AND r.reader_type = 'contact' AND r.reader_id = ${ctx.contactId}::uuid
+      WHERE m.conversation_id = ${conversationId}::uuid
+        AND m.is_private = false
+        AND (m.created_at, m.id) < (${cursorAt}::timestamptz, ${cursorId}::uuid)
+      ORDER BY m.created_at DESC, m.id DESC
+      LIMIT ${limit}
+    `;
+    rows = [...rows].reverse();
+  } else {
+    rows = await sql`
+      SELECT m.id, m.conversation_id as "conversationId", m.content,
+             m.sender_type as "senderType", m.sender_id as "senderId",
+             m.is_private as "isPrivate", m.client_message_id as "clientMessageId",
+             m.edited_at as "editedAt", m.deleted_at as "deletedAt",
+             m.created_at as "createdAt",
+             r.read_at as "readAt"
+      FROM messages m
+      LEFT JOIN message_reads r ON r.message_id = m.id
+        AND r.reader_type = 'contact' AND r.reader_id = ${ctx.contactId}::uuid
+      WHERE m.conversation_id = ${conversationId}::uuid AND m.is_private = false
+      ORDER BY m.created_at DESC, m.id DESC
+      LIMIT ${limit}
+    `;
+    rows = [...rows].reverse();
+  }
 
-  return Response.json({ messages }, { headers: corsHeaders() });
+  const ids = (rows as { id: string }[]).map((r) => r.id);
+  const attMap = await loadMessageAttachments(sql, ids);
+  const messages = (rows as Parameters<typeof serializeMessage>[0][]).map((m) =>
+    serializeMessage(m, attMap.get(m.id) ?? [])
+  );
+
+  const oldest = messages[0];
+  const nextCursor =
+    messages.length === limit && oldest ? `${oldest.createdAt}|${oldest.id}` : null;
+
+  void markMessagesRead(sql, conversationId, 'contact', ctx.contactId);
+
+  return Response.json({ messages, nextCursor }, { headers: corsHeaders() });
 }
 
 export async function POST(req: Request, { params }: Params) {
@@ -88,11 +136,12 @@ export async function POST(req: Request, { params }: Params) {
     return new Response(guard.response.body, { status: guard.response.status, headers });
   }
 
-  const body = (await req.json()) as { content?: string };
+  const body = (await req.json()) as { content?: string; clientMessageId?: string };
   if (!body.content?.trim()) {
     return Response.json({ error: 'Content is required' }, { status: 400, headers: corsHeaders() });
   }
 
+  const sql = neon(process.env.DATABASE_URL!) as AppSql;
   const message = await insertMessage({
     conversationId,
     accountId: ctx.accountId,
@@ -100,9 +149,10 @@ export async function POST(req: Request, { params }: Params) {
     senderType: 'contact',
     senderId: ctx.contactId,
     incrementUnread: true,
+    clientMessageId: body.clientMessageId ?? null,
+    sql,
   });
 
-  const sql = neon(process.env.DATABASE_URL!) as AppSql;
   void maybeSendOfflineAutoReply(sql, conversationId, ctx.accountId);
 
   return Response.json({ message }, { status: 201, headers: corsHeaders() });

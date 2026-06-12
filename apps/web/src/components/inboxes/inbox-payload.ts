@@ -20,5 +20,7 @@ export function inboxPayloadFromSettings(s: WidgetSettingsInput) {
     useBusinessHours: s.useBusinessHours,
     businessHours: s.businessHours,
     missedChatMinutes: s.missedChatMinutes,
+    csatEnabled: s.csatEnabled,
+    preChatFields: s.preChatFields,
   };
 }

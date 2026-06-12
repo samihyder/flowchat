@@ -106,6 +106,17 @@ See [sprints.md](sprints.md) for full story breakdown.
 - Label management
 - Company association
 
+### Email marketing automation (Sprint 6)
+
+> Full checklist: [email-marketing-standard.md](email-marketing-standard.md). Outbound marketing on CRM contacts — separate from the email **support inbox** (Sprint 7).
+
+- **Audience:** Static lists, dynamic segments, subscription status, suppression list
+- **Templates:** HTML + plain-text, merge tags, test send, verified sending domain (Resend)
+- **Broadcasts:** One-time campaigns to a segment; schedule or send now; BullMQ queue
+- **Automation:** Workflow builder — triggers (contact created, label added, conversation resolved) → send email, wait, branch on open/click, drip sequences
+- **Compliance:** One-click unsubscribe, `List-Unsubscribe` header, bounce/complaint auto-suppress, optional double opt-in
+- **Analytics:** Campaign open/click/bounce rates; per-contact email timeline on profile
+
 ### Companies (CRM)
 - Name, domain, description
 - Favicon auto-fetch from domain

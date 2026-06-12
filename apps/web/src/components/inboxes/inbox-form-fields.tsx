@@ -133,6 +133,32 @@ export function InboxTrustFields({
         />
         <p className="mt-1 text-xs text-gray-400">Agents are alerted if no reply within this window.</p>
       </div>
+      <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
+        <input
+          type="checkbox"
+          className={checkboxClass}
+          checked={settings.csatEnabled}
+          onChange={(e) => onChange({ ...settings, csatEnabled: e.target.checked })}
+        />
+        Post-chat CSAT survey after resolve
+      </label>
+      <div>
+        <label className={labelClass}>
+          Custom pre-chat fields <span className="font-normal text-gray-400">(JSON array)</span>
+        </label>
+        <Textarea
+          value={JSON.stringify(settings.preChatFields, null, 2)}
+          onChange={(e) => {
+            try {
+              const parsed = JSON.parse(e.target.value) as typeof settings.preChatFields;
+              onChange({ ...settings, preChatFields: parsed });
+            } catch { /* ignore invalid JSON while typing */ }
+          }}
+          rows={6}
+          className="font-mono text-xs"
+          placeholder={'[\n  {"id":"company","label":"Company","type":"text","required":true}\n]'}
+        />
+      </div>
     </div>
   );
 }

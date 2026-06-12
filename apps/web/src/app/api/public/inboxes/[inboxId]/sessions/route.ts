@@ -1,5 +1,6 @@
 import { corsHeaders, optionsResponse } from '@/lib/cors';
 import { newVisitorToken } from '@/lib/conversations';
+import { dispatchWebhooks } from '@/lib/webhooks';
 import { getClientIp } from '@/lib/request-ip';
 import { guardPublicInboxRequest } from '@/lib/public-inbox-guard';
 import { pickRoundRobinAssignee } from '@/lib/assign';
@@ -26,7 +27,12 @@ export async function OPTIONS() {
 
 export async function POST(req: Request, { params }: Params) {
   const { inboxId } = await params;
-  const body = (await req.json()) as { sourceId?: string; name?: string; email?: string };
+  const body = (await req.json()) as {
+    sourceId?: string;
+    name?: string;
+    email?: string;
+    preChatData?: Record<string, string>;
+  };
   const sourceId = body.sourceId?.trim();
   const name = body.name?.trim();
   const email = body.email?.trim() || null;
@@ -117,6 +123,19 @@ export async function POST(req: Request, { params }: Params) {
         )
         RETURNING id
       `) as { id: string }[];
+
+      void dispatchWebhooks(sql, inbox.accountId, 'conversation.created', {
+        conversationId: convRows[0]!.id,
+        inboxId,
+        contactId: link.contactId,
+      });
+    }
+
+    if (body.preChatData && Object.keys(body.preChatData).length > 0) {
+      await sql`
+        UPDATE contact_inboxes SET pre_chat_data = ${JSON.stringify(body.preChatData)}::jsonb
+        WHERE inbox_id = ${inboxId}::uuid AND source_id = ${sourceId}
+      `;
     }
 
     if (clientIp) {
@@ -177,6 +196,19 @@ export async function POST(req: Request, { params }: Params) {
     )
     RETURNING id
   `) as { id: string }[];
+
+  if (body.preChatData && Object.keys(body.preChatData).length > 0) {
+    await sql`
+      UPDATE contact_inboxes SET pre_chat_data = ${JSON.stringify(body.preChatData)}::jsonb
+      WHERE inbox_id = ${inboxId}::uuid AND source_id = ${sourceId}
+    `;
+  }
+
+  void dispatchWebhooks(sql, inbox.accountId, 'conversation.created', {
+    conversationId: convRows[0]!.id,
+    inboxId,
+    contactId: contact.id,
+  });
 
   return Response.json(
     {

@@ -1,6 +1,7 @@
-import { pgTable, uuid, text, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, pgEnum, boolean, varchar } from 'drizzle-orm/pg-core';
 import { accounts } from './accounts';
 import { conversations } from './conversations';
+import { users } from './users';
 
 export const senderTypeEnum = pgEnum('sender_type', ['contact', 'agent', 'system']);
 
@@ -15,6 +16,11 @@ export const messages = pgTable('messages', {
   content: text('content').notNull(),
   senderType: senderTypeEnum('sender_type').notNull(),
   senderId: uuid('sender_id'),
+  isPrivate: boolean('is_private').notNull().default(false),
+  clientMessageId: varchar('client_message_id', { length: 64 }),
+  editedAt: timestamp('edited_at', { withTimezone: true }),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: uuid('deleted_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

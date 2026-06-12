@@ -12,6 +12,8 @@ const settingsNav: { label: string; href: Route }[] = [
   { label: 'Agents', href: '/settings/agents' },
   { label: 'Teams', href: '/settings/teams' },
   { label: 'Security', href: '/settings/security' },
+  { label: 'Shortcuts', href: '/settings/canned-responses' as Route },
+  { label: 'Integrations', href: '/settings/integrations' as Route },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {

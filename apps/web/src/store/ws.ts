@@ -24,19 +24,28 @@ export type MissedChatEvent = {
   minutesWaiting: number;
 };
 
+export type WsMessage = {
+  id: string;
+  conversationId: string;
+  content: string;
+  senderType: 'contact' | 'agent' | 'system';
+  senderId: string | null;
+  isPrivate?: boolean;
+  editedAt?: string | null;
+  deletedAt?: string | null;
+  readAt?: string | null;
+  attachments?: { id: string; filename: string; contentType: string; publicUrl: string | null }[];
+  createdAt: string;
+};
+
 export type MessageCreatedEvent = {
   type: 'message_created';
   conversationId: string;
   accountId: string;
-  message: {
-    id: string;
-    conversationId: string;
-    content: string;
-    senderType: 'contact' | 'agent' | 'system';
-    senderId: string | null;
-    createdAt: string;
-  };
+  message: WsMessage;
 };
+
+export type ConversationViewer = { userId: string; userName: string };
 
 type PresenceMap = Record<string, Availability>;
 
@@ -52,13 +61,15 @@ type WsStore = {
   missedChatEventSeq: number;
   activeConversationId: string | null;
   typingByConversation: Record<string, boolean>;
+  viewersByConversation: Record<string, ConversationViewer[]>;
   setSocket: (socket: WebSocket | null) => void;
   setConnected: (v: boolean) => void;
   setPresence: (userId: string, availability: Availability) => void;
   sendPresence: (availability: Availability) => void;
-  subscribeConversation: (conversationId: string) => void;
+  subscribeConversation: (conversationId: string, userName?: string) => void;
   sendTyping: (conversationId: string) => void;
   setTyping: (conversationId: string, isTyping: boolean) => void;
+  setViewers: (conversationId: string, viewers: ConversationViewer[]) => void;
   pushMessageEvent: (event: MessageCreatedEvent) => void;
   pushVisitorEvent: (event: VisitorOnlineEvent) => void;
   pushMissedChatEvent: (event: MissedChatEvent) => void;
@@ -77,6 +88,7 @@ export const useWsStore = create<WsStore>((set, get) => ({
   missedChatEventSeq: 0,
   activeConversationId: null,
   typingByConversation: {},
+  viewersByConversation: {},
 
   setSocket: (socket) => set({ socket }),
   setConnected: (connected) => set({ connected }),
@@ -90,11 +102,11 @@ export const useWsStore = create<WsStore>((set, get) => ({
     }
   },
 
-  subscribeConversation: (conversationId) => {
+  subscribeConversation: (conversationId, userName?: string) => {
     set({ activeConversationId: conversationId });
     const { socket, connected } = get();
     if (socket && connected) {
-      socket.send(JSON.stringify({ type: 'subscribe_conversation', conversationId }));
+      socket.send(JSON.stringify({ type: 'subscribe_conversation', conversationId, userName }));
     }
   },
 
@@ -108,6 +120,11 @@ export const useWsStore = create<WsStore>((set, get) => ({
   setTyping: (conversationId, isTyping) =>
     set((s) => ({
       typingByConversation: { ...s.typingByConversation, [conversationId]: isTyping },
+    })),
+
+  setViewers: (conversationId, viewers) =>
+    set((s) => ({
+      viewersByConversation: { ...s.viewersByConversation, [conversationId]: viewers },
     })),
 
   pushMessageEvent: (event) =>

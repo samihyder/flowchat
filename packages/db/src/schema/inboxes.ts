@@ -37,6 +37,8 @@ export const inboxes = pgTable('inboxes', {
   roundRobinEnabled: boolean('round_robin_enabled').notNull().default(false),
   useBusinessHours: boolean('use_business_hours').notNull().default(false),
   missedChatMinutes: integer('missed_chat_minutes').notNull().default(5),
+  csatEnabled: boolean('csat_enabled').notNull().default(false),
+  preChatFields: jsonb('pre_chat_fields').$type<unknown[]>().notNull().default([]),
   isEnabled: boolean('is_enabled').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

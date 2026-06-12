@@ -11,7 +11,7 @@
 |---|---|---|---|
 | 1 — Foundation | 1 – 3 | Monorepo, auth, first inbox | Agents can receive web chats |
 | 2 — Industry-Standard Chat | 4 – 5 | Lifecycle, messaging, trust, ops KPIs | **Chat module complete** (gate before CRM) |
-| 2b — CRM | 6 | Contacts, companies, attributes | CRM on top of finished chat |
+| 2b — CRM + Email Marketing | 6 | Contacts, segments, email automation | CRM + industry-standard outbound email |
 | 3 — Multi-channel | 7 – 9 | Email, WhatsApp, social channels | Omnichannel inbox |
 | 4 — Automation & AI | 10 – 12 | Rules, macros, AI copilot | Intelligent routing + suggestions |
 | 5 — Knowledge & Campaigns | 13 – 14 | Help center, campaigns | Self-service + outbound |
@@ -202,20 +202,23 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 **Sprint 5 total: ~87 pts (Must: ~68)**
 
 #### Definition of Done (Sprint 5 — **Chat Module Complete**)
-- [ ] All items in [chat-module-standard.md](chat-module-standard.md) marked **Must** are shipped
-- [ ] Attachments, notes, canned replies, and CSAT work end-to-end
-- [ ] FRT and resolution metrics visible per inbox/agent
-- [ ] Webhooks deliver signed events to customer endpoints
-- [ ] Conversation search returns results in &lt; 500 ms for typical accounts
-- [ ] **No CRM sprint work begins until this checklist is signed off**
+- [x] All items in [chat-module-standard.md](chat-module-standard.md) marked **Must** are shipped
+- [x] Attachments, notes, canned replies, and CSAT work end-to-end
+- [x] FRT and resolution metrics visible per inbox/agent
+- [x] Webhooks deliver signed events to customer endpoints
+- [x] Conversation search returns results in &lt; 500 ms for typical accounts
+- [ ] **No CRM sprint work begins until this checklist is signed off** *(pending your sign-off after migration + deploy)*
 
 ---
 
-### Sprint 6 · 2026-09-07 → 2026-09-20
+### Sprint 6 · 2026-09-07 → 2026-10-04 *(extended — 4 weeks)*
 **Prerequisite:** [Chat Module Definition of Done](chat-module-standard.md) ✅  
-**Goal:** Contact management, CRM basics, conversation participants.
+**Goal:** CRM contact management **plus** industry-standard email marketing automation (segments, broadcasts, drip workflows).
 
-#### Stories
+> Email **inbox** (inbound reply-by-email) remains Sprint 7. Sprint 6 delivers **outbound marketing automation** on CRM contacts (HubSpot / Mailchimp / Brevo parity for SMB).  
+> See [email-marketing-standard.md](email-marketing-standard.md) for the full checklist.
+
+#### CRM — contacts & profile
 
 | # | Story | Points | Priority |
 |---|---|---|---|
@@ -229,7 +232,45 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 | S6-8 | Conversation participants — add agents as observers, participant notification settings | 3 | Should |
 | S6-9 | Custom attributes — define schema per account (contact + conversation), render in sidebar | 5 | Should |
 
-**Sprint total: 40 pts**
+#### Email marketing — foundation (lists, consent, templates)
+
+| # | Story | Points | Priority |
+|---|---|---|---|
+| S6-10 | Subscription model — per-contact status (subscribed / unsubscribed / bounced / complained); global suppression list | 5 | Must |
+| S6-11 | Segments — static lists + dynamic segments (labels, attributes, last activity, subscription status) | 8 | Must |
+| S6-12 | Email templates — HTML + plain-text editor, merge tags (`{{first_name}}`, custom attrs), preview, test send | 8 | Must |
+| S6-13 | Sender identity — workspace from-name, reply-to, verified sending domain status (Resend); physical address footer | 3 | Must |
+
+#### Email marketing — campaigns & automation
+
+| # | Story | Points | Priority |
+|---|---|---|---|
+| S6-14 | Broadcast campaigns — select segment + template, schedule or send now, BullMQ dispatch with rate limits | 8 | Must |
+| S6-15 | Automation workflows — visual step builder: triggers (contact created, label added, conversation resolved, manual enroll) → actions (send email, wait, branch on opened/clicked, add label, exit) | 13 | Must |
+| S6-16 | Drip sequences — multi-step time-delayed series inside a workflow; enrollment caps and re-entry rules | 5 | Must |
+| S6-17 | Unsubscribe — one-click public page, `List-Unsubscribe` header, instant suppression; preference center (opt-down vs opt-out) | 5 | Must |
+
+#### Email marketing — delivery, tracking & analytics
+
+| # | Story | Points | Priority |
+|---|---|---|---|
+| S6-18 | Resend webhooks — ingest delivered, bounced, opened, clicked, complained; update contact + campaign recipient status | 5 | Must |
+| S6-19 | Campaign analytics — sent / delivered / open % / click % / bounce % / unsubscribe %; live send progress | 5 | Must |
+| S6-20 | Contact email timeline — all marketing sends, opens, clicks on contact profile | 3 | Must |
+| S6-21 | Double opt-in — optional confirm-email flow before first marketing send | 3 | Should |
+| S6-22 | A/B subject test — two variants, winner by open rate after N hours | 5 | Should |
+| S6-23 | Send-time optimization — schedule in recipient timezone window (basic) | 3 | Should |
+
+**Sprint 6 total: ~108 pts (Must: ~88 · CRM ~24 + Email ~64)**
+
+#### Definition of Done (Sprint 6)
+- [ ] Admin can import contacts and build static + dynamic segments
+- [ ] Admin can create HTML templates with merge tags and send a test email
+- [ ] Admin can run a broadcast campaign to a segment; recipients receive mail from verified domain
+- [ ] Admin can publish an automation workflow (welcome drip, post-chat follow-up) that runs on triggers
+- [ ] Unsubscribe link works; suppressed contacts never receive marketing mail
+- [ ] Campaign dashboard shows delivery and engagement metrics; contact profile shows email history
+- [ ] All **Must** items in [email-marketing-standard.md](email-marketing-standard.md) verified in staging
 
 ---
 
@@ -382,7 +423,8 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 ---
 
 ### Sprint 14 · 2026-12-14 → 2026-12-27
-**Goal:** Campaigns — one-off WhatsApp/SMS campaigns + drip web widget campaigns.
+**Goal:** Omnichannel campaigns — one-off WhatsApp/SMS campaigns + drip web widget campaigns.  
+> **Note:** Email marketing automation (broadcasts, drips, segments) ships in **Sprint 6**. Sprint 14 extends the campaign engine to WA/SMS/widget channels only.
 
 #### Stories
 
@@ -568,4 +610,4 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ---
 
-*Last updated: 2026-06-05 · 20 sprints · Phase 2 Sprints 4–5 expanded for industry-standard chat gate before CRM · Target launch: 2027-03-29*
+*Last updated: 2026-06-05 · 20 sprints · Sprint 6 extended: CRM + email marketing automation · Target launch: 2027-03-29*

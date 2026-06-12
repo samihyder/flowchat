@@ -1,6 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { publishEvent } from '@/lib/redis';
+import { writeAuditLog } from '@/lib/audit-log';
+import { logConversationResolved } from '@/lib/conversations';
+import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string; conversationId: string }> };
 
@@ -154,6 +157,37 @@ export async function PATCH(req: Request, { params }: Params) {
         `;
       }
     }
+  }
+
+  const prevStatus = (existing[0] as { status: string }).status;
+  const newStatus = (rows[0] as { status: string }).status;
+
+  if (body.assigneeId !== undefined) {
+    await writeAuditLog(sql as AppSql, {
+      accountId,
+      actorId: auth.userId,
+      action: 'conversation.assigned',
+      resourceType: 'conversation',
+      resourceId: conversationId,
+      metadata: { assigneeId: body.assigneeId },
+    });
+  }
+
+  if (newStatus === 'resolved' && prevStatus !== 'resolved') {
+    await logConversationResolved(sql as AppSql, accountId, conversationId, auth.userId);
+  } else if (body.status || body.priority || body.labelIds) {
+    await writeAuditLog(sql as AppSql, {
+      accountId,
+      actorId: auth.userId,
+      action: 'conversation.updated',
+      resourceType: 'conversation',
+      resourceId: conversationId,
+      metadata: {
+        status: body.status,
+        priority: body.priority,
+        labelIds: body.labelIds,
+      },
+    });
   }
 
   void publishEvent(`account:${accountId}`, {

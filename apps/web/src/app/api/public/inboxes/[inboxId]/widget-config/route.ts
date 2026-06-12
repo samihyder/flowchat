@@ -27,7 +27,8 @@ export async function GET(req: Request, { params }: Params) {
       SELECT id, name, greeting_message as "greetingMessage",
              welcome_title as "welcomeTitle", welcome_tagline as "welcomeTagline",
              widget_color as "widgetColor", widget_icon as "widgetIcon",
-             widget_theme as "widgetTheme", allowed_domains as "allowedDomains"
+             widget_theme as "widgetTheme", allowed_domains as "allowedDomains",
+             pre_chat_fields as "preChatFields", csat_enabled as "csatEnabled"
       FROM inboxes
       WHERE id = ${inboxId}::uuid AND is_enabled = true
       LIMIT 1
@@ -43,6 +44,8 @@ export async function GET(req: Request, { params }: Params) {
       widgetIcon: string | null;
       widgetTheme: Record<string, string> | null;
       allowedDomains: unknown;
+      preChatFields: unknown;
+      csatEnabled: boolean;
     } | undefined;
 
     if (!inbox) {
@@ -73,6 +76,8 @@ export async function GET(req: Request, { params }: Params) {
           widgetColor: primary,
           widgetIcon: inbox.widgetIcon ?? 'chat',
           widgetTheme: mergeWidgetTheme(inbox.widgetTheme, primary),
+          preChatFields: inbox.preChatFields ?? [],
+          csatEnabled: inbox.csatEnabled ?? false,
         },
       },
       { headers: { ...corsHeaders(), 'Cache-Control': 'no-cache, no-store, must-revalidate' } }

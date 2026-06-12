@@ -73,6 +73,8 @@
     consentGiven: false,
     agentTyping: false,
     typingTimer: null,
+    showCsat: false,
+    csatSubmitted: false,
   };
 
   function saveSession() {
@@ -356,19 +358,46 @@
             }.</span>
           </label>`
         : '';
+      var customFields = (state.inbox && state.inbox.preChatFields) || [];
+      var customHtml = customFields.map(function (f) {
+        var req = f.required ? ' required' : '';
+        var label = escapeHtml(f.label || f.id);
+        if (f.type === 'select' && f.options && f.options.length) {
+          var opts = f.options.map(function (o) {
+            return '<option value="' + escapeHtml(o) + '">' + escapeHtml(o) + '</option>';
+          }).join('');
+          return '<label for="fc-field-' + escapeHtml(f.id) + '">' + label + '</label>' +
+            '<select id="fc-field-' + escapeHtml(f.id) + '" data-field-id="' + escapeHtml(f.id) + '"' + req + '>' +
+            '<option value="">Select…</option>' + opts + '</select>';
+        }
+        return '<label for="fc-field-' + escapeHtml(f.id) + '">' + label + '</label>' +
+          '<input id="fc-field-' + escapeHtml(f.id) + '" data-field-id="' + escapeHtml(f.id) + '" placeholder="' + label + '"' + req + ' />';
+      }).join('');
       return `<div id="fc-prechat">
         <label for="fc-name">Your name</label>
         <input id="fc-name" placeholder="Enter your name" required autocomplete="name" />
         <label for="fc-email">Email <span style="font-weight:400;color:var(--fc-input-placeholder)">(optional)</span></label>
         <input id="fc-email" type="email" placeholder="you@company.com" autocomplete="email" />
+        ${customHtml}
         ${consent}
         <button type="button" id="fc-start" ${state.sending ? 'disabled' : ''}>${state.sending ? 'Connecting…' : 'Start chat'}</button>
       </div>`;
     }
     const typing = state.agentTyping ? '<p id="fc-typing" style="font-size:12px;color:#9ca3af;font-style:italic;padding:0 16px">Agent is typing…</p>' : '';
+    var csatHtml = '';
+    if (state.showCsat && !state.csatSubmitted && state.inbox && state.inbox.csatEnabled) {
+      csatHtml = '<div id="fc-csat" style="padding:12px 16px;border-top:1px solid var(--fc-panel-border)">' +
+        '<p style="font-size:13px;margin:0 0 8px;color:var(--fc-label-text)">How was your experience?</p>' +
+        '<div style="display:flex;gap:6px;margin-bottom:8px">' +
+        [1,2,3,4,5].map(function (n) {
+          return '<button type="button" class="fc-csat-star" data-score="' + n + '" style="flex:1;padding:8px;border:1px solid var(--fc-input-border);border-radius:8px;background:var(--fc-input-bg);cursor:pointer">★ ' + n + '</button>';
+        }).join('') +
+        '</div></div>';
+    }
     return `
       <div id="fc-messages">${renderMessages()}</div>
       ${typing}
+      ${csatHtml}
       <form id="fc-composer">
         <input id="fc-input" placeholder="Type your message…" autocomplete="off" />
         <button type="submit" id="fc-send" ${state.sending ? 'disabled' : ''}>Send</button>
@@ -421,6 +450,11 @@
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
     document.getElementById('fc-input')?.addEventListener('input', sendTyping);
+    document.querySelectorAll('.fc-csat-star').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        submitCsat(Number(btn.getAttribute('data-score')));
+      });
+    });
 
     scrollMessages();
   }
@@ -482,9 +516,53 @@
     }
   }
 
+  async function submitCsat(score) {
+    if (!state.conversationId || !state.visitorToken || state.csatSubmitted) return;
+    try {
+      const res = await fetch(`${apiUrl}/public/conversations/${state.conversationId}/csat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Visitor-Token': state.visitorToken },
+        body: JSON.stringify({ score }),
+      });
+      if (res.ok) {
+        state.csatSubmitted = true;
+        state.showCsat = false;
+        render();
+      }
+    } catch (_) {}
+  }
+
+  async function checkConversationStatus() {
+    if (!state.conversationId || !state.visitorToken) return;
+    try {
+      const res = await fetch(`${apiUrl}/public/conversations/${state.conversationId}/status`, {
+        headers: { 'X-Visitor-Token': state.visitorToken },
+      });
+      const data = await res.json();
+      if (res.ok && data.status) {
+        state.csatSubmitted = !!data.status.csatSubmitted;
+        state.showCsat = data.status.status === 'resolved' && data.status.csatEnabled && !state.csatSubmitted;
+        if (state.showCsat && state.open) render();
+      }
+    } catch (_) {}
+  }
+
   async function startChat() {
     const name = document.getElementById('fc-name')?.value?.trim();
     const email = document.getElementById('fc-email')?.value?.trim() || '';
+    var preChatData = {};
+    var customFields = (state.inbox && state.inbox.preChatFields) || [];
+    for (var i = 0; i < customFields.length; i++) {
+      var f = customFields[i];
+      var el = document.querySelector('[data-field-id="' + f.id + '"]');
+      var val = el && el.value ? el.value.trim() : '';
+      if (f.required && !val) {
+        state.error = 'Please fill in: ' + (f.label || f.id);
+        render();
+        return;
+      }
+      if (val) preChatData[f.id] = val;
+    }
     if (!name) return;
     if (state.availability?.requireConsent && !state.consentGiven) {
       state.error = 'Please accept the privacy consent to continue.';
@@ -500,7 +578,7 @@
       const res = await fetch(`${apiUrl}/public/inboxes/${inboxId}/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sourceId, name, email }),
+        body: JSON.stringify({ sourceId, name, email, preChatData }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to start chat');
@@ -562,7 +640,8 @@
       return '<div class="fc-msg out' + (pending ? ' fc-pending' : '') + '">' + escapeHtml(msg.content) + time + '</div>';
     }
     if (msg.senderType === 'agent') {
-      return '<div class="fc-msg in">' + escapeHtml(msg.content) + time + '</div>';
+      var read = msg.readAt ? ' ✓✓' : '';
+      return '<div class="fc-msg in">' + escapeHtml(msg.content) + time + read + '</div>';
     }
     return '<div class="fc-msg sys">' + escapeHtml(msg.content) + '</div>';
   }
@@ -573,7 +652,8 @@
     if (!content || !state.conversationId || !state.visitorToken || state.sending) return;
 
     input.value = '';
-    var tempId = 'pending-' + Date.now();
+    var clientMessageId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+    var tempId = 'pending-' + clientMessageId;
     var optimistic = {
       id: tempId,
       content: content,
@@ -590,7 +670,7 @@
           'Content-Type': 'application/json',
           'X-Visitor-Token': state.visitorToken,
         },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, clientMessageId }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -695,6 +775,7 @@
     state.pollTimer = setInterval(function () {
       if (state.prechatDone && state.conversationId && state.visitorToken) {
         loadMessages(true);
+        checkConversationStatus();
       }
     }, 2500);
   }
@@ -731,6 +812,7 @@
       body: JSON.stringify({
         sourceId,
         pageUrl: window.location.href,
+        referrer: document.referrer || null,
       }),
     }).catch(function () {});
   }

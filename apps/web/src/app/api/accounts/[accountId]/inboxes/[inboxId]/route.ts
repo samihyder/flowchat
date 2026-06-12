@@ -39,6 +39,8 @@ export async function PATCH(req: Request, { params }: Params) {
     roundRobinEnabled?: boolean;
     useBusinessHours?: boolean;
     missedChatMinutes?: number;
+    csatEnabled?: boolean;
+    preChatFields?: unknown[];
   };
 
   const sql = neon(databaseUrl);
@@ -82,6 +84,8 @@ export async function PATCH(req: Request, { params }: Params) {
       round_robin_enabled = COALESCE(${body.roundRobinEnabled ?? null}, round_robin_enabled),
       use_business_hours = COALESCE(${body.useBusinessHours ?? null}, use_business_hours),
       missed_chat_minutes = COALESCE(${body.missedChatMinutes ?? null}, missed_chat_minutes),
+      csat_enabled = COALESCE(${body.csatEnabled ?? null}, csat_enabled),
+      pre_chat_fields = COALESCE(${body.preChatFields ? JSON.stringify(body.preChatFields) : null}::jsonb, pre_chat_fields),
       updated_at = NOW()
     WHERE id = ${inboxId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, channel_type as "channelType", widget_color as "widgetColor",
@@ -92,7 +96,8 @@ export async function PATCH(req: Request, { params }: Params) {
               allowed_domains as "allowedDomains", business_hours as "businessHours",
               offline_message as "offlineMessage", privacy_policy_url as "privacyPolicyUrl",
               require_consent as "requireConsent", round_robin_enabled as "roundRobinEnabled",
-              use_business_hours as "useBusinessHours", missed_chat_minutes as "missedChatMinutes"
+              use_business_hours as "useBusinessHours", missed_chat_minutes as "missedChatMinutes",
+              csat_enabled as "csatEnabled", pre_chat_fields as "preChatFields"
   `;
 
   const inbox = rows[0];

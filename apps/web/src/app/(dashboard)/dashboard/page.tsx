@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth';
 import { useWsStore } from '@/store/ws';
 import { api, type Conversation, type Label } from '@/lib/api';
 import { ConversationList } from '@/components/conversations/conversation-list';
+import { ConversationSearch } from '@/components/conversations/conversation-search';
 import { ConversationThread } from '@/components/conversations/conversation-thread';
 import {
   ConversationFilterBar,
@@ -121,6 +122,9 @@ function DashboardPageContent() {
           }`}
         >
           <ConversationFilterBar filters={filters} labels={labels} onChange={setFilters} />
+          {token && accountId && (
+            <ConversationSearch accountId={accountId} token={token} onSelect={handleSelect} />
+          )}
           <ConversationList
             conversations={conversations}
             selectedId={selectedId}
