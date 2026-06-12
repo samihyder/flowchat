@@ -93,9 +93,13 @@ export function contactsToCsv(
     email: string | null;
     phone: string | null;
     type: string;
+    externalId?: string | null;
+    labels?: string;
+    customAttributes?: Record<string, unknown>;
     createdAt: string;
     lastActivityAt: string | null;
-  }[]
+  }[],
+  customAttrKeys: string[] = []
 ): string {
   const escape = (v: string) => {
     if (v.includes(',') || v.includes('"') || v.includes('\n')) {
@@ -104,14 +108,29 @@ export function contactsToCsv(
     return v;
   };
 
+  const headers = [
+    'name',
+    'email',
+    'phone',
+    'type',
+    'external_id',
+    'labels',
+    ...customAttrKeys,
+    'created_at',
+    'last_activity_at',
+  ];
+
   const lines = [
-    'name,email,phone,type,created_at,last_activity_at',
+    headers.join(','),
     ...contacts.map((c) =>
       [
         escape(c.name),
         escape(c.email ?? ''),
         escape(c.phone ?? ''),
         c.type,
+        escape(c.externalId ?? ''),
+        escape(c.labels ?? ''),
+        ...customAttrKeys.map((k) => escape(String(c.customAttributes?.[k] ?? ''))),
         c.createdAt,
         c.lastActivityAt ?? '',
       ].join(',')

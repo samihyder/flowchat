@@ -114,6 +114,7 @@ export type Conversation = {
   assigneeName?: string | null;
   snoozedUntil?: string | null;
   labels?: Label[];
+  participants?: { userId: string; name: string }[];
   lastMessageAt: string | null;
   lastMessagePreview: string | null;
   unreadCount: number;
@@ -175,12 +176,24 @@ export type AccountCrmSettings = {
   crmExportAllowedUserIds?: string[];
 };
 
+export type CustomAttributeDefinition = {
+  id: string;
+  entityType: 'contact' | 'conversation';
+  key: string;
+  label: string;
+  attrType: 'text' | 'number' | 'date' | 'select' | 'boolean';
+  options: string[] | null;
+  sortOrder: number;
+};
+
 export type Contact = {
   id: string;
   name: string;
   email: string | null;
   phone: string | null;
   type: 'visitor' | 'lead' | 'customer';
+  externalId?: string | null;
+  labels?: Label[];
   lastActivityAt: string | null;
   isBlocked: boolean;
   createdAt: string;
@@ -198,6 +211,8 @@ export type ContactNote = {
 export type ContactDetail = Contact & {
   avatarUrl: string | null;
   blockedAt: string | null;
+  externalId?: string | null;
+  customAttributes?: Record<string, unknown>;
   labels: Label[];
   conversations: {
     id: string;
@@ -208,6 +223,23 @@ export type ContactDetail = Contact & {
     createdAt: string;
   }[];
   notes: ContactNote[];
+};
+
+export type DuplicateGroup = {
+  key: string;
+  field: 'email' | 'phone';
+  value: string;
+  contacts: { id: string; name: string; email: string | null; phone: string | null }[];
+};
+
+export type ImportJob = {
+  id: string;
+  status: string;
+  totalRows: number;
+  processedRows?: number;
+  importedCount?: number;
+  skippedCount?: number;
+  errors?: { row: number; message: string }[];
 };
 
 type RequestOptions = {
@@ -625,6 +657,7 @@ export const api = {
         priority?: 'urgent' | 'high' | 'medium' | 'low';
         snoozedUntil?: string | null;
         labelIds?: string[];
+        participantIds?: string[];
         blockContact?: boolean;
         blockIp?: boolean;
       },
@@ -640,11 +673,22 @@ export const api = {
     list: (
       accountId: string,
       token: string,
-      params?: { q?: string; type?: string; sort?: string; order?: string; limit?: number; offset?: number }
+      params?: {
+        q?: string;
+        type?: string;
+        labelId?: string;
+        ids?: string[];
+        sort?: string;
+        order?: string;
+        limit?: number;
+        offset?: number;
+      }
     ) => {
       const qs = new URLSearchParams();
       if (params?.q) qs.set('q', params.q);
       if (params?.type) qs.set('type', params.type);
+      if (params?.labelId) qs.set('labelId', params.labelId);
+      if (params?.ids?.length) qs.set('ids', params.ids.join(','));
       if (params?.sort) qs.set('sort', params.sort);
       if (params?.order) qs.set('order', params.order);
       if (params?.limit) qs.set('limit', String(params.limit));
@@ -657,21 +701,37 @@ export const api = {
     },
 
     get: (accountId: string, contactId: string, token: string) =>
-      request<{ contact: ContactDetail; labels: Label[]; conversations: ContactDetail['conversations']; notes: ContactNote[] }>(
-        `/accounts/${accountId}/contacts/${contactId}`,
-        { token }
-      ),
+      request<{
+        contact: ContactDetail;
+        labels: Label[];
+        conversations: ContactDetail['conversations'];
+        notes: ContactNote[];
+      }>(`/accounts/${accountId}/contacts/${contactId}`, { token }),
 
     create: (
       accountId: string,
-      body: { name: string; email?: string | null; phone?: string | null; type?: string; labelIds?: string[] },
+      body: {
+        name: string;
+        email?: string | null;
+        phone?: string | null;
+        type?: string;
+        labelIds?: string[];
+        customAttributes?: Record<string, unknown>;
+      },
       token: string
     ) => request<{ contact: Contact }>(`/accounts/${accountId}/contacts`, { method: 'POST', body, token }),
 
     update: (
       accountId: string,
       contactId: string,
-      body: { name?: string; email?: string | null; phone?: string | null; type?: string; labelIds?: string[] },
+      body: {
+        name?: string;
+        email?: string | null;
+        phone?: string | null;
+        type?: string;
+        labelIds?: string[];
+        customAttributes?: Record<string, unknown>;
+      },
       token: string
     ) =>
       request<{ contact: Contact }>(`/accounts/${accountId}/contacts/${contactId}`, {
@@ -682,6 +742,16 @@ export const api = {
 
     remove: (accountId: string, contactId: string, token: string) =>
       request<{ ok: boolean }>(`/accounts/${accountId}/contacts/${contactId}`, { method: 'DELETE', token }),
+
+    listDuplicates: (accountId: string, token: string) =>
+      request<{ groups: DuplicateGroup[] }>(`/accounts/${accountId}/contacts/duplicates`, { token }),
+
+    merge: (accountId: string, primaryId: string, secondaryId: string, token: string) =>
+      request<{ contact: Contact }>(`/accounts/${accountId}/contacts/merge`, {
+        method: 'POST',
+        body: { primaryId, secondaryId },
+        token,
+      }),
 
     addNote: (accountId: string, contactId: string, content: string, token: string) =>
       request<{ note: ContactNote }>(`/accounts/${accountId}/contacts/${contactId}/notes`, {
@@ -712,6 +782,45 @@ export const api = {
         isAdmin: boolean;
       }>(`/accounts/${accountId}/contacts/access`, { token }),
 
+    startImportJob: async (
+      accountId: string,
+      file: File,
+      token: string,
+      options?: { columnMapping?: Record<string, unknown>; upsertByEmail?: boolean }
+    ) => {
+      const form = new FormData();
+      form.append('file', file);
+      if (options?.columnMapping) {
+        form.append('columnMapping', JSON.stringify(options.columnMapping));
+      }
+      if (options?.upsertByEmail) form.append('upsertByEmail', 'true');
+      const apiUrl = (await import('@/lib/config')).getApiUrl();
+      const res = await fetch(`${apiUrl}/accounts/${accountId}/contacts/import/jobs`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Import failed');
+      return data as { job: ImportJob };
+    },
+
+    pollImportJob: (accountId: string, jobId: string, token: string) =>
+      request<{ job: ImportJob; done: boolean }>(
+        `/accounts/${accountId}/contacts/import/jobs/${jobId}`,
+        { token }
+      ),
+
+    downloadImportErrors: async (accountId: string, jobId: string, token: string) => {
+      const apiUrl = (await import('@/lib/config')).getApiUrl();
+      const res = await fetch(
+        `${apiUrl}/accounts/${accountId}/contacts/import/jobs/${jobId}?download=errors`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!res.ok) throw new Error('Failed to download errors');
+      return res.blob();
+    },
+
     importCsv: async (accountId: string, file: File, token: string) => {
       const form = new FormData();
       form.append('file', file);
@@ -729,11 +838,13 @@ export const api = {
     exportCsv: async (
       accountId: string,
       token: string,
-      params?: { q?: string; type?: string }
+      params?: { q?: string; type?: string; labelId?: string; ids?: string[] }
     ) => {
       const qs = new URLSearchParams();
       if (params?.q) qs.set('q', params.q);
       if (params?.type) qs.set('type', params.type);
+      if (params?.labelId) qs.set('labelId', params.labelId);
+      if (params?.ids?.length) qs.set('ids', params.ids.join(','));
       const query = qs.toString();
       const apiUrl = (await import('@/lib/config')).getApiUrl();
       const res = await fetch(
@@ -746,6 +857,37 @@ export const api = {
       }
       return res.blob();
     },
+  },
+
+  customAttributes: {
+    list: (accountId: string, token: string, entityType = 'contact') =>
+      request<{ definitions: CustomAttributeDefinition[] }>(
+        `/accounts/${accountId}/custom-attributes?entityType=${entityType}`,
+        { token }
+      ),
+
+    create: (
+      accountId: string,
+      body: {
+        label: string;
+        key?: string;
+        entityType?: string;
+        attrType?: string;
+        options?: string[];
+        sortOrder?: number;
+      },
+      token: string
+    ) =>
+      request<{ definition: CustomAttributeDefinition }>(
+        `/accounts/${accountId}/custom-attributes`,
+        { method: 'POST', body, token }
+      ),
+
+    remove: (accountId: string, definitionId: string, token: string) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/custom-attributes/${definitionId}`, {
+        method: 'DELETE',
+        token,
+      }),
   },
 
   search: {

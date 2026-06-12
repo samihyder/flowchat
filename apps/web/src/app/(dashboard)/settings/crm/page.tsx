@@ -162,7 +162,7 @@ export default function CrmSettingsPage() {
         </div>
 
         <p className="text-xs text-gray-400">
-          CSV columns: <code className="font-mono">name,email,phone,type</code>
+          CSV supports name, email, phone, type, external_id, labels, and custom attribute columns.
         </p>
 
         <Button type="submit" disabled={saving}>
@@ -171,6 +171,115 @@ export default function CrmSettingsPage() {
         {message && <p className="text-sm text-green-600">{message}</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
       </form>
+
+      <CustomAttributesSection />
+    </div>
+  );
+}
+
+function CustomAttributesSection() {
+  const { token, accountId } = useAuthStore();
+  const [definitions, setDefinitions] = useState<
+    { id: string; label: string; key: string; attrType: string; options: string[] | null }[]
+  >([]);
+  const [newLabel, setNewLabel] = useState('');
+  const [newType, setNewType] = useState('text');
+  const [newOptions, setNewOptions] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const load = () => {
+    if (!token || !accountId) return;
+    api.customAttributes.list(accountId, token).then((r) => setDefinitions(r.definitions)).catch(() => {});
+  };
+
+  useEffect(load, [token, accountId]);
+
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !accountId || !newLabel.trim()) return;
+    await api.customAttributes.create(
+      accountId,
+      {
+        label: newLabel.trim(),
+        attrType: newType,
+        options: newType === 'select' ? newOptions.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+      },
+      token
+    );
+    setNewLabel('');
+    setNewOptions('');
+    setMsg('Attribute added.');
+    load();
+  };
+
+  const remove = async (id: string) => {
+    if (!token || !accountId || !confirm('Remove this attribute definition?')) return;
+    await api.customAttributes.remove(accountId, id, token);
+    load();
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+      <div>
+        <h2 className="text-base font-semibold text-gray-900">Custom contact attributes</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Define extra fields shown on contact profiles and available in CSV import/export.
+        </p>
+      </div>
+      <ul className="space-y-2 text-sm">
+        {definitions.map((d) => (
+          <li key={d.id} className="flex items-center justify-between gap-2">
+            <span>
+              <span className="font-medium">{d.label}</span>{' '}
+              <code className="text-gray-400 text-xs">{d.key}</code>{' '}
+              <span className="text-gray-400">({d.attrType})</span>
+            </span>
+            <Button type="button" variant="danger" size="sm" onClick={() => void remove(d.id)}>
+              Remove
+            </Button>
+          </li>
+        ))}
+        {definitions.length === 0 && <p className="text-gray-400">No custom attributes yet.</p>}
+      </ul>
+      <form onSubmit={add} className="flex flex-wrap gap-2 items-end pt-2 border-t border-gray-100">
+        <div>
+          <label className="text-xs text-gray-500">Label</label>
+          <input
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            className="block mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg"
+            placeholder="Company size"
+            required
+          />
+        </div>
+        <div>
+          <label className="text-xs text-gray-500">Type</label>
+          <select
+            value={newType}
+            onChange={(e) => setNewType(e.target.value)}
+            className="block mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg"
+          >
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="date">Date</option>
+            <option value="select">Select</option>
+            <option value="boolean">Yes/No</option>
+          </select>
+        </div>
+        {newType === 'select' && (
+          <div>
+            <label className="text-xs text-gray-500">Options (comma-separated)</label>
+            <input
+              value={newOptions}
+              onChange={(e) => setNewOptions(e.target.value)}
+              className="block mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg"
+              placeholder="Small, Medium, Enterprise"
+            />
+          </div>
+        )}
+        <Button type="submit">Add attribute</Button>
+      </form>
+      {msg && <p className="text-sm text-green-600">{msg}</p>}
     </div>
   );
 }

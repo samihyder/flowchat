@@ -266,8 +266,14 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 **Sprint 6 total: ~108 pts (Must: ~88 · CRM ~24 + Email ~64)**
 
 #### Definition of Done (Sprint 6)
-- [ ] Admin can enable/disable CSV import and export in Settings → CRM and assign which agents may use each
-- [ ] Admin can create API keys and webhooks in Settings → Integrations for two-way contact sync with external CRMs
+- [x] Admin can enable/disable CSV import and export in Settings → CRM and assign which agents may use each
+- [x] Admin can create API keys and webhooks in Settings → Integrations for two-way contact sync with external CRMs
+- [x] Contacts list supports search, filter, sort, pagination, label filter, and bulk export
+- [x] Contact profile supports edit, labels, custom attributes, notes (edit/delete), and delete
+- [x] CSV import with column mapping, background job, and error report download
+- [x] Contact merge for duplicate email/phone groups
+- [x] Conversation participants (observers) on threads
+- [x] Custom attribute definitions in Settings → CRM
 - [ ] Admin can import contacts and build static + dynamic segments
 - [ ] Admin can create HTML templates with merge tags and send a test email
 - [ ] Admin can run a broadcast campaign to a segment; recipients receive mail from verified domain

@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
+import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-attributes';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string; contactId: string }> };
@@ -19,6 +20,7 @@ export async function GET(req: Request, { params }: Params) {
   const rows = await sql`
     SELECT c.id, c.name, c.email, c.phone, c.type, c.external_id as "externalId",
            c.avatar_url as "avatarUrl",
+           c.custom_attributes as "customAttributes",
            c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
            c.blocked_at as "blockedAt", c.created_at as "createdAt", c.updated_at as "updatedAt"
     FROM contacts c
@@ -56,6 +58,7 @@ export async function GET(req: Request, { params }: Params) {
   return Response.json({
     contact: {
       ...rows[0],
+      customAttributes: (rows[0] as { customAttributes?: Record<string, unknown> }).customAttributes ?? {},
       createdAt: new Date((rows[0] as { createdAt: Date }).createdAt).toISOString(),
       updatedAt: new Date((rows[0] as { updatedAt: Date }).updatedAt).toISOString(),
       lastActivityAt: (rows[0] as { lastActivityAt: Date | null }).lastActivityAt
@@ -93,17 +96,41 @@ export async function PATCH(req: Request, { params }: Params) {
     phone?: string | null;
     type?: string;
     labelIds?: string[];
+    customAttributes?: Record<string, unknown>;
   };
 
   if (body.type && !VALID_TYPES.includes(body.type as (typeof VALID_TYPES)[number])) {
     return Response.json({ error: 'Invalid contact type' }, { status: 400 });
   }
 
-  const sql = neon(process.env.DATABASE_URL!);
+  const sql = neon(process.env.DATABASE_URL!) as AppSql;
   const existing = await sql`
     SELECT id FROM contacts WHERE id = ${contactId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
   `;
   if (!existing[0]) return Response.json({ error: 'Contact not found' }, { status: 404 });
+
+  let customAttributesJson: string | null = null;
+  if (body.customAttributes !== undefined) {
+    const defRows = await sql`
+      SELECT id, entity_type as "entityType", key, label, attr_type as "attrType", options, sort_order as "sortOrder"
+      FROM custom_attribute_definitions
+      WHERE account_id = ${accountId}::uuid AND entity_type = 'contact'
+    `;
+    const definitions = (defRows as Record<string, unknown>[]).map((r) => ({
+      id: r.id as string,
+      entityType: r.entityType as 'contact',
+      key: r.key as string,
+      label: r.label as string,
+      attrType: r.attrType as 'text',
+      options: (r.options as string[] | null) ?? null,
+      sortOrder: Number(r.sortOrder ?? 0),
+    }));
+    const { valid, errors } = validateCustomAttributes(definitions, body.customAttributes);
+    if (errors.length > 0) {
+      return Response.json({ error: errors.join('; ') }, { status: 400 });
+    }
+    customAttributesJson = JSON.stringify(valid);
+  }
 
   const rows = await sql`
     UPDATE contacts SET
@@ -111,9 +138,11 @@ export async function PATCH(req: Request, { params }: Params) {
       email = CASE WHEN ${body.email !== undefined} THEN ${body.email?.trim() || null} ELSE email END,
       phone = CASE WHEN ${body.phone !== undefined} THEN ${body.phone?.trim() || null} ELSE phone END,
       type = COALESCE(${body.type ?? null}, type),
+      custom_attributes = CASE WHEN ${customAttributesJson !== null} THEN ${customAttributesJson}::jsonb ELSE custom_attributes END,
       updated_at = NOW()
     WHERE id = ${contactId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, email, phone, type, external_id as "externalId",
+              custom_attributes as "customAttributes",
               last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
               created_at as "createdAt", updated_at as "updatedAt"
   `;

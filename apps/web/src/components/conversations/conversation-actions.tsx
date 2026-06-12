@@ -45,6 +45,7 @@ export function ConversationActions({ conversation, onUpdated }: Props) {
   };
 
   const selectedLabelIds = conversation.labels?.map((l) => l.id) ?? [];
+  const selectedParticipantIds = conversation.participants?.map((p) => p.userId) ?? [];
 
   return (
     <div className="flex flex-wrap items-center gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50/50 text-xs">
@@ -116,6 +117,24 @@ export function ConversationActions({ conversation, onUpdated }: Props) {
           );
         })}
       </div>
+
+      <select
+        multiple
+        value={selectedParticipantIds}
+        disabled={saving}
+        onChange={(e) => {
+          const next = Array.from(e.target.selectedOptions).map((o) => o.value);
+          void update({ participantIds: next });
+        }}
+        className="border border-gray-200 rounded-md px-2 py-1 bg-white max-w-[160px] min-h-[28px]"
+        title="Observers (participants)"
+      >
+        {agents.map((a) => (
+          <option key={a.userId} value={a.userId}>
+            👁 {a.name}
+          </option>
+        ))}
+      </select>
 
       <button
         type="button"

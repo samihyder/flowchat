@@ -46,7 +46,14 @@ export async function GET(req: Request, { params }: Params) {
     WHERE cl.conversation_id = ${conversationId}::uuid
   `;
 
-  return Response.json({ conversation: { ...rows[0], labels } });
+  const participants = await sql`
+    SELECT cp.user_id as "userId", u.name
+    FROM conversation_participants cp
+    INNER JOIN users u ON u.id = cp.user_id
+    WHERE cp.conversation_id = ${conversationId}::uuid
+  `;
+
+  return Response.json({ conversation: { ...rows[0], labels, participants } });
 }
 
 export async function PATCH(req: Request, { params }: Params) {
@@ -63,6 +70,7 @@ export async function PATCH(req: Request, { params }: Params) {
     priority?: 'urgent' | 'high' | 'medium' | 'low';
     snoozedUntil?: string | null;
     labelIds?: string[];
+    participantIds?: string[];
     blockContact?: boolean;
     blockIp?: boolean;
   };
@@ -120,6 +128,18 @@ export async function PATCH(req: Request, { params }: Params) {
         INSERT INTO conversation_labels (conversation_id, label_id)
         SELECT ${conversationId}::uuid, ${labelId}::uuid
         WHERE EXISTS (SELECT 1 FROM labels WHERE id = ${labelId}::uuid AND account_id = ${accountId}::uuid)
+        ON CONFLICT DO NOTHING
+      `;
+    }
+  }
+
+  if (body.participantIds) {
+    await sql`DELETE FROM conversation_participants WHERE conversation_id = ${conversationId}::uuid`;
+    for (const userId of body.participantIds) {
+      await sql`
+        INSERT INTO conversation_participants (conversation_id, user_id)
+        SELECT ${conversationId}::uuid, ${userId}::uuid
+        WHERE EXISTS (SELECT 1 FROM account_users WHERE account_id = ${accountId}::uuid AND user_id = ${userId}::uuid)
         ON CONFLICT DO NOTHING
       `;
     }

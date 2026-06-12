@@ -1,6 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
+import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-attributes';
+import { listContacts } from '@/lib/contacts-query';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -16,100 +18,26 @@ export async function GET(req: Request, { params }: Params) {
   if (!auth) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   const url = new URL(req.url);
-  const q = url.searchParams.get('q')?.trim();
   const type = url.searchParams.get('type');
-  const sort = url.searchParams.get('sort') ?? 'last_activity_at';
-  const orderAsc = url.searchParams.get('order') === 'asc';
-  const limit = Math.min(Number(url.searchParams.get('limit') ?? 50), 100);
-  const offset = Math.max(Number(url.searchParams.get('offset') ?? 0), 0);
-
   if (type && !VALID_TYPES.includes(type as (typeof VALID_TYPES)[number])) {
     return Response.json({ error: 'Invalid type filter' }, { status: 400 });
   }
 
-  const sql = neon(process.env.DATABASE_URL!);
-  const pattern = q ? `%${q}%` : null;
+  const idsParam = url.searchParams.get('ids');
+  const ids = idsParam ? idsParam.split(',').filter(Boolean) : null;
 
-  let rows;
-  if (sort === 'name') {
-    rows = orderAsc
-      ? await sql`
-          SELECT c.id, c.name, c.email, c.phone, c.type,
-                 c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
-                 c.created_at as "createdAt", c.updated_at as "updatedAt",
-                 COUNT(*) OVER()::int as "totalCount"
-          FROM contacts c
-          WHERE c.account_id = ${accountId}::uuid
-            AND (${type ?? null}::text IS NULL OR c.type = ${type ?? null})
-            AND (${pattern ?? null}::text IS NULL OR c.name ILIKE ${pattern} OR c.email ILIKE ${pattern} OR c.phone ILIKE ${pattern})
-          ORDER BY c.name ASC
-          LIMIT ${limit} OFFSET ${offset}
-        `
-      : await sql`
-          SELECT c.id, c.name, c.email, c.phone, c.type,
-                 c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
-                 c.created_at as "createdAt", c.updated_at as "updatedAt",
-                 COUNT(*) OVER()::int as "totalCount"
-          FROM contacts c
-          WHERE c.account_id = ${accountId}::uuid
-            AND (${type ?? null}::text IS NULL OR c.type = ${type ?? null})
-            AND (${pattern ?? null}::text IS NULL OR c.name ILIKE ${pattern} OR c.email ILIKE ${pattern} OR c.phone ILIKE ${pattern})
-          ORDER BY c.name DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-  } else if (sort === 'created_at') {
-    rows = orderAsc
-      ? await sql`
-          SELECT c.id, c.name, c.email, c.phone, c.type,
-                 c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
-                 c.created_at as "createdAt", c.updated_at as "updatedAt",
-                 COUNT(*) OVER()::int as "totalCount"
-          FROM contacts c
-          WHERE c.account_id = ${accountId}::uuid
-            AND (${type ?? null}::text IS NULL OR c.type = ${type ?? null})
-            AND (${pattern ?? null}::text IS NULL OR c.name ILIKE ${pattern} OR c.email ILIKE ${pattern} OR c.phone ILIKE ${pattern})
-          ORDER BY c.created_at ASC
-          LIMIT ${limit} OFFSET ${offset}
-        `
-      : await sql`
-          SELECT c.id, c.name, c.email, c.phone, c.type,
-                 c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
-                 c.created_at as "createdAt", c.updated_at as "updatedAt",
-                 COUNT(*) OVER()::int as "totalCount"
-          FROM contacts c
-          WHERE c.account_id = ${accountId}::uuid
-            AND (${type ?? null}::text IS NULL OR c.type = ${type ?? null})
-            AND (${pattern ?? null}::text IS NULL OR c.name ILIKE ${pattern} OR c.email ILIKE ${pattern} OR c.phone ILIKE ${pattern})
-          ORDER BY c.created_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-  } else {
-    rows = orderAsc
-      ? await sql`
-          SELECT c.id, c.name, c.email, c.phone, c.type,
-                 c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
-                 c.created_at as "createdAt", c.updated_at as "updatedAt",
-                 COUNT(*) OVER()::int as "totalCount"
-          FROM contacts c
-          WHERE c.account_id = ${accountId}::uuid
-            AND (${type ?? null}::text IS NULL OR c.type = ${type ?? null})
-            AND (${pattern ?? null}::text IS NULL OR c.name ILIKE ${pattern} OR c.email ILIKE ${pattern} OR c.phone ILIKE ${pattern})
-          ORDER BY c.last_activity_at ASC NULLS LAST
-          LIMIT ${limit} OFFSET ${offset}
-        `
-      : await sql`
-          SELECT c.id, c.name, c.email, c.phone, c.type,
-                 c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
-                 c.created_at as "createdAt", c.updated_at as "updatedAt",
-                 COUNT(*) OVER()::int as "totalCount"
-          FROM contacts c
-          WHERE c.account_id = ${accountId}::uuid
-            AND (${type ?? null}::text IS NULL OR c.type = ${type ?? null})
-            AND (${pattern ?? null}::text IS NULL OR c.name ILIKE ${pattern} OR c.email ILIKE ${pattern} OR c.phone ILIKE ${pattern})
-          ORDER BY c.last_activity_at DESC NULLS LAST
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-  }
+  const sql = neon(process.env.DATABASE_URL!) as AppSql;
+  const rows = await listContacts(sql, {
+    accountId,
+    q: url.searchParams.get('q')?.trim(),
+    type,
+    labelId: url.searchParams.get('labelId'),
+    ids,
+    sort: url.searchParams.get('sort') ?? 'last_activity_at',
+    orderAsc: url.searchParams.get('order') === 'asc',
+    limit: Number(url.searchParams.get('limit') ?? 50),
+    offset: Number(url.searchParams.get('offset') ?? 0),
+  });
 
   const total = (rows[0] as { totalCount?: number } | undefined)?.totalCount ?? 0;
   const contacts = rows.map((r) => {
@@ -117,6 +45,7 @@ export async function GET(req: Request, { params }: Params) {
     const { totalCount: _, ...contact } = row;
     return {
       ...contact,
+      labels: contact.labels ?? [],
       createdAt: new Date(contact.createdAt as Date | string).toISOString(),
       updatedAt: new Date(contact.updatedAt as Date | string).toISOString(),
       lastActivityAt: contact.lastActivityAt
@@ -142,6 +71,7 @@ export async function POST(req: Request, { params }: Params) {
     phone?: string | null;
     type?: string;
     labelIds?: string[];
+    customAttributes?: Record<string, unknown>;
   };
 
   const name = body.name?.trim();
@@ -153,17 +83,31 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
+
+  const defRows = await sql`
+    SELECT id, entity_type as "entityType", key, label, attr_type as "attrType", options, sort_order as "sortOrder"
+    FROM custom_attribute_definitions
+    WHERE account_id = ${accountId}::uuid AND entity_type = 'contact'
+  `;
+  const definitions = (defRows as Record<string, unknown>[]).map(serializeDefinitionRow);
+  const { valid: customAttributes, errors } = validateCustomAttributes(definitions, body.customAttributes);
+  if (errors.length > 0) {
+    return Response.json({ error: errors.join('; ') }, { status: 400 });
+  }
+
   const rows = await sql`
-    INSERT INTO contacts (account_id, name, email, phone, type, last_activity_at)
+    INSERT INTO contacts (account_id, name, email, phone, type, custom_attributes, last_activity_at)
     VALUES (
       ${accountId}::uuid,
       ${name},
       ${body.email?.trim() || null},
       ${body.phone?.trim() || null},
       ${type},
+      ${JSON.stringify(customAttributes)}::jsonb,
       NOW()
     )
     RETURNING id, name, email, phone, type, external_id as "externalId",
+              custom_attributes as "customAttributes",
               last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
               created_at as "createdAt", updated_at as "updatedAt"
   `;
