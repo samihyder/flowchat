@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { parseCsvRaw, type ColumnMapping } from '@/lib/contact-import';
+import { parseCsvRaw, type ColumnMapping } from '@/lib/csv-import-utils';
 import { Button } from '@/components/ui/button';
 
 const STANDARD_FIELDS = [

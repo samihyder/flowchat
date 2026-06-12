@@ -2,7 +2,7 @@ import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { getAccountSettings } from '@/lib/account-settings-db';
 import { canImportContacts } from '@/lib/crm-permissions';
-import { parseCsvRaw, type ColumnMapping } from '@/lib/contact-import';
+import { parseCsvRaw, type ColumnMapping } from '@/lib/csv-import-utils';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -26,7 +26,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const contentType = req.headers.get('content-type') ?? '';
   let csvText = '';
-  let columnMapping: import('@/lib/contact-import').ColumnMapping = {};
+  let columnMapping: ColumnMapping = {};
   let upsertByEmail = false;
 
   if (contentType.includes('multipart/form-data')) {

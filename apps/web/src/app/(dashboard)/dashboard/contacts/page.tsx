@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ContactImportModal } from '@/components/contacts/contact-import-modal';
 import { ContactMergeModal } from '@/components/contacts/contact-merge-modal';
+import type { ColumnMapping } from '@/lib/csv-import-utils';
 
 const TYPES = ['', 'visitor', 'lead', 'customer'] as const;
 const SORTS = [
@@ -102,7 +103,7 @@ export default function ContactsPage() {
     else setSelected(new Set(contacts.map((c) => c.id)));
   };
 
-  const handleImportJob = async (file: File, columnMapping: import('@/lib/contact-import').ColumnMapping, upsertByEmail: boolean) => {
+  const handleImportJob = async (file: File, columnMapping: ColumnMapping, upsertByEmail: boolean) => {
     if (!token || !accountId) return;
     const { job } = await api.contacts.startImportJob(accountId, file, token, {
       columnMapping,
