@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
+import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
 import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-attributes';
 import { listContacts } from '@/lib/contacts-query';
 import { getAccountSettings } from '@/lib/account-settings-db';
@@ -142,6 +143,8 @@ export async function POST(req: Request, { params }: Params) {
         to: email,
         name,
       });
+    } else {
+      await triggerMarketingWorkflows(sql, accountId, 'contact_created', contact.id);
     }
   }
 

@@ -27,10 +27,13 @@ export default function EmailMarketingSettingsPage() {
   const [replyTo, setReplyTo] = useState('');
   const [physicalAddress, setPhysicalAddress] = useState('');
   const [creating, setCreating] = useState(false);
+  const [suppressions, setSuppressions] = useState<{ id: string; email: string; reason: string }[]>([]);
+  const [suppressEmail, setSuppressEmail] = useState('');
 
   const load = () => {
     if (!token || !accountId) return;
     api.marketing.senders.list(accountId, token).then((r) => setSenders(r.senders));
+    api.marketing.suppressions.list(accountId, token).then((r) => setSuppressions(r.suppressions));
     api.account.get(accountId, token).then((r) => {
       setDoubleOptIn(Boolean(r.account.settings?.marketingDoubleOptIn));
     });
@@ -168,6 +171,31 @@ export default function EmailMarketingSettingsPage() {
         </Button>
         {message && <p className="text-sm text-green-600">{message}</p>}
       </form>
+
+      <section className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
+        <h3 className="font-medium text-gray-900">Suppression list</h3>
+        <div className="flex gap-2">
+          <Input value={suppressEmail} onChange={(e) => setSuppressEmail(e.target.value)} placeholder="email@example.com" />
+          <Button
+            type="button"
+            onClick={() => {
+              if (!token || !accountId || !suppressEmail.trim()) return;
+              void api.marketing.suppressions.add(accountId, suppressEmail.trim(), token).then(() => {
+                setSuppressEmail('');
+                load();
+              });
+            }}
+          >
+            Suppress
+          </Button>
+        </div>
+        <ul className="text-sm space-y-1 max-h-32 overflow-y-auto">
+          {suppressions.map((s) => (
+            <li key={s.id} className="text-gray-600">{s.email} <span className="text-gray-400">({s.reason})</span></li>
+          ))}
+          {suppressions.length === 0 && <p className="text-gray-400">No suppressed addresses.</p>}
+        </ul>
+      </section>
 
       <section className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
         <h3 className="font-medium text-gray-900">Subscription & compliance</h3>

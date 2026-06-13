@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
-import { campaignRates } from '@/lib/marketing/campaign-dispatch';
+import { campaignRates, getCampaignAbStats } from '@/lib/marketing/campaign-dispatch';
 
 type Params = { params: Promise<{ accountId: string; campaignId: string }> };
 
@@ -63,5 +63,6 @@ export async function GET(req: Request, { params }: Params) {
   return Response.json({
     campaign: { ...campaign, rates: campaignRates(campaign) },
     statusBreakdown,
+    abStats: await getCampaignAbStats(sql, campaignId),
   });
 }

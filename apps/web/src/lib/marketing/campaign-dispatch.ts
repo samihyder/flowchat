@@ -4,15 +4,52 @@ import { applyMergeTags } from '@/lib/marketing/merge-tags';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
 import { resolveSegmentContacts } from '@/lib/marketing/segments';
 
+export async function scheduleCampaign(
+  sql: AppSql,
+  accountId: string,
+  campaignId: string,
+  scheduledAt: Date
+) {
+  const rows = await sql`
+    UPDATE email_campaigns SET status = 'scheduled', scheduled_at = ${scheduledAt.toISOString()}::timestamptz, updated_at = NOW()
+    WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid AND status = 'draft'
+    RETURNING id
+  `;
+  if (!rows[0]) throw new Error('Campaign not found or cannot be scheduled');
+}
+
+export async function pauseCampaign(sql: AppSql, accountId: string, campaignId: string) {
+  await sql`
+    UPDATE email_campaigns SET status = 'paused', updated_at = NOW()
+    WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid AND status = 'sending'
+  `;
+}
+
+export async function cancelCampaign(sql: AppSql, accountId: string, campaignId: string) {
+  await sql`
+    UPDATE email_campaigns SET status = 'cancelled', completed_at = NOW(), updated_at = NOW()
+    WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid
+      AND status IN ('draft', 'scheduled', 'sending', 'paused')
+  `;
+}
+
 export async function prepareCampaignSend(sql: AppSql, accountId: string, campaignId: string) {
   const campaigns = await sql`
-    SELECT id, segment_id as "segmentId", template_id as "templateId", subject, status
+    SELECT id, segment_id as "segmentId", template_id as "templateId", subject, status,
+           ab_test_enabled as "abTestEnabled", subject_variant_b as "subjectVariantB"
     FROM email_campaigns
     WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid
     LIMIT 1
   `;
   const campaign = campaigns[0] as
-    | { segmentId: string | null; templateId: string | null; subject: string; status: string }
+    | {
+        segmentId: string | null;
+        templateId: string | null;
+        subject: string;
+        status: string;
+        abTestEnabled: boolean;
+        subjectVariantB: string | null;
+      }
     | undefined;
   if (!campaign) throw new Error('Campaign not found');
   if (!campaign.segmentId || !campaign.templateId) {
@@ -20,6 +57,9 @@ export async function prepareCampaignSend(sql: AppSql, accountId: string, campai
   }
   if (campaign.status !== 'draft' && campaign.status !== 'scheduled') {
     throw new Error('Campaign cannot be sent in current status');
+  }
+  if (campaign.abTestEnabled && !campaign.subjectVariantB?.trim()) {
+    throw new Error('A/B test requires subject variant B');
   }
 
   const templates = await sql`
@@ -32,11 +72,14 @@ export async function prepareCampaignSend(sql: AppSql, accountId: string, campai
   const contacts = await resolveSegmentContacts(sql, accountId, campaign.segmentId);
   await sql`DELETE FROM email_campaign_recipients WHERE campaign_id = ${campaignId}::uuid`;
 
+  let i = 0;
   for (const c of contacts) {
+    const variant = campaign.abTestEnabled ? (i % 2 === 0 ? 'A' : 'B') : null;
     await sql`
-      INSERT INTO email_campaign_recipients (campaign_id, contact_id, email, status)
-      VALUES (${campaignId}::uuid, ${c.id}::uuid, ${c.email}, 'queued')
+      INSERT INTO email_campaign_recipients (campaign_id, contact_id, email, status, ab_variant)
+      VALUES (${campaignId}::uuid, ${c.id}::uuid, ${c.email}, 'queued', ${variant})
     `;
+    i++;
   }
 
   await sql`
@@ -65,10 +108,18 @@ export async function processCampaignBatch(
   campaignId: string,
   batchSize = 25
 ): Promise<{ done: boolean; processed: number }> {
+  const statusRows = await sql`
+    SELECT status FROM email_campaigns WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
+  `;
+  const status = (statusRows[0] as { status: string } | undefined)?.status;
+  if (status === 'paused' || status === 'cancelled') {
+    return { done: false, processed: 0 };
+  }
+
   const settings = await getAccountSettings(sql, accountId);
 
   const campaigns = await sql`
-    SELECT c.id, c.subject, c.sender_id as "senderId", c.template_id as "templateId",
+    SELECT c.id, c.subject, c.subject_variant_b as "subjectVariantB", c.sender_id as "senderId",
            t.html_body as "htmlBody", t.text_body as "textBody"
     FROM email_campaigns c
     LEFT JOIN email_templates t ON t.id = c.template_id
@@ -76,12 +127,18 @@ export async function processCampaignBatch(
     LIMIT 1
   `;
   const campaign = campaigns[0] as
-    | { subject: string; senderId: string | null; htmlBody: string; textBody: string | null }
+    | {
+        subject: string;
+        subjectVariantB: string | null;
+        senderId: string | null;
+        htmlBody: string;
+        textBody: string | null;
+      }
     | undefined;
   if (!campaign?.htmlBody) throw new Error('Campaign not found');
 
   const recipients = await sql`
-    SELECT r.id, r.contact_id as "contactId", r.email,
+    SELECT r.id, r.contact_id as "contactId", r.email, r.ab_variant as "abVariant",
            c.name, c.phone, c.type, c.custom_attributes as "customAttributes"
     FROM email_campaign_recipients r
     LEFT JOIN contacts c ON c.id = r.contact_id
@@ -94,6 +151,7 @@ export async function processCampaignBatch(
     id: string;
     contactId: string | null;
     email: string;
+    abVariant: string | null;
     name: string | null;
     phone: string | null;
     type: string | null;
@@ -108,29 +166,19 @@ export async function processCampaignBatch(
       continue;
     }
 
-    const subject = applyMergeTags(campaign.subject, {
+    const baseSubject = row.abVariant === 'B' && campaign.subjectVariantB
+      ? campaign.subjectVariantB
+      : campaign.subject;
+    const mergeCtx = {
       name: row.name ?? 'there',
       email: row.email,
       phone: row.phone,
       type: row.type ?? undefined,
       customAttributes: row.customAttributes ?? {},
-    });
-    const html = applyMergeTags(campaign.htmlBody, {
-      name: row.name ?? 'there',
-      email: row.email,
-      phone: row.phone,
-      type: row.type ?? undefined,
-      customAttributes: row.customAttributes ?? {},
-    });
-    const text = campaign.textBody
-      ? applyMergeTags(campaign.textBody, {
-          name: row.name ?? 'there',
-          email: row.email,
-          phone: row.phone,
-          type: row.type ?? undefined,
-          customAttributes: row.customAttributes ?? {},
-        })
-      : undefined;
+    };
+    const subject = applyMergeTags(baseSubject, mergeCtx);
+    const html = applyMergeTags(campaign.htmlBody, mergeCtx);
+    const text = campaign.textBody ? applyMergeTags(campaign.textBody, mergeCtx) : undefined;
 
     const result = await sendMarketingEmail(sql, accountId, row.contactId, settings, {
       to: row.email,
@@ -156,7 +204,7 @@ export async function processCampaignBatch(
           ${campaignId}::uuid,
           'sent',
           ${subject},
-          ${JSON.stringify({ resendMessageId: result.messageId })}::jsonb
+          ${JSON.stringify({ resendMessageId: result.messageId, abVariant: row.abVariant })}::jsonb
         )
       `;
       await sql`
@@ -165,9 +213,7 @@ export async function processCampaignBatch(
       `;
     } else {
       await sql`
-        UPDATE email_campaign_recipients SET
-          status = 'failed',
-          error_message = ${result.error}
+        UPDATE email_campaign_recipients SET status = 'failed', error_message = ${result.error}
         WHERE id = ${row.id}::uuid
       `;
       await sql`
@@ -232,4 +278,16 @@ export function campaignRates(campaign: {
     deliveryRate: pct(delivered, sent),
     complaintRate: pct(campaign.complainedCount, sent),
   };
+}
+
+export async function getCampaignAbStats(sql: AppSql, campaignId: string) {
+  const rows = await sql`
+    SELECT ab_variant as "variant",
+           COUNT(*)::int as sent,
+           COUNT(*) FILTER (WHERE opened_at IS NOT NULL)::int as opened
+    FROM email_campaign_recipients
+    WHERE campaign_id = ${campaignId}::uuid AND ab_variant IS NOT NULL
+    GROUP BY ab_variant
+  `;
+  return rows as { variant: string; sent: number; opened: number }[];
 }

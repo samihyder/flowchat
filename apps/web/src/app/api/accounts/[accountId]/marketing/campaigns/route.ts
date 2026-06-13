@@ -73,14 +73,23 @@ export async function POST(req: Request, { params }: Params) {
     templateId?: string;
     segmentId?: string;
     senderId?: string;
+    scheduledAt?: string;
+    abTestEnabled?: boolean;
+    subjectVariantB?: string;
   };
   if (!body.name?.trim() || !body.subject?.trim()) {
     return Response.json({ error: 'Name and subject are required' }, { status: 400 });
   }
 
   const sql = neon(process.env.DATABASE_URL!);
+  const scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : null;
+  const initialStatus = scheduledAt && !Number.isNaN(scheduledAt.getTime()) ? 'scheduled' : 'draft';
+
   const rows = await sql`
-    INSERT INTO email_campaigns (account_id, name, subject, template_id, segment_id, sender_id, created_by)
+    INSERT INTO email_campaigns (
+      account_id, name, subject, template_id, segment_id, sender_id, created_by,
+      status, scheduled_at, ab_test_enabled, subject_variant_b
+    )
     VALUES (
       ${accountId}::uuid,
       ${body.name.trim()},
@@ -88,7 +97,11 @@ export async function POST(req: Request, { params }: Params) {
       ${body.templateId ?? null}::uuid,
       ${body.segmentId ?? null}::uuid,
       ${body.senderId ?? null}::uuid,
-      ${auth.userId}::uuid
+      ${auth.userId}::uuid,
+      ${initialStatus},
+      ${scheduledAt && !Number.isNaN(scheduledAt.getTime()) ? scheduledAt.toISOString() : null}::timestamptz,
+      ${body.abTestEnabled ?? false},
+      ${body.subjectVariantB?.trim() ?? null}
     )
     RETURNING id, name, subject, status, template_id as "templateId", segment_id as "segmentId",
               total_recipients as "totalRecipients", sent_count as "sentCount",

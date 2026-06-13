@@ -17,6 +17,9 @@ export default function NewCampaignPage() {
   const [templateId, setTemplateId] = useState('');
   const [segmentId, setSegmentId] = useState('');
   const [senderId, setSenderId] = useState('');
+  const [scheduledAt, setScheduledAt] = useState('');
+  const [abTest, setAbTest] = useState(false);
+  const [subjectVariantB, setSubjectVariantB] = useState('');
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [segments, setSegments] = useState<MarketingSegment[]>([]);
   const [senders, setSenders] = useState<MarketingSender[]>([]);
@@ -50,6 +53,9 @@ export default function NewCampaignPage() {
           templateId: templateId || undefined,
           segmentId: segmentId || undefined,
           senderId: senderId || undefined,
+          scheduledAt: scheduledAt || undefined,
+          abTestEnabled: abTest,
+          subjectVariantB: abTest ? subjectVariantB.trim() : undefined,
         },
         token
       );
@@ -68,6 +74,15 @@ export default function NewCampaignPage() {
       <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Campaign name" required />
         <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Email subject (supports {{first_name}})" required />
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={abTest} onChange={(e) => setAbTest(e.target.checked)} />
+          A/B subject test (50/50 split)
+        </label>
+        {abTest && (
+          <Input value={subjectVariantB} onChange={(e) => setSubjectVariantB(e.target.value)} placeholder="Subject variant B" required />
+        )}
+        <Input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
+        <p className="text-xs text-gray-400">Leave schedule empty to save as draft. Cron runs every 5 min.</p>
         <select
           value={templateId}
           onChange={(e) => setTemplateId(e.target.value)}

@@ -1,6 +1,7 @@
 import { createId } from '@paralleldrive/cuid2';
 import type { AppSql } from '@/lib/db-sql';
 import { getWebAppOrigin } from '@/lib/marketing/origin';
+import { suppressEmail } from '@/lib/marketing/suppressions';
 
 export async function getOrCreateUnsubscribeToken(
   sql: AppSql,
@@ -31,10 +32,12 @@ export function unsubscribeUrl(token: string): string {
 
 export async function unsubscribeByToken(sql: AppSql, token: string): Promise<boolean> {
   const rows = await sql`
-    SELECT account_id as "accountId", contact_id as "contactId"
-    FROM marketing_unsubscribe_tokens WHERE token = ${token} LIMIT 1
+    SELECT t.account_id as "accountId", t.contact_id as "contactId", c.email
+    FROM marketing_unsubscribe_tokens t
+    INNER JOIN contacts c ON c.id = t.contact_id
+    WHERE t.token = ${token} LIMIT 1
   `;
-  const row = rows[0] as { accountId: string; contactId: string } | undefined;
+  const row = rows[0] as { accountId: string; contactId: string; email: string } | undefined;
   if (!row) return false;
 
   await sql`
@@ -44,6 +47,10 @@ export async function unsubscribeByToken(sql: AppSql, token: string): Promise<bo
       updated_at = NOW()
     WHERE id = ${row.contactId}::uuid AND account_id = ${row.accountId}::uuid
   `;
+
+  if (row.email) {
+    await suppressEmail(sql, row.accountId, row.email, 'unsubscribe');
+  }
 
   await sql`
     INSERT INTO contact_email_events (account_id, contact_id, event_type, subject, metadata)

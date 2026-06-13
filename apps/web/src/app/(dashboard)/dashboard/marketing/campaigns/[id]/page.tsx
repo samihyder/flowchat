@@ -24,6 +24,7 @@ export default function CampaignDetailPage() {
   const { token, accountId } = useAuthStore();
   const [campaign, setCampaign] = useState<EmailCampaign | null>(null);
   const [breakdown, setBreakdown] = useState<{ status: string; count: number }[]>([]);
+  const [abStats, setAbStats] = useState<{ variant: string; sent: number; opened: number }[]>([]);
   const [sending, setSending] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
 
@@ -32,6 +33,7 @@ export default function CampaignDetailPage() {
     api.marketing.campaigns.get(accountId, campaignId, token).then((r) => {
       setCampaign(r.campaign);
       setBreakdown(r.statusBreakdown);
+      setAbStats(r.abStats ?? []);
     });
   };
 
@@ -89,8 +91,18 @@ export default function CampaignDetailPage() {
           </div>
           {(campaign.status === 'draft' || campaign.status === 'scheduled') && (
             <Button type="button" disabled={sending} onClick={() => void sendCampaign()}>
-              {sending ? 'Sending…' : 'Send now'}
+              {sending ? 'Sending…' : campaign.status === 'scheduled' ? 'Send now (override)' : 'Send now'}
             </Button>
+          )}
+          {campaign.status === 'sending' && (
+            <div className="flex gap-2">
+              <Button type="button" variant="secondary" onClick={() => void api.marketing.campaigns.control(accountId!, campaignId, 'pause', token!).then(load)}>
+                Pause
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => void api.marketing.campaigns.control(accountId!, campaignId, 'cancel', token!).then(load)}>
+                Cancel
+              </Button>
+            </div>
           )}
         </div>
         {statusMsg && <p className="text-sm text-gray-600 mt-2">{statusMsg}</p>}
@@ -119,6 +131,20 @@ export default function CampaignDetailPage() {
           {breakdown.length === 0 && <p className="text-gray-400 col-span-full">No recipients yet.</p>}
         </ul>
       </section>
+
+      {abStats.length > 0 && (
+        <section className="bg-white border border-gray-200 rounded-xl p-4">
+          <h2 className="font-semibold text-gray-900 mb-3">A/B subject results</h2>
+          <ul className="text-sm space-y-2">
+            {abStats.map((v) => (
+              <li key={v.variant} className="flex justify-between">
+                <span>Variant {v.variant}</span>
+                <span>{v.opened}/{v.sent} opens ({v.sent ? Math.round((v.opened / v.sent) * 100) : 0}%)</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

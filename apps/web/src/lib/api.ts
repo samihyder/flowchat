@@ -1030,6 +1030,36 @@ export const api = {
           body,
           token,
         }),
+      preview: (accountId: string, segmentId: string, token: string) =>
+        request<{ preview: { id: string; name: string; email: string }[] }>(
+          `/accounts/${accountId}/marketing/segments/${segmentId}`,
+          { token }
+        ),
+      delete: (accountId: string, segmentId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/segments/${segmentId}`, {
+          method: 'DELETE',
+          token,
+        }),
+      addMembers: (accountId: string, segmentId: string, contactIds: string[], token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/segments/${segmentId}/members`, {
+          method: 'POST',
+          body: { contactIds },
+          token,
+        }),
+    },
+
+    suppressions: {
+      list: (accountId: string, token: string) =>
+        request<{ suppressions: { id: string; email: string; reason: string; createdAt: string }[] }>(
+          `/accounts/${accountId}/marketing/suppressions`,
+          { token }
+        ),
+      add: (accountId: string, email: string, token: string, reason?: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/suppressions`, {
+          method: 'POST',
+          body: { email, reason },
+          token,
+        }),
     },
 
     templates: {
@@ -1055,6 +1085,21 @@ export const api = {
           `/accounts/${accountId}/marketing/templates/${templateId}/test-send`,
           { method: 'POST', body, token }
         ),
+      get: (accountId: string, templateId: string, token: string) =>
+        request<{ template: EmailTemplate }>(`/accounts/${accountId}/marketing/templates/${templateId}`, {
+          token,
+        }),
+      duplicate: (accountId: string, templateId: string, token: string) =>
+        request<{ template: EmailTemplate }>(
+          `/accounts/${accountId}/marketing/templates/${templateId}/duplicate`,
+          { method: 'POST', token }
+        ),
+      archive: (accountId: string, templateId: string, token: string) =>
+        request<{ template: EmailTemplate }>(`/accounts/${accountId}/marketing/templates/${templateId}`, {
+          method: 'PATCH',
+          body: { archived: true },
+          token,
+        }),
     },
 
     campaigns: {
@@ -1064,10 +1109,20 @@ export const api = {
         request<{
           campaign: EmailCampaign;
           statusBreakdown: { status: string; count: number }[];
+          abStats?: { variant: string; sent: number; opened: number }[];
         }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}`, { token }),
       create: (
         accountId: string,
-        body: { name: string; subject: string; templateId?: string; segmentId?: string; senderId?: string },
+        body: {
+          name: string;
+          subject: string;
+          templateId?: string;
+          segmentId?: string;
+          senderId?: string;
+          scheduledAt?: string;
+          abTestEnabled?: boolean;
+          subjectVariantB?: string;
+        },
         token: string
       ) =>
         request<{ campaign: EmailCampaign }>(`/accounts/${accountId}/marketing/campaigns`, {
@@ -1085,6 +1140,18 @@ export const api = {
           `/accounts/${accountId}/marketing/campaigns/${campaignId}/process`,
           { method: 'POST', token }
         ),
+      schedule: (accountId: string, campaignId: string, scheduledAt: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}/schedule`, {
+          method: 'POST',
+          body: { scheduledAt },
+          token,
+        }),
+      control: (accountId: string, campaignId: string, action: 'pause' | 'cancel', token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}/control`, {
+          method: 'POST',
+          body: { action },
+          token,
+        }),
     },
 
     workflows: {
@@ -1118,6 +1185,16 @@ export const api = {
           method: 'POST',
           token,
         }),
+      update: (
+        accountId: string,
+        workflowId: string,
+        body: { enabled?: boolean; name?: string; allowReentry?: boolean; maxEnrollments?: number | null },
+        token: string
+      ) =>
+        request<{ workflow: MarketingWorkflow }>(
+          `/accounts/${accountId}/marketing/workflows/${workflowId}`,
+          { method: 'PATCH', body, token }
+        ),
     },
   },
 

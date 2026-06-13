@@ -3,6 +3,7 @@ import { publishEvent } from '@/lib/redis';
 import { updateReplyTracking } from '@/lib/missed-chats';
 import { writeAuditLog } from '@/lib/audit-log';
 import { dispatchWebhooks } from '@/lib/webhooks';
+import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
 import type { AppSql } from '@/lib/db-sql';
 
 export type MessageAttachment = {
@@ -352,4 +353,13 @@ export async function logConversationResolved(
   });
 
   void dispatchWebhooks(sql, accountId, 'conversation.resolved', { conversationId });
+
+  const convRows = await sql`
+    SELECT contact_id as "contactId" FROM conversations
+    WHERE id = ${conversationId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
+  `;
+  const contactId = (convRows[0] as { contactId: string | null } | undefined)?.contactId;
+  if (contactId) {
+    await triggerMarketingWorkflows(sql, accountId, 'conversation_resolved', contactId);
+  }
 }

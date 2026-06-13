@@ -1,5 +1,6 @@
 import type { AppSql } from '@/lib/db-sql';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
+import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
 import { validateCustomAttributes, type CustomAttributeDefinition } from '@/lib/custom-attributes';
 import {
   parseCsvRaw,
@@ -223,12 +224,16 @@ export async function processImportJobBatch(
                     created_at as "createdAt", updated_at as "updatedAt"
         `;
         if (inserted[0]) {
+          const contactId = (inserted[0] as { id: string }).id;
           await emitContactEvent(
             sql,
             accountId,
             'contact.created',
             serializeContactRow(inserted[0] as Record<string, unknown>)
           );
+          if (row.email) {
+            await triggerMarketingWorkflows(sql, accountId, 'contact_created', contactId);
+          }
         }
         importedCount++;
       }

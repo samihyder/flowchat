@@ -274,12 +274,12 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 - [x] Contact merge for duplicate email/phone groups
 - [x] Conversation participants (observers) on threads
 - [x] Custom attribute definitions in Settings → CRM
-- [ ] Admin can import contacts and build static + dynamic segments
-- [ ] Admin can create HTML templates with merge tags and send a test email
-- [ ] Admin can run a broadcast campaign to a segment; recipients receive mail from verified domain
-- [ ] Admin can publish an automation workflow (welcome drip, post-chat follow-up) that runs on triggers
-- [ ] Unsubscribe link works; suppressed contacts never receive marketing mail
-- [ ] Campaign dashboard shows delivery and engagement metrics; contact profile shows email history
+- [x] Admin can import contacts and build static + dynamic segments
+- [x] Admin can create HTML templates with merge tags and send a test email
+- [x] Admin can run a broadcast campaign to a segment; recipients receive mail from verified domain
+- [x] Admin can publish an automation workflow (welcome drip, post-chat follow-up) that runs on triggers
+- [x] Unsubscribe link works; suppressed contacts never receive marketing mail
+- [x] Campaign dashboard shows delivery and engagement metrics; contact profile shows email history
 - [ ] All **Must** items in [email-marketing-standard.md](email-marketing-standard.md) verified in staging
 
 ---

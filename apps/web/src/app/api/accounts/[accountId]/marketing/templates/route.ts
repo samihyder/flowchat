@@ -13,7 +13,7 @@ export async function GET(req: Request, { params }: Params) {
   const sql = neon(process.env.DATABASE_URL!);
   const rows = await sql`
     SELECT id, name, subject, created_at as "createdAt", updated_at as "updatedAt"
-    FROM email_templates WHERE account_id = ${accountId}::uuid
+    FROM email_templates WHERE account_id = ${accountId}::uuid AND archived = false
     ORDER BY updated_at DESC
   `;
   return Response.json({ templates: rows });

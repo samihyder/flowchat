@@ -13,9 +13,11 @@ export default function WorkflowsPage() {
   const [senders, setSenders] = useState<MarketingSender[]>([]);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [name, setName] = useState('');
+  const [triggerType, setTriggerType] = useState('manual');
   const [senderId, setSenderId] = useState('');
   const [waitHours, setWaitHours] = useState('24');
   const [templateId, setTemplateId] = useState('');
+  const [includeBranch, setIncludeBranch] = useState(false);
   const [processing, setProcessing] = useState(false);
 
   const load = () => {
@@ -30,26 +32,38 @@ export default function WorkflowsPage() {
   const createDrip = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token || !accountId || !templateId) return;
-    const template = templates.find((t) => t.id === templateId);
-    if (!template) return;
+
+    const steps: { stepType: string; config: Record<string, unknown> }[] = [
+      { stepType: 'send_email', config: { templateId } },
+    ];
+    if (includeBranch) {
+      steps.push({
+        stepType: 'branch',
+        config: { condition: 'not_opened', waitHours: 48, trueStepOrder: 4, falseStepOrder: 3 },
+      });
+    }
+    steps.push({ stepType: 'wait', config: { hours: Number(waitHours) || 24 } });
+    steps.push({ stepType: 'send_email', config: { templateId, subjectPrefix: 'Follow-up: ' } });
+    steps.push({ stepType: 'exit', config: {} });
 
     await api.marketing.workflows.create(
       accountId,
       {
-        name: name.trim() || 'Welcome drip',
-        triggerType: 'manual',
+        name: name.trim() || 'Automation workflow',
+        triggerType,
         senderId: senderId || undefined,
         allowReentry: false,
-        steps: [
-          { stepType: 'send_email', config: { templateId } },
-          { stepType: 'wait', config: { hours: Number(waitHours) || 24 } },
-          { stepType: 'send_email', config: { templateId, subjectPrefix: 'Follow-up: ' } },
-          { stepType: 'exit', config: {} },
-        ],
+        steps,
       },
       token
     );
     setName('');
+    load();
+  };
+
+  const toggleWorkflow = async (workflowId: string, enabled: boolean) => {
+    if (!token || !accountId) return;
+    await api.marketing.workflows.update(accountId, workflowId, { enabled }, token);
     load();
   };
 
@@ -68,7 +82,7 @@ export default function WorkflowsPage() {
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <PageHeader
         title="Automation workflows"
-        description="Drip sequences with send → wait → send steps. Enroll contacts manually from their profile."
+        description="Triggers: contact created, label added, conversation resolved, or manual enroll"
         action={
           <Button type="button" variant="secondary" onClick={() => void runProcessor()} disabled={processing}>
             {processing ? 'Processing…' : 'Run due steps'}
@@ -77,8 +91,18 @@ export default function WorkflowsPage() {
       />
       <div className="px-6 pb-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <form onSubmit={createDrip} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-          <h2 className="font-semibold text-gray-900">New drip sequence</h2>
+          <h2 className="font-semibold text-gray-900">New workflow</h2>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Workflow name" />
+          <select
+            value={triggerType}
+            onChange={(e) => setTriggerType(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"
+          >
+            <option value="manual">Manual enrollment</option>
+            <option value="contact_created">Contact created</option>
+            <option value="label_added">Label added</option>
+            <option value="conversation_resolved">Conversation resolved</option>
+          </select>
           <select
             value={senderId}
             onChange={(e) => setSenderId(e.target.value)}
@@ -86,9 +110,7 @@ export default function WorkflowsPage() {
           >
             <option value="">Default sender</option>
             {senders.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label} ({s.fromEmail})
-              </option>
+              <option key={s.id} value={s.id}>{s.label}</option>
             ))}
           </select>
           <select
@@ -97,39 +119,40 @@ export default function WorkflowsPage() {
             className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"
             required
           >
-            <option value="">First email template</option>
+            <option value="">Email template</option>
             {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
+              <option key={t.id} value={t.id}>{t.name}</option>
             ))}
           </select>
-          <Input
-            type="number"
-            min={1}
-            value={waitHours}
-            onChange={(e) => setWaitHours(e.target.value)}
-            placeholder="Wait hours between emails"
-          />
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={includeBranch} onChange={(e) => setIncludeBranch(e.target.checked)} />
+            Branch if not opened after 48h
+          </label>
+          <Input type="number" min={1} value={waitHours} onChange={(e) => setWaitHours(e.target.value)} placeholder="Wait hours" />
           <Button type="submit">Create workflow</Button>
         </form>
 
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <h2 className="font-semibold text-gray-900 mb-3">Active workflows</h2>
+          <h2 className="font-semibold text-gray-900 mb-3">Workflows</h2>
           <ul className="space-y-3 text-sm">
             {workflows.map((w) => (
               <li key={w.id} className="border-b border-gray-100 pb-3">
-                <p className="font-medium">{w.name}</p>
-                <p className="text-gray-500 capitalize">
-                  {w.triggerType.replace(/_/g, ' ')} · {w.steps.length} steps · {w.activeEnrollments} enrolled
-                </p>
-                <ul className="mt-1 text-xs text-gray-400">
-                  {w.steps.map((s) => (
-                    <li key={s.id}>
-                      {s.stepOrder}. {s.stepType.replace(/_/g, ' ')}
-                    </li>
-                  ))}
-                </ul>
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <p className="font-medium">{w.name}</p>
+                    <p className="text-gray-500 capitalize">
+                      {w.triggerType.replace(/_/g, ' ')} · {w.steps.length} steps · {w.activeEnrollments} active
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => void toggleWorkflow(w.id, !w.enabled)}
+                  >
+                    {w.enabled ? 'Disable' : 'Enable'}
+                  </Button>
+                </div>
               </li>
             ))}
             {workflows.length === 0 && <p className="text-gray-400">No workflows yet.</p>}

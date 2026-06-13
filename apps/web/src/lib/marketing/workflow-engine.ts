@@ -10,6 +10,22 @@ type WorkflowStep = {
   config: Record<string, unknown>;
 };
 
+async function contactOpenedWorkflowEmail(
+  sql: AppSql,
+  accountId: string,
+  contactId: string,
+  workflowId: string
+): Promise<boolean> {
+  const rows = await sql`
+    SELECT 1 FROM contact_email_events
+    WHERE account_id = ${accountId}::uuid AND contact_id = ${contactId}::uuid
+      AND event_type IN ('opened', 'clicked')
+      AND metadata->>'workflowId' = ${workflowId}
+    LIMIT 1
+  `;
+  return Boolean(rows[0]);
+}
+
 export async function enrollContactInWorkflow(
   sql: AppSql,
   accountId: string,
@@ -17,13 +33,22 @@ export async function enrollContactInWorkflow(
   contactId: string
 ): Promise<{ enrolled: boolean; reason?: string }> {
   const workflows = await sql`
-    SELECT id, enabled, allow_reentry as "allowReentry"
+    SELECT id, enabled, allow_reentry as "allowReentry", max_enrollments as "maxEnrollments"
     FROM marketing_workflows
     WHERE id = ${workflowId}::uuid AND account_id = ${accountId}::uuid
     LIMIT 1
   `;
-  const wf = workflows[0] as { enabled: boolean; allowReentry: boolean } | undefined;
+  const wf = workflows[0] as { enabled: boolean; allowReentry: boolean; maxEnrollments: number | null } | undefined;
   if (!wf?.enabled) return { enrolled: false, reason: 'Workflow disabled' };
+
+  if (wf.maxEnrollments != null) {
+    const total = await sql`
+      SELECT COUNT(*)::int as count FROM marketing_workflow_enrollments WHERE workflow_id = ${workflowId}::uuid
+    `;
+    if (((total[0] as { count: number }).count ?? 0) >= wf.maxEnrollments) {
+      return { enrolled: false, reason: 'Enrollment cap reached' };
+    }
+  }
 
   const existing = await sql`
     SELECT id FROM marketing_workflow_enrollments
@@ -41,6 +66,21 @@ export async function enrollContactInWorkflow(
   return { enrolled: true };
 }
 
+async function advanceEnrollment(
+  sql: AppSql,
+  enrollmentId: string,
+  stepOrder: number,
+  nextRunAt: Date | null
+) {
+  await sql`
+    UPDATE marketing_workflow_enrollments SET
+      current_step_order = ${stepOrder},
+      next_run_at = ${nextRunAt ? nextRunAt.toISOString() : null}::timestamptz,
+      branch_context = '{}'::jsonb
+    WHERE id = ${enrollmentId}::uuid
+  `;
+}
+
 export async function processWorkflowBatch(
   sql: AppSql,
   accountId: string,
@@ -49,10 +89,11 @@ export async function processWorkflowBatch(
   const settings = await getAccountSettings(sql, accountId);
   const due = await sql`
     SELECT e.id as "enrollmentId", e.workflow_id as "workflowId", e.contact_id as "contactId",
-           e.current_step_order as "currentStepOrder", w.sender_id as "senderId"
+           e.current_step_order as "currentStepOrder", e.branch_context as "branchContext",
+           w.sender_id as "senderId"
     FROM marketing_workflow_enrollments e
     INNER JOIN marketing_workflows w ON w.id = e.workflow_id
-    WHERE w.account_id = ${accountId}::uuid
+    WHERE w.account_id = ${accountId}::uuid AND w.enabled = true
       AND e.status = 'active'
       AND (e.next_run_at IS NULL OR e.next_run_at <= NOW())
     ORDER BY e.next_run_at NULLS FIRST
@@ -65,15 +106,32 @@ export async function processWorkflowBatch(
     workflowId: string;
     contactId: string;
     currentStepOrder: number;
+    branchContext: Record<string, unknown>;
     senderId: string | null;
   }[]) {
     const steps = await sql`
       SELECT id, step_order as "stepOrder", step_type as "stepType", config
-      FROM marketing_workflow_steps
-      WHERE workflow_id = ${row.workflowId}::uuid
-      ORDER BY step_order ASC
+      FROM marketing_workflow_steps WHERE workflow_id = ${row.workflowId}::uuid ORDER BY step_order ASC
     `;
     const allSteps = steps as WorkflowStep[];
+
+    const pendingBranch = row.branchContext?.pendingBranch as
+      | { stepOrder: number; condition: string; trueStepOrder: number; falseStepOrder: number }
+      | undefined;
+
+    if (pendingBranch) {
+      let pass = false;
+      if (pendingBranch.condition === 'opened' || pendingBranch.condition === 'clicked') {
+        pass = await contactOpenedWorkflowEmail(sql, accountId, row.contactId, row.workflowId);
+      } else if (pendingBranch.condition === 'not_opened') {
+        pass = !(await contactOpenedWorkflowEmail(sql, accountId, row.contactId, row.workflowId));
+      }
+      const goto = pass ? pendingBranch.trueStepOrder : pendingBranch.falseStepOrder;
+      await advanceEnrollment(sql, row.enrollmentId, goto - 1, new Date());
+      processed++;
+      continue;
+    }
+
     const nextStep = allSteps.find((s) => s.stepOrder > row.currentStepOrder);
     if (!nextStep) {
       await sql`
@@ -113,6 +171,27 @@ export async function processWorkflowBatch(
       customAttributes: contact.customAttributes ?? {},
     };
 
+    if (nextStep.stepType === 'branch') {
+      const cfg = nextStep.config;
+      const waitHours = Number(cfg.waitHours ?? 24);
+      await sql`
+        UPDATE marketing_workflow_enrollments SET
+          current_step_order = ${nextStep.stepOrder},
+          next_run_at = NOW() + (${String(waitHours)}::text || ' hours')::interval,
+          branch_context = ${JSON.stringify({
+            pendingBranch: {
+              stepOrder: nextStep.stepOrder,
+              condition: String(cfg.condition ?? 'not_opened'),
+              trueStepOrder: Number(cfg.trueStepOrder ?? nextStep.stepOrder + 1),
+              falseStepOrder: Number(cfg.falseStepOrder ?? nextStep.stepOrder + 2),
+            },
+          })}::jsonb
+        WHERE id = ${row.enrollmentId}::uuid
+      `;
+      processed++;
+      continue;
+    }
+
     if (nextStep.stepType === 'send_email') {
       const cfg = nextStep.config;
       let subject = String(cfg.subject ?? '');
@@ -122,9 +201,7 @@ export async function processWorkflowBatch(
       if (cfg.templateId) {
         const tplRows = await sql`
           SELECT subject, html_body as "htmlBody", text_body as "textBody"
-          FROM email_templates
-          WHERE id = ${String(cfg.templateId)}::uuid AND account_id = ${accountId}::uuid
-          LIMIT 1
+          FROM email_templates WHERE id = ${String(cfg.templateId)}::uuid AND account_id = ${accountId}::uuid LIMIT 1
         `;
         const tpl = tplRows[0] as { subject: string; htmlBody: string; textBody: string | null } | undefined;
         if (!tpl) {
@@ -152,24 +229,23 @@ export async function processWorkflowBatch(
       await sql`
         INSERT INTO contact_email_events (account_id, contact_id, event_type, subject, metadata)
         VALUES (${accountId}::uuid, ${row.contactId}::uuid, 'workflow_sent', ${subject},
-                ${JSON.stringify({ workflowId: row.workflowId, stepOrder: nextStep.stepOrder })}::jsonb)
+          ${JSON.stringify({ workflowId: row.workflowId, stepOrder: nextStep.stepOrder })}::jsonb)
       `;
     } else if (nextStep.stepType === 'wait') {
       const hours = Number(nextStep.config.hours ?? 24);
-      await sql`
-        UPDATE marketing_workflow_enrollments SET
-          current_step_order = ${nextStep.stepOrder},
-          next_run_at = NOW() + (${hours}::text || ' hours')::interval
-        WHERE id = ${row.enrollmentId}::uuid
-      `;
+      await advanceEnrollment(
+        sql,
+        row.enrollmentId,
+        nextStep.stepOrder,
+        new Date(Date.now() + hours * 3600 * 1000)
+      );
       processed++;
       continue;
     } else if (nextStep.stepType === 'add_label') {
       const labelId = nextStep.config.labelId as string | undefined;
       if (labelId) {
         await sql`
-          INSERT INTO contact_labels (contact_id, label_id)
-          VALUES (${row.contactId}::uuid, ${labelId}::uuid)
+          INSERT INTO contact_labels (contact_id, label_id) VALUES (${row.contactId}::uuid, ${labelId}::uuid)
           ON CONFLICT DO NOTHING
         `;
       }
@@ -191,10 +267,7 @@ export async function processWorkflowBatch(
         WHERE id = ${row.enrollmentId}::uuid
       `;
     } else if (nextStep.stepType !== 'wait') {
-      await sql`
-        UPDATE marketing_workflow_enrollments SET current_step_order = ${nextStep.stepOrder}, next_run_at = NOW()
-        WHERE id = ${row.enrollmentId}::uuid
-      `;
+      await advanceEnrollment(sql, row.enrollmentId, nextStep.stepOrder, new Date());
     }
     processed++;
   }

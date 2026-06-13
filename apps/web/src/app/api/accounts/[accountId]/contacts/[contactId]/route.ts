@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
+import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
 import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-attributes';
 import type { AppSql } from '@/lib/db-sql';
 
@@ -157,6 +158,11 @@ export async function PATCH(req: Request, { params }: Params) {
   }
 
   if (body.labelIds) {
+    const oldLabels = await sql`
+      SELECT label_id as "labelId" FROM contact_labels WHERE contact_id = ${contactId}::uuid
+    `;
+    const oldSet = new Set((oldLabels as { labelId: string }[]).map((r) => r.labelId));
+
     await sql`DELETE FROM contact_labels WHERE contact_id = ${contactId}::uuid`;
     for (const labelId of body.labelIds) {
       await sql`
@@ -165,6 +171,9 @@ export async function PATCH(req: Request, { params }: Params) {
         WHERE EXISTS (SELECT 1 FROM labels WHERE id = ${labelId}::uuid AND account_id = ${accountId}::uuid)
         ON CONFLICT DO NOTHING
       `;
+      if (!oldSet.has(labelId)) {
+        await triggerMarketingWorkflows(sql, accountId, 'label_added', contactId, { labelId });
+      }
     }
   }
 
