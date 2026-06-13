@@ -3,6 +3,7 @@ import { getAccountSettings } from '@/lib/account-settings-db';
 import { applyMergeTags } from '@/lib/marketing/merge-tags';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
 import { resolveSegmentContacts } from '@/lib/marketing/segments';
+import { isInSendWindow, resolveContactTimezone } from '@/lib/marketing/send-time';
 
 export async function scheduleCampaign(
   sql: AppSql,
@@ -95,11 +96,52 @@ export async function prepareCampaignSend(sql: AppSql, accountId: string, campai
       complained_count = 0,
       unsubscribed_count = 0,
       failed_count = 0,
+      ab_test_phase = ${campaign.abTestEnabled ? 'testing' : 'none'},
       updated_at = NOW()
     WHERE id = ${campaignId}::uuid
   `;
 
   return { totalRecipients: contacts.length };
+}
+
+export async function pickAbTestWinner(sql: AppSql, accountId: string, campaignId: string) {
+  const rows = await sql`
+    SELECT ab_test_enabled as "abTestEnabled", ab_test_phase as "abTestPhase",
+           ab_winner_after_hours as "abWinnerAfterHours", started_at as "startedAt"
+    FROM email_campaigns
+    WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid
+    LIMIT 1
+  `;
+  const c = rows[0] as {
+    abTestEnabled: boolean;
+    abTestPhase: string;
+    abWinnerAfterHours: number;
+    startedAt: Date | null;
+  } | undefined;
+  if (!c?.abTestEnabled || c.abTestPhase !== 'testing' || !c.startedAt) return;
+
+  const elapsed = Date.now() - new Date(c.startedAt).getTime();
+  if (elapsed < c.abWinnerAfterHours * 3600 * 1000) return;
+
+  const stats = await getCampaignAbStats(sql, campaignId);
+  if (stats.length < 2) return;
+
+  const scored = stats.map((s) => ({
+    variant: s.variant,
+    rate: s.sent > 0 ? s.opened / s.sent : 0,
+  }));
+  scored.sort((a, b) => b.rate - a.rate);
+  const winner = scored[0]?.variant;
+  if (!winner) return;
+
+  await sql`
+    UPDATE email_campaigns SET ab_winner_variant = ${winner}, ab_test_phase = 'winner_sent', updated_at = NOW()
+    WHERE id = ${campaignId}::uuid
+  `;
+  await sql`
+    UPDATE email_campaign_recipients SET ab_variant = ${winner}
+    WHERE campaign_id = ${campaignId}::uuid AND status = 'queued'
+  `;
 }
 
 export async function processCampaignBatch(
@@ -117,10 +159,14 @@ export async function processCampaignBatch(
   }
 
   const settings = await getAccountSettings(sql, accountId);
+  const accountRows = await sql`SELECT timezone FROM accounts WHERE id = ${accountId}::uuid LIMIT 1`;
+  const accountTz = (accountRows[0] as { timezone: string } | undefined)?.timezone ?? 'UTC';
 
   const campaigns = await sql`
-    SELECT c.id, c.subject, c.subject_variant_b as "subjectVariantB", c.sender_id as "senderId",
-           t.html_body as "htmlBody", t.text_body as "textBody"
+    SELECT c.id, c.subject, c.subject_variant_b as "subjectVariantB", c.ab_winner_variant as "abWinnerVariant",
+           c.ab_test_phase as "abTestPhase", c.use_send_time_optimization as "useSendTimeOptimization",
+           c.send_window_start as "sendWindowStart", c.send_window_end as "sendWindowEnd",
+           c.sender_id as "senderId", t.html_body as "htmlBody", t.text_body as "textBody"
     FROM email_campaigns c
     LEFT JOIN email_templates t ON t.id = c.template_id
     WHERE c.id = ${campaignId}::uuid AND c.account_id = ${accountId}::uuid
@@ -130,6 +176,11 @@ export async function processCampaignBatch(
     | {
         subject: string;
         subjectVariantB: string | null;
+        abWinnerVariant: string | null;
+        abTestPhase: string;
+        useSendTimeOptimization: boolean;
+        sendWindowStart: number;
+        sendWindowEnd: number;
         senderId: string | null;
         htmlBody: string;
         textBody: string | null;
@@ -139,14 +190,16 @@ export async function processCampaignBatch(
 
   const recipients = await sql`
     SELECT r.id, r.contact_id as "contactId", r.email, r.ab_variant as "abVariant",
-           c.name, c.phone, c.type, c.custom_attributes as "customAttributes"
+           c.name, c.phone, c.type, c.timezone, c.marketing_preference as "marketingPreference",
+           c.custom_attributes as "customAttributes"
     FROM email_campaign_recipients r
     LEFT JOIN contacts c ON c.id = r.contact_id
     WHERE r.campaign_id = ${campaignId}::uuid AND r.status = 'queued'
-    LIMIT ${batchSize}
+    LIMIT ${batchSize * 3}
   `;
 
   let processed = 0;
+  let sentThisBatch = 0;
   for (const row of recipients as {
     id: string;
     contactId: string | null;
@@ -155,8 +208,12 @@ export async function processCampaignBatch(
     name: string | null;
     phone: string | null;
     type: string | null;
+    timezone: string | null;
+    marketingPreference: string;
     customAttributes: Record<string, unknown> | null;
   }[]) {
+    if (sentThisBatch >= batchSize) break;
+
     if (!row.contactId) {
       await sql`
         UPDATE email_campaign_recipients SET status = 'skipped', error_message = 'Missing contact'
@@ -166,9 +223,28 @@ export async function processCampaignBatch(
       continue;
     }
 
-    const baseSubject = row.abVariant === 'B' && campaign.subjectVariantB
-      ? campaign.subjectVariantB
-      : campaign.subject;
+    if (row.marketingPreference === 'none' || row.marketingPreference === 'reduced') {
+      await sql`
+        UPDATE email_campaign_recipients SET status = 'skipped', error_message = 'Preference opt-down'
+        WHERE id = ${row.id}::uuid
+      `;
+      processed++;
+      continue;
+    }
+
+    if (campaign.useSendTimeOptimization) {
+      const tz = resolveContactTimezone(row.timezone, accountTz);
+      if (!isInSendWindow(tz, campaign.sendWindowStart, campaign.sendWindowEnd)) {
+        continue;
+      }
+    }
+
+    let baseSubject = campaign.subject;
+    if (campaign.abTestPhase === 'winner_sent' && campaign.abWinnerVariant === 'B' && campaign.subjectVariantB) {
+      baseSubject = campaign.subjectVariantB;
+    } else if (row.abVariant === 'B' && campaign.subjectVariantB) {
+      baseSubject = campaign.subjectVariantB;
+    }
     const mergeCtx = {
       name: row.name ?? 'there',
       email: row.email,
@@ -222,6 +298,7 @@ export async function processCampaignBatch(
       `;
     }
     processed++;
+    sentThisBatch++;
   }
 
   const remaining = await sql`

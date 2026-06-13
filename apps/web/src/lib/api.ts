@@ -1122,6 +1122,7 @@ export const api = {
           scheduledAt?: string;
           abTestEnabled?: boolean;
           subjectVariantB?: string;
+          useSendTimeOptimization?: boolean;
         },
         token: string
       ) =>

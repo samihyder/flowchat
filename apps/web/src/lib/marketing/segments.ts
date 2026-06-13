@@ -55,6 +55,7 @@ export async function resolveSegmentContacts(
         AND c.account_id = ${accountId}::uuid
         AND c.email IS NOT NULL AND c.email <> ''
         AND c.marketing_status = 'subscribed'
+        AND c.marketing_preference = 'all'
     `;
     return filterSubscribed(sql, accountId, rows as SegmentContact[]);
   }
@@ -70,6 +71,7 @@ export async function resolveSegmentContacts(
       WHERE c.account_id = ${accountId}::uuid
         AND c.email IS NOT NULL AND c.email <> ''
         AND c.marketing_status = COALESCE(${f.marketingStatus ?? null}::text, 'subscribed')
+      AND c.marketing_preference = 'all'
         AND (${f.type ?? null}::text IS NULL OR c.type = ${f.type ?? null})
         AND (${f.labelId ?? null}::uuid IS NULL OR EXISTS (
           SELECT 1 FROM contact_labels cl WHERE cl.contact_id = c.id AND cl.label_id = ${f.labelId ?? null}::uuid
@@ -84,6 +86,7 @@ export async function resolveSegmentContacts(
       WHERE c.account_id = ${accountId}::uuid
         AND c.email IS NOT NULL AND c.email <> ''
         AND c.marketing_status = COALESCE(${f.marketingStatus ?? null}::text, 'subscribed')
+      AND c.marketing_preference = 'all'
         AND (${f.type ?? null}::text IS NULL OR c.type = ${f.type ?? null})
         AND (${f.labelId ?? null}::uuid IS NULL OR EXISTS (
           SELECT 1 FROM contact_labels cl WHERE cl.contact_id = c.id AND cl.label_id = ${f.labelId ?? null}::uuid
@@ -98,6 +101,7 @@ export async function resolveSegmentContacts(
       WHERE c.account_id = ${accountId}::uuid
         AND c.email IS NOT NULL AND c.email <> ''
         AND c.marketing_status = COALESCE(${f.marketingStatus ?? null}::text, 'subscribed')
+      AND c.marketing_preference = 'all'
         AND (${f.type ?? null}::text IS NULL OR c.type = ${f.type ?? null})
         AND (${f.labelId ?? null}::uuid IS NULL OR EXISTS (
           SELECT 1 FROM contact_labels cl WHERE cl.contact_id = c.id AND cl.label_id = ${f.labelId ?? null}::uuid

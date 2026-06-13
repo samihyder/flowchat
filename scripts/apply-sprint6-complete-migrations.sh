@@ -9,7 +9,8 @@ fi
 for f in \
   packages/db/drizzle/0013_sprint6_email_marketing.sql \
   packages/db/drizzle/0014_sprint6_email_phase2.sql \
-  packages/db/drizzle/0015_sprint6_complete.sql
+  packages/db/drizzle/0015_sprint6_complete.sql \
+  packages/db/drizzle/0016_sprint6_stretch.sql
 do
   echo "Applying $f..."
   psql "$DATABASE_URL" -f "$f"

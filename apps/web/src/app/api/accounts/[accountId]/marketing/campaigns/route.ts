@@ -76,6 +76,7 @@ export async function POST(req: Request, { params }: Params) {
     scheduledAt?: string;
     abTestEnabled?: boolean;
     subjectVariantB?: string;
+    useSendTimeOptimization?: boolean;
   };
   if (!body.name?.trim() || !body.subject?.trim()) {
     return Response.json({ error: 'Name and subject are required' }, { status: 400 });
@@ -88,7 +89,7 @@ export async function POST(req: Request, { params }: Params) {
   const rows = await sql`
     INSERT INTO email_campaigns (
       account_id, name, subject, template_id, segment_id, sender_id, created_by,
-      status, scheduled_at, ab_test_enabled, subject_variant_b
+      status, scheduled_at, ab_test_enabled, subject_variant_b, use_send_time_optimization
     )
     VALUES (
       ${accountId}::uuid,
@@ -101,7 +102,8 @@ export async function POST(req: Request, { params }: Params) {
       ${initialStatus},
       ${scheduledAt && !Number.isNaN(scheduledAt.getTime()) ? scheduledAt.toISOString() : null}::timestamptz,
       ${body.abTestEnabled ?? false},
-      ${body.subjectVariantB?.trim() ?? null}
+      ${body.subjectVariantB?.trim() ?? null},
+      ${body.useSendTimeOptimization ?? false}
     )
     RETURNING id, name, subject, status, template_id as "templateId", segment_id as "segmentId",
               total_recipients as "totalRecipients", sent_count as "sentCount",

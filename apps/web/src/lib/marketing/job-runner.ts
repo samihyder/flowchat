@@ -1,5 +1,5 @@
 import type { AppSql } from '@/lib/db-sql';
-import { prepareCampaignSend, processCampaignBatch } from '@/lib/marketing/campaign-dispatch';
+import { prepareCampaignSend, processCampaignBatch, pickAbTestWinner } from '@/lib/marketing/campaign-dispatch';
 import { processWorkflowBatch } from '@/lib/marketing/workflow-engine';
 
 const BATCH_SIZE = Number(process.env.MARKETING_BATCH_SIZE ?? 25);
@@ -40,6 +40,7 @@ export async function runMarketingJobs(sql: AppSql): Promise<{
   `;
 
   for (const row of sending as { id: string; accountId: string }[]) {
+    await pickAbTestWinner(sql, row.accountId, row.id);
     const result = await processCampaignBatch(sql, row.accountId, row.id, BATCH_SIZE);
     campaignsProcessed += result.processed;
   }
