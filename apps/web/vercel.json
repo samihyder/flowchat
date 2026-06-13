@@ -2,11 +2,5 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "framework": "nextjs",
-  "crons": [
-    {
-      "path": "/api/cron/marketing",
-      "schedule": "*/1 * * * *"
-    }
-  ]
+  "framework": "nextjs"
 }
