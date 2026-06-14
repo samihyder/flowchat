@@ -8,7 +8,7 @@ import {
   MUTEX_DEFAULT_GREETING_MESSAGES,
   MUTEX_DEFAULT_WELCOME_TAGLINE,
   MUTEX_DEFAULT_WELCOME_TITLE,
-} from '@/lib/welcome-messages';
+} from '@/lib/welcome-message-defaults';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {

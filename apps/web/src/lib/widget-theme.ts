@@ -5,7 +5,7 @@ import {
   MUTEX_DEFAULT_GREETING_MESSAGES,
   MUTEX_DEFAULT_WELCOME_TAGLINE,
   MUTEX_DEFAULT_WELCOME_TITLE,
-} from '@/lib/welcome-messages';
+} from '@/lib/welcome-message-defaults';
 
 export type WidgetIconId = 'chat' | 'bubble' | 'headset' | 'message' | 'help' | 'wave';
 
