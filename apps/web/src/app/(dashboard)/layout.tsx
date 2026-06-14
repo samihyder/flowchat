@@ -12,6 +12,7 @@ import { useMessageAlert } from '@/lib/useMessageAlert';
 import { isMessageAlertMuted, setMessageAlertMuted } from '@/lib/message-alert';
 import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
 import { api } from '@/lib/api';
+import { countryLabel } from '@/lib/country';
 
 type Inbox = { id: string; name: string; channelType: string; widgetColor: string | null };
 type Team = { id: string; name: string };
@@ -379,6 +380,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             <span>
               Visitor on {visitorAlert.inboxName}
               {visitorAlert.ipAddress ? ` · ${visitorAlert.ipAddress}` : ''}
+              {visitorAlert.countryCode
+                ? ` · ${countryLabel(visitorAlert.countryCode) ?? visitorAlert.countryCode}`
+                : ''}
             </span>
             <button
               type="button"

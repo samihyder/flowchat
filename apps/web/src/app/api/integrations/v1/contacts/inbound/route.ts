@@ -7,6 +7,7 @@ type InboundContact = {
   phone?: string | null;
   type?: string;
   externalId?: string | null;
+  customAttributes?: Record<string, unknown>;
 };
 
 /**
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
         phone: item.phone,
         type: item.type,
         externalId: item.externalId,
+        customAttributes: item.customAttributes,
       });
       results.push({ externalId: contact.externalId, id: contact.id, created });
     } catch {

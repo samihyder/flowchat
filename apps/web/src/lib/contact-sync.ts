@@ -42,6 +42,16 @@ export async function emitContactEvent(
   void dispatchWebhooks(sql, accountId, event, { contact });
 }
 
+function mergeCustomAttributes(
+  existing: Record<string, unknown> | null | undefined,
+  incoming: Record<string, unknown> | undefined
+): Record<string, unknown> {
+  if (!incoming || Object.keys(incoming).length === 0) {
+    return existing ?? {};
+  }
+  return { ...(existing ?? {}), ...incoming };
+}
+
 export async function upsertIntegrationContact(
   sql: AppSql,
   accountId: string,
@@ -52,6 +62,8 @@ export async function upsertIntegrationContact(
     type?: string;
     externalId?: string | null;
     matchByEmail?: boolean;
+    matchByDomain?: boolean;
+    customAttributes?: Record<string, unknown>;
   }
 ): Promise<{ contact: ContactRecord; created: boolean }> {
   const type =
@@ -67,6 +79,7 @@ export async function upsertIntegrationContact(
   if (externalId) {
     const rows = await sql`
       SELECT id, name, email, phone, type, external_id as "externalId",
+             custom_attributes as "customAttributes",
              last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
              created_at as "createdAt", updated_at as "updatedAt"
       FROM contacts
@@ -79,6 +92,7 @@ export async function upsertIntegrationContact(
   if (!existing && email && input.matchByEmail !== false) {
     const rows = await sql`
       SELECT id, name, email, phone, type, external_id as "externalId",
+             custom_attributes as "customAttributes",
              last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
              created_at as "createdAt", updated_at as "updatedAt"
       FROM contacts
@@ -88,7 +102,26 @@ export async function upsertIntegrationContact(
     existing = rows[0] as Record<string, unknown> | undefined;
   }
 
+  const domain = input.customAttributes?.domain;
+  if (!existing && input.matchByDomain && domain && typeof domain === 'string') {
+    const rows = await sql`
+      SELECT id, name, email, phone, type, external_id as "externalId",
+             custom_attributes as "customAttributes",
+             last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
+             created_at as "createdAt", updated_at as "updatedAt"
+      FROM contacts
+      WHERE account_id = ${accountId}::uuid
+        AND custom_attributes->>'domain' = ${domain}
+      LIMIT 1
+    `;
+    existing = rows[0] as Record<string, unknown> | undefined;
+  }
+
   if (existing) {
+    const mergedAttrs = mergeCustomAttributes(
+      existing.customAttributes as Record<string, unknown> | undefined,
+      input.customAttributes
+    );
     const rows = await sql`
       UPDATE contacts SET
         name = ${input.name},
@@ -96,6 +129,7 @@ export async function upsertIntegrationContact(
         phone = COALESCE(${phone}, phone),
         type = ${type},
         external_id = COALESCE(${externalId}, external_id),
+        custom_attributes = ${JSON.stringify(mergedAttrs)}::jsonb,
         last_activity_at = NOW(),
         updated_at = NOW()
       WHERE id = ${existing.id as string}::uuid
@@ -108,8 +142,10 @@ export async function upsertIntegrationContact(
     return { contact, created: false };
   }
 
+  const customAttributes = input.customAttributes ?? {};
+
   const rows = await sql`
-    INSERT INTO contacts (account_id, name, email, phone, type, external_id, last_activity_at)
+    INSERT INTO contacts (account_id, name, email, phone, type, external_id, custom_attributes, last_activity_at)
     VALUES (
       ${accountId}::uuid,
       ${input.name},
@@ -117,6 +153,7 @@ export async function upsertIntegrationContact(
       ${phone},
       ${type},
       ${externalId},
+      ${JSON.stringify(customAttributes)}::jsonb,
       NOW()
     )
     RETURNING id, name, email, phone, type, external_id as "externalId",

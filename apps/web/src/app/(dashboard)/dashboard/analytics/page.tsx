@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type Inbox, type InboxAnalytics } from '@/lib/api';
+import { countryLabel } from '@/lib/country';
 import { AnalyticsExceptionsPanel } from '@/components/analytics/analytics-exceptions-panel';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { ListSkeleton } from '@/components/ui/skeleton';
@@ -303,6 +304,7 @@ export default function AnalyticsPage() {
                       <tr className="border-b border-gray-100 text-left text-xs text-gray-500">
                         <th className="px-5 py-3 font-medium">Contact</th>
                         <th className="px-5 py-3 font-medium">IP address</th>
+                        <th className="px-5 py-3 font-medium">Country</th>
                         <th className="px-5 py-3 font-medium">Machine ID</th>
                         <th className="px-5 py-3 font-medium">Assignee</th>
                         <th className="px-5 py-3 font-medium">Started</th>
@@ -329,6 +331,9 @@ export default function AnalyticsPage() {
                                 Exclude IP
                               </button>
                             )}
+                          </td>
+                          <td className="px-5 py-3 text-xs text-gray-600">
+                            {countryLabel(chat.countryCode) ?? chat.countryCode ?? '—'}
                           </td>
                           <td className="px-5 py-3 font-mono text-xs text-gray-500 max-w-[120px] truncate">
                             <span title={chat.sourceId ?? undefined}>{chat.sourceId ?? '—'}</span>
@@ -366,6 +371,7 @@ export default function AnalyticsPage() {
                       <tr className="border-b border-gray-100 text-left text-xs text-gray-500">
                         <th className="px-5 py-3 font-medium">Time</th>
                         <th className="px-5 py-3 font-medium">IP address</th>
+                        <th className="px-5 py-3 font-medium">Country</th>
                         <th className="px-5 py-3 font-medium">Machine ID</th>
                         <th className="px-5 py-3 font-medium">Page</th>
                         <th className="px-5 py-3 font-medium">User agent</th>
@@ -388,6 +394,9 @@ export default function AnalyticsPage() {
                                 Exclude IP
                               </button>
                             )}
+                          </td>
+                          <td className="px-5 py-3 text-xs text-gray-600">
+                            {countryLabel(visit.countryCode) ?? visit.countryCode ?? '—'}
                           </td>
                           <td className="px-5 py-3 font-mono text-xs text-gray-500 max-w-[100px] truncate">
                             <span title={visit.sourceId ?? undefined}>{visit.sourceId ?? '—'}</span>

@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
+import { countryLabel } from '@/lib/country';
 
 type Params = { params: Promise<{ accountId: string; conversationId: string }> };
 
@@ -36,9 +37,13 @@ export async function GET(req: Request, { params }: Params) {
 
   const { contactId, inboxId } = conv[0] as { contactId: string; inboxId: string };
 
-  const [ci, visits, pastChats] = await Promise.all([
+  const [contact, ci, visits, pastChats] = await Promise.all([
+    sql`
+      SELECT name, email FROM contacts WHERE id = ${contactId}::uuid LIMIT 1
+    `,
     sql`
       SELECT ci.source_id as "sourceId", ci.last_ip_address as "ipAddress",
+             ci.country_code as "countryCode",
              ci.last_seen_at as "lastSeenAt", ci.pre_chat_data as "preChatData"
       FROM contact_inboxes ci
       WHERE ci.contact_id = ${contactId}::uuid AND ci.inbox_id = ${inboxId}::uuid
@@ -46,7 +51,7 @@ export async function GET(req: Request, { params }: Params) {
     `,
     sql`
       SELECT page_url as "pageUrl", referrer, user_agent as "userAgent",
-             ip_address as "ipAddress", created_at as "visitedAt"
+             ip_address as "ipAddress", country_code as "countryCode", created_at as "visitedAt"
       FROM inbox_visits
       WHERE inbox_id = ${inboxId}::uuid
         AND (source_id = (SELECT source_id FROM contact_inboxes WHERE contact_id = ${contactId}::uuid AND inbox_id = ${inboxId}::uuid LIMIT 1)
@@ -63,9 +68,12 @@ export async function GET(req: Request, { params }: Params) {
     `,
   ]);
 
+  const contactRow = contact[0] as { name: string; email: string | null } | undefined;
+
   const link = ci[0] as {
     sourceId: string;
     ipAddress: string | null;
+    countryCode: string | null;
     lastSeenAt: string | null;
     preChatData: Record<string, string>;
   } | undefined;
@@ -75,15 +83,21 @@ export async function GET(req: Request, { params }: Params) {
     referrer: string | null;
     userAgent: string | null;
     ipAddress: string | null;
+    countryCode: string | null;
   } | undefined;
 
   const ua = parseUserAgent(latestVisit?.userAgent ?? null);
+  const countryCode = link?.countryCode ?? latestVisit?.countryCode ?? null;
 
   return Response.json({
     context: {
+      contactName: contactRow?.name ?? null,
+      contactEmail: contactRow?.email ?? null,
       pageUrl: latestVisit?.pageUrl ?? null,
       referrer: latestVisit?.referrer ?? null,
       ipAddress: link?.ipAddress ?? latestVisit?.ipAddress ?? null,
+      countryCode,
+      country: countryLabel(countryCode),
       device: ua.device,
       browser: ua.browser,
       visitCount: visits.length,

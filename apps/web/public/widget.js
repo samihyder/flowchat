@@ -308,9 +308,34 @@
     if (el) el.scrollTop = el.scrollHeight;
   }
 
+  function greetingMessagesForDisplay() {
+    if (state.inbox && state.inbox.greetingMessages && state.inbox.greetingMessages.length) {
+      return state.inbox.greetingMessages;
+    }
+    if (state.availability && state.availability.greetingMessages && state.availability.greetingMessages.length) {
+      return state.availability.greetingMessages;
+    }
+    var single = (state.inbox && state.inbox.greetingMessage) || 'How can we help?';
+    return [single];
+  }
+
+  function offlineGreetingMessages() {
+    var msgs = greetingMessagesForDisplay().slice();
+    var offlineNote = state.availability && state.availability.offlineMessage;
+    if (offlineNote && msgs.indexOf(offlineNote) === -1) {
+      msgs.push(offlineNote);
+    }
+    return msgs;
+  }
+
   function renderMessages() {
     if (!state.messages.length && state.prechatDone) {
-      return `<div class="fc-msg sys">${escapeHtml(state.inbox?.greetingMessage || 'How can we help?')}</div>`;
+      var greetingList = state.availability && !isChatAvailable()
+        ? offlineGreetingMessages()
+        : greetingMessagesForDisplay();
+      return greetingList.map(function (msg) {
+        return '<div class="fc-msg in">' + escapeHtml(msg) + '</div>';
+      }).join('');
     }
     return state.messages.map((m) => {
       const time = `<span class="fc-msg-time">${formatTime(m.createdAt)}</span>`;
@@ -339,11 +364,28 @@
       const offlineNote = offline
         ? `<p style="font-size:13px;color:#b45309;background:#fffbeb;border-radius:8px;padding:10px 12px;margin-bottom:16px">${escapeHtml(state.availability.offlineMessage || 'We are away — leave a message and we will reply by email.')}</p>`
         : '';
+      const offlinePreview = offline && state.availability.greetingMessages && state.availability.greetingMessages.length
+        ? `<div style="margin-top:16px;text-align:left;max-width:260px;margin-left:auto;margin-right:auto">${
+            state.availability.greetingMessages.map(function (msg) {
+              return '<p style="font-size:13px;color:#374151;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px 12px 12px 4px;padding:10px 12px;margin:0 0 8px;line-height:1.45">' + escapeHtml(msg) + '</p>';
+            }).join('')
+          }</div>`
+        : '';
       return `<div id="fc-home">
         <div class="fc-avatar">${launcherIconSvg()}</div>
-        <h4>${escapeHtml(state.inbox?.welcomeTitle || state.inbox?.name || 'Chat with us')}</h4>
-        <p>${escapeHtml(state.inbox?.welcomeTagline || 'We typically reply in a few minutes')}</p>
+        <h4>${escapeHtml(
+          (offline && state.availability.welcomeTitle) ||
+            state.inbox?.welcomeTitle ||
+            state.inbox?.name ||
+            'Chat with us'
+        )}</h4>
+        <p>${escapeHtml(
+          (offline && state.availability.welcomeTagline) ||
+            state.inbox?.welcomeTagline ||
+            'We typically reply in a few minutes'
+        )}</p>
         ${offlineNote}
+        ${offlinePreview}
         <button type="button" class="fc-cta" id="fc-start-home">${offline ? 'Leave a message' : 'Start conversation'}</button>
       </div>`;
     }
@@ -422,7 +464,7 @@
             <h3>${escapeHtml(state.inbox?.welcomeTitle || state.inbox?.name || 'Chat with us')}</h3>
             <p>${escapeHtml(
               state.availability && !isChatAvailable()
-                ? (state.availability.offlineMessage || 'We are currently away')
+                ? (state.availability.welcomeTagline || state.availability.offlineMessage || 'We are currently away')
                 : (state.inbox?.welcomeTagline || 'We reply quickly')
             )}</p>
           </div>

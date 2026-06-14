@@ -1,15 +1,18 @@
 import type { AppSql } from '@/lib/db-sql';
-import { isWithinBusinessHours, parseBusinessHours } from '@/lib/business-hours';
 import { insertMessage } from '@/lib/conversations';
+import {
+  DEFAULT_OFFLINE_RECEIPT,
+  getInboxAvailability,
+} from '@/lib/inbox-availability';
 
-/** Send one offline system reply per conversation when agents are unavailable. */
+/** Acknowledge visitor messages received while agents are offline. */
 export async function maybeSendOfflineAutoReply(
   sql: AppSql,
   conversationId: string,
   accountId: string
 ) {
   const rows = (await sql`
-    SELECT i.offline_message as "offlineMessage",
+    SELECT c.inbox_id as "inboxId",
            i.use_business_hours as "useBusinessHours",
            i.business_hours as "businessHours",
            a.timezone
@@ -19,7 +22,7 @@ export async function maybeSendOfflineAutoReply(
     WHERE c.id = ${conversationId}::uuid
     LIMIT 1
   `) as {
-    offlineMessage: string | null;
+    inboxId: string;
     useBusinessHours: boolean;
     businessHours: unknown;
     timezone: string;
@@ -28,36 +31,38 @@ export async function maybeSendOfflineAutoReply(
   const inbox = rows[0];
   if (!inbox) return;
 
-  const hours = parseBusinessHours(inbox.businessHours, inbox.timezone);
-  const withinHours = inbox.useBusinessHours
-    ? isWithinBusinessHours(hours, inbox.timezone)
-    : true;
+  const availability = await getInboxAvailability(sql, inbox.inboxId, accountId, {
+    useBusinessHours: inbox.useBusinessHours,
+    businessHours: inbox.businessHours,
+    timezone: inbox.timezone,
+  });
 
-  const agentsOnline = (await sql`
-    SELECT COUNT(*)::int as count FROM account_users au
-    WHERE au.account_id = ${accountId}::uuid AND au.status = 'active' AND au.availability = 'online'
-  `) as { count: number }[];
+  if (availability.available) return;
 
-  const available = withinHours && (agentsOnline[0]?.count ?? 0) > 0;
-  if (available) return;
+  const receipt = DEFAULT_OFFLINE_RECEIPT;
 
   const existing = (await sql`
     SELECT 1 FROM messages
     WHERE conversation_id = ${conversationId}::uuid
-      AND sender_type = 'system'
-      AND content = ${inbox.offlineMessage ?? 'We are currently offline. We will reply as soon as possible.'}
+      AND sender_type IN ('agent', 'system')
+      AND content = ${receipt}
     LIMIT 1
   `) as unknown[];
 
   if (existing.length > 0) return;
 
+  const contactMessages = (await sql`
+    SELECT COUNT(*)::int as count FROM messages
+    WHERE conversation_id = ${conversationId}::uuid AND sender_type = 'contact'
+  `) as { count: number }[];
+
+  if ((contactMessages[0]?.count ?? 0) !== 1) return;
+
   await insertMessage({
     conversationId,
     accountId,
-    content:
-      inbox.offlineMessage ??
-      'We are currently offline. Your message has been received and we will reply as soon as possible.',
-    senderType: 'system',
+    content: receipt,
+    senderType: 'agent',
     senderId: null,
     incrementUnread: false,
   });

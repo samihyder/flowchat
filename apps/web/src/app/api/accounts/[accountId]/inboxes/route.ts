@@ -2,6 +2,12 @@ import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { isAccountAgent } from '@/lib/inbox-assignee';
 import { mergeWidgetTheme } from '@/lib/widget-theme';
+import { getAccountSettings } from '@/lib/account-settings-db';
+import {
+  MUTEX_DEFAULT_GREETING_MESSAGES,
+  MUTEX_DEFAULT_WELCOME_TAGLINE,
+  MUTEX_DEFAULT_WELCOME_TITLE,
+} from '@/lib/welcome-messages';
 
 type Params = { params: Promise<{ accountId: string }> };
 
@@ -22,8 +28,8 @@ export async function GET(req: Request, { params }: Params) {
   const rows = await sql`
     SELECT id, name, channel_type as "channelType", widget_color as "widgetColor",
            widget_icon as "widgetIcon", widget_theme as "widgetTheme",
-           greeting_message as "greetingMessage", welcome_title as "welcomeTitle",
-           welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
+           greeting_message as "greetingMessage", greeting_messages as "greetingMessages",
+           welcome_title as "welcomeTitle", welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
            default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled",
            allowed_domains as "allowedDomains", business_hours as "businessHours",
            offline_message as "offlineMessage", privacy_policy_url as "privacyPolicyUrl",
@@ -81,10 +87,30 @@ export async function POST(req: Request, { params }: Params) {
 
   const primary = body.widgetColor ?? '#6366F1';
   const theme = mergeWidgetTheme(body.widgetTheme, primary);
+  const accountSettings = await getAccountSettings(sql, accountId);
+
+  const greetingMessages =
+    body.greetingMessage
+      ?.split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean) ??
+    (accountSettings.autoMessages?.length
+      ? accountSettings.autoMessages
+      : MUTEX_DEFAULT_GREETING_MESSAGES);
+
+  const greetingMessage = greetingMessages.join('\n');
+  const welcomeTitle =
+    body.welcomeTitle ??
+    accountSettings.autoWelcomeTitle ??
+    MUTEX_DEFAULT_WELCOME_TITLE;
+  const welcomeTagline =
+    body.welcomeTagline ??
+    accountSettings.autoWelcomeTagline ??
+    MUTEX_DEFAULT_WELCOME_TAGLINE;
 
   const rows = await sql`
     INSERT INTO inboxes (
-      account_id, name, channel_type, greeting_message,
+      account_id, name, channel_type, greeting_message, greeting_messages,
       welcome_title, welcome_tagline, widget_color, widget_icon, widget_theme,
       website_url, default_assignee_id
     )
@@ -92,9 +118,10 @@ export async function POST(req: Request, { params }: Params) {
       ${accountId}::uuid,
       ${body.name.trim()},
       ${body.channelType ?? 'web_widget'},
-      ${body.greetingMessage ?? null},
-      ${body.welcomeTitle ?? null},
-      ${body.welcomeTagline ?? null},
+      ${greetingMessage},
+      ${JSON.stringify(greetingMessages)}::jsonb,
+      ${welcomeTitle},
+      ${welcomeTagline},
       ${primary},
       ${body.widgetIcon ?? 'chat'},
       ${JSON.stringify(theme)}::jsonb,
@@ -103,7 +130,8 @@ export async function POST(req: Request, { params }: Params) {
     )
     RETURNING id, name, channel_type as "channelType", widget_color as "widgetColor",
               widget_icon as "widgetIcon", widget_theme as "widgetTheme",
-              greeting_message as "greetingMessage", welcome_title as "welcomeTitle",
+              greeting_message as "greetingMessage", greeting_messages as "greetingMessages",
+              welcome_title as "welcomeTitle",
               welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
               default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled"
   `;

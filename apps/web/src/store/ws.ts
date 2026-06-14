@@ -10,6 +10,7 @@ export type VisitorOnlineEvent = {
   inboxName: string;
   accountId: string;
   ipAddress: string | null;
+  countryCode: string | null;
   pageUrl: string | null;
   sourceId: string | null;
   visitedAt: string;

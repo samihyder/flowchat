@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth';
 import { useWsStore } from '@/store/ws';
 import { ConversationActions } from '@/components/conversations/conversation-actions';
 import { VisitorContextSidebar } from '@/components/conversations/visitor-context-sidebar';
+import { countryLabel } from '@/lib/country';
 
 function formatMessageTime(iso: string) {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -49,6 +50,11 @@ export function ConversationThread({ conversation, onConversationUpdate }: Props
   const [cannedOpen, setCannedOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
+  const [visitorInfo, setVisitorInfo] = useState<{
+    ipAddress: string | null;
+    country: string | null;
+    countryCode: string | null;
+  } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastEventSeq = useRef(0);
 
@@ -62,6 +68,23 @@ export function ConversationThread({ conversation, onConversationUpdate }: Props
       setMessages((prev) => mergeMessages(prev, res.messages));
       setNextCursor(res.nextCursor);
     } catch { /* keep existing */ }
+  }, [conversation, token, accountId]);
+
+  useEffect(() => {
+    if (!conversation || !token || !accountId) {
+      setVisitorInfo(null);
+      return;
+    }
+    api.conversations
+      .visitorContext(accountId, conversation.id, token)
+      .then((r) =>
+        setVisitorInfo({
+          ipAddress: r.context.ipAddress,
+          country: r.context.country,
+          countryCode: r.context.countryCode,
+        })
+      )
+      .catch(() => setVisitorInfo(null));
   }, [conversation, token, accountId]);
 
   useEffect(() => {
@@ -282,7 +305,14 @@ export function ConversationThread({ conversation, onConversationUpdate }: Props
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-gray-900 truncate">{conversation.contactName}</h2>
             <p className="text-xs text-gray-500 truncate">
-              {conversation.contactEmail || conversation.inboxName}
+              {[
+                visitorInfo?.ipAddress,
+                visitorInfo?.country ?? countryLabel(visitorInfo?.countryCode),
+                conversation.contactEmail,
+                !visitorInfo?.ipAddress && !conversation.contactEmail ? conversation.inboxName : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
               {!connected && <span className="text-amber-600 ml-2">· reconnecting…</span>}
               {otherViewers.length > 0 && (
                 <span className="text-amber-700 ml-2">

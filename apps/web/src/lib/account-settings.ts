@@ -1,6 +1,14 @@
 export type AccountSettings = {
   allowedInviteDomains?: string[];
   dataRetentionDays?: number;
+  /** Workspace default auto messages sent when a visitor starts chat (one per line in UI). */
+  autoMessages?: string[];
+  autoWelcomeTitle?: string;
+  autoWelcomeTagline?: string;
+  /** When true, LeadSnapper extension may push qualified leads via integration API. */
+  leadsnapperSyncEnabled?: boolean;
+  /** Minimum priority to accept: Hot, Warm, or all. */
+  leadsnapperMinPriority?: 'Hot' | 'Warm' | 'all';
   /** When true, CSV import is allowed for admins + crmImportAllowedUserIds */
   crmImportEnabled?: boolean;
   /** When true, CSV export is allowed for admins + crmExportAllowedUserIds */
@@ -41,6 +49,15 @@ export function parseAccountSettings(raw: unknown): AccountSettings {
       typeof s.marketingPhysicalAddress === 'string' ? s.marketingPhysicalAddress : undefined,
     marketingDoubleOptIn:
       typeof s.marketingDoubleOptIn === 'boolean' ? s.marketingDoubleOptIn : undefined,
+    autoMessages: parseStringArray(s.autoMessages),
+    autoWelcomeTitle: typeof s.autoWelcomeTitle === 'string' ? s.autoWelcomeTitle : undefined,
+    autoWelcomeTagline: typeof s.autoWelcomeTagline === 'string' ? s.autoWelcomeTagline : undefined,
+    leadsnapperSyncEnabled:
+      typeof s.leadsnapperSyncEnabled === 'boolean' ? s.leadsnapperSyncEnabled : undefined,
+    leadsnapperMinPriority:
+      s.leadsnapperMinPriority === 'Hot' || s.leadsnapperMinPriority === 'Warm' || s.leadsnapperMinPriority === 'all'
+        ? s.leadsnapperMinPriority
+        : undefined,
   };
 }
 

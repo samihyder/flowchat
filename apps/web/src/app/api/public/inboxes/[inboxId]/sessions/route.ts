@@ -2,6 +2,8 @@ import { corsHeaders, optionsResponse } from '@/lib/cors';
 import { newVisitorToken } from '@/lib/conversations';
 import { dispatchWebhooks } from '@/lib/webhooks';
 import { getClientIp } from '@/lib/request-ip';
+import { getClientGeo } from '@/lib/request-geo';
+import { sendWelcomeMessages } from '@/lib/welcome-messages';
 import { guardPublicInboxRequest } from '@/lib/public-inbox-guard';
 import { pickRoundRobinAssignee } from '@/lib/assign';
 import type { AppSql } from '@/lib/db-sql';
@@ -52,6 +54,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const sql = guard.sql;
   const clientIp = getClientIp(req);
+  const geo = getClientGeo(req);
 
   const inboxes = (await sql`
     SELECT id, account_id as "accountId", default_assignee_id as "defaultAssigneeId",
@@ -105,7 +108,9 @@ export async function POST(req: Request, { params }: Params) {
       ORDER BY created_at DESC LIMIT 1
     `) as { id: string }[];
 
+    let isNewConversation = false;
     if (!convRows[0]) {
+      isNewConversation = true;
       const assigneeId = await resolveAssignee(
         sql,
         inboxId,
@@ -138,11 +143,18 @@ export async function POST(req: Request, { params }: Params) {
       `;
     }
 
-    if (clientIp) {
+    if (clientIp || geo.countryCode) {
       await sql`
-        UPDATE contact_inboxes SET last_ip_address = ${clientIp}, last_seen_at = NOW()
+        UPDATE contact_inboxes SET
+          last_ip_address = COALESCE(${clientIp}, last_ip_address),
+          country_code = COALESCE(${geo.countryCode}, country_code),
+          last_seen_at = NOW()
         WHERE inbox_id = ${inboxId}::uuid AND source_id = ${sourceId}
       `;
+    }
+
+    if (isNewConversation) {
+      await sendWelcomeMessages(sql, convRows[0]!.id, inbox.accountId, inboxId);
     }
 
     return Response.json(
@@ -167,13 +179,14 @@ export async function POST(req: Request, { params }: Params) {
 
   const visitorToken = newVisitorToken();
   await sql`
-    INSERT INTO contact_inboxes (contact_id, inbox_id, source_id, visitor_token, last_ip_address, last_seen_at)
+    INSERT INTO contact_inboxes (contact_id, inbox_id, source_id, visitor_token, last_ip_address, country_code, last_seen_at)
     VALUES (
       ${contact.id}::uuid,
       ${inboxId}::uuid,
       ${sourceId},
       ${visitorToken},
       ${clientIp},
+      ${geo.countryCode},
       NOW()
     )
   `;
@@ -209,6 +222,8 @@ export async function POST(req: Request, { params }: Params) {
     inboxId,
     contactId: contact.id,
   });
+
+  await sendWelcomeMessages(sql, convRows[0]!.id, inbox.accountId, inboxId);
 
   return Response.json(
     {

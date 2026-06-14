@@ -1,7 +1,17 @@
 import { neon } from '@neondatabase/serverless';
 import { corsHeaders, optionsResponse } from '@/lib/cors';
 import { isDomainAllowed, parseAllowedDomains } from '@/lib/domain-allowlist';
-import { isWithinBusinessHours, parseBusinessHours } from '@/lib/business-hours';
+import { parseAccountSettings } from '@/lib/account-settings';
+import {
+  DEFAULT_OFFLINE_MESSAGE,
+  countOnlineAgents,
+  resolveInboxAvailability,
+} from '@/lib/inbox-availability';
+import {
+  resolveGreetingMessages,
+  resolveWelcomeTagline,
+  resolveWelcomeTitle,
+} from '@/lib/welcome-messages';
 
 type Params = { params: Promise<{ inboxId: string }> };
 
@@ -22,9 +32,14 @@ export async function GET(req: Request, { params }: Params) {
   const rows = await sql`
     SELECT i.allowed_domains as "allowedDomains", i.business_hours as "businessHours",
            i.use_business_hours as "useBusinessHours",
-           i.offline_message as "offlineMessage", i.require_consent as "requireConsent",
+           i.offline_message as "offlineMessage",
+           i.greeting_messages as "greetingMessages",
+           i.greeting_message as "greetingMessage",
+           i.welcome_title as "welcomeTitle",
+           i.welcome_tagline as "welcomeTagline",
+           i.require_consent as "requireConsent",
            i.privacy_policy_url as "privacyPolicyUrl",
-           a.timezone
+           a.timezone, a.settings as "accountSettings", a.id as "accountId"
     FROM inboxes i
     INNER JOIN accounts a ON a.id = i.account_id
     WHERE i.id = ${inboxId}::uuid AND i.is_enabled = true
@@ -36,9 +51,15 @@ export async function GET(req: Request, { params }: Params) {
     businessHours: unknown;
     useBusinessHours: boolean;
     offlineMessage: string | null;
+    greetingMessages: unknown;
+    greetingMessage: string | null;
+    welcomeTitle: string | null;
+    welcomeTagline: string | null;
     requireConsent: boolean;
     privacyPolicyUrl: string | null;
     timezone: string;
+    accountSettings: unknown;
+    accountId: string;
   } | undefined;
 
   if (!inbox) {
@@ -50,30 +71,36 @@ export async function GET(req: Request, { params }: Params) {
     return Response.json({ error: 'Domain not authorized' }, { status: 403, headers: corsHeaders() });
   }
 
-  const hours = parseBusinessHours(inbox.businessHours, inbox.timezone);
-  const withinHours = inbox.useBusinessHours
-    ? isWithinBusinessHours(hours, inbox.timezone)
-    : true;
+  const onlineCount = await countOnlineAgents(sql, inbox.accountId);
+  const availability = resolveInboxAvailability(
+    {
+      useBusinessHours: inbox.useBusinessHours,
+      businessHours: inbox.businessHours,
+      timezone: inbox.timezone,
+    },
+    onlineCount
+  );
 
-  const agentsOnline = await sql`
-    SELECT COUNT(*)::int as count FROM account_users au
-    INNER JOIN inboxes i ON i.account_id = au.account_id
-    WHERE i.id = ${inboxId}::uuid
-      AND au.status = 'active'
-      AND au.availability = 'online'
-  `;
-
-  const hasOnlineAgent = ((agentsOnline[0] as { count: number }).count ?? 0) > 0;
-  const available = withinHours && hasOnlineAgent;
+  const accountSettings = parseAccountSettings(inbox.accountSettings);
+  const greetingMessages = resolveGreetingMessages(
+    inbox.greetingMessages,
+    inbox.greetingMessage,
+    accountSettings
+  );
 
   return Response.json(
     {
-      available,
-      withinBusinessHours: withinHours,
-      agentsOnline: hasOnlineAgent,
-      offlineMessage:
-        inbox.offlineMessage ??
-        'We are currently offline. Leave your message and we will get back to you soon.',
+      available: availability.available,
+      withinBusinessHours: availability.withinBusinessHours,
+      agentsOnline: availability.agentsOnline,
+      offlineMessage: inbox.offlineMessage ?? DEFAULT_OFFLINE_MESSAGE,
+      greetingMessages,
+      welcomeTitle: resolveWelcomeTitle(inbox.welcomeTitle, accountSettings),
+      welcomeTagline: resolveWelcomeTagline(
+        inbox.welcomeTagline,
+        accountSettings,
+        !availability.available
+      ),
       requireConsent: inbox.requireConsent,
       privacyPolicyUrl: inbox.privacyPolicyUrl,
     },

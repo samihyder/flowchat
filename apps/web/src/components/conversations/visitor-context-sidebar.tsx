@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api, type VisitorContext } from '@/lib/api';
+import { countryLabel } from '@/lib/country';
 
 type Props = {
   accountId: string;
@@ -33,6 +34,32 @@ export function VisitorContextSidebar({ accountId, conversationId, token }: Prop
         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Visitor</h3>
       </div>
       <dl className="p-4 space-y-3 text-sm">
+        {ctx.contactName && (
+          <div>
+            <dt className="text-xs text-gray-400">Name</dt>
+            <dd className="text-gray-800 font-medium">{ctx.contactName}</dd>
+          </div>
+        )}
+        {ctx.contactEmail && (
+          <div>
+            <dt className="text-xs text-gray-400">Email</dt>
+            <dd className="text-gray-800">{ctx.contactEmail}</dd>
+          </div>
+        )}
+        {ctx.ipAddress && (
+          <div>
+            <dt className="text-xs text-gray-400">IP address</dt>
+            <dd className="text-gray-800 font-mono text-xs">{ctx.ipAddress}</dd>
+          </div>
+        )}
+        {(ctx.country || ctx.countryCode) && (
+          <div>
+            <dt className="text-xs text-gray-400">Country</dt>
+            <dd className="text-gray-800">
+              {ctx.country ?? countryLabel(ctx.countryCode) ?? ctx.countryCode}
+            </dd>
+          </div>
+        )}
         {ctx.pageUrl && (
           <div>
             <dt className="text-xs text-gray-400">Current page</dt>
@@ -49,12 +76,6 @@ export function VisitorContextSidebar({ accountId, conversationId, token }: Prop
           <dt className="text-xs text-gray-400">Device</dt>
           <dd className="text-gray-800">{ctx.device} · {ctx.browser}</dd>
         </div>
-        {ctx.ipAddress && (
-          <div>
-            <dt className="text-xs text-gray-400">IP</dt>
-            <dd className="text-gray-800 font-mono text-xs">{ctx.ipAddress}</dd>
-          </div>
-        )}
         <div>
           <dt className="text-xs text-gray-400">Visits</dt>
           <dd className="text-gray-800">{ctx.visitCount}</dd>

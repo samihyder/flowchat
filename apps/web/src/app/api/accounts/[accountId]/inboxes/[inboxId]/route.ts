@@ -24,6 +24,7 @@ export async function PATCH(req: Request, { params }: Params) {
   const body = (await req.json()) as {
     name?: string;
     greetingMessage?: string | null;
+    greetingMessages?: string[];
     welcomeTitle?: string | null;
     welcomeTagline?: string | null;
     widgetColor?: string;
@@ -65,10 +66,21 @@ export async function PATCH(req: Request, { params }: Params) {
     ? mergeWidgetTheme(body.widgetTheme, primary)
     : (existing[0] as { widgetTheme: Record<string, string> | null }).widgetTheme;
 
+  const greetingMessages =
+    body.greetingMessages !== undefined
+      ? body.greetingMessages
+      : body.greetingMessage !== undefined && body.greetingMessage
+        ? body.greetingMessage
+            .split('\n')
+            .map((l) => l.trim())
+            .filter(Boolean)
+        : undefined;
+
   const rows = await sql`
     UPDATE inboxes SET
       name = COALESCE(${body.name ?? null}, name),
       greeting_message = COALESCE(${body.greetingMessage !== undefined ? body.greetingMessage : null}, greeting_message),
+      greeting_messages = COALESCE(${greetingMessages !== undefined ? JSON.stringify(greetingMessages) : null}::jsonb, greeting_messages),
       welcome_title = COALESCE(${body.welcomeTitle !== undefined ? body.welcomeTitle : null}, welcome_title),
       welcome_tagline = COALESCE(${body.welcomeTagline !== undefined ? body.welcomeTagline : null}, welcome_tagline),
       widget_color = COALESCE(${body.widgetColor ?? null}, widget_color),
@@ -90,7 +102,8 @@ export async function PATCH(req: Request, { params }: Params) {
     WHERE id = ${inboxId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, channel_type as "channelType", widget_color as "widgetColor",
               widget_icon as "widgetIcon", widget_theme as "widgetTheme",
-              greeting_message as "greetingMessage", welcome_title as "welcomeTitle",
+              greeting_message as "greetingMessage", greeting_messages as "greetingMessages",
+              welcome_title as "welcomeTitle",
               welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
               default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled",
               allowed_domains as "allowedDomains", business_hours as "businessHours",

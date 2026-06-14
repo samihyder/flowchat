@@ -32,6 +32,7 @@ export type Inbox = {
   widgetIcon?: string | null;
   widgetTheme?: WidgetTheme | null;
   greetingMessage?: string | null;
+  greetingMessages?: string[] | null;
   welcomeTitle?: string | null;
   welcomeTagline?: string | null;
   websiteUrl?: string | null;
@@ -78,6 +79,7 @@ export type InboxAnalytics = {
     contactName: string;
     contactEmail: string | null;
     ipAddress: string | null;
+    countryCode?: string | null;
     sourceId?: string | null;
     startedAt: string;
     lastMessageAt: string | null;
@@ -87,6 +89,7 @@ export type InboxAnalytics = {
   }[];
   recentVisits: {
     ipAddress: string | null;
+    countryCode?: string | null;
     userAgent: string | null;
     sourceId: string | null;
     pageUrl: string | null;
@@ -156,9 +159,13 @@ export type PreChatField = {
 };
 
 export type VisitorContext = {
+  contactName: string | null;
+  contactEmail: string | null;
   pageUrl: string | null;
   referrer: string | null;
   ipAddress: string | null;
+  countryCode: string | null;
+  country: string | null;
   device: string;
   browser: string;
   visitCount: number;
@@ -174,6 +181,8 @@ export type AccountCrmSettings = {
   crmExportEnabled?: boolean;
   crmImportAllowedUserIds?: string[];
   crmExportAllowedUserIds?: string[];
+  leadsnapperSyncEnabled?: boolean;
+  leadsnapperMinPriority?: 'Hot' | 'Warm' | 'all';
   marketingFromName?: string;
   marketingFromEmail?: string;
   marketingReplyTo?: string;
@@ -483,6 +492,9 @@ export const api = {
           settings?: AccountCrmSettings & {
             allowedInviteDomains?: string[];
             dataRetentionDays?: number;
+            autoMessages?: string[];
+            autoWelcomeTitle?: string;
+            autoWelcomeTagline?: string;
           };
         };
       }>(`/accounts/${accountId}`, { token }),
@@ -496,6 +508,9 @@ export const api = {
         settings?: AccountCrmSettings & {
           allowedInviteDomains?: string[];
           dataRetentionDays?: number;
+          autoMessages?: string[];
+          autoWelcomeTitle?: string;
+          autoWelcomeTagline?: string;
           marketingFromName?: string;
           marketingFromEmail?: string;
           marketingReplyTo?: string;
@@ -515,6 +530,9 @@ export const api = {
           settings?: AccountCrmSettings & {
             allowedInviteDomains?: string[];
             dataRetentionDays?: number;
+            autoMessages?: string[];
+            autoWelcomeTitle?: string;
+            autoWelcomeTagline?: string;
           };
         };
       }>(`/accounts/${accountId}`, { method: 'PATCH', body, token }),
@@ -563,6 +581,7 @@ export const api = {
       body: {
         name?: string;
         greetingMessage?: string | null;
+        greetingMessages?: string[];
         welcomeTitle?: string | null;
         welcomeTagline?: string | null;
         widgetColor?: string;
@@ -1228,6 +1247,30 @@ export const api = {
         method: 'DELETE',
         token,
       }),
+  },
+
+  crm: {
+    leadsnapper: {
+      get: (accountId: string, token: string) =>
+        request<{
+          leadsnapperSyncEnabled: boolean;
+          leadsnapperMinPriority: 'Hot' | 'Warm' | 'all';
+        }>(`/accounts/${accountId}/crm/leadsnapper/provision`, { token }),
+
+      provision: (
+        accountId: string,
+        body: {
+          leadsnapperSyncEnabled?: boolean;
+          leadsnapperMinPriority?: 'Hot' | 'Warm' | 'all';
+          provisionAttributes?: boolean;
+        },
+        token: string
+      ) =>
+        request<{
+          settings: { leadsnapperSyncEnabled: boolean; leadsnapperMinPriority: 'Hot' | 'Warm' | 'all' };
+          attributes: { created: number; updated: number } | null;
+        }>(`/accounts/${accountId}/crm/leadsnapper/provision`, { method: 'POST', body, token }),
+    },
   },
 
   search: {

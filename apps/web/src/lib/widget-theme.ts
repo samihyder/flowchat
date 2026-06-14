@@ -1,6 +1,11 @@
 import type { BusinessHours } from '@/lib/business-hours';
 import type { PreChatField } from '@/lib/api';
 import { DEFAULT_BUSINESS_HOURS } from '@/lib/business-hours';
+import {
+  MUTEX_DEFAULT_GREETING_MESSAGES,
+  MUTEX_DEFAULT_WELCOME_TAGLINE,
+  MUTEX_DEFAULT_WELCOME_TITLE,
+} from '@/lib/welcome-messages';
 
 export type WidgetIconId = 'chat' | 'bubble' | 'headset' | 'message' | 'help' | 'wave';
 
@@ -108,6 +113,7 @@ export type WidgetSettingsInput = {
   name: string;
   channelType: string;
   greetingMessage: string;
+  greetingMessages: string[];
   welcomeTitle: string;
   welcomeTagline: string;
   websiteUrl: string;
@@ -130,9 +136,10 @@ export type WidgetSettingsInput = {
 export const emptyWidgetSettings = (): WidgetSettingsInput => ({
   name: '',
   channelType: 'web_widget',
-  greetingMessage: 'Hi! How can we help you today?',
-  welcomeTitle: 'Chat with us',
-  welcomeTagline: 'We typically reply in a few minutes',
+  greetingMessage: MUTEX_DEFAULT_GREETING_MESSAGES.join('\n'),
+  greetingMessages: [...MUTEX_DEFAULT_GREETING_MESSAGES],
+  welcomeTitle: MUTEX_DEFAULT_WELCOME_TITLE,
+  welcomeTagline: MUTEX_DEFAULT_WELCOME_TAGLINE,
   websiteUrl: '',
   defaultAssigneeId: '',
   widgetColor: '#6366F1',
@@ -161,6 +168,7 @@ export function settingsFromInbox(inbox: {
   name: string;
   channelType: string;
   greetingMessage?: string | null;
+  greetingMessages?: string[] | null;
   welcomeTitle?: string | null;
   welcomeTagline?: string | null;
   websiteUrl?: string | null;
@@ -180,12 +188,23 @@ export function settingsFromInbox(inbox: {
   preChatFields?: PreChatField[] | null;
 }): WidgetSettingsInput {
   const primary = inbox.widgetColor ?? '#6366F1';
+  const greetingMessages =
+    inbox.greetingMessages && inbox.greetingMessages.length > 0
+      ? inbox.greetingMessages
+      : inbox.greetingMessage
+        ? inbox.greetingMessage
+            .split('\n')
+            .map((l) => l.trim())
+            .filter(Boolean)
+        : [...MUTEX_DEFAULT_GREETING_MESSAGES];
+
   return {
     name: inbox.name,
     channelType: inbox.channelType,
-    greetingMessage: inbox.greetingMessage ?? 'Hi! How can we help you today?',
-    welcomeTitle: inbox.welcomeTitle ?? 'Chat with us',
-    welcomeTagline: inbox.welcomeTagline ?? 'We typically reply in a few minutes',
+    greetingMessage: greetingMessages.join('\n'),
+    greetingMessages,
+    welcomeTitle: inbox.welcomeTitle ?? MUTEX_DEFAULT_WELCOME_TITLE,
+    welcomeTagline: inbox.welcomeTagline ?? MUTEX_DEFAULT_WELCOME_TAGLINE,
     websiteUrl: inbox.websiteUrl ?? '',
     defaultAssigneeId: inbox.defaultAssigneeId ?? '',
     widgetColor: primary,

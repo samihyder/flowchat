@@ -1,5 +1,6 @@
 import { corsHeaders, optionsResponse } from '@/lib/cors';
 import { getClientIp } from '@/lib/request-ip';
+import { getClientGeo } from '@/lib/request-geo';
 import { publishEvent } from '@/lib/redis';
 import { guardPublicInboxRequest } from '@/lib/public-inbox-guard';
 
@@ -33,6 +34,7 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const ip = getClientIp(req);
+  const geo = getClientGeo(req);
   const userAgent = req.headers.get('user-agent') ?? null;
   const sourceId = body.sourceId ?? null;
 
@@ -51,10 +53,11 @@ export async function POST(req: Request, { params }: Params) {
   const referrer = body.referrer ?? req.headers.get('referer');
 
   await sql`
-    INSERT INTO inbox_visits (inbox_id, ip_address, user_agent, source_id, page_url, referrer)
+    INSERT INTO inbox_visits (inbox_id, ip_address, country_code, user_agent, source_id, page_url, referrer)
     VALUES (
       ${inboxId}::uuid,
       ${ip},
+      ${geo.countryCode},
       ${userAgent},
       ${body.sourceId ?? null},
       ${body.pageUrl ?? null},
@@ -62,9 +65,12 @@ export async function POST(req: Request, { params }: Params) {
     )
   `;
 
-  if (sourceId && ip) {
+  if (sourceId && (ip || geo.countryCode)) {
     await sql`
-      UPDATE contact_inboxes SET last_ip_address = ${ip}, last_seen_at = NOW()
+      UPDATE contact_inboxes SET
+        last_ip_address = COALESCE(${ip}, last_ip_address),
+        country_code = COALESCE(${geo.countryCode}, country_code),
+        last_seen_at = NOW()
       WHERE inbox_id = ${inboxId}::uuid AND source_id = ${sourceId}
     `;
   }
@@ -76,6 +82,7 @@ export async function POST(req: Request, { params }: Params) {
       inboxName: inboxRow.name,
       accountId: inboxRow.accountId,
       ipAddress: ip,
+      countryCode: geo.countryCode,
       pageUrl: body.pageUrl ?? null,
       sourceId,
       visitedAt: new Date().toISOString(),

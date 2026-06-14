@@ -64,7 +64,7 @@ export default function IntegrationsPage() {
       <div>
         <h2 className="text-base font-semibold text-gray-900">CRM integrations</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Sync contacts with HubSpot, Salesforce, Zapier, or custom apps via API keys (inbound) and webhooks (outbound).
+          Sync contacts with HubSpot, Salesforce, Zapier, LeadSnapper, or custom apps via API keys (inbound) and webhooks (outbound).
         </p>
       </div>
 
@@ -73,6 +73,7 @@ export default function IntegrationsPage() {
         <CardBody className="space-y-4">
           <div className="text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 font-mono space-y-1 overflow-x-auto">
             <p>POST {baseUrl}/integrations/v1/contacts/inbound</p>
+            <p>POST {baseUrl}/integrations/v1/leadsnapper/leads</p>
             <p>GET/PATCH/DELETE {baseUrl}/integrations/v1/contacts/…</p>
             <p>Authorization: Bearer fc_live_…</p>
           </div>

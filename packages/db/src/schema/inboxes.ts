@@ -22,6 +22,7 @@ export const inboxes = pgTable('inboxes', {
   channelType: channelTypeEnum('channel_type').notNull().default('web_widget'),
   avatarUrl: text('avatar_url'),
   greetingMessage: text('greeting_message'),
+  greetingMessages: jsonb('greeting_messages').$type<string[]>().notNull().default([]),
   welcomeTitle: varchar('welcome_title', { length: 255 }),
   welcomeTagline: varchar('welcome_tagline', { length: 255 }),
   widgetColor: varchar('widget_color', { length: 20 }).default('#1F93FF'),

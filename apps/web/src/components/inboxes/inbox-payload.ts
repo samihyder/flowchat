@@ -1,10 +1,19 @@
 import { parseDomainsText, type WidgetSettingsInput } from '@/lib/widget-theme';
 
 export function inboxPayloadFromSettings(s: WidgetSettingsInput) {
+  const greetingMessages =
+    s.greetingMessages.length > 0
+      ? s.greetingMessages
+      : s.greetingMessage
+          .split('\n')
+          .map((l) => l.trim())
+          .filter(Boolean);
+
   return {
     name: s.name,
     channelType: s.channelType,
-    greetingMessage: s.greetingMessage,
+    greetingMessage: greetingMessages.join('\n'),
+    greetingMessages,
     welcomeTitle: s.welcomeTitle,
     welcomeTagline: s.welcomeTagline,
     websiteUrl: s.websiteUrl.trim() || undefined,

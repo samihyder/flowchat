@@ -51,6 +51,9 @@ export async function PATCH(req: Request, { params }: Params) {
       crmExportEnabled?: boolean;
       crmImportAllowedUserIds?: string[];
       crmExportAllowedUserIds?: string[];
+      autoMessages?: string[];
+      autoWelcomeTitle?: string;
+      autoWelcomeTagline?: string;
     };
   };
 

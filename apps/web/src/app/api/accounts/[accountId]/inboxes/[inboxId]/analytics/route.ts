@@ -201,7 +201,8 @@ export async function GET(req: Request, { params }: Params) {
 
   const activeChats = await sql`
     SELECT c.id as "conversationId", ct.name as "contactName", ct.email as "contactEmail",
-           ci.last_ip_address as "ipAddress", ci.source_id as "sourceId",
+           ci.last_ip_address as "ipAddress", ci.country_code as "countryCode",
+           ci.source_id as "sourceId",
            c.created_at as "startedAt",
            c.last_message_at as "lastMessageAt", c.unread_count as "unreadCount",
            u.name as "assigneeName", c.assignee_id as "assigneeId"
@@ -223,7 +224,8 @@ export async function GET(req: Request, { params }: Params) {
   `;
 
   const recentVisits = await sql`
-    SELECT ip_address as "ipAddress", user_agent as "userAgent",
+    SELECT ip_address as "ipAddress", country_code as "countryCode",
+           user_agent as "userAgent",
            source_id as "sourceId", page_url as "pageUrl", created_at as "visitedAt"
     FROM inbox_visits
     WHERE inbox_id = ${inboxId}::uuid

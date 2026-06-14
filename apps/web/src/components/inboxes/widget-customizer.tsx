@@ -96,10 +96,28 @@ function WidgetCustomizerInner({ settings, onChange, showNameChannel = true }: P
       )}
 
       <div>
-        <label className={labelClass}>Greeting message</label>
-        <Input
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <label className={labelClass}>Greeting messages</label>
+          <a href="/settings/auto-messages" className="text-xs text-primary-600 hover:underline">
+            Manage in Settings
+          </a>
+        </div>
+        <p className="text-xs text-gray-500 mb-1">One message per line — sent automatically when a visitor starts chat.</p>
+        <textarea
           value={settings.greetingMessage}
-          onChange={(e) => onChange({ ...settings, greetingMessage: e.target.value })}
+          onChange={(e) => {
+            const lines = e.target.value
+              .split('\n')
+              .map((l) => l.trim())
+              .filter(Boolean);
+            onChange({
+              ...settings,
+              greetingMessage: e.target.value,
+              greetingMessages: lines,
+            });
+          }}
+          rows={4}
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/25"
         />
       </div>
 

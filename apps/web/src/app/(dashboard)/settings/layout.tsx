@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/ui/page-header';
 const settingsNav: { label: string; href: Route }[] = [
   { label: 'Account', href: '/settings/account' },
   { label: 'Inboxes', href: '/settings/inboxes' },
+  { label: 'Auto messages', href: '/settings/auto-messages' as Route },
   { label: 'Labels', href: '/settings/labels' as Route },
   { label: 'CRM', href: '/settings/crm' as Route },
   { label: 'Email marketing', href: '/settings/email-marketing' as Route },
