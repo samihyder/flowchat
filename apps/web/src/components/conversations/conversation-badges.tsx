@@ -15,11 +15,13 @@ const PRIORITY_STYLES: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status: Conversation['status'] }) {
+  const style =
+    STATUS_STYLES[status] ?? 'bg-gray-100 text-gray-700';
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_STYLES[status]}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${style}`}
     >
-      {status}
+      {status ?? 'unknown'}
     </span>
   );
 }
@@ -46,9 +48,11 @@ export function LabelPill({ name, color }: { name: string; color: string }) {
   );
 }
 
-export function initials(name: string) {
+export function initials(name: string | null | undefined) {
+  const safe = (name ?? '').trim();
+  if (!safe) return '?';
   return (
-    name
+    safe
       .split(/\s+/)
       .map((p) => p[0])
       .join('')

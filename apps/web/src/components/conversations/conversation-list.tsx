@@ -1,6 +1,7 @@
 'use client';
 
 import { type Conversation } from '@/lib/api';
+import { initials } from '@/components/conversations/conversation-badges';
 import { ListSkeleton } from '@/components/ui/skeleton';
 
 function formatTime(iso: string | null) {
@@ -63,11 +64,13 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
           >
             <div className="flex gap-3">
               <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-semibold shrink-0">
-                {conv.contactName.charAt(0).toUpperCase()}
+                {initials(conv.contactName)}
               </div>
               <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-0.5">
-              <span className="text-sm font-semibold text-gray-900 truncate">{conv.contactName}</span>
+              <span className="text-sm font-semibold text-gray-900 truncate">
+                {conv.contactName || 'Visitor'}
+              </span>
               <span className="text-[11px] text-gray-400 shrink-0">{formatTime(conv.lastMessageAt)}</span>
             </div>
             <div className="flex items-center gap-1.5 mb-1 flex-wrap">

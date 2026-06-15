@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { usePathname } from 'next/navigation';
 import type { Availability } from '@/store/ws';
+import { initials } from '@/components/conversations/conversation-badges';
 
 type Inbox = { id: string; name: string; channelType: string; widgetColor: string | null };
 type Team = { id: string; name: string };
@@ -216,7 +217,7 @@ export function DashboardSidebar({
             title="Change availability"
           >
             <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-bold">
-              {userName.charAt(0).toUpperCase()}
+              {initials(userName)}
             </div>
             <span
               className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-sidebar-bg ${availabilityColors[myAvailability]}`}

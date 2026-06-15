@@ -92,7 +92,9 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
     const domain = conversation.contactEmail?.includes('@')
       ? conversation.contactEmail.split('@')[1]
       : null;
-    return [domain, 'Web Chat', `Inbox: ${conversation.inboxName}`].filter(Boolean).join(' · ');
+    return [domain, 'Web Chat', `Inbox: ${conversation.inboxName ?? 'Inbox'}`]
+      .filter(Boolean)
+      .join(' · ');
   }, [conversation]);
 
   const fetchMessages = useCallback(async () => {
@@ -369,7 +371,9 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
         {/* Wireframe topbar */}
         <header className="h-14 bg-white border-b border-gray-200 px-4 sm:px-5 flex items-center gap-3 shrink-0">
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-semibold text-gray-900 truncate">{conversation.contactName}</h2>
+            <h2 className="text-base font-semibold text-gray-900 truncate">
+              {conversation.contactName || 'Visitor'}
+            </h2>
             <p className="text-xs text-gray-500 truncate">
               {subtitle}
               {!connected && <span className="text-amber-600 ml-2">· reconnecting…</span>}

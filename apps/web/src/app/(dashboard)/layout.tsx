@@ -130,7 +130,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     setSidebarOpen(false);
   }, [pathname]);
 
-  if (!authReady || !user) {
+  if (!authReady || !user?.id) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-3">
@@ -161,7 +161,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       >
         <DashboardSidebar
           accountName={accountName ?? undefined}
-          userName={user.name}
+          userName={user.name || user.email || 'Agent'}
           myAvailability={myAvailability}
           inboxes={inboxes}
           teams={teams}
