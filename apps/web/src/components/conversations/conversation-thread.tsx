@@ -44,7 +44,7 @@ function downloadTranscript(conversation: Conversation, messages: ChatMessage[])
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `flowchat-${conversation.contactName.replace(/\s+/g, '-').toLowerCase()}.txt`;
+  a.download = `flowchat-${(conversation.contactName || 'visitor').replace(/\s+/g, '-').toLowerCase()}.txt`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -498,7 +498,7 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
                         >
                           <p>{msg.content}</p>
                           {msg.attachments?.map((a) =>
-                            a.contentType.startsWith('image/') && a.publicUrl ? (
+                            a.contentType?.startsWith('image/') && a.publicUrl ? (
                               <img
                                 key={a.id}
                                 src={a.publicUrl}

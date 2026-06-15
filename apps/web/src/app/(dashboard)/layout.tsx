@@ -102,20 +102,20 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         .list(accountId, token, { status: 'open' })
         .then((r) => {
           const convs = r.conversations;
-          setUnreadAll(convs.reduce((n, c) => n + c.unreadCount, 0));
+          setUnreadAll(convs.reduce((n, c) => n + (Number(c.unreadCount) || 0), 0));
           setUnreadMine(
             convs
               .filter((c) => c.assigneeId === user.id)
-              .reduce((n, c) => n + c.unreadCount, 0)
+              .reduce((n, c) => n + (Number(c.unreadCount) || 0), 0)
           );
           setUnreadUnassigned(
             convs
               .filter((c) => !c.assigneeId)
-              .reduce((n, c) => n + c.unreadCount, 0)
+              .reduce((n, c) => n + (Number(c.unreadCount) || 0), 0)
           );
           const byInbox: Record<string, number> = {};
           for (const c of convs) {
-            byInbox[c.inboxId] = (byInbox[c.inboxId] ?? 0) + c.unreadCount;
+            byInbox[c.inboxId] = (byInbox[c.inboxId] ?? 0) + (Number(c.unreadCount) || 0);
           }
           setUnreadByInbox(byInbox);
         })

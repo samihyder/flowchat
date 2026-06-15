@@ -3,6 +3,7 @@ import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { publishEvent } from '@/lib/redis';
 import { writeAuditLog } from '@/lib/audit-log';
 import { logConversationResolved } from '@/lib/conversations';
+import { normalizeConversation } from '@/lib/conversation-normalize';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string; conversationId: string }> };
@@ -53,7 +54,13 @@ export async function GET(req: Request, { params }: Params) {
     WHERE cp.conversation_id = ${conversationId}::uuid
   `;
 
-  return Response.json({ conversation: { ...rows[0], labels, participants } });
+  return Response.json({
+    conversation: normalizeConversation({
+      ...(rows[0] as Record<string, unknown>),
+      labels,
+      participants,
+    }),
+  });
 }
 
 export async function PATCH(req: Request, { params }: Params) {

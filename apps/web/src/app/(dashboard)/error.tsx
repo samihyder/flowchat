@@ -26,6 +26,11 @@ export default function DashboardError({
           The dashboard hit an unexpected error. Try again, or sign out and back in if the problem
           persists.
         </p>
+        {error.message && (
+          <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4 text-left font-mono break-words">
+            {error.message}
+          </p>
+        )}
         {error.digest && (
           <p className="text-[11px] text-gray-400 font-mono mb-4">Ref: {error.digest}</p>
         )}

@@ -8,6 +8,7 @@ import { api, type Conversation, type Label } from '@/lib/api';
 import { ConversationList } from '@/components/conversations/conversation-list';
 import { ConversationSearch } from '@/components/conversations/conversation-search';
 import { ConversationThread } from '@/components/conversations/conversation-thread';
+import { normalizeConversations } from '@/lib/conversation-normalize';
 import {
   ConversationFilterBar,
   type ConversationFilters,
@@ -53,7 +54,7 @@ function DashboardPageContent() {
         from: filters.from ? `${filters.from}T00:00:00.000Z` : undefined,
         to: filters.to ? `${filters.to}T23:59:59.999Z` : undefined,
       });
-      setConversations(res.conversations);
+      setConversations(normalizeConversations(res.conversations as unknown as Record<string, unknown>[]));
     } catch {
       setConversations([]);
     } finally {
@@ -86,7 +87,7 @@ function DashboardPageContent() {
       const updated = [...prev];
       const conv = { ...updated[idx]! };
       conv.lastMessageAt = lastMessageEvent.message.createdAt;
-      conv.lastMessagePreview = lastMessageEvent.message.content.slice(0, 200);
+      conv.lastMessagePreview = (lastMessageEvent.message.content ?? '').slice(0, 200);
       if (lastMessageEvent.message.senderType === 'contact' && selectedId !== conv.id) {
         conv.unreadCount += 1;
       }

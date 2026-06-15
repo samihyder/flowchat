@@ -155,7 +155,7 @@ export function VisitorContextSidebar({
             {initials(conversation.contactName)}
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-sm text-gray-900 truncate">{conversation.contactName}</p>
+            <p className="font-semibold text-sm text-gray-900 truncate">{conversation.contactName || 'Visitor'}</p>
             <p className="text-[11px] text-gray-500 truncate">
               {conversation.contactEmail ?? contact?.email ?? '—'}
             </p>

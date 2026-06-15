@@ -2,6 +2,7 @@
 
 import { type Conversation } from '@/lib/api';
 import { initials } from '@/components/conversations/conversation-badges';
+import { asLabelArray } from '@/lib/conversation-normalize';
 import { ListSkeleton } from '@/components/ui/skeleton';
 
 function formatTime(iso: string | null) {
@@ -47,8 +48,9 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
   return (
     <ul className="flex-1 overflow-y-auto">
       {conversations.map((conv) => {
-        const unread = conv.unreadCount > 0;
+        const unread = (Number(conv.unreadCount) || 0) > 0;
         const active = selectedId === conv.id;
+        const labels = asLabelArray(conv.labels);
         return (
         <li key={conv.id}>
           <button
@@ -82,7 +84,7 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
               {conv.assigneeName && (
                 <span className="text-[10px] text-gray-500">→ {conv.assigneeName}</span>
               )}
-              {conv.labels?.slice(0, 2).map((l) => (
+              {labels.slice(0, 2).map((l) => (
                 <span
                   key={l.id}
                   className="text-[10px] px-1.5 py-0.5 rounded text-white"

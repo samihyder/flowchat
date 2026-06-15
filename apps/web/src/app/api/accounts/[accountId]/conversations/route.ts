@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { listConversations } from '@/lib/conversations-query';
+import { normalizeConversations } from '@/lib/conversation-normalize';
 import { processMissedChats } from '@/lib/missed-chats';
 import { purgeExpiredVisitorData } from '@/lib/data-retention';
 import { parseAccountSettings } from '@/lib/account-settings';
@@ -56,5 +57,5 @@ export async function GET(req: Request, { params }: Params) {
     agentRole: auth.role,
   });
 
-  return Response.json({ conversations: rows });
+  return Response.json({ conversations: normalizeConversations(rows as Record<string, unknown>[]) });
 }

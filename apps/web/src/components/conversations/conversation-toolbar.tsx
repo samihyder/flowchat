@@ -5,6 +5,7 @@ import { api, type Conversation, type Label } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { LabelPill, PriorityBadge, StatusBadge } from '@/components/conversations/conversation-badges';
+import { asLabelArray } from '@/lib/conversation-normalize';
 
 type AgentOption = { userId: string; name: string; membershipStatus: string };
 
@@ -46,13 +47,14 @@ export function ConversationToolbar({ conversation, onUpdated, onResolve, onExpo
     void update({ status: 'snoozed', snoozedUntil: until });
   };
 
-  const selectedLabelIds = conversation.labels?.map((l) => l.id) ?? [];
+  const conversationLabels = asLabelArray(conversation.labels);
+  const selectedLabelIds = conversationLabels.map((l) => l.id);
 
   return (
     <div className="px-4 py-2.5 bg-white border-b border-gray-200 flex flex-wrap items-center gap-2 shrink-0">
       <StatusBadge status={conversation.status} />
       <PriorityBadge priority={conversation.priority} />
-      {conversation.labels?.map((l) => (
+      {conversationLabels.map((l) => (
         <LabelPill key={l.id} name={l.name} color={l.color} />
       ))}
 
