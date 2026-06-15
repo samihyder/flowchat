@@ -7,6 +7,8 @@ import { parseInviteDomainsText } from '@/lib/invite-domain';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { labelClass, selectClass } from '@/components/ui/form-field';
+import { AnnotationBox, SettingsCard } from '@/components/ui/settings-page';
+import { Button } from '@/components/ui/button';
 
 const TIMEZONES = [
   'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -79,8 +81,8 @@ export default function AccountSettingsPage() {
       );
       setSuccess('Settings saved.');
       setAuth(user, token, accountId, res.account.name);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Save failed');
     } finally {
       setSaving(false);
     }
@@ -97,117 +99,111 @@ export default function AccountSettingsPage() {
       await api.account.update(accountId, { logoUrl: publicUrl }, token);
       setLogoUrl(publicUrl);
       setSuccess('Logo updated.');
-    } catch (err: any) {
-      setError(err.message === 'Storage not configured' ? 'Logo upload requires R2 configuration.' : err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Upload failed';
+      setError(msg === 'Storage not configured' ? 'Logo upload requires R2 configuration.' : msg);
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-2xl">
-      <div className="mb-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-1">Account Settings</h2>
-        <p className="text-sm text-gray-500">Manage your workspace details.</p>
-      </div>
-
-      {/* Logo */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5">
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">Logo</h3>
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0">
-            {logoUrl ? (
-              <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-2xl font-bold text-indigo-600">
-                {name.charAt(0).toUpperCase() || 'F'}
-              </span>
-            )}
-          </div>
+    <form onSubmit={handleSave} className="space-y-4">
+      <SettingsCard title="Workspace identity">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <input ref={fileRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-60 transition-colors"
-            >
-              {uploading ? 'Uploading…' : 'Upload Logo'}
-            </button>
-            <p className="text-xs text-gray-400 mt-1.5">PNG or JPG, max 2MB</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Settings form */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5">
-        <form onSubmit={handleSave} className="space-y-5">
-          <div>
-            <label className={`${labelClass} text-sm`}>Workspace name</label>
+            <label className={labelClass}>Workspace name</label>
             <Input value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={`${labelClass} text-sm`}>Timezone</label>
-              <select value={timezone} onChange={(e) => setTimezone(e.target.value)} className={selectClass}>
-                {TIMEZONES.map((tz) => (
-                  <option key={tz} value={tz}>{tz}</option>
-                ))}
-              </select>
+          <div>
+            <label className={labelClass}>Account</label>
+            <Input value={accountName ?? ''} disabled className="bg-gray-50" />
+            <p className="text-[11px] text-gray-400 mt-1">Workspace identifier</p>
+          </div>
+        </div>
+        <div>
+          <label className={labelClass}>Logo</label>
+          <div className="flex items-center gap-4">
+            <div className="w-[72px] h-[72px] rounded-xl border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0">
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs text-gray-400">Logo</span>
+              )}
             </div>
-
             <div>
-              <label className={`${labelClass} text-sm`}>Language</label>
-              <select value={locale} onChange={(e) => setLocale(e.target.value)} className={selectClass}>
-                {LOCALES.map((l) => (
-                  <option key={l.value} value={l.value}>{l.label}</option>
-                ))}
-              </select>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+              <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                {uploading ? 'Uploading…' : 'Upload logo'}
+              </Button>
+              <p className="text-[11px] text-gray-400 mt-1.5">PNG or JPG, max 2MB. Recommended 200×200px.</p>
             </div>
           </div>
+        </div>
+      </SettingsCard>
 
-          <div className="pt-4 border-t border-gray-100 space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900">Compliance & access</h3>
-            <div>
-              <label className={`${labelClass} text-sm`}>
-                Allowed invite domains{' '}
-                <span className="font-normal text-gray-400">(one per line, empty = any work email)</span>
-              </label>
-              <Textarea
-                value={inviteDomainsText}
-                onChange={(e) => setInviteDomainsText(e.target.value)}
-                rows={3}
-                placeholder="company.com"
-                className="font-mono"
-              />
-            </div>
-            <div className="max-w-xs">
-              <label className={`${labelClass} text-sm`}>Visitor data retention (days)</label>
-              <Input
-                type="number"
-                min={30}
-                max={3650}
-                value={dataRetentionDays}
-                onChange={(e) => setDataRetentionDays(Number(e.target.value) || 365)}
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                Inactive visitors are purged automatically (min 30 days). Export/delete via visitor GDPR API.
-              </p>
-            </div>
+      <SettingsCard title="Locale & time">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Timezone</label>
+            <select value={timezone} onChange={(e) => setTimezone(e.target.value)} className={selectClass}>
+              {TIMEZONES.map((tz) => (
+                <option key={tz} value={tz}>{tz}</option>
+              ))}
+            </select>
           </div>
+          <div>
+            <label className={labelClass}>Locale</label>
+            <select value={locale} onChange={(e) => setLocale(e.target.value)} className={selectClass}>
+              {LOCALES.map((l) => (
+                <option key={l.value} value={l.value}>{l.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </SettingsCard>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {success && <p className="text-sm text-green-600">{success}</p>}
+      <SettingsCard title="Agent invite policy">
+        <div>
+          <label className={labelClass}>Allowed email domains (optional)</label>
+          <Textarea
+            value={inviteDomainsText}
+            onChange={(e) => setInviteDomainsText(e.target.value)}
+            rows={3}
+            placeholder="company.com"
+            className="font-mono text-sm"
+          />
+          <p className="text-[11px] text-gray-400 mt-1">One per line. Leave blank to allow any work email.</p>
+        </div>
+        <AnnotationBox>
+          Restricts agent invites to company email patterns. Prevents accidental external invites.
+        </AnnotationBox>
+      </SettingsCard>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            {saving ? 'Saving…' : 'Save changes'}
-          </button>
-        </form>
+      <SettingsCard title="Data retention">
+        <div className="max-w-xs">
+          <label className={labelClass}>Visitor data retention (days)</label>
+          <Input
+            type="number"
+            min={30}
+            max={3650}
+            value={dataRetentionDays}
+            onChange={(e) => setDataRetentionDays(Number(e.target.value) || 365)}
+          />
+        </div>
+        <AnnotationBox>
+          GDPR baseline — inactive visitors are purged automatically. Export/delete via visitor GDPR API.
+        </AnnotationBox>
+      </SettingsCard>
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      {success && <p className="text-sm text-green-600">{success}</p>}
+
+      <div className="flex justify-end gap-2 pt-2">
+        <Button type="submit" disabled={saving}>
+          {saving ? 'Saving…' : 'Save changes'}
+        </Button>
       </div>
-    </div>
+    </form>
   );
 }

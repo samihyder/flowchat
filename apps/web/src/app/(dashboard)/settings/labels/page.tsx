@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/auth';
 import { api, type Label } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { SettingsCard } from '@/components/ui/settings-page';
 
 const COLORS = ['#6366F1', '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
 
@@ -43,11 +44,9 @@ export default function LabelsSettingsPage() {
   };
 
   return (
-    <div className="p-6 max-w-lg">
-      <h2 className="text-base font-semibold text-gray-900 mb-1">Labels</h2>
-      <p className="text-sm text-gray-500 mb-6">Create tags to organize and filter conversations.</p>
-
-      <form onSubmit={handleCreate} className="bg-white border border-gray-200 rounded-xl p-4 mb-6 space-y-3">
+    <div className="space-y-4">
+      <SettingsCard title="Create label">
+      <form onSubmit={handleCreate} className="space-y-3">
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -71,8 +70,10 @@ export default function LabelsSettingsPage() {
         </Button>
         {error && <p className="text-sm text-red-600">{error}</p>}
       </form>
+      </SettingsCard>
 
-      <ul className="bg-white border border-gray-200 rounded-xl divide-y divide-gray-100">
+      <SettingsCard title="All labels">
+      <ul className="divide-y divide-gray-100 -mx-1">
         {labels.length === 0 ? (
           <li className="p-6 text-sm text-gray-400 text-center">No labels yet.</li>
         ) : (
@@ -84,6 +85,7 @@ export default function LabelsSettingsPage() {
           ))
         )}
       </ul>
+      </SettingsCard>
     </div>
   );
 }

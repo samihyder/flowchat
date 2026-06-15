@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type MarketingSender, type MarketingWorkflow, type EmailTemplate } from '@/lib/api';
 import { WorkflowStepBuilder, type WorkflowStepDraft } from '@/components/marketing/workflow-step-builder';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
+import { Badge } from '@/components/ui/badge';
 
 export default function WorkflowsPage() {
   const { token, accountId } = useAuthStore();
@@ -68,6 +70,12 @@ export default function WorkflowsPage() {
     }
   };
 
+  const stats = useMemo(() => {
+    const active = workflows.filter((w) => w.enabled).length;
+    const enrolled = workflows.reduce((n, w) => n + w.activeEnrollments, 0);
+    return { total: workflows.length, active, enrolled };
+  }, [workflows]);
+
   return (
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <PageHeader
@@ -79,6 +87,14 @@ export default function WorkflowsPage() {
           </Button>
         }
       />
+      <div className="px-6">
+        <MetricGrid>
+          <MetricCard label="Workflows" value={stats.total} accent="neutral" />
+          <MetricCard label="Active" value={stats.active} accent="accent" />
+          <MetricCard label="Enrolled" value={stats.enrolled} accent="primary" />
+          <MetricCard label="Triggers" value="4" hint="Manual, contact, label, resolved" />
+        </MetricGrid>
+      </div>
       <div className="px-6 pb-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <form onSubmit={createWorkflow} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
           <h2 className="font-semibold text-gray-900">New workflow</h2>
@@ -136,31 +152,53 @@ export default function WorkflowsPage() {
           <Button type="submit">Create workflow</Button>
         </form>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <h2 className="font-semibold text-gray-900 mb-3">Workflows</h2>
-          <ul className="space-y-3 text-sm">
-            {workflows.map((w) => (
-              <li key={w.id} className="border-b border-gray-100 pb-3">
-                <div className="flex justify-between items-start gap-2">
-                  <div>
-                    <p className="font-medium">{w.name}</p>
-                    <p className="text-gray-500 capitalize">
-                      {w.triggerType.replace(/_/g, ' ')} · {w.steps.length} steps · {w.activeEnrollments} active
-                    </p>
-                    <ul className="mt-1 text-xs text-gray-400">
-                      {w.steps.map((s, i) => (
-                        <li key={s.id}>{i + 1}. {s.stepType.replace(/_/g, ' ')}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <Button type="button" variant="secondary" size="sm" onClick={() => void toggleWorkflow(w.id, !w.enabled)}>
-                    {w.enabled ? 'Disable' : 'Enable'}
-                  </Button>
-                </div>
-              </li>
-            ))}
-            {workflows.length === 0 && <p className="text-gray-400">No workflows yet.</p>}
-          </ul>
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-900">Workflows</h2>
+          </div>
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+              <tr>
+                <th className="px-4 py-3">Workflow</th>
+                <th className="px-4 py-3">Trigger</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Enrolled</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {workflows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                    No workflows yet.
+                  </td>
+                </tr>
+              ) : (
+                workflows.map((w) => (
+                  <tr key={w.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-900">{w.name}</p>
+                      <p className="text-[11px] text-gray-500">
+                        {w.steps.length} steps
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 text-xs capitalize text-gray-600">
+                      {w.triggerType.replace(/_/g, ' ')}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge color={w.enabled ? 'success' : 'gray'}>{w.enabled ? 'Active' : 'Draft'}</Badge>
+                    </td>
+                    <td className="px-4 py-3 font-medium">{w.activeEnrollments}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Button type="button" variant="secondary" size="sm" onClick={() => void toggleWorkflow(w.id, !w.enabled)}>
+                        {w.enabled ? 'Disable' : 'Enable'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

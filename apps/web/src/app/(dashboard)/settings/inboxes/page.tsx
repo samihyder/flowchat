@@ -71,13 +71,7 @@ export default function InboxesPage() {
   const embedSnippet = (inboxId: string) => buildWidgetEmbedSnippet(inboxId);
 
   return (
-    <div className="p-6 max-w-4xl">
-      <div className="mb-6">
-        <h2 className="text-base font-semibold text-gray-900 mb-1">Inboxes</h2>
-        <p className="text-sm text-gray-500">
-          Create and customize web chat widgets. Pick an icon, set colors, then copy the embed code.
-        </p>
-      </div>
+    <div className="space-y-4">
 
       <CreateInboxForm
         agents={agents}

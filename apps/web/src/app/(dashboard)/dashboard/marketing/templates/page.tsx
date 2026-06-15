@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type EmailTemplate, type MarketingSender } from '@/lib/api';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
 
 export default function TemplatesPage() {
   const { token, accountId } = useAuthStore();
@@ -55,9 +56,22 @@ export default function TemplatesPage() {
     }
   };
 
+  const stats = useMemo(
+    () => ({ templates: templates.length, senders: senders.length }),
+    [templates.length, senders.length]
+  );
+
   return (
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <PageHeader title="Email templates" description="Reusable HTML with merge tags and test send" />
+      <div className="px-6">
+        <MetricGrid>
+          <MetricCard label="Templates" value={stats.templates} accent="neutral" />
+          <MetricCard label="Senders" value={stats.senders} accent="primary" />
+          <MetricCard label="Merge tags" value="4+" hint="first_name, name, email, custom" />
+          <MetricCard label="Test send" value="✓" hint="Send preview to any inbox" />
+        </MetricGrid>
+      </div>
       <div className="px-6 pb-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <form onSubmit={create} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
           <h2 className="font-semibold text-gray-900">New template</h2>

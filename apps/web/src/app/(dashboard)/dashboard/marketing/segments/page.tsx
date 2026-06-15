@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type MarketingSegment } from '@/lib/api';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
 
 export default function SegmentsPage() {
   const { token, accountId } = useAuthStore();
@@ -60,9 +61,24 @@ export default function SegmentsPage() {
     load();
   };
 
+  const stats = useMemo(() => {
+    const dynamic = segments.filter((s) => s.segmentType === 'dynamic').length;
+    const staticN = segments.filter((s) => s.segmentType === 'static').length;
+    const contacts = segments.reduce((n, s) => n + (s.contactCount ?? 0), 0);
+    return { total: segments.length, dynamic, staticN, contacts };
+  }, [segments]);
+
   return (
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <PageHeader title="Audience segments" description="Static lists and dynamic CRM filters with preview" />
+      <div className="px-6">
+        <MetricGrid>
+          <MetricCard label="Segments" value={stats.total} accent="neutral" />
+          <MetricCard label="Dynamic" value={stats.dynamic} accent="primary" />
+          <MetricCard label="Static" value={stats.staticN} accent="amber" />
+          <MetricCard label="Total contacts" value={stats.contacts} hint="Across all segments" />
+        </MetricGrid>
+      </div>
       <div className="px-6 pb-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <form onSubmit={create} className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
           <h2 className="font-semibold text-gray-900">New segment</h2>

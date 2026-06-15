@@ -113,18 +113,20 @@ function DashboardPageContent() {
 
   return (
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
-      <PageHeader
-        title="Conversations"
-        description={
-          queueFilter === 'mine'
-            ? 'Assigned to you'
-            : queueFilter === 'unassigned'
-              ? 'Unassigned queue'
-              : inboxFilter
-                ? 'Filtered by inbox'
-                : 'Manage live chats'
-        }
-      />
+      {!selectedId && (
+        <PageHeader
+          title="Conversations"
+          description={
+            queueFilter === 'mine'
+              ? 'Assigned to you'
+              : queueFilter === 'unassigned'
+                ? 'Unassigned queue'
+                : inboxFilter
+                  ? 'Filtered by inbox'
+                  : 'Manage live chats'
+          }
+        />
+      )}
 
       <div className="flex-1 flex min-h-0">
         <aside
@@ -144,19 +146,11 @@ function DashboardPageContent() {
           />
         </aside>
 
-        <div className={`flex-1 min-w-0 flex flex-col ${!selectedId ? 'hidden md:flex' : 'flex'}`}>
-          {selectedId && (
-            <button
-              type="button"
-              onClick={() => setSelectedId(null)}
-              className="md:hidden flex items-center gap-2 px-4 py-2 text-sm text-primary-600 border-b border-gray-200 bg-white"
-            >
-              ← Back to list
-            </button>
-          )}
+        <div className={`flex-1 min-w-0 flex flex-col min-h-0 ${!selectedId ? 'hidden md:flex' : 'flex'}`}>
           <ConversationThread
             conversation={selected}
             onConversationUpdate={fetchConversations}
+            onBack={() => setSelectedId(null)}
           />
         </div>
       </div>

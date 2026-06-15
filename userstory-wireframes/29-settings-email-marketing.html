@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Email Marketing Settings — FlowChat Wireframes</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F9FAFB;color:#111827;font-size:14px}
+.card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:20px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:12px}
+.form-label{display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:6px}
+.form-input{width:100%;padding:9px 12px;border:1px solid #D1D5DB;border-radius:8px;font-size:13px}
+.form-hint{font-size:11px;color:#6B7280;margin-top:4px}
+.btn-primary{background:#6366F1;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500}
+.annotation{background:#FFFBEB;border:1px solid #FCD34D;border-radius:6px;padding:8px 10px;font-size:11px;color:#92400E;margin-top:10px}
+</style></head>
+<body style="padding:24px;max-width:720px;margin:0 auto">
+<span style="display:inline-block;background:#EDE9FE;color:#5B21B6;font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;margin-bottom:16px">🏃 S6-10, S6-13</span>
+<h1 style="font-size:20px;font-weight:700;margin-bottom:4px">Email marketing settings</h1>
+<p style="font-size:13px;color:#6B7280;margin-bottom:20px">Subscription defaults, sender identity, and compliance</p>
+
+<div class="card">
+  <div class="card-title">Subscription defaults</div>
+  <label class="form-label">Default marketing status for new contacts</label>
+  <select class="form-input"><option>Subscribed (opt-in required)</option><option>Unsubscribed</option></select>
+  <label class="form-label" style="margin-top:12px"><input type="checkbox" checked> Require double opt-in (S6-21)</label>
+  <div class="annotation">Contacts must confirm via email before receiving campaigns.</div>
+</div>
+
+<div class="card">
+  <div class="card-title">Sender identity</div>
+  <label class="form-label">From name</label>
+  <input class="form-input" value="Mutex Systems">
+  <label class="form-label" style="margin-top:12px">Reply-to email</label>
+  <input class="form-input" value="hello@mutexsystemsltd.com">
+  <label class="form-label" style="margin-top:12px">Footer address (CAN-SPAM)</label>
+  <textarea class="form-input" rows="2">Mutex Systems Ltd, London, UK</textarea>
+</div>
+
+<div class="card">
+  <div class="card-title">Sending domain</div>
+  <p style="font-size:13px;color:#6B7280;margin-bottom:8px">Verify DNS records for Resend delivery.</p>
+  <input class="form-input" value="mutexsystemsltd.com" readonly style="background:#F9FAFB">
+  <p class="form-hint">SPF · DKIM · DMARC status shown after domain verification.</p>
+</div>
+
+<button class="btn-primary">Save changes</button>
+<p style="text-align:center;color:#9CA3AF;font-size:11px;margin-top:16px">FlowChat Wireframe — Email Marketing Settings (29)</p>
+</body></html>

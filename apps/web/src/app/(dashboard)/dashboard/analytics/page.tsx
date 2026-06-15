@@ -5,9 +5,10 @@ import { useAuthStore } from '@/store/auth';
 import { api, type Inbox, type InboxAnalytics } from '@/lib/api';
 import { countryLabel } from '@/lib/country';
 import { AnalyticsExceptionsPanel } from '@/components/analytics/analytics-exceptions-panel';
+import { Csatsummary, VolumeBarChart } from '@/components/analytics/charts';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { PageHeader } from '@/components/ui/page-header';
 
 type DatePreset = 'today' | '7d' | '30d' | 'custom';
 
@@ -43,6 +44,14 @@ function formatDate(iso: string) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function formatMinutes(m: number | null | undefined) {
+  if (m == null) return '—';
+  if (m < 1) return `${Math.round(m * 60)}s`;
+  const mins = Math.floor(m);
+  const secs = Math.round((m - mins) * 60);
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
 }
 
 function formatShortDate(date: string) {
@@ -134,14 +143,29 @@ export default function AnalyticsPage() {
     }
   };
 
-  const maxDaily = Math.max(...(analytics?.daily.map((d) => d.visits) ?? [1]), 1);
+  const chartData = useMemo(
+    () =>
+      (analytics?.daily ?? []).slice(-7).map((d) => ({
+        label: formatShortDate(d.date).replace(/\s/g, ''),
+        value: d.conversations,
+      })),
+    [analytics?.daily]
+  );
+
+  const rangeLabel = useMemo(() => {
+    const fmt = (d: Date) =>
+      d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    return `${fmt(range.from)} – ${fmt(range.to)}`;
+  }, [range.from, range.to]);
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <PageHeader
-        title="Analytics"
-        description="Per-website visits, active chats, and conversation metrics."
-      />
+    <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
+      <header className="h-14 bg-white border-b border-gray-200 px-5 flex items-center justify-between gap-4 shrink-0">
+        <div>
+          <p className="text-base font-semibold text-gray-900">Analytics</p>
+          <p className="text-xs text-gray-500">Performance metrics and KPIs</p>
+        </div>
+      </header>
 
       <div className="p-4 sm:p-6 space-y-6 max-w-6xl">
         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
@@ -220,6 +244,77 @@ export default function AnalyticsPage() {
           <p className="text-sm text-gray-500">Select an inbox to view analytics.</p>
         ) : (
           <>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Analytics overview</h2>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {rangeLabel} · {analytics.inbox.name}
+              </p>
+            </div>
+
+            <MetricGrid>
+              <MetricCard
+                label="Avg. first response"
+                value={formatMinutes(analytics.summary.avgFirstResponseMinutes)}
+                accent="neutral"
+              />
+              <MetricCard
+                label="Avg. resolution"
+                value={formatMinutes(analytics.summary.avgResolutionMinutes)}
+                accent="neutral"
+              />
+              <MetricCard
+                label="CSAT score"
+                value={
+                  analytics.summary.csatAverage != null
+                    ? `${analytics.summary.csatAverage.toFixed(1)} ★`
+                    : '—'
+                }
+                accent="neutral"
+              />
+              <MetricCard
+                label="Missed / unanswered"
+                value={
+                  analytics.summary.missedChatRate != null
+                    ? `${analytics.summary.missedChatRate}%`
+                    : '—'
+                }
+                accent="neutral"
+              />
+            </MetricGrid>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader title="Conversation volume" description="Chats started per day" />
+                <CardBody>
+                  <VolumeBarChart data={chartData} />
+                  <div className="flex justify-around text-xs text-gray-500 border-t border-gray-100 pt-3 mt-2">
+                    <span>
+                      Total:{' '}
+                      <strong className="text-gray-900">{analytics.summary.totalConversations}</strong>
+                    </span>
+                    <span>
+                      Open:{' '}
+                      <strong className="text-green-600">{analytics.summary.openConversations}</strong>
+                    </span>
+                    <span>
+                      Resolved:{' '}
+                      <strong className="text-gray-900">{analytics.summary.resolvedConversations}</strong>
+                    </span>
+                  </div>
+                </CardBody>
+              </Card>
+              <Card>
+                <CardHeader title="CSAT breakdown" description="Post-chat satisfaction" />
+                <CardBody>
+                  <Csatsummary
+                    average={analytics.summary.csatAverage}
+                    open={analytics.summary.openConversations}
+                    resolved={analytics.summary.resolvedConversations}
+                  />
+                </CardBody>
+              </Card>
+            </div>
+
             {analytics.inbox.websiteUrl && (
               <p className="text-xs text-gray-500">
                 Website:{' '}
@@ -264,13 +359,15 @@ export default function AnalyticsPage() {
             </div>
 
             <Card>
-              <CardHeader title="Daily activity" description="Visits per day in selected range" />
+              <CardHeader title="Daily visits" description="Widget loads per day in selected range" />
               <CardBody>
                 {analytics.daily.length === 0 ? (
                   <p className="text-sm text-gray-400">No data for this period.</p>
                 ) : (
                   <div className="space-y-2">
-                    {analytics.daily.map((day) => (
+                    {analytics.daily.map((day) => {
+                      const maxDaily = Math.max(...analytics.daily.map((d) => d.visits), 1);
+                      return (
                       <div key={day.date} className="flex items-center gap-3 text-xs">
                         <span className="w-16 shrink-0 text-gray-500">{formatShortDate(day.date)}</span>
                         <div className="flex-1 h-5 bg-gray-100 rounded overflow-hidden">
@@ -284,7 +381,8 @@ export default function AnalyticsPage() {
                         <span className="w-14 text-right text-gray-400">{day.conversations} chats</span>
                         <span className="w-14 text-right text-gray-400">{day.messages} msgs</span>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardBody>

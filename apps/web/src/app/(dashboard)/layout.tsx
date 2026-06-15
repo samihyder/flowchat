@@ -51,6 +51,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const [unreadAll, setUnreadAll] = useState(0);
   const [unreadMine, setUnreadMine] = useState(0);
   const [unreadUnassigned, setUnreadUnassigned] = useState(0);
+  const [unreadByInbox, setUnreadByInbox] = useState<Record<string, number>>({});
 
   useWebSocket();
   const { alert: visitorAlert, muted: alarmMuted, toggleMute: toggleAlarm } = useVisitorAlarm();
@@ -112,6 +113,11 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               .filter((c) => !c.assigneeId)
               .reduce((n, c) => n + c.unreadCount, 0)
           );
+          const byInbox: Record<string, number> = {};
+          for (const c of convs) {
+            byInbox[c.inboxId] = (byInbox[c.inboxId] ?? 0) + c.unreadCount;
+          }
+          setUnreadByInbox(byInbox);
         })
         .catch(() => {});
     };
@@ -163,6 +169,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           unreadAll={unreadAll}
           unreadMine={unreadMine}
           unreadUnassigned={unreadUnassigned}
+          unreadByInbox={unreadByInbox}
           onAvailabilityClick={() => setShowAvailability(!showAvailability)}
           onSignOut={() => {
             clearAuth();

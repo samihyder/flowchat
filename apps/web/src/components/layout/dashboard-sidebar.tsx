@@ -75,6 +75,7 @@ export function DashboardSidebar({
   unreadAll = 0,
   unreadMine = 0,
   unreadUnassigned = 0,
+  unreadByInbox = {},
   onAvailabilityClick,
   onSignOut,
   messageMuted,
@@ -90,6 +91,7 @@ export function DashboardSidebar({
   unreadAll?: number;
   unreadMine?: number;
   unreadUnassigned?: number;
+  unreadByInbox?: Record<string, number>;
   onAvailabilityClick: () => void;
   onSignOut: () => void;
   messageMuted: boolean;
@@ -152,6 +154,7 @@ export function DashboardSidebar({
                 active={isDashboard && false}
                 icon="🌐"
                 label={inbox.name}
+                badge={unreadByInbox[inbox.id]}
               />
             ))
           )}

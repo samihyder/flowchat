@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 
-export function AuthLogo() {
+export function AuthLogo({ centered = true }: { centered?: boolean }) {
   return (
-    <div className="flex items-center justify-center gap-2.5 mb-6">
-      <div className="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center text-white font-bold text-lg">
+    <div className={`flex items-center gap-2.5 mb-7 ${centered ? 'justify-center' : ''}`}>
+      <div className="w-10 h-10 rounded-[10px] bg-primary-500 flex items-center justify-center text-white font-bold text-lg">
         F
       </div>
       <span className="text-xl font-bold text-gray-900">FlowChat</span>
@@ -24,17 +24,17 @@ export function AuthShell({
   footer?: ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50 px-4 py-10">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-[#F0FDF4] to-white px-4 py-10">
       <div className="w-full max-w-[420px]">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.07)] p-9">
           <AuthLogo />
-          <h1 className="text-xl font-bold text-gray-900 text-center">{title}</h1>
-          {subtitle && <p className="text-sm text-gray-500 text-center mt-1 mb-6">{subtitle}</p>}
+          <h1 className="text-[22px] font-bold text-gray-900">{title}</h1>
+          {subtitle && <p className="text-sm text-gray-500 mt-1.5 mb-6">{subtitle}</p>}
           {!subtitle && <div className="mb-6" />}
           {children}
           {footer}
         </div>
-        <p className="text-center text-[11px] text-gray-400 mt-4">
+        <p className="text-center text-[11px] text-gray-400 mt-3">
           FlowChat ·{' '}
           <Link href="https://mutexsystemsltd.com" className="hover:text-primary-600">
             Mutex Systems Ltd
@@ -91,6 +91,15 @@ export function AuthError({ message }: { message: string }) {
   return (
     <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700 mb-4">
       {message}
+    </div>
+  );
+}
+
+export function AuthAnnotation({ children }: { children: ReactNode }) {
+  return (
+    <div className="mt-4 flex gap-2 items-start bg-amber-50 border border-amber-200 rounded-md px-2.5 py-2 text-[11px] text-amber-900">
+      <span aria-hidden>★</span>
+      <span>{children}</span>
     </div>
   );
 }

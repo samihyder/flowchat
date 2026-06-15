@@ -12,6 +12,7 @@ import {
   AuthDivider,
   GoogleSignInButton,
   AuthError,
+  AuthAnnotation,
   authInputClass,
   authLabelClass,
   authSubmitClass,
@@ -99,9 +100,7 @@ export default function SignUpPage() {
           Sign in
         </Link>
       </p>
-      <p className="mt-3 text-center text-[11px] text-gray-400">
-        First user automatically becomes the workspace Administrator.
-      </p>
+      <AuthAnnotation>First user automatically becomes the workspace Administrator.</AuthAnnotation>
     </AuthShell>
   );
 }
