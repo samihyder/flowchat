@@ -240,6 +240,7 @@ export type Contact = {
   email: string | null;
   phone: string | null;
   type: 'visitor' | 'lead' | 'customer';
+  marketingStatus?: string;
   externalId?: string | null;
   labels?: Label[];
   lastActivityAt: string | null;
@@ -802,6 +803,7 @@ export const api = {
         q?: string;
         type?: string;
         labelId?: string;
+        marketingStatus?: string;
         ids?: string[];
         sort?: string;
         order?: string;
@@ -813,6 +815,7 @@ export const api = {
       if (params?.q) qs.set('q', params.q);
       if (params?.type) qs.set('type', params.type);
       if (params?.labelId) qs.set('labelId', params.labelId);
+      if (params?.marketingStatus) qs.set('marketingStatus', params.marketingStatus);
       if (params?.ids?.length) qs.set('ids', params.ids.join(','));
       if (params?.sort) qs.set('sort', params.sort);
       if (params?.order) qs.set('order', params.order);

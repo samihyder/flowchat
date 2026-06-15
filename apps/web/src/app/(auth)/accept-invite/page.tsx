@@ -6,6 +6,13 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { acceptInviteSchema, type AcceptInviteInput } from '@/lib/schemas';
+import {
+  AuthShell,
+  AuthError,
+  authInputClass,
+  authLabelClass,
+  authSubmitClass,
+} from '@/components/layout/auth-shell';
 
 function AcceptInviteForm() {
   const searchParams = useSearchParams();
@@ -56,17 +63,20 @@ function AcceptInviteForm() {
   };
 
   if (!token) {
-    return <p className="text-sm text-red-600">Missing invite token.</p>;
+    return <AuthError message="Missing invite token." />;
   }
 
   if (loadError) {
-    return <p className="text-sm text-red-600">{loadError}</p>;
+    return <AuthError message={loadError} />;
   }
 
   if (done) {
     return (
       <div className="text-center space-y-4">
-        <p className="text-sm text-gray-700">
+        <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto text-xl">
+          ✓
+        </div>
+        <p className="text-sm text-gray-600">
           Your account is ready. An administrator must approve your access before you can open chats.
         </p>
         <Link href="/sign-in" className="text-primary-600 font-medium hover:underline text-sm">
@@ -79,41 +89,31 @@ function AcceptInviteForm() {
   return (
     <div>
       {inviteInfo && (
-        <p className="text-sm text-gray-600 mb-4 text-center">
-          Join <strong>{inviteInfo.accountName}</strong> as <strong>{inviteInfo.email}</strong>
+        <p className="text-sm text-gray-600 mb-5 text-center">
+          Join <strong>{inviteInfo.accountName}</strong>
+          <br />
+          <span className="text-gray-400">{inviteInfo.email}</span>
         </p>
       )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <input type="hidden" {...register('token')} />
-        {errors.root && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
-            {errors.root.message}
-          </div>
-        )}
+        {errors.root && <AuthError message={errors.root.message!} />}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Your name</label>
-          <input
-            {...register('name')}
-            className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm"
-            placeholder="Your name"
-          />
+          <label className={authLabelClass}>Your name</label>
+          <input {...register('name')} className={authInputClass} placeholder="Your name" />
           {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+          <label className={authLabelClass}>Password</label>
           <input
             {...register('password')}
             type="password"
-            className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm"
+            className={authInputClass}
             placeholder="Min. 8 characters"
           />
           {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
         </div>
-        <button
-          type="submit"
-          disabled={isSubmitting || !inviteInfo}
-          className="w-full bg-primary-500 hover:bg-primary-600 disabled:opacity-60 text-white font-medium py-2.5 rounded-lg text-sm"
-        >
+        <button type="submit" disabled={isSubmitting || !inviteInfo} className={authSubmitClass}>
           {isSubmitting ? 'Creating account…' : 'Accept invite'}
         </button>
       </form>
@@ -123,13 +123,10 @@ function AcceptInviteForm() {
 
 export default function AcceptInvitePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-        <h1 className="text-lg font-semibold text-gray-900 mb-2 text-center">Agent invite</h1>
-        <Suspense fallback={<p className="text-sm text-gray-400 text-center">Loading…</p>}>
-          <AcceptInviteForm />
-        </Suspense>
-      </div>
-    </div>
+    <AuthShell title="Agent invite" subtitle="Set up your account to join the workspace.">
+      <Suspense fallback={<p className="text-sm text-gray-400 text-center">Loading invite…</p>}>
+        <AcceptInviteForm />
+      </Suspense>
+    </AuthShell>
   );
 }

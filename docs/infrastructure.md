@@ -217,7 +217,7 @@ pnpm dev
 ### Running services
 | Service | URL | Command |
 |---|---|---|
-| Web app (Next.js) | http://localhost:3000 | `pnpm --filter @flowchat/web dev` |
+| Web app (Next.js) | http://localhost:3100 | `pnpm --filter @flowchat/web dev` |
 | API (Hono/Bun) | http://localhost:3001 | `pnpm --filter @flowchat/api dev` |
 | All together | — | `pnpm dev` |
 

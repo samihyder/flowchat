@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore, type Availability } from '@/store/ws';
@@ -13,6 +13,7 @@ import { isMessageAlertMuted, setMessageAlertMuted } from '@/lib/message-alert';
 import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
 import { api } from '@/lib/api';
 import { countryLabel } from '@/lib/country';
+import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
 
 type Inbox = { id: string; name: string; channelType: string; widgetColor: string | null };
 type Team = { id: string; name: string };
@@ -20,26 +21,8 @@ type Team = { id: string; name: string };
 const availabilityColors: Record<Availability, string> = {
   online: 'bg-accent-500',
   busy: 'bg-amber-400',
-  offline: 'bg-gray-300',
+  offline: 'bg-gray-400',
 };
-
-const channelIcons: Record<string, string> = {
-  web_widget: '💬',
-  email: '✉️',
-  whatsapp: '📱',
-  api: '🔌',
-};
-
-function NavSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="px-2 py-1 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-        {title}
-      </div>
-      <div className="space-y-0.5 mt-1">{children}</div>
-    </div>
-  );
-}
 
 function DashboardShellFallback() {
   return (
@@ -55,15 +38,19 @@ function DashboardShellFallback() {
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const conversationFilter = searchParams.get('filter');
   const { user, token, accountId, accountName, clearAuth } = useAuthStore();
   const { ready: authReady } = useAuthBootstrap();
-  const { sendPresence, presence, lastMissedChatEvent, missedChatEventSeq, clearMissedChatEvent } =
-    useWsStore();
+  const { sendPresence, presence, lastMissedChatEvent, clearMissedChatEvent } = useWsStore();
   const [showAvailability, setShowAvailability] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [inboxes, setInboxes] = useState<Inbox[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [messageMuted, setMessageMuted] = useState(true);
+  const [unreadAll, setUnreadAll] = useState(0);
+  const [unreadMine, setUnreadMine] = useState(0);
+  const [unreadUnassigned, setUnreadUnassigned] = useState(0);
 
   useWebSocket();
   const { alert: visitorAlert, muted: alarmMuted, toggleMute: toggleAlarm } = useVisitorAlarm();
@@ -88,7 +75,10 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!authReady) return;
-    if (!token) { router.push('/sign-in'); return; }
+    if (!token) {
+      router.push('/sign-in');
+      return;
+    }
     if (!accountId) {
       fetch('/api/workspace', { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.json())
@@ -103,6 +93,32 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       api.teams.list(accountId, token).then((r) => setTeams(r.teams)).catch(() => {}),
     ]);
   }, [authReady, token, accountId, router]);
+
+  useEffect(() => {
+    if (!token || !accountId || !user) return;
+    const refreshUnread = () => {
+      api.conversations
+        .list(accountId, token, { status: 'open' })
+        .then((r) => {
+          const convs = r.conversations;
+          setUnreadAll(convs.reduce((n, c) => n + c.unreadCount, 0));
+          setUnreadMine(
+            convs
+              .filter((c) => c.assigneeId === user.id)
+              .reduce((n, c) => n + c.unreadCount, 0)
+          );
+          setUnreadUnassigned(
+            convs
+              .filter((c) => !c.assigneeId)
+              .reduce((n, c) => n + c.unreadCount, 0)
+          );
+        })
+        .catch(() => {});
+    };
+    refreshUnread();
+    const interval = setInterval(refreshUnread, 30_000);
+    return () => clearInterval(interval);
+  }, [token, accountId, user]);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -120,169 +136,58 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   const myAvailability: Availability = (presence[user.id] ?? 'online') as Availability;
-  const isSettingsActive = pathname.startsWith('/settings');
 
-  const sidebar = (
-    <>
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shrink-0 shadow-sm">
-            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-              <path d="M4 4h16v12H7l-3 4V4z" fill="white" />
-            </svg>
-          </div>
-          <div className="min-w-0">
-            <p className="font-bold text-gray-900 text-sm leading-tight">
-              Flow<span className="text-primary-500">Chat</span>
-            </p>
-            {accountName && (
-              <p className="text-xs text-gray-400 truncate">{accountName}</p>
-            )}
-          </div>
-        </div>
-      </div>
+  return (
+    <div className="min-h-screen flex bg-gray-50">
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-label="Close menu"
+        />
+      )}
 
-      <nav className="flex-1 overflow-y-auto p-3 space-y-5">
-        <NavSection title="CRM">
-          <Link
-            href={'/dashboard/contacts' as Route}
-            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-              pathname.startsWith('/dashboard/contacts')
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Contacts
-          </Link>
-        </NavSection>
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-[220px] bg-sidebar-bg flex flex-col shrink-0 transform transition-transform duration-200 relative ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        <DashboardSidebar
+          accountName={accountName ?? undefined}
+          userName={user.name}
+          myAvailability={myAvailability}
+          inboxes={inboxes}
+          teams={teams}
+          conversationFilter={conversationFilter}
+          unreadAll={unreadAll}
+          unreadMine={unreadMine}
+          unreadUnassigned={unreadUnassigned}
+          onAvailabilityClick={() => setShowAvailability(!showAvailability)}
+          onSignOut={() => {
+            clearAuth();
+            router.push('/sign-in');
+          }}
+          messageMuted={messageMuted}
+          onToggleMessageMute={() => {
+            const next = !messageMuted;
+            setMessageAlertMuted(next);
+            setMessageMuted(next);
+          }}
+        />
 
-        <NavSection title="Marketing">
-          <Link
-            href={'/dashboard/marketing/campaigns' as Route}
-            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-              pathname.startsWith('/dashboard/marketing/campaigns')
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Campaigns
-          </Link>
-          <Link
-            href={'/dashboard/marketing/segments' as Route}
-            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-              pathname.startsWith('/dashboard/marketing/segments')
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Segments
-          </Link>
-          <Link
-            href={'/dashboard/marketing/templates' as Route}
-            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-              pathname.startsWith('/dashboard/marketing/templates')
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Templates
-          </Link>
-          <Link
-            href={'/dashboard/marketing/workflows' as Route}
-            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-              pathname.startsWith('/dashboard/marketing/workflows')
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Workflows
-          </Link>
-        </NavSection>
-
-        <NavSection title="Conversations">
-          <Link
-            href={'/dashboard' as Route}
-            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-              pathname === '/dashboard'
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Conversations
-          </Link>
-          <Link
-            href={'/dashboard/analytics' as Route}
-            className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-              pathname === '/dashboard/analytics'
-                ? 'bg-primary-50 text-primary-700 font-medium'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Analytics
-          </Link>
-        </NavSection>
-
-        <NavSection title="Inboxes">
-          {inboxes.length === 0 ? (
-            <Link
-              href="/settings/inboxes"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-primary-600 hover:bg-primary-50 transition-colors"
-            >
-              + Create first inbox
-            </Link>
-          ) : (
-            inboxes.map((inbox) => (
-              <Link
-                key={inbox.id}
-                href={`/dashboard?inbox=${inbox.id}` as Route}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
-              >
-                <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ background: inbox.widgetColor ?? '#6366F1' }}
-                />
-                <span className="truncate">{inbox.name}</span>
-              </Link>
-            ))
-          )}
-        </NavSection>
-
-        {teams.length > 0 && (
-          <NavSection title="Teams">
-            {teams.map((team) => (
-              <Link
-                key={team.id}
-                href={`/dashboard?team=${team.id}` as Route}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
-              >
-                <span className="truncate">{team.name}</span>
-              </Link>
-            ))}
-          </NavSection>
-        )}
-
-        <div className="pt-2 border-t border-gray-100">
-          <Link
-            href="/settings/agents"
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isSettingsActive ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Settings
-          </Link>
-        </div>
-      </nav>
-
-      <div className="p-3 border-t border-gray-200 relative">
         {showAvailability && (
-          <div className="absolute bottom-16 left-3 right-3 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-10">
+          <div className="absolute bottom-16 left-3 right-3 bg-sidebar-hover border border-sidebar-muted/30 rounded-lg shadow-lg py-1 z-10">
             {(['online', 'busy', 'offline'] as Availability[]).map((a) => (
               <button
                 key={a}
                 type="button"
-                onClick={() => { sendPresence(a); setShowAvailability(false); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                  myAvailability === a ? 'font-medium text-gray-900' : 'text-gray-600'
+                onClick={() => {
+                  sendPresence(a);
+                  setShowAvailability(false);
+                }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+                  myAvailability === a ? 'font-medium text-white' : 'text-sidebar-text hover:bg-sidebar-bg'
                 }`}
               >
                 <span className={`w-2 h-2 rounded-full ${availabilityColors[a]}`} />
@@ -291,67 +196,6 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             ))}
           </div>
         )}
-
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => setShowAvailability(!showAvailability)}
-            className="relative shrink-0"
-            title="Change availability"
-          >
-            <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-sm font-bold">
-              {user.name.charAt(0).toUpperCase()}
-            </div>
-            <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${availabilityColors[myAvailability]}`} />
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-            <p className="text-xs text-gray-400 capitalize">{myAvailability}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              const next = !messageMuted;
-              setMessageAlertMuted(next);
-              setMessageMuted(next);
-            }}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-            title={messageMuted ? 'Unmute message sounds' : 'Mute message sounds'}
-          >
-            {messageMuted ? '🔕' : '🔔'}
-          </button>
-          <button
-            type="button"
-            onClick={() => { clearAuth(); router.push('/sign-in'); }}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-            title="Sign out"
-          >
-            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </>
-  );
-
-  return (
-    <div className="min-h-screen flex bg-gray-50">
-      {sidebarOpen && (
-        <button
-          type="button"
-          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-          aria-label="Close menu"
-        />
-      )}
-
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col shrink-0 transform transition-transform duration-200 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        {sidebar}
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0 min-h-screen">
@@ -404,9 +248,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
             </svg>
           </button>
-          <p className="text-sm font-semibold text-gray-900">
-            Flow<span className="text-primary-500">Chat</span>
-          </p>
+          <p className="text-sm font-semibold text-gray-900">FlowChat</p>
         </div>
         {children}
       </main>

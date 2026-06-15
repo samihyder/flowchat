@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowChat — UI Wireframes Index</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #F1F5F9; color: #111827; min-height: 100vh; }
+
+  .hero {
+    background: linear-gradient(135deg, #1E1B4B 0%, #312E81 60%, #4338CA 100%);
+    padding: 48px 40px 36px;
+    color: #fff;
+  }
+  .hero-logo {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.12); border-radius: 10px; padding: 8px 14px;
+    margin-bottom: 20px;
+  }
+  .hero-logo-icon {
+    width: 32px; height: 32px; background: #6366F1; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 16px;
+  }
+  .hero h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .hero p { font-size: 15px; color: #A5B4FC; margin-top: 6px; max-width: 600px; line-height: 1.5; }
+  .hero-meta {
+    display: flex; gap: 24px; margin-top: 24px; flex-wrap: wrap;
+  }
+  .hero-stat {
+    background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 18px; text-align: center;
+  }
+  .hero-stat-value { font-size: 22px; font-weight: 800; }
+  .hero-stat-label { font-size: 11px; color: #C7D2FE; margin-top: 2px; }
+
+  .body-wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  .section-title { font-size: 13px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+
+  .sprint-card {
+    background: #fff; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07); margin-bottom: 16px;
+  }
+  .sprint-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; background: #FAFAFA; border-bottom: 1px solid #E5E7EB;
+  }
+  .sprint-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 12px; border-radius: 6px;
+    padding: 3px 8px; letter-spacing: 0.5px;
+  }
+  .sprint-title { font-size: 15px; font-weight: 700; color: #111827; }
+  .sprint-subtitle { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+  .screen-list { display: flex; flex-direction: column; gap: 0; }
+  .screen-link {
+    display: flex; align-items: center; padding: 11px 18px;
+    text-decoration: none; color: inherit;
+    border-bottom: 1px solid #F3F4F6;
+    transition: background 0.12s;
+    gap: 16px;
+  }
+  .screen-link:last-child { border-bottom: none; }
+  .screen-link:hover { background: #EEF2FF; }
+  .screen-label {
+    font-weight: 600; font-size: 13px; color: #374151; min-width: 200px; flex-shrink: 0;
+  }
+  .screen-link:hover .screen-label { color: #6366F1; }
+  .screen-desc { font-size: 12px; color: #6B7280; }
+
+  .legend {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151;
+    background: #fff; border-radius: 20px; padding: 5px 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .footer {
+    text-align: center; padding: 20px; font-size: 12px; color: #9CA3AF;
+    border-top: 1px solid #E5E7EB; margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-logo">
+    <div class="hero-logo-icon">F</div>
+    <span style="font-weight:700;font-size:15px">FlowChat</span>
+  </div>
+  <h1>UI Wireframes — Sprints 1–6</h1>
+  <p>Full-fidelity wireframes covering every feature built in S1–S6. Each screen maps to user stories in the XLSX and includes sprint story IDs for traceability.</p>
+  <div class="hero-meta">
+    <div class="hero-stat">
+      <div class="hero-stat-value">28</div>
+      <div class="hero-stat-label">Wireframe screens</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value">6</div>
+      <div class="hero-stat-label">Sprints covered</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value">89</div>
+      <div class="hero-stat-label">User stories</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value">430</div>
+      <div class="hero-stat-label">Story points</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-value">
+        <a href="FlowChat_User_Stories_S1_S6.xlsx" style="color:#A5B4FC;font-size:13px;font-weight:600">📥 XLSX</a>
+      </div>
+      <div class="hero-stat-label">User stories workbook</div>
+    </div>
+  </div>
+</div>
+
+<div class="body-wrap">
+  <div class="section-title">Sprint legend</div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#6366F1"></div>S1 — Foundation</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8B5CF6"></div>S2 — Auth &amp; Workspace</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#14B8A6"></div>S3 — Widget &amp; Real-time</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F59E0B"></div>S4 — Conversations &amp; Teams</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#EF4444"></div>S5 — Advanced Messaging</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#10B981"></div>S6 — CRM &amp; Email Marketing</div>
+  </div>
+
+  <div class="section-title" style="margin-top:4px">All screens</div>
+  
+    <div class="sprint-card">
+      <div class="sprint-header" style="border-left:5px solid #6366F1">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="sprint-badge" style="background:#6366F1">S1</span>
+          <div>
+            <div class="sprint-title">Foundation</div>
+            <div class="sprint-subtitle">Project scaffold, monorepo, CI/CD, DB schema, Bun workspace</div>
+          </div>
+        </div>
+        <span style="font-size:12px;color:#9CA3AF">0 screens</span>
+      </div>
+      <div class="screen-list"><div style="color:#9CA3AF;font-size:13px;padding:10px 0;font-style:italic">No dedicated screens — S1 is backend/infrastructure. Its stories are reflected in the auth and workspace flows.</div></div>
+    </div>
+    <div class="sprint-card">
+      <div class="sprint-header" style="border-left:5px solid #8B5CF6">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="sprint-badge" style="background:#8B5CF6">S2</span>
+          <div>
+            <div class="sprint-title">Auth & Workspace</div>
+            <div class="sprint-subtitle">Sign-up / sign-in, JWT, 2FA, agent invite, teams, inbox creation</div>
+          </div>
+        </div>
+        <span style="font-size:12px;color:#9CA3AF">9 screens</span>
+      </div>
+      <div class="screen-list">
+            <a href="01-auth-signup.html" class="screen-link">
+              <div class="screen-label">Sign Up</div>
+              <div class="screen-desc">Sign-up form with workspace creation — S1-4, S1-5, S1-6</div>
+            </a>
+            <a href="02-auth-signin.html" class="screen-link">
+              <div class="screen-label">Sign In</div>
+              <div class="screen-desc">Email + password login — S1-4, S1-5</div>
+            </a>
+            <a href="03-auth-2fa-verify.html" class="screen-link">
+              <div class="screen-label">2FA Verify</div>
+              <div class="screen-desc">TOTP code verification screen — S2-8</div>
+            </a>
+            <a href="04-auth-2fa-setup.html" class="screen-link">
+              <div class="screen-label">2FA Setup</div>
+              <div class="screen-desc">QR code + backup codes setup — S2-8</div>
+            </a>
+            <a href="05-accept-invite.html" class="screen-link">
+              <div class="screen-label">Accept Invite</div>
+              <div class="screen-desc">Agent invite acceptance with pending-approval state — S2-2, S4-17</div>
+            </a>
+            <a href="09-settings-account.html" class="screen-link">
+              <div class="screen-label">Account Settings</div>
+              <div class="screen-desc">Workspace name, logo, timezone, invite domain — S2-7</div>
+            </a>
+            <a href="10-settings-agents.html" class="screen-link">
+              <div class="screen-label">Agents</div>
+              <div class="screen-desc">Pending approval banner, roles, availability dots — S2-2, S4-17</div>
+            </a>
+            <a href="11-settings-teams.html" class="screen-link">
+              <div class="screen-label">Teams</div>
+              <div class="screen-desc">Teams with member avatars, auto-assignment modes — S2-3</div>
+            </a>
+            <a href="12-settings-inboxes.html" class="screen-link">
+              <div class="screen-label">Inboxes</div>
+              <div class="screen-desc">Inbox list + embed code display — S2-1, S3-5</div>
+            </a></div>
+    </div>
+    <div class="sprint-card">
+      <div class="sprint-header" style="border-left:5px solid #14B8A6">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="sprint-badge" style="background:#14B8A6">S3</span>
+          <div>
+            <div class="sprint-title">Widget & Real-time</div>
+            <div class="sprint-subtitle">Embeddable chat widget, WebSocket, visitor tracking, widget config</div>
+          </div>
+        </div>
+        <span style="font-size:12px;color:#9CA3AF">2 screens</span>
+      </div>
+      <div class="screen-list">
+            <a href="07-widget.html" class="screen-link">
+              <div class="screen-label">Widget States</div>
+              <div class="screen-desc">4 states: bubble, pre-chat, active chat, offline capture — S3-2, S3-3, S3-4, S5-14</div>
+            </a>
+            <a href="13-settings-inbox-config.html" class="screen-link">
+              <div class="screen-label">Inbox Config</div>
+              <div class="screen-desc">Widget appearance, business hours, domain allowlist — S3-5, S4-11–S4-19</div>
+            </a></div>
+    </div>
+    <div class="sprint-card">
+      <div class="sprint-header" style="border-left:5px solid #F59E0B">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="sprint-badge" style="background:#F59E0B">S4</span>
+          <div>
+            <div class="sprint-title">Conversations & Teams</div>
+            <div class="sprint-subtitle">Conversation list, assignment, labels, typing, private notes, collision</div>
+          </div>
+        </div>
+        <span style="font-size:12px;color:#9CA3AF">4 screens</span>
+      </div>
+      <div class="screen-list">
+            <a href="06-dashboard-conversations.html" class="screen-link">
+              <div class="screen-label">Conversation List</div>
+              <div class="screen-desc">Filters, labels, unread badges, assignment — S2-6, S3-6, S4-2–S4-4</div>
+            </a>
+            <a href="08-conversation-detail.html" class="screen-link">
+              <div class="screen-label">Conversation Detail</div>
+              <div class="screen-desc">Thread + attachments + private notes + canned + visitor sidebar + labels + collision — S4-1–S4-8, S5-1–S5-16, S6-8</div>
+            </a>
+            <a href="14-settings-labels.html" class="screen-link">
+              <div class="screen-label">Labels</div>
+              <div class="screen-desc">Colour swatches and conversation counts — S4-4</div>
+            </a>
+            <a href="19-settings-auto-messages.html" class="screen-link">
+              <div class="screen-label">Auto Messages</div>
+              <div class="screen-desc">Welcome + offline messages per inbox — S4-12, S5-11</div>
+            </a></div>
+    </div>
+    <div class="sprint-card">
+      <div class="sprint-header" style="border-left:5px solid #EF4444">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="sprint-badge" style="background:#EF4444">S5</span>
+          <div>
+            <div class="sprint-title">Advanced Messaging</div>
+            <div class="sprint-subtitle">File attachments, email, canned responses, CSAT, analytics, webhooks</div>
+          </div>
+        </div>
+        <span style="font-size:12px;color:#9CA3AF">4 screens</span>
+      </div>
+      <div class="screen-list">
+            <a href="16-settings-canned.html" class="screen-link">
+              <div class="screen-label">Canned Responses</div>
+              <div class="screen-desc">/keyword shortcuts + composer autocomplete — S5-6</div>
+            </a>
+            <a href="17-analytics.html" class="screen-link">
+              <div class="screen-label">Analytics</div>
+              <div class="screen-desc">KPI cards, bar chart, donut, agent performance table — S5-17, S5-18, S4-19</div>
+            </a>
+            <a href="15-settings-security.html" class="screen-link">
+              <div class="screen-label">Security</div>
+              <div class="screen-desc">2FA status, backup codes, sessions, blocked visitors — S2-8, S4-15, S4-16</div>
+            </a>
+            <a href="18-settings-integrations.html" class="screen-link">
+              <div class="screen-label">Integrations</div>
+              <div class="screen-desc">Webhooks + event subscriptions + audit log — S5-20, S5-21, S6-4c</div>
+            </a></div>
+    </div>
+    <div class="sprint-card">
+      <div class="sprint-header" style="border-left:5px solid #10B981">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="sprint-badge" style="background:#10B981">S6</span>
+          <div>
+            <div class="sprint-title">CRM & Email Marketing</div>
+            <div class="sprint-subtitle">Contacts, import, custom attributes, LeadSnapper, campaigns, workflows</div>
+          </div>
+        </div>
+        <span style="font-size:12px;color:#9CA3AF">9 screens</span>
+      </div>
+      <div class="screen-list">
+            <a href="20-contacts-list.html" class="screen-link">
+              <div class="screen-label">Contacts List</div>
+              <div class="screen-desc">Search, filter, labels, deduplication banner — S6-1, S6-3, S6-5, S6-6</div>
+            </a>
+            <a href="21-contact-profile.html" class="screen-link">
+              <div class="screen-label">Contact Profile</div>
+              <div class="screen-desc">Conversations, notes, email history, LeadSnapper attributes — S6-2, S6-7, S6-9, S6-20</div>
+            </a>
+            <a href="22-contacts-import.html" class="screen-link">
+              <div class="screen-label">CSV Import</div>
+              <div class="screen-desc">3-step import wizard with column mapping + BullMQ progress — S6-4, S6-4b</div>
+            </a>
+            <a href="23-settings-crm.html" class="screen-link">
+              <div class="screen-label">CRM Settings</div>
+              <div class="screen-desc">Import/export governance, custom attributes, LeadSnapper sync — S6-4b, S6-4c, S6-9</div>
+            </a>
+            <a href="24-marketing-segments.html" class="screen-link">
+              <div class="screen-label">Segments</div>
+              <div class="screen-desc">Dynamic audience builder with filter conditions — S6-11</div>
+            </a>
+            <a href="25-marketing-templates.html" class="screen-link">
+              <div class="screen-label">Email Templates</div>
+              <div class="screen-desc">Template grid + drag-and-drop editor + personalisation tokens — S6-12, S6-13</div>
+            </a>
+            <a href="26-marketing-campaigns.html" class="screen-link">
+              <div class="screen-label">Campaigns</div>
+              <div class="screen-desc">Campaign list + wizard: segment, schedule, rate limiting — S6-14, S6-22, S6-23</div>
+            </a>
+            <a href="27-marketing-campaign-analytics.html" class="screen-link">
+              <div class="screen-label">Campaign Analytics</div>
+              <div class="screen-desc">Funnel, opens-over-time, link clicks, per-recipient activity — S6-18, S6-19</div>
+            </a>
+            <a href="28-marketing-workflows.html" class="screen-link">
+              <div class="screen-label">Workflows</div>
+              <div class="screen-desc">Visual drip builder: trigger, send, wait, condition branch, exit — S6-15, S6-16, S6-17, S6-21</div>
+            </a></div>
+    </div>
+
+  <div class="footer">
+    FlowChat · Mutex Systems Ltd · Generated Jun 2026 · 28 screens across S1–S6<br>
+    <a href="ASSESSMENT.md" style="color:#6366F1;font-weight:600;margin-top:8px;display:inline-block">📋 Wireframe vs built modules assessment (S1–S6)</a>
+  </div>
+</div>
+
+</body>
+</html>

@@ -8,6 +8,7 @@ export type ContactListParams = {
   ids?: string[] | null;
   sort?: string;
   orderAsc?: boolean;
+  marketingStatus?: string | null;
   limit?: number;
   offset?: number;
 };
@@ -23,6 +24,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
   if (sort === 'name' && orderAsc) {
     return sql`
       SELECT c.id, c.name, c.email, c.phone, c.type, c.external_id as "externalId",
+             c.marketing_status as "marketingStatus",
              c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
              c.created_at as "createdAt", c.updated_at as "updatedAt",
              COALESCE(
@@ -40,6 +42,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
           SELECT 1 FROM contact_labels cl WHERE cl.contact_id = c.id AND cl.label_id = ${p.labelId ?? null}::uuid
         ))
         AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
+        AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
       ORDER BY c.name ASC
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -48,6 +51,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
   if (sort === 'name') {
     return sql`
       SELECT c.id, c.name, c.email, c.phone, c.type, c.external_id as "externalId",
+             c.marketing_status as "marketingStatus",
              c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
              c.created_at as "createdAt", c.updated_at as "updatedAt",
              COALESCE(
@@ -65,6 +69,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
           SELECT 1 FROM contact_labels cl WHERE cl.contact_id = c.id AND cl.label_id = ${p.labelId ?? null}::uuid
         ))
         AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
+        AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
       ORDER BY c.name DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -73,6 +78,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
   if (sort === 'created_at' && orderAsc) {
     return sql`
       SELECT c.id, c.name, c.email, c.phone, c.type, c.external_id as "externalId",
+             c.marketing_status as "marketingStatus",
              c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
              c.created_at as "createdAt", c.updated_at as "updatedAt",
              COALESCE(
@@ -90,6 +96,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
           SELECT 1 FROM contact_labels cl WHERE cl.contact_id = c.id AND cl.label_id = ${p.labelId ?? null}::uuid
         ))
         AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
+        AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
       ORDER BY c.created_at ASC
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -98,6 +105,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
   if (sort === 'created_at') {
     return sql`
       SELECT c.id, c.name, c.email, c.phone, c.type, c.external_id as "externalId",
+             c.marketing_status as "marketingStatus",
              c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
              c.created_at as "createdAt", c.updated_at as "updatedAt",
              COALESCE(
@@ -115,6 +123,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
           SELECT 1 FROM contact_labels cl WHERE cl.contact_id = c.id AND cl.label_id = ${p.labelId ?? null}::uuid
         ))
         AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
+        AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
       ORDER BY c.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -123,6 +132,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
   if (orderAsc) {
     return sql`
       SELECT c.id, c.name, c.email, c.phone, c.type, c.external_id as "externalId",
+             c.marketing_status as "marketingStatus",
              c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
              c.created_at as "createdAt", c.updated_at as "updatedAt",
              COALESCE(
@@ -140,6 +150,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
           SELECT 1 FROM contact_labels cl WHERE cl.contact_id = c.id AND cl.label_id = ${p.labelId ?? null}::uuid
         ))
         AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
+        AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
       ORDER BY c.last_activity_at ASC NULLS LAST
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -147,6 +158,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
 
   return sql`
     SELECT c.id, c.name, c.email, c.phone, c.type, c.external_id as "externalId",
+           c.marketing_status as "marketingStatus",
            c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
            c.created_at as "createdAt", c.updated_at as "updatedAt",
            COALESCE(
@@ -164,6 +176,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
         SELECT 1 FROM contact_labels cl WHERE cl.contact_id = c.id AND cl.label_id = ${p.labelId ?? null}::uuid
       ))
       AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
+      AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
     ORDER BY c.last_activity_at DESC NULLS LAST
     LIMIT ${limit} OFFSET ${offset}
   `;

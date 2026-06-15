@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ContactImportModal } from '@/components/contacts/contact-import-modal';
 import { ContactMergeModal } from '@/components/contacts/contact-merge-modal';
+import { MarketingStatusBadge } from '@/components/contacts/marketing-status-badge';
+import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
 import type { ColumnMapping } from '@/lib/csv-import-utils';
 
 const TYPES = ['', 'visitor', 'lead', 'customer'] as const;
@@ -32,6 +34,7 @@ export default function ContactsPage() {
   const [q, setQ] = useState('');
   const [type, setType] = useState('');
   const [labelId, setLabelId] = useState('');
+  const [marketingStatus, setMarketingStatus] = useState('');
   const [sortKey, setSortKey] = useState('last_activity_at:desc');
   const [labels, setLabels] = useState<Label[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +47,15 @@ export default function ContactsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [duplicateGroups, setDuplicateGroups] = useState(0);
+
+  useEffect(() => {
+    if (!token || !accountId || !access.isAdmin) return;
+    api.contacts
+      .listDuplicates(accountId, token)
+      .then((r) => setDuplicateGroups(r.groups.length))
+      .catch(() => setDuplicateGroups(0));
+  }, [token, accountId, access.isAdmin, mergeOpen]);
 
   const [sort, order] = sortKey.split(':') as [string, string];
 
@@ -55,6 +67,7 @@ export default function ContactsPage() {
         q: q || undefined,
         type: type || undefined,
         labelId: labelId || undefined,
+        marketingStatus: marketingStatus || undefined,
         sort,
         order,
         limit: PAGE_SIZE,
@@ -68,7 +81,7 @@ export default function ContactsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, accountId, q, type, labelId, sort, order, page]);
+  }, [token, accountId, q, type, labelId, marketingStatus, sort, order, page]);
 
   useEffect(() => {
     if (!token || !accountId) return;
@@ -87,7 +100,7 @@ export default function ContactsPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [q, type, labelId, sortKey]);
+  }, [q, type, labelId, marketingStatus, sortKey]);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -165,7 +178,7 @@ export default function ContactsPage() {
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <PageHeader
         title="Contacts"
-        description={`${total} contact${total === 1 ? '' : 's'} in your CRM`}
+        description={`${total} contact${total === 1 ? '' : 's'} · Mutex Systems CRM`}
         action={
           <div className="flex flex-wrap gap-2">
             {access.isAdmin && (
@@ -190,6 +203,19 @@ export default function ContactsPage() {
         }
       />
 
+      <div className="px-6 pb-4">
+        <MetricGrid>
+          <MetricCard label="Total contacts" value={loading ? '—' : total} accent="primary" />
+          <MetricCard label="On this page" value={contacts.length} hint={`Page ${page + 1}`} accent="accent" />
+          <MetricCard label="Selected" value={selected.size} hint="Bulk export when selected" />
+          <MetricCard
+            label="Duplicate groups"
+            value={duplicateGroups}
+            accent={duplicateGroups > 0 ? 'amber' : 'primary'}
+          />
+        </MetricGrid>
+      </div>
+
       <div className="px-6 pb-4 flex flex-wrap gap-3 items-center">
         <Input
           value={q}
@@ -207,6 +233,18 @@ export default function ContactsPage() {
               {t ? t.charAt(0).toUpperCase() + t.slice(1) : 'All types'}
             </option>
           ))}
+        </select>
+        <select
+          value={marketingStatus}
+          onChange={(e) => setMarketingStatus(e.target.value)}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white"
+        >
+          <option value="">Subscription: All</option>
+          <option value="subscribed">Subscribed</option>
+          <option value="unsubscribed">Unsubscribed</option>
+          <option value="pending">Pending</option>
+          <option value="bounced">Bounced</option>
+          <option value="complained">Complained</option>
         </select>
         <select
           value={labelId}
@@ -233,6 +271,21 @@ export default function ContactsPage() {
         </select>
         {importStatus && <p className="text-sm text-gray-600">{importStatus}</p>}
       </div>
+
+      {access.isAdmin && duplicateGroups > 0 && (
+        <div className="mx-6 mb-4 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+          <span aria-hidden>⚠️</span>
+          <p className="flex-1 text-sm text-amber-900">
+            <strong>
+              {duplicateGroups} duplicate group{duplicateGroups === 1 ? '' : 's'} found
+            </strong>{' '}
+            — matching by email or phone.
+          </p>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setMergeOpen(true)}>
+            Review &amp; merge
+          </Button>
+        </div>
+      )}
 
       {showCreate && (
         <form
@@ -268,19 +321,20 @@ export default function ContactsPage() {
                 <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Labels</th>
+                <th className="px-4 py-3">Subscription</th>
                 <th className="px-4 py-3">Last activity</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
                     Loading…
                   </td>
                 </tr>
               ) : contacts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
                     No contacts found.
                   </td>
                 </tr>
@@ -320,6 +374,9 @@ export default function ContactsPage() {
                           </span>
                         ))}
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <MarketingStatusBadge status={c.marketingStatus} />
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {c.lastActivityAt ? new Date(c.lastActivityAt).toLocaleString() : '—'}

@@ -17,6 +17,7 @@ import { PageHeader } from '@/components/ui/page-header';
 function DashboardPageContent() {
   const searchParams = useSearchParams();
   const inboxFilter = searchParams.get('inbox');
+  const queueFilter = searchParams.get('filter');
   const conversationParam = searchParams.get('conversation');
   const { token, accountId } = useAuthStore();
   const { lastMessageEvent, messageEventSeq, connected } = useWsStore();
@@ -45,6 +46,8 @@ function DashboardPageContent() {
       const res = await api.conversations.list(accountId, token, {
         inboxId: inboxFilter ?? undefined,
         status: filters.status,
+        filter:
+          queueFilter === 'mine' || queueFilter === 'unassigned' ? queueFilter : undefined,
         priority: filters.priority || undefined,
         labelId: filters.labelId || undefined,
         from: filters.from ? `${filters.from}T00:00:00.000Z` : undefined,
@@ -56,7 +59,7 @@ function DashboardPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [token, accountId, inboxFilter, filters]);
+  }, [token, accountId, inboxFilter, queueFilter, filters]);
 
   useEffect(() => {
     fetchConversations();
@@ -112,7 +115,15 @@ function DashboardPageContent() {
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <PageHeader
         title="Conversations"
-        description={inboxFilter ? 'Filtered by inbox' : 'Manage live chats'}
+        description={
+          queueFilter === 'mine'
+            ? 'Assigned to you'
+            : queueFilter === 'unassigned'
+              ? 'Unassigned queue'
+              : inboxFilter
+                ? 'Filtered by inbox'
+                : 'Manage live chats'
+        }
       />
 
       <div className="flex-1 flex min-h-0">

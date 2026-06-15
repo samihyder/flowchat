@@ -17,6 +17,12 @@
   --color-accent-500: #14B8A6;
   --color-accent-600: #0D9488;
 
+  --color-sidebar-bg: #1E1B4B;
+  --color-sidebar-hover: #312E81;
+  --color-sidebar-text: #C7D2FE;
+  --color-sidebar-muted: #818CF8;
+  --color-sidebar-label: #6366F1;
+
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 

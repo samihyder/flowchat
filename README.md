@@ -10,6 +10,7 @@ FlowChat is a modern, omnichannel customer communication platform. This reposito
 
 | File | Description |
 |---|---|
+| [docs/MUTEX_SYSTEMS_SETUP.md](docs/MUTEX_SYSTEMS_SETUP.md) | **Complete Mutex Systems setup** — Flow, CRM, LeadSnapper, widget, migrations |
 | [docs/features.md](docs/features.md) | Complete feature specification — 15 modules covering all platform capabilities |
 | [docs/branding.md](docs/branding.md) | Color palette, typography, spacing, motion — full design system |
 | [docs/tech-stack.md](docs/tech-stack.md) | Recommended tech stack with architecture diagram and rationale |

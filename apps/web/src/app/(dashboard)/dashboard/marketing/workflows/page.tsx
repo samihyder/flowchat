@@ -108,6 +108,31 @@ export default function WorkflowsPage() {
             onChange={setSteps}
             templates={templates.map((t) => ({ id: t.id, name: t.name }))}
           />
+          <div className="rounded-xl border border-gray-200 bg-slate-100 p-4 -mx-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              Workflow canvas preview
+            </p>
+            <div className="space-y-2">
+              {steps.map((s, i) => (
+                <div key={i} className="flex flex-col items-center">
+                  <div
+                    className={`w-full max-w-xs bg-white border rounded-lg px-3 py-2 text-xs font-medium shadow-sm border-l-4 ${
+                      s.stepType === 'send_email'
+                        ? 'border-l-green-500'
+                        : s.stepType === 'wait'
+                          ? 'border-l-amber-500'
+                          : s.stepType === 'branch'
+                            ? 'border-l-violet-500'
+                            : 'border-l-gray-400'
+                    }`}
+                  >
+                    {s.stepType.replace(/_/g, ' ')}
+                  </div>
+                  {i < steps.length - 1 && <div className="w-px h-4 bg-gray-300" />}
+                </div>
+              ))}
+            </div>
+          </div>
           <Button type="submit">Create workflow</Button>
         </form>
 
