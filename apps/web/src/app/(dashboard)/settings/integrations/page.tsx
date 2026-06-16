@@ -7,8 +7,14 @@ import { getApiUrl } from '@/lib/config';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { TabBar } from '@/components/ui/tabs';
 
 const CONTACT_EVENTS = ['contact.created', 'contact.updated', 'contact.deleted'];
+const TABS = [
+  { id: 'webhooks', label: 'Webhooks' },
+  { id: 'api-keys', label: 'API Keys' },
+  { id: 'audit', label: 'Audit Log' },
+];
 
 export default function IntegrationsPage() {
   const { token, accountId } = useAuthStore();
@@ -23,6 +29,7 @@ export default function IntegrationsPage() {
   const [webhookSecret, setWebhookSecret] = useState<string | null>(null);
   const [keyName, setKeyName] = useState('HubSpot sync');
   const [apiKeySecret, setApiKeySecret] = useState<string | null>(null);
+  const [tab, setTab] = useState('webhooks');
   const baseUrl = typeof window !== 'undefined' ? getApiUrl() : 'https://your-app.vercel.app/api';
 
   const load = () => {
@@ -60,14 +67,10 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <div className="p-6 max-w-3xl space-y-6">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">CRM integrations</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Sync contacts with HubSpot, Salesforce, Zapier, LeadSnapper, or custom apps via API keys (inbound) and webhooks (outbound).
-        </p>
-      </div>
+    <div className="space-y-4">
+      <TabBar tabs={TABS} active={tab} onChange={setTab} />
 
+      {tab === 'api-keys' && (
       <Card>
         <CardHeader title="API keys (incoming)" description="External apps push/pull contacts into FlowChat" />
         <CardBody className="space-y-4">
@@ -104,7 +107,9 @@ export default function IntegrationsPage() {
           </ul>
         </CardBody>
       </Card>
+      )}
 
+      {tab === 'webhooks' && (
       <Card>
         <CardHeader title="Webhooks (outgoing)" description="FlowChat notifies your app when contacts change" />
         <CardBody className="space-y-4">
@@ -133,40 +138,35 @@ export default function IntegrationsPage() {
           </ul>
         </CardBody>
       </Card>
+      )}
 
-      <Card>
-        <CardHeader title="Inbound payload example" description="POST /integrations/v1/contacts/inbound" />
-        <CardBody>
-          <pre className="text-xs bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">{`{
-  "contacts": [
-    {
-      "externalId": "hubspot-12345",
-      "name": "Jane Doe",
-      "email": "jane@company.com",
-      "phone": "+15551234567",
-      "type": "lead"
-    }
-  ]
-}`}</pre>
-        </CardBody>
-      </Card>
-
+      {tab === 'audit' && (
       <Card>
         <CardHeader title="Audit log" description="Recent integration and admin actions" />
         <CardBody>
-          <ul className="text-sm divide-y divide-gray-100">
-            {logs.slice(0, 20).map((l) => (
-              <li key={l.id} className="py-2 flex justify-between gap-4">
-                <span>
-                  <span className="font-medium">{l.action}</span>
-                  <span className="text-gray-400"> · {l.resourceType}</span>
-                </span>
-                <span className="text-gray-400 shrink-0">{new Date(l.createdAt).toLocaleString()}</span>
-              </li>
-            ))}
-          </ul>
+          <table className="w-full text-sm">
+            <thead className="text-left text-xs text-gray-500 uppercase bg-gray-50">
+              <tr>
+                <th className="px-3 py-2">Action</th>
+                <th className="px-3 py-2">Entity</th>
+                <th className="px-3 py-2">Agent</th>
+                <th className="px-3 py-2">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {logs.slice(0, 30).map((l) => (
+                <tr key={l.id}>
+                  <td className="px-3 py-2 font-medium">{l.action}</td>
+                  <td className="px-3 py-2 text-gray-500">{l.resourceType}</td>
+                  <td className="px-3 py-2 text-gray-500">{l.actorName ?? '—'}</td>
+                  <td className="px-3 py-2 text-gray-400 text-xs">{new Date(l.createdAt).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </CardBody>
       </Card>
+      )}
     </div>
   );
 }

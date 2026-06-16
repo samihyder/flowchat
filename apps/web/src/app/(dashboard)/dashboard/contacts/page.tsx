@@ -12,6 +12,7 @@ import { ContactImportModal } from '@/components/contacts/contact-import-modal';
 import { ContactMergeModal } from '@/components/contacts/contact-merge-modal';
 import { MarketingStatusBadge } from '@/components/contacts/marketing-status-badge';
 import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
+import { contactTypeBadgeClass, formatRelativeTime, initialsFromName } from '@/lib/format';
 import type { ColumnMapping } from '@/lib/csv-import-utils';
 
 const TYPES = ['', 'visitor', 'lead', 'customer'] as const;
@@ -172,7 +173,38 @@ export default function ContactsPage() {
     await load();
   };
 
+  const handleBulkDelete = async () => {
+    if (!token || !accountId || selected.size === 0) return;
+    if (!confirm(`Delete ${selected.size} contact(s)? This cannot be undone.`)) return;
+    for (const id of selected) {
+      await api.contacts.remove(accountId, id, token).catch(() => {});
+    }
+    setSelected(new Set());
+    await load();
+  };
+
+  const handleBulkLabel = async () => {
+    if (!token || !accountId || selected.size === 0 || labels.length === 0) return;
+    const labelName = prompt(
+      `Label selected contacts. Enter label name:\n${labels.map((l) => l.name).join(', ')}`
+    );
+    const label = labels.find((l) => l.name.toLowerCase() === labelName?.toLowerCase());
+    if (!label) return;
+    for (const id of selected) {
+      const c = contacts.find((x) => x.id === id);
+      const existing = c?.labels?.map((l) => l.id) ?? [];
+      if (existing.includes(label.id)) continue;
+      await api.contacts
+        .update(accountId, id, { labelIds: [...existing, label.id] }, token)
+        .catch(() => {});
+    }
+    setSelected(new Set());
+    await load();
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const rangeStart = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(total, (page + 1) * PAGE_SIZE);
 
   return (
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
@@ -197,7 +229,7 @@ export default function ContactsPage() {
               </Button>
             )}
             <Button type="button" onClick={() => setShowCreate(!showCreate)}>
-              Add contact
+              + New contact
             </Button>
           </div>
         }
@@ -287,6 +319,27 @@ export default function ContactsPage() {
         </div>
       )}
 
+      {selected.size > 0 && (
+        <div className="mx-6 mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3">
+          <span className="text-sm text-primary-900 font-medium">
+            {selected.size === contacts.length ? 'All on page selected' : `${selected.size} selected`}
+          </span>
+          <button type="button" onClick={toggleAll} className="text-xs text-primary-600 hover:underline">
+            {selected.size === contacts.length ? 'Clear selection' : 'Select all on page'}
+          </button>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" size="sm" onClick={() => void handleBulkLabel()}>
+              Label selected
+            </Button>
+            {access.isAdmin && (
+              <Button type="button" variant="secondary" size="sm" onClick={() => void handleBulkDelete()}>
+                Delete selected
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {showCreate && (
         <form
           onSubmit={handleCreate}
@@ -316,13 +369,13 @@ export default function ContactsPage() {
                     onChange={toggleAll}
                   />
                 </th>
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Contact</th>
                 <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Labels</th>
                 <th className="px-4 py-3">Subscription</th>
                 <th className="px-4 py-3">Last activity</th>
+                <th className="px-4 py-3 w-16" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -349,19 +402,30 @@ export default function ContactsPage() {
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <Link
-                        href={`/dashboard/contacts/${c.id}` as Route}
-                        className="font-medium text-primary-600 hover:underline"
-                      >
-                        {c.name}
-                      </Link>
-                      {c.isBlocked && (
-                        <span className="ml-2 text-xs text-red-500">Blocked</span>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-semibold shrink-0">
+                          {initialsFromName(c.name)}
+                        </div>
+                        <div className="min-w-0">
+                          <Link
+                            href={`/dashboard/contacts/${c.id}` as Route}
+                            className="font-medium text-gray-900 hover:text-primary-600 block truncate"
+                          >
+                            {c.name}
+                          </Link>
+                          <p className="text-xs text-gray-500 truncate">{c.email ?? 'No email'}</p>
+                          {c.isBlocked && <span className="text-xs text-red-500">Blocked</span>}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{c.email ?? '—'}</td>
                     <td className="px-4 py-3 text-gray-600">{c.phone ?? '—'}</td>
-                    <td className="px-4 py-3 capitalize text-gray-600">{c.type}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${contactTypeBadgeClass(c.type)}`}
+                      >
+                        {c.type}
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {(c.labels ?? []).map((l) => (
@@ -378,8 +442,16 @@ export default function ContactsPage() {
                     <td className="px-4 py-3">
                       <MarketingStatusBadge status={c.marketingStatus} />
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
-                      {c.lastActivityAt ? new Date(c.lastActivityAt).toLocaleString() : '—'}
+                    <td className="px-4 py-3 text-gray-500 text-xs">
+                      {formatRelativeTime(c.lastActivityAt)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/dashboard/contacts/${c.id}` as Route}
+                        className="text-xs text-primary-600 hover:underline"
+                      >
+                        View →
+                      </Link>
                     </td>
                   </tr>
                 ))
@@ -391,7 +463,7 @@ export default function ContactsPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
             <span>
-              Page {page + 1} of {totalPages}
+              Showing {rangeStart}–{rangeEnd} of {total}
             </span>
             <div className="flex gap-2">
               <Button

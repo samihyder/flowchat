@@ -9,6 +9,14 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
 import { Badge } from '@/components/ui/badge';
+import { TabBar } from '@/components/ui/tabs';
+
+const STATUS_TABS = [
+  { id: 'all', label: 'All' },
+  { id: 'scheduled', label: 'Scheduled' },
+  { id: 'sent', label: 'Sent' },
+  { id: 'draft', label: 'Drafts' },
+] as const;
 
 const statusColor: Record<string, 'success' | 'warning' | 'gray' | 'primary'> = {
   sent: 'success',
@@ -23,6 +31,7 @@ export default function CampaignsPage() {
   const { token, accountId } = useAuthStore();
   const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusTab, setStatusTab] = useState<string>('all');
 
   const load = () => {
     if (!token || !accountId) return;
@@ -47,6 +56,12 @@ export default function CampaignsPage() {
     return { total: campaigns.length, sent, scheduled, avgOpen };
   }, [campaigns]);
 
+  const filtered = useMemo(() => {
+    if (statusTab === 'all') return campaigns;
+    if (statusTab === 'sent') return campaigns.filter((c) => c.status === 'sent' || c.status === 'sending');
+    return campaigns.filter((c) => c.status === statusTab);
+  }, [campaigns, statusTab]);
+
   return (
     <div className="flex flex-col h-full min-h-0">
       <PageHeader
@@ -69,6 +84,7 @@ export default function CampaignsPage() {
       </div>
 
       <div className="px-6 pb-6 flex-1 overflow-auto">
+        <TabBar tabs={[...STATUS_TABS]} active={statusTab} onChange={setStatusTab} />
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
@@ -89,14 +105,14 @@ export default function CampaignsPage() {
                     Loading…
                   </td>
                 </tr>
-              ) : campaigns.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                    No campaigns yet. Create your first broadcast.
+                    No campaigns in this view.
                   </td>
                 </tr>
               ) : (
-                campaigns.map((c) => (
+                filtered.map((c) => (
                   <tr key={c.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <Link

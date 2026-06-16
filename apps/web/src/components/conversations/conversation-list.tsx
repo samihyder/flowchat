@@ -3,20 +3,11 @@
 import { type Conversation } from '@/lib/api';
 import { initials } from '@/components/conversations/conversation-badges';
 import { asLabelArray } from '@/lib/conversation-normalize';
+import { formatRelativeTime } from '@/lib/format';
 import { ListSkeleton } from '@/components/ui/skeleton';
 
 function formatTime(iso: string | null) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const now = new Date();
-  const sameDay =
-    d.getDate() === now.getDate() &&
-    d.getMonth() === now.getMonth() &&
-    d.getFullYear() === now.getFullYear();
-  if (sameDay) {
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return formatRelativeTime(iso);
 }
 
 type Props = {
