@@ -24,8 +24,8 @@ function formatDayLabel(iso: string) {
   return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-function mergeMessages(prev: ChatMessage[], incoming: ChatMessage[]) {
-  if (incoming.length === 0) return prev;
+function mergeMessages(prev: ChatMessage[], incoming: ChatMessage[] | undefined | null) {
+  if (!incoming?.length) return prev;
   const byId = new Map(prev.map((m) => [m.id, m]));
   for (const m of incoming) byId.set(m.id, m);
   return [...byId.values()].sort(
@@ -101,8 +101,8 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
     if (!conversation || !token || !accountId) return;
     try {
       const res = await api.conversations.listMessages(accountId, conversation.id, token);
-      setMessages((prev) => mergeMessages(prev, res.messages));
-      setNextCursor(res.nextCursor);
+      setMessages((prev) => mergeMessages(prev, res.messages ?? []));
+      setNextCursor(res.nextCursor ?? null);
     } catch {
       /* keep existing */
     }
@@ -138,8 +138,8 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
     api.conversations
       .listMessages(accountId, conversation.id, token)
       .then((res) => {
-        setMessages(res.messages);
-        setNextCursor(res.nextCursor);
+        setMessages(res.messages ?? []);
+        setNextCursor(res.nextCursor ?? null);
       })
       .catch(() => setMessages([]))
       .finally(() => setLoading(false));
@@ -176,8 +176,8 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
       const res = await api.conversations.listMessages(accountId, conversation.id, token, {
         before: nextCursor,
       });
-      setMessages((prev) => mergeMessages(res.messages, prev));
-      setNextCursor(res.nextCursor);
+      setMessages((prev) => mergeMessages(res.messages ?? [], prev));
+      setNextCursor(res.nextCursor ?? null);
     } finally {
       setLoadingMore(false);
     }

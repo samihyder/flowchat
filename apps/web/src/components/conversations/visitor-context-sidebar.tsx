@@ -36,12 +36,19 @@ export function VisitorContextSidebar({
       .catch(() => setCtx(null));
     api.contacts
       .get(accountId, conversation.contactId, token)
-      .then((r) => setContact(r.contact))
+      .then((r) =>
+        setContact({
+          ...r.contact,
+          labels: r.labels ?? [],
+          conversations: r.conversations ?? [],
+          notes: r.notes ?? [],
+        })
+      )
       .catch(() => setContact(null));
   }, [accountId, conversation.id, conversation.contactId, token]);
 
   const participants = conversation.participants ?? [];
-  const pastChatCount = ctx?.pastChats.length ?? 0;
+  const pastChatCount = ctx?.pastChats?.length ?? 0;
 
   const sectionTitle = 'text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2.5';
 
@@ -169,10 +176,10 @@ export function VisitorContextSidebar({
               </span>
             </Row>
             {contact.phone && <Row label="Phone" value={contact.phone} />}
-            {contact.labels.length > 0 && (
+            {(contact.labels?.length ?? 0) > 0 && (
               <Row label="Labels">
                 <div className="flex flex-wrap gap-1 justify-end">
-                  {contact.labels.map((l) => (
+                  {(contact.labels ?? []).map((l) => (
                     <LabelPill key={l.id} name={l.name} color={l.color} />
                   ))}
                 </div>
