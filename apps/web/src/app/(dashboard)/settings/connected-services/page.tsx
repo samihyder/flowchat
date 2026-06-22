@@ -355,6 +355,11 @@ export default function ConnectedServicesPage() {
             required
             autoComplete="off"
           />
+          {category === 'email_marketing' && provider === 'resend' && (
+            <p className="text-xs text-gray-500">
+              Resend &quot;Sending access&quot; keys are supported — full-access keys are not required.
+            </p>
+          )}
           {provider === 'mailgun' && (
             <Input
               placeholder="Mailgun sending domain (e.g. mg.example.com)"

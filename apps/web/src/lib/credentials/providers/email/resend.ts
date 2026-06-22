@@ -9,12 +9,19 @@ export const resendEmailProvider: EmailProviderAdapter = {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
       const data = (await res.json().catch(() => ({}))) as { message?: string; statusCode?: number };
-      if (res.status === 401 || res.status === 403) {
+
+      if (res.status === 401) {
         return {
           ok: false,
-          error: data.message ?? 'Invalid Resend API key — check the key starts with re_ and has sending access',
+          error: data.message ?? 'Invalid Resend API key — check the key starts with re_',
         };
       }
+
+      // Send-only keys cannot list domains but are valid for email marketing.
+      if (res.status === 403) {
+        return { ok: true };
+      }
+
       if (!res.ok) {
         return {
           ok: false,
