@@ -20,6 +20,7 @@ const STATUS_STYLES: Record<string, string> = {
   delivered: 'bg-gray-100 text-gray-700',
   waiting: 'bg-amber-100 text-amber-800',
   send_failed: 'bg-red-100 text-red-800',
+  finished_no_email: 'bg-orange-100 text-orange-900',
   bounced: 'bg-red-100 text-red-800',
   completed: 'bg-gray-100 text-gray-600',
   cancelled: 'bg-red-50 text-red-600',
@@ -80,6 +81,7 @@ export default function AutomationDetailPage() {
   const [createdAt, setCreatedAt] = useState<string | undefined>();
   const [scheduleEmails, setScheduleEmails] = useState<{ sendAt: string; subject?: string }[]>([]);
   const [processing, setProcessing] = useState(false);
+  const [restarting, setRestarting] = useState(false);
   const [processMessage, setProcessMessage] = useState('');
   const [emailRoute, setEmailRoute] = useState<MarketingEmailRouteInfo | undefined>();
 
@@ -144,7 +146,7 @@ export default function AutomationDetailPage() {
       setProcessMessage(
         result.processed > 0
           ? `Processed ${result.processed} enrollment step(s). Refreshing…`
-          : 'No due steps right now — check send times or edit the schedule.'
+          : 'No due steps right now — check send times or restart contacts if status shows finished without email.'
       );
       setTimeout(() => load(), 800);
     } catch (err) {
@@ -153,6 +155,27 @@ export default function AutomationDetailPage() {
       setProcessing(false);
     }
   };
+
+  const restartContacts = async () => {
+    if (!token || !accountId) return;
+    setRestarting(true);
+    setProcessMessage('');
+    try {
+      const result = await api.marketing.automations.restart(accountId, automationId, token);
+      setProcessMessage(
+        result.processed > 0
+          ? `Restarted contacts and processed ${result.processed} step(s). Refreshing…`
+          : 'Contacts restarted from the beginning. They will wait for the next scheduled send time.'
+      );
+      setTimeout(() => load(), 800);
+    } catch (err) {
+      setProcessMessage(err instanceof Error ? err.message : 'Failed to restart contacts');
+    } finally {
+      setRestarting(false);
+    }
+  };
+
+  const stuckWithoutEmail = recipients.some((r) => r.status === 'finished_no_email');
 
   if (loading) {
     return <div className="p-8 text-sm text-gray-400">Loading stats…</div>;
@@ -182,6 +205,15 @@ export default function AutomationDetailPage() {
             </Button>
             <Button
               type="button"
+              variant="secondary"
+              size="sm"
+              disabled={restarting || !enabled}
+              onClick={() => void restartContacts()}
+            >
+              {restarting ? 'Restarting…' : 'Restart contacts'}
+            </Button>
+            <Button
+              type="button"
               size="sm"
               disabled={processing || !enabled}
               onClick={() => void processDueEmails()}
@@ -191,6 +223,13 @@ export default function AutomationDetailPage() {
           </div>
         </div>
         {processMessage && <p className="text-sm text-gray-600 mt-2">{processMessage}</p>}
+        {stuckWithoutEmail && (
+          <p className="text-sm mt-2 rounded-lg px-3 py-2 bg-orange-50 text-orange-900 border border-orange-200">
+            <span className="font-medium">Action needed: </span>
+            One or more contacts are marked finished but no email was delivered. Click{' '}
+            <strong>Restart contacts</strong> to run the sequence again, or edit the automation and save to reset the schedule.
+          </p>
+        )}
         {emailRouteLabel(emailRoute) && (
           <p
             className={`text-sm mt-2 rounded-lg px-3 py-2 ${

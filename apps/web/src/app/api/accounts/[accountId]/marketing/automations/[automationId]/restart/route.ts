@@ -1,6 +1,9 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import {
+  restartAutomationEnrollments,
+} from '@/lib/marketing/workflow-engine';
+import {
   processWorkflowUntilIdle,
   reviveStaleCompletedEnrollments,
 } from '@/lib/marketing/workflow-engine';
@@ -23,7 +26,10 @@ export async function POST(req: Request, { params }: Params) {
   `;
   if (!wf[0]) return Response.json({ error: 'Automation not found' }, { status: 404 });
 
+  const body = (await req.json().catch(() => ({}))) as { contactIds?: string[] };
+  await restartAutomationEnrollments(sql, automationId, body.contactIds);
   await reviveStaleCompletedEnrollments(sql, automationId);
   const result = await processWorkflowUntilIdle(sql, accountId, 50);
-  return Response.json(result);
+
+  return Response.json({ ok: true, ...result });
 }

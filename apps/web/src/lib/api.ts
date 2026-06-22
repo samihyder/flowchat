@@ -1393,6 +1393,11 @@ export const api = {
           `/accounts/${accountId}/marketing/automations/${automationId}/process`,
           { method: 'POST', token }
         ),
+      restart: (accountId: string, automationId: string, token: string, contactIds?: string[]) =>
+        request<{ ok: boolean; processed: number }>(
+          `/accounts/${accountId}/marketing/automations/${automationId}/restart`,
+          { method: 'POST', body: contactIds?.length ? { contactIds } : {}, token }
+        ),
     },
 
     workflows: {

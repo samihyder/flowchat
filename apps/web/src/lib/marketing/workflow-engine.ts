@@ -81,6 +81,131 @@ async function advanceEnrollment(
   `;
 }
 
+async function countVerifiedSends(
+  sql: AppSql,
+  workflowId: string,
+  contactId: string
+): Promise<number> {
+  const rows = await sql`
+    SELECT COUNT(*)::int as count FROM contact_email_events
+    WHERE contact_id = ${contactId}::uuid
+      AND event_type = 'workflow_sent'
+      AND metadata->>'workflowId' = ${workflowId}
+      AND metadata->>'messageId' IS NOT NULL
+      AND metadata->>'messageId' <> ''
+  `;
+  return (rows[0] as { count: number } | undefined)?.count ?? 0;
+}
+
+function requiredEmailSteps(allSteps: WorkflowStep[]): WorkflowStep[] {
+  return allSteps.filter((s) => s.stepType === 'send_email');
+}
+
+/** Rewind to just before the first send_email step that has no verified send. */
+async function rewindToUnsentEmail(
+  sql: AppSql,
+  enrollmentId: string,
+  allSteps: WorkflowStep[],
+  workflowId: string,
+  contactId: string
+): Promise<boolean> {
+  const emailSteps = requiredEmailSteps(allSteps);
+  for (const step of emailSteps) {
+    const rows = await sql`
+      SELECT 1 FROM contact_email_events
+      WHERE contact_id = ${contactId}::uuid
+        AND event_type = 'workflow_sent'
+        AND metadata->>'workflowId' = ${workflowId}
+        AND metadata->>'stepOrder' = ${String(step.stepOrder)}
+        AND metadata->>'messageId' IS NOT NULL
+        AND metadata->>'messageId' <> ''
+      LIMIT 1
+    `;
+    if (!rows[0]) {
+      const prior = allSteps.filter((s) => s.stepOrder < step.stepOrder).pop();
+      const rewindOrder = prior?.stepOrder ?? 0;
+      await advanceEnrollment(sql, enrollmentId, rewindOrder, new Date());
+      return true;
+    }
+  }
+  return false;
+}
+
+export async function restartAutomationEnrollments(
+  sql: AppSql,
+  workflowId: string,
+  contactIds?: string[]
+) {
+  if (contactIds?.length) {
+    await sql`
+      UPDATE marketing_workflow_enrollments
+      SET status = 'active',
+          current_step_order = 0,
+          next_run_at = NOW(),
+          completed_at = NULL,
+          branch_context = '{}'::jsonb
+      WHERE workflow_id = ${workflowId}::uuid
+        AND contact_id = ANY(${contactIds}::uuid[])
+    `;
+    return;
+  }
+
+  await sql`
+    UPDATE marketing_workflow_enrollments
+    SET status = 'active',
+        current_step_order = 0,
+        next_run_at = NOW(),
+        completed_at = NULL,
+        branch_context = '{}'::jsonb
+    WHERE workflow_id = ${workflowId}::uuid
+      AND status IN ('completed', 'cancelled')
+  `;
+}
+
+export async function reviveStaleCompletedEnrollments(sql: AppSql, workflowId: string) {
+  await sql`
+    UPDATE marketing_workflow_enrollments e
+    SET status = 'active',
+        current_step_order = 0,
+        next_run_at = NOW(),
+        completed_at = NULL,
+        branch_context = '{}'::jsonb
+    WHERE e.workflow_id = ${workflowId}::uuid
+      AND e.status = 'completed'
+      AND EXISTS (
+        SELECT 1 FROM marketing_workflow_steps s
+        WHERE s.workflow_id = ${workflowId}::uuid AND s.step_type = 'send_email'
+      )
+      AND (
+        SELECT COUNT(*)::int FROM contact_email_events ev
+        WHERE ev.contact_id = e.contact_id
+          AND ev.event_type = 'workflow_sent'
+          AND ev.metadata->>'workflowId' = ${workflowId}
+          AND ev.metadata->>'messageId' IS NOT NULL
+          AND ev.metadata->>'messageId' <> ''
+      ) < (
+        SELECT COUNT(*)::int FROM marketing_workflow_steps s
+        WHERE s.workflow_id = ${workflowId}::uuid AND s.step_type = 'send_email'
+      )
+  `;
+}
+
+/** Run workflow steps until nothing due or max passes (wait → send → exit in one action). */
+export async function processWorkflowUntilIdle(
+  sql: AppSql,
+  accountId: string,
+  batchSize = 20,
+  maxPasses = 12
+): Promise<{ processed: number }> {
+  let processed = 0;
+  for (let pass = 0; pass < maxPasses; pass++) {
+    const result = await processWorkflowBatch(sql, accountId, batchSize);
+    processed += result.processed;
+    if (result.processed === 0) break;
+  }
+  return { processed };
+}
+
 export async function processWorkflowBatch(
   sql: AppSql,
   accountId: string,
@@ -134,6 +259,21 @@ export async function processWorkflowBatch(
 
     const nextStep = allSteps.find((s) => s.stepOrder > row.currentStepOrder);
     if (!nextStep) {
+      const required = requiredEmailSteps(allSteps).length;
+      const sent = await countVerifiedSends(sql, row.workflowId, row.contactId);
+      if (required > sent) {
+        const rewound = await rewindToUnsentEmail(
+          sql,
+          row.enrollmentId,
+          allSteps,
+          row.workflowId,
+          row.contactId
+        );
+        if (rewound) {
+          processed++;
+          continue;
+        }
+      }
       await sql`
         UPDATE marketing_workflow_enrollments SET status = 'completed', completed_at = NOW(), next_run_at = NULL
         WHERE id = ${row.enrollmentId}::uuid
@@ -285,6 +425,21 @@ export async function processWorkflowBatch(
         `;
       }
     } else if (nextStep.stepType === 'exit') {
+      const required = requiredEmailSteps(allSteps).length;
+      const sent = await countVerifiedSends(sql, row.workflowId, row.contactId);
+      if (required > sent) {
+        const rewound = await rewindToUnsentEmail(
+          sql,
+          row.enrollmentId,
+          allSteps,
+          row.workflowId,
+          row.contactId
+        );
+        if (rewound) {
+          processed++;
+          continue;
+        }
+      }
       await sql`
         UPDATE marketing_workflow_enrollments SET status = 'completed', completed_at = NOW(), next_run_at = NULL,
           current_step_order = ${nextStep.stepOrder}
@@ -296,6 +451,21 @@ export async function processWorkflowBatch(
 
     const following = allSteps.find((s) => s.stepOrder > nextStep.stepOrder);
     if (!following) {
+      const required = requiredEmailSteps(allSteps).length;
+      const sent = await countVerifiedSends(sql, row.workflowId, row.contactId);
+      if (required > sent) {
+        const rewound = await rewindToUnsentEmail(
+          sql,
+          row.enrollmentId,
+          allSteps,
+          row.workflowId,
+          row.contactId
+        );
+        if (rewound) {
+          processed++;
+          continue;
+        }
+      }
       await sql`
         UPDATE marketing_workflow_enrollments SET status = 'completed', completed_at = NOW(), next_run_at = NULL,
           current_step_order = ${nextStep.stepOrder}

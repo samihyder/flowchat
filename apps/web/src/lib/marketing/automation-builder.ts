@@ -1,7 +1,7 @@
 import type { AppSql } from '@/lib/db-sql';
 import { getAccountSettings } from '@/lib/account-settings-db';
 import { describeMarketingEmailRoute } from '@/lib/marketing/email-send';
-import { enrollContactInWorkflow, processWorkflowBatch } from '@/lib/marketing/workflow-engine';
+import { enrollContactInWorkflow, processWorkflowUntilIdle, restartAutomationEnrollments } from '@/lib/marketing/workflow-engine';
 
 export type AutomationEmailInput = {
   /** ISO datetime when this email should send */
@@ -59,7 +59,7 @@ export async function createEmailAutomation(
     else skipped++;
   }
 
-  await processWorkflowBatch(sql, accountId, 50);
+  await processWorkflowUntilIdle(sql, accountId, 50);
 
   return { workflowId, enrolled, skipped };
 }
@@ -267,14 +267,16 @@ export async function updateEmailAutomation(
       AND metadata->>'workflowId' = ${workflowId}
   `;
 
-  // New schedule replaces steps — restart active enrollments from the beginning.
+  // New schedule replaces steps — restart active and completed enrollments from the beginning.
   await sql`
     UPDATE marketing_workflow_enrollments
-    SET current_step_order = 0,
+    SET status = 'active',
+        current_step_order = 0,
         next_run_at = NOW(),
+        completed_at = NULL,
         branch_context = '{}'::jsonb
     WHERE workflow_id = ${workflowId}::uuid
-      AND status = 'active'
+      AND status IN ('active', 'completed')
   `;
 
   const enrolledRows = await sql`
@@ -314,7 +316,7 @@ export async function updateEmailAutomation(
     }
   }
 
-  await processWorkflowBatch(sql, accountId, 50);
+  await processWorkflowUntilIdle(sql, accountId, 50);
   return { enrolled, skipped };
 }
 
@@ -478,6 +480,8 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
                 r.nextRunAt &&
                 new Date(r.nextRunAt).getTime() > Date.now()
               ? 'waiting'
+            : r.enrollmentStatus === 'completed' && r.emailsSent === 0
+              ? 'finished_no_email'
             : r.emailsSent > 0
               ? 'sent'
               : r.enrollmentStatus === 'cancelled' && r.marketingStatus !== 'subscribed'
