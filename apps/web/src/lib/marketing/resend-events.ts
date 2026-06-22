@@ -73,6 +73,26 @@ export async function handleResendWebhookEvent(sql: AppSql, event: ResendEvent) 
   let accountId = recipient?.accountId ?? null;
   let contactId = recipient?.contactId ?? null;
   const campaignId = recipient?.campaignId ?? null;
+  let workflowId: string | undefined;
+
+  if (!recipient && messageId) {
+    const workflowSend = await sql`
+      SELECT contact_id as "contactId", account_id as "accountId", metadata
+      FROM contact_email_events
+      WHERE event_type = 'workflow_sent'
+        AND metadata->>'messageId' = ${messageId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+    const ws = workflowSend[0] as
+      | { contactId: string; accountId: string; metadata?: { workflowId?: string } }
+      | undefined;
+    if (ws) {
+      accountId = ws.accountId;
+      contactId = ws.contactId;
+      workflowId = ws.metadata?.workflowId;
+    }
+  }
 
   if (!recipient && event.data?.to?.[0]) {
     const email = event.data.to[0];
@@ -88,6 +108,7 @@ export async function handleResendWebhookEvent(sql: AppSql, event: ResendEvent) 
 
   const type = event.type;
   const meta: Record<string, unknown> = { resendMessageId: messageId, resendType: type };
+  if (workflowId) meta.workflowId = workflowId;
   if (!accountId) return;
 
   if (type === 'email.delivered') {

@@ -15,6 +15,54 @@ export type MarketingSendResult =
   | { ok: true; messageId: string; provider: EmailProviderId; credentialId?: string }
   | { ok: false; error: string };
 
+export type MarketingEmailRoute =
+  | {
+      mode: 'connected';
+      provider: EmailProviderId;
+      label: string;
+      secretPrefix: string;
+      fromEmail: string;
+    }
+  | { mode: 'platform'; provider: 'resend'; fromEmail: string; platformConfigured: boolean }
+  | { mode: 'missing'; fromEmail: string; error: string };
+
+/** Describes which API key / provider will send marketing mail for this workspace. */
+export async function describeMarketingEmailRoute(
+  sql: AppSql,
+  accountId: string,
+  settings: AccountSettings,
+  senderId?: string | null
+): Promise<MarketingEmailRoute> {
+  const senderRow = await getMarketingSender(sql, accountId, settings, senderId);
+  const fromEmail = senderRow.identity.fromEmail;
+  const cred = await resolveEmailCredential(sql, accountId, senderRow.credentialId);
+
+  if (cred) {
+    return {
+      mode: 'connected',
+      provider: cred.row.provider as EmailProviderId,
+      label: cred.row.label,
+      secretPrefix: cred.row.secretPrefix,
+      fromEmail,
+    };
+  }
+
+  if (settings.marketingByokOnly === true) {
+    return {
+      mode: 'missing',
+      fromEmail,
+      error: 'No connected email provider. Add one in Settings → Connected services.',
+    };
+  }
+
+  return {
+    mode: 'platform',
+    provider: 'resend',
+    fromEmail,
+    platformConfigured: Boolean(process.env.RESEND_API_KEY),
+  };
+}
+
 function complianceFooter(physicalAddress: string | undefined, unsubscribeLink: string): string {
   const address = physicalAddress?.trim() || 'FlowChat';
   return `

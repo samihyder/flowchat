@@ -397,8 +397,22 @@ export type AutomationRecipient = {
   opened: boolean;
   clicked: boolean;
   bounced: boolean;
+  lastMessageId?: string | null;
+  lastProvider?: string | null;
+  lastSendError?: string | null;
   status: string;
 };
+
+export type MarketingEmailRouteInfo =
+  | {
+      mode: 'connected';
+      provider: string;
+      label: string;
+      secretPrefix: string;
+      fromEmail: string;
+    }
+  | { mode: 'platform'; provider: string; fromEmail: string; platformConfigured: boolean }
+  | { mode: 'missing'; fromEmail: string; error: string };
 
 export type ContactEmailEvent = {
   id: string;
@@ -1322,6 +1336,7 @@ export const api = {
             clickRate: number;
           };
           recipients: AutomationRecipient[];
+          emailRoute?: MarketingEmailRouteInfo;
         }>(`/accounts/${accountId}/marketing/automations/${automationId}`, { token }),
       getEdit: (accountId: string, automationId: string, token: string) =>
         request<{

@@ -1,4 +1,6 @@
 import type { AppSql } from '@/lib/db-sql';
+import { getAccountSettings } from '@/lib/account-settings-db';
+import { describeMarketingEmailRoute } from '@/lib/marketing/email-send';
 import { enrollContactInWorkflow, processWorkflowBatch } from '@/lib/marketing/workflow-engine';
 
 export type AutomationEmailInput = {
@@ -366,7 +368,29 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
         WHERE ev.contact_id = c.id
           AND ev.event_type IN ('bounced', 'complained')
           AND ev.metadata->>'workflowId' = ${workflowId}
-      ) as "bounced"
+      ) as "bounced",
+      (
+        SELECT ev.metadata->>'messageId' FROM contact_email_events ev
+        WHERE ev.contact_id = c.id
+          AND ev.event_type = 'workflow_sent'
+          AND ev.metadata->>'workflowId' = ${workflowId}
+          AND ev.metadata->>'messageId' IS NOT NULL
+        ORDER BY ev.created_at DESC LIMIT 1
+      ) as "lastMessageId",
+      (
+        SELECT ev.metadata->>'provider' FROM contact_email_events ev
+        WHERE ev.contact_id = c.id
+          AND ev.event_type = 'workflow_sent'
+          AND ev.metadata->>'workflowId' = ${workflowId}
+        ORDER BY ev.created_at DESC LIMIT 1
+      ) as "lastProvider",
+      (
+        SELECT ev.metadata->>'error' FROM contact_email_events ev
+        WHERE ev.contact_id = c.id
+          AND ev.event_type = 'workflow_send_failed'
+          AND ev.metadata->>'workflowId' = ${workflowId}
+        ORDER BY ev.created_at DESC LIMIT 1
+      ) as "lastSendError"
     FROM marketing_workflow_enrollments e
     INNER JOIN contacts c ON c.id = e.contact_id
     WHERE e.workflow_id = ${workflowId}::uuid
@@ -387,7 +411,14 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
     opened: boolean;
     clicked: boolean;
     bounced: boolean;
+    lastMessageId: string | null;
+    lastProvider: string | null;
+    lastSendError: string | null;
   }[];
+
+  const settings = await getAccountSettings(sql, accountId);
+  const senderId = (wfRows[0] as { senderId: string | null }).senderId;
+  const emailRoute = await describeMarketingEmailRoute(sql, accountId, settings, senderId);
 
   const sent = rows.reduce((n, r) => n + r.emailsSent, 0);
   const opened = rows.filter((r) => r.opened).length;
@@ -423,13 +454,16 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
           ? 'clicked'
           : r.opened
             ? 'opened'
+            : r.lastSendError && r.emailsSent === 0 && r.enrollmentStatus === 'active'
+              ? 'send_failed'
             : r.emailsSent > 0
-              ? 'delivered'
+              ? 'sent'
               : r.enrollmentStatus === 'cancelled' && r.marketingStatus !== 'subscribed'
                 ? 'not_subscribed'
                 : r.enrollmentStatus === 'active'
                   ? 'waiting'
                   : r.enrollmentStatus,
     })),
+    emailRoute,
   };
 }

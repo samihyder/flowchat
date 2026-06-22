@@ -205,6 +205,21 @@ export async function processWorkflowBatch(
         `;
         const tpl = tplRows[0] as { subject: string; htmlBody: string; textBody: string | null } | undefined;
         if (!tpl) {
+          await sql`
+            INSERT INTO contact_email_events (account_id, contact_id, event_type, subject, metadata)
+            VALUES (${accountId}::uuid, ${row.contactId}::uuid, 'workflow_send_failed', ${subject || 'Automation email'},
+              ${JSON.stringify({
+                workflowId: row.workflowId,
+                stepOrder: nextStep.stepOrder,
+                error: 'Email template not found — edit the automation and pick a valid template.',
+                templateId: String(cfg.templateId),
+              })}::jsonb)
+          `;
+          await sql`
+            UPDATE marketing_workflow_enrollments
+            SET next_run_at = NOW() + interval '2 minutes'
+            WHERE id = ${row.enrollmentId}::uuid
+          `;
           processed++;
           continue;
         }
@@ -244,7 +259,14 @@ export async function processWorkflowBatch(
       await sql`
         INSERT INTO contact_email_events (account_id, contact_id, event_type, subject, metadata)
         VALUES (${accountId}::uuid, ${row.contactId}::uuid, 'workflow_sent', ${subject},
-          ${JSON.stringify({ workflowId: row.workflowId, stepOrder: nextStep.stepOrder })}::jsonb)
+          ${JSON.stringify({
+            workflowId: row.workflowId,
+            stepOrder: nextStep.stepOrder,
+            messageId: result.messageId,
+            provider: result.provider,
+            credentialId: result.credentialId ?? null,
+            to: contact.email,
+          })}::jsonb)
       `;
     } else if (nextStep.stepType === 'wait') {
       const until = typeof nextStep.config.until === 'string' ? nextStep.config.until : undefined;

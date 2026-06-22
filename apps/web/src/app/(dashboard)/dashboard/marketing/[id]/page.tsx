@@ -5,7 +5,7 @@ import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { api, type AutomationRecipient } from '@/lib/api';
+import { api, type AutomationRecipient, type MarketingEmailRouteInfo } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
 import { AutomationSchedulePreview } from '@/components/marketing/automation-schedule-preview';
@@ -16,13 +16,29 @@ import { formatSendAtLabel } from '@/lib/marketing/automation-email-draft';
 const STATUS_STYLES: Record<string, string> = {
   clicked: 'bg-green-100 text-green-800',
   opened: 'bg-blue-100 text-blue-800',
+  sent: 'bg-gray-100 text-gray-700',
   delivered: 'bg-gray-100 text-gray-700',
   waiting: 'bg-amber-100 text-amber-800',
+  send_failed: 'bg-red-100 text-red-800',
   bounced: 'bg-red-100 text-red-800',
   completed: 'bg-gray-100 text-gray-600',
   cancelled: 'bg-red-50 text-red-600',
   not_subscribed: 'bg-orange-100 text-orange-800',
 };
+
+function emailRouteLabel(route: MarketingEmailRouteInfo | undefined): string | null {
+  if (!route) return null;
+  if (route.mode === 'connected') {
+    return `Connected ${route.provider} (“${route.label}”, key ${route.secretPrefix}…) · From ${route.fromEmail}`;
+  }
+  if (route.mode === 'platform') {
+    if (!route.platformConfigured) {
+      return `Platform Resend is not configured on the server · From ${route.fromEmail}`;
+    }
+    return `Platform Resend (server API key) · From ${route.fromEmail} — check this account in resend.com, not a connected key`;
+  }
+  return route.error;
+}
 
 function StatusBadge({ status }: { status: string }) {
   return (
@@ -61,6 +77,7 @@ export default function AutomationDetailPage() {
   const [scheduleEmails, setScheduleEmails] = useState<{ sendAt: string; subject?: string }[]>([]);
   const [processing, setProcessing] = useState(false);
   const [processMessage, setProcessMessage] = useState('');
+  const [emailRoute, setEmailRoute] = useState<MarketingEmailRouteInfo | undefined>();
 
   const load = () => {
     if (!token || !accountId) return;
@@ -72,6 +89,7 @@ export default function AutomationDetailPage() {
       setEnabled(Boolean(r.workflow.enabled));
       setSummary(r.summary);
       setRecipients(r.recipients);
+      setEmailRoute(r.emailRoute);
       setTimezone(resolveScheduleTimezone(accountRes.account.timezone));
       setLocale(accountRes.account.locale || 'en');
       setCreatedAt(typeof r.workflow.createdAt === 'string' ? r.workflow.createdAt : undefined);
@@ -169,6 +187,18 @@ export default function AutomationDetailPage() {
           </div>
         </div>
         {processMessage && <p className="text-sm text-gray-600 mt-2">{processMessage}</p>}
+        {emailRouteLabel(emailRoute) && (
+          <p
+            className={`text-sm mt-2 rounded-lg px-3 py-2 ${
+              emailRoute?.mode === 'missing' || (emailRoute?.mode === 'platform' && !emailRoute.platformConfigured)
+                ? 'bg-amber-50 text-amber-900 border border-amber-200'
+                : 'bg-blue-50 text-blue-900 border border-blue-200'
+            }`}
+          >
+            <span className="font-medium">Email provider: </span>
+            {emailRouteLabel(emailRoute)}
+          </p>
+        )}
       </div>
 
       <div className="px-6 py-4">
@@ -226,6 +256,7 @@ export default function AutomationDetailPage() {
                 <th className="px-4 py-3">Emails sent</th>
                 <th className="px-4 py-3">Next send</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -249,11 +280,22 @@ export default function AutomationDetailPage() {
                   <td className="px-4 py-3">
                     <StatusBadge status={r.status} />
                   </td>
+                  <td className="px-4 py-3 text-xs text-gray-500 max-w-xs">
+                    {r.lastSendError ? (
+                      <span className="text-red-700">{r.lastSendError}</span>
+                    ) : r.lastMessageId ? (
+                      <span title="Resend message ID — search this in the Resend dashboard tied to your sending key">
+                        {r.lastProvider ?? 'email'} id: {r.lastMessageId}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                     No contacts match this filter.
                   </td>
                 </tr>
