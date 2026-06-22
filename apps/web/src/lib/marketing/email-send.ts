@@ -22,6 +22,9 @@ export type MarketingEmailRoute =
       label: string;
       secretPrefix: string;
       fromEmail: string;
+      credentialId: string;
+      lastUsedAt: string | null;
+      usageCount: number;
     }
   | { mode: 'platform'; provider: 'resend'; fromEmail: string; platformConfigured: boolean }
   | { mode: 'missing'; fromEmail: string; error: string };
@@ -44,6 +47,9 @@ export async function describeMarketingEmailRoute(
       label: cred.row.label,
       secretPrefix: cred.row.secretPrefix,
       fromEmail,
+      credentialId: cred.row.id,
+      lastUsedAt: cred.row.lastUsedAt,
+      usageCount: cred.row.usageCount,
     };
   }
 

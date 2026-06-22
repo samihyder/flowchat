@@ -29,7 +29,11 @@ const STATUS_STYLES: Record<string, string> = {
 function emailRouteLabel(route: MarketingEmailRouteInfo | undefined): string | null {
   if (!route) return null;
   if (route.mode === 'connected') {
-    return `Connected ${route.provider} (“${route.label}”, key ${route.secretPrefix}…) · From ${route.fromEmail}`;
+    const used =
+      route.usageCount > 0
+        ? `Used ${route.usageCount} time${route.usageCount === 1 ? '' : 's'}${route.lastUsedAt ? `, last ${new Date(route.lastUsedAt).toLocaleString()}` : ''}`
+        : 'This key has never successfully sent mail from FlowChat yet';
+    return `Connected ${route.provider} (“${route.label}”, key ${route.secretPrefix}…) · From ${route.fromEmail}. ${used}.`;
   }
   if (route.mode === 'platform') {
     if (!route.platformConfigured) {
@@ -190,7 +194,9 @@ export default function AutomationDetailPage() {
         {emailRouteLabel(emailRoute) && (
           <p
             className={`text-sm mt-2 rounded-lg px-3 py-2 ${
-              emailRoute?.mode === 'missing' || (emailRoute?.mode === 'platform' && !emailRoute.platformConfigured)
+              emailRoute?.mode === 'missing' ||
+              (emailRoute?.mode === 'platform' && !emailRoute.platformConfigured) ||
+              (emailRoute?.mode === 'connected' && emailRoute.usageCount === 0)
                 ? 'bg-amber-50 text-amber-900 border border-amber-200'
                 : 'bg-blue-50 text-blue-900 border border-blue-200'
             }`}

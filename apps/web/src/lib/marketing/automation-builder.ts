@@ -260,6 +260,13 @@ export async function updateEmailAutomation(
   await sql`DELETE FROM marketing_workflow_steps WHERE workflow_id = ${workflowId}::uuid`;
   await insertAutomationSteps(sql, accountId, workflowId, input.name, input.emails);
 
+  // Schedule changed — drop prior send stats so counts match the new run.
+  await sql`
+    DELETE FROM contact_email_events
+    WHERE event_type IN ('workflow_sent', 'workflow_send_failed')
+      AND metadata->>'workflowId' = ${workflowId}
+  `;
+
   // New schedule replaces steps — restart active enrollments from the beginning.
   await sql`
     UPDATE marketing_workflow_enrollments
@@ -350,6 +357,7 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
         WHERE ev.contact_id = c.id
           AND ev.event_type = 'workflow_sent'
           AND ev.metadata->>'workflowId' = ${workflowId}
+          AND ev.metadata->>'messageId' IS NOT NULL
       ) as "emailsSent",
       EXISTS (
         SELECT 1 FROM contact_email_events ev
@@ -390,7 +398,15 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
           AND ev.event_type = 'workflow_send_failed'
           AND ev.metadata->>'workflowId' = ${workflowId}
         ORDER BY ev.created_at DESC LIMIT 1
-      ) as "lastSendError"
+      ) as "lastSendError",
+      (
+        SELECT ev.created_at FROM contact_email_events ev
+        WHERE ev.contact_id = c.id
+          AND ev.event_type = 'workflow_sent'
+          AND ev.metadata->>'workflowId' = ${workflowId}
+          AND ev.metadata->>'messageId' IS NOT NULL
+        ORDER BY ev.created_at DESC LIMIT 1
+      ) as "lastSentAt"
     FROM marketing_workflow_enrollments e
     INNER JOIN contacts c ON c.id = e.contact_id
     WHERE e.workflow_id = ${workflowId}::uuid
@@ -414,6 +430,7 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
     lastMessageId: string | null;
     lastProvider: string | null;
     lastSendError: string | null;
+    lastSentAt: Date | null;
   }[];
 
   const settings = await getAccountSettings(sql, accountId);
@@ -448,6 +465,7 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
       nextRunAt: r.nextRunAt ? new Date(r.nextRunAt).toISOString() : null,
       enrolledAt: new Date(r.enrolledAt).toISOString(),
       completedAt: r.completedAt ? new Date(r.completedAt).toISOString() : null,
+      lastSentAt: r.lastSentAt ? new Date(r.lastSentAt).toISOString() : null,
       status: r.bounced
         ? 'bounced'
         : r.clicked
@@ -456,6 +474,10 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
             ? 'opened'
             : r.lastSendError && r.emailsSent === 0 && r.enrollmentStatus === 'active'
               ? 'send_failed'
+            : r.enrollmentStatus === 'active' &&
+                r.nextRunAt &&
+                new Date(r.nextRunAt).getTime() > Date.now()
+              ? 'waiting'
             : r.emailsSent > 0
               ? 'sent'
               : r.enrollmentStatus === 'cancelled' && r.marketingStatus !== 'subscribed'

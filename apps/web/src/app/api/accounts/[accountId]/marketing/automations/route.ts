@@ -24,7 +24,8 @@ export async function GET(req: Request, { params }: Params) {
             WHERE s.workflow_id = w.id AND s.step_type = 'send_email') as "emailCount",
            (SELECT COUNT(*)::int FROM contact_email_events ev
             WHERE ev.event_type = 'workflow_sent'
-              AND ev.metadata->>'workflowId' = w.id::text) as "emailsSent"
+              AND ev.metadata->>'workflowId' = w.id::text
+              AND ev.metadata->>'messageId' IS NOT NULL) as "emailsSent"
     FROM marketing_workflows w
     WHERE w.account_id = ${accountId}::uuid
       AND w.trigger_type = 'manual'

@@ -27,6 +27,13 @@ else
   echo "account_service_credentials exists — skipping 0018"
 fi
 
+echo "Cleaning legacy workflow_sent rows without Resend message IDs..."
+psql "$DATABASE_URL" -c "
+  DELETE FROM contact_email_events
+  WHERE event_type = 'workflow_sent'
+    AND (metadata->>'messageId' IS NULL OR metadata->>'messageId' = '');
+" >/dev/null || true
+
 if [ -z "${CREDENTIALS_ENCRYPTION_KEY:-}" ]; then
   CREDENTIALS_ENCRYPTION_KEY="$(openssl rand -hex 32)"
   echo "CREDENTIALS_ENCRYPTION_KEY=$CREDENTIALS_ENCRYPTION_KEY" >>"$ROOT/.env"

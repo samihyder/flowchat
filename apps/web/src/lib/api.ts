@@ -400,6 +400,7 @@ export type AutomationRecipient = {
   lastMessageId?: string | null;
   lastProvider?: string | null;
   lastSendError?: string | null;
+  lastSentAt?: string | null;
   status: string;
 };
 
@@ -410,6 +411,9 @@ export type MarketingEmailRouteInfo =
       label: string;
       secretPrefix: string;
       fromEmail: string;
+      credentialId: string;
+      lastUsedAt: string | null;
+      usageCount: number;
     }
   | { mode: 'platform'; provider: string; fromEmail: string; platformConfigured: boolean }
   | { mode: 'missing'; fromEmail: string; error: string };
