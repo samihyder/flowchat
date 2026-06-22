@@ -258,6 +258,16 @@ export async function updateEmailAutomation(
   await sql`DELETE FROM marketing_workflow_steps WHERE workflow_id = ${workflowId}::uuid`;
   await insertAutomationSteps(sql, accountId, workflowId, input.name, input.emails);
 
+  // New schedule replaces steps — restart active enrollments from the beginning.
+  await sql`
+    UPDATE marketing_workflow_enrollments
+    SET current_step_order = 0,
+        next_run_at = NOW(),
+        branch_context = '{}'::jsonb
+    WHERE workflow_id = ${workflowId}::uuid
+      AND status = 'active'
+  `;
+
   const enrolledRows = await sql`
     SELECT contact_id as "contactId", status
     FROM marketing_workflow_enrollments
@@ -329,7 +339,9 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
       c.email,
       e.status as "enrollmentStatus",
       e.current_step_order as "currentStepOrder",
+      e.next_run_at as "nextRunAt",
       e.enrolled_at as "enrolledAt",
+      c.marketing_status as "marketingStatus",
       e.completed_at as "completedAt",
       (
         SELECT COUNT(*)::int FROM contact_email_events ev
@@ -367,6 +379,8 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
     email: string | null;
     enrollmentStatus: string;
     currentStepOrder: number;
+    nextRunAt: Date | null;
+    marketingStatus: string;
     enrolledAt: Date;
     completedAt: Date | null;
     emailsSent: number;
@@ -400,6 +414,7 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
     },
     recipients: rows.map((r) => ({
       ...r,
+      nextRunAt: r.nextRunAt ? new Date(r.nextRunAt).toISOString() : null,
       enrolledAt: new Date(r.enrolledAt).toISOString(),
       completedAt: r.completedAt ? new Date(r.completedAt).toISOString() : null,
       status: r.bounced
@@ -410,9 +425,11 @@ export async function getAutomationStats(sql: AppSql, accountId: string, workflo
             ? 'opened'
             : r.emailsSent > 0
               ? 'delivered'
-              : r.enrollmentStatus === 'active'
-                ? 'waiting'
-                : r.enrollmentStatus,
+              : r.enrollmentStatus === 'cancelled' && r.marketingStatus !== 'subscribed'
+                ? 'not_subscribed'
+                : r.enrollmentStatus === 'active'
+                  ? 'waiting'
+                  : r.enrollmentStatus,
     })),
   };
 }

@@ -38,6 +38,12 @@ if [ -z "${JWT_SECRET:-}" ] || [ "$JWT_SECRET" = '\$JWT_SECRET' ]; then
   echo "Note: set JWT_SECRET on Railway API manually if not already configured."
 fi
 
+if [ -z "${CRON_SECRET:-}" ]; then
+  CRON_SECRET="$(openssl rand -hex 32)"
+  echo "CRON_SECRET=$CRON_SECRET" >>"$ROOT/.env"
+  echo "Generated CRON_SECRET (appended to .env)"
+fi
+
 PROD_WEB_URL="${WEB_APP_URL:-https://www.digitalbrandcast.com/FlowChat}"
 BASE_PATH="${NEXT_PUBLIC_BASE_PATH:-/FlowChat}"
 WS_URL="${NEXT_PUBLIC_WS_URL:-wss://flowchat-ws-production.up.railway.app}"

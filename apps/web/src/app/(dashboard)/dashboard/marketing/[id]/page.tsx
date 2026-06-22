@@ -11,6 +11,7 @@ import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
 import { AutomationSchedulePreview } from '@/components/marketing/automation-schedule-preview';
 import { emailsFromWorkflowSteps } from '@/lib/marketing/schedule';
 import { resolveScheduleTimezone } from '@/lib/timezone';
+import { formatSendAtLabel } from '@/lib/marketing/automation-email-draft';
 
 const STATUS_STYLES: Record<string, string> = {
   clicked: 'bg-green-100 text-green-800',
@@ -20,6 +21,7 @@ const STATUS_STYLES: Record<string, string> = {
   bounced: 'bg-red-100 text-red-800',
   completed: 'bg-gray-100 text-gray-600',
   cancelled: 'bg-red-50 text-red-600',
+  not_subscribed: 'bg-orange-100 text-orange-800',
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -57,6 +59,8 @@ export default function AutomationDetailPage() {
   const [locale, setLocale] = useState('en');
   const [createdAt, setCreatedAt] = useState<string | undefined>();
   const [scheduleEmails, setScheduleEmails] = useState<{ sendAt: string; subject?: string }[]>([]);
+  const [processing, setProcessing] = useState(false);
+  const [processMessage, setProcessMessage] = useState('');
 
   const load = () => {
     if (!token || !accountId) return;
@@ -92,6 +96,25 @@ export default function AutomationDetailPage() {
     setEnabled(!enabled);
   };
 
+  const processDueEmails = async () => {
+    if (!token || !accountId) return;
+    setProcessing(true);
+    setProcessMessage('');
+    try {
+      const result = await api.marketing.automations.processDue(accountId, automationId, token);
+      setProcessMessage(
+        result.processed > 0
+          ? `Processed ${result.processed} enrollment step(s). Refreshing…`
+          : 'No due steps right now — check send times or edit the schedule.'
+      );
+      setTimeout(() => load(), 800);
+    } catch (err) {
+      setProcessMessage(err instanceof Error ? err.message : 'Failed to process emails');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-8 text-sm text-gray-400">Loading stats…</div>;
   }
@@ -118,8 +141,17 @@ export default function AutomationDetailPage() {
             <Button type="button" variant="secondary" size="sm" onClick={() => void togglePause()}>
               {enabled ? 'Pause automation' : 'Resume automation'}
             </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={processing || !enabled}
+              onClick={() => void processDueEmails()}
+            >
+              {processing ? 'Processing…' : 'Process due emails now'}
+            </Button>
           </div>
         </div>
+        {processMessage && <p className="text-sm text-gray-600 mt-2">{processMessage}</p>}
       </div>
 
       <div className="px-6 py-4">
@@ -175,6 +207,7 @@ export default function AutomationDetailPage() {
                 <th className="px-4 py-3">Contact</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Emails sent</th>
+                <th className="px-4 py-3">Next send</th>
                 <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
@@ -191,6 +224,11 @@ export default function AutomationDetailPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600">{r.email ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-600">{r.emailsSent}</td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">
+                    {r.status === 'waiting' && r.nextRunAt
+                      ? formatSendAtLabel(r.nextRunAt, locale, timezone)
+                      : '—'}
+                  </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={r.status} />
                   </td>
@@ -198,7 +236,7 @@ export default function AutomationDetailPage() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
                     No contacts match this filter.
                   </td>
                 </tr>

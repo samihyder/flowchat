@@ -389,6 +389,8 @@ export type AutomationRecipient = {
   email: string | null;
   enrollmentStatus: string;
   currentStepOrder: number;
+  nextRunAt: string | null;
+  marketingStatus?: string;
   enrolledAt: string;
   completedAt: string | null;
   emailsSent: number;
@@ -1367,6 +1369,11 @@ export const api = {
           method: 'DELETE',
           token,
         }),
+      processDue: (accountId: string, automationId: string, token: string) =>
+        request<{ processed: number }>(
+          `/accounts/${accountId}/marketing/automations/${automationId}/process`,
+          { method: 'POST', token }
+        ),
     },
 
     workflows: {

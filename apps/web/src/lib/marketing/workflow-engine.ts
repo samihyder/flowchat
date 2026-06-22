@@ -224,6 +224,20 @@ export async function processWorkflowBatch(
         mergeContact: mergeCtx,
       });
       if (!result.ok) {
+        await sql`
+          INSERT INTO contact_email_events (account_id, contact_id, event_type, subject, metadata)
+          VALUES (${accountId}::uuid, ${row.contactId}::uuid, 'workflow_send_failed', ${subject},
+            ${JSON.stringify({
+              workflowId: row.workflowId,
+              stepOrder: nextStep.stepOrder,
+              error: result.error,
+            })}::jsonb)
+        `;
+        await sql`
+          UPDATE marketing_workflow_enrollments
+          SET next_run_at = NOW() + interval '2 minutes'
+          WHERE id = ${row.enrollmentId}::uuid
+        `;
         processed++;
         continue;
       }
