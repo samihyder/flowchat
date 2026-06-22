@@ -7,17 +7,14 @@ import {
 } from '@/lib/marketing/schedule';
 
 type Props = {
-  emails: { daysAfterPrevious: number; subject?: string }[];
+  emails: { sendAt: string; subject?: string }[];
   timezone?: string;
   locale?: string;
-  /** When set, schedule starts from this date (e.g. automation created_at). */
-  startAt?: string;
   compact?: boolean;
 };
 
-export function AutomationSchedulePreview({ emails, timezone, locale, startAt, compact }: Props) {
+export function AutomationSchedulePreview({ emails, timezone, locale, compact }: Props) {
   const items = computeAutomationSchedule(emails, {
-    start: startAt ? new Date(startAt) : new Date(),
     timezone: timezone ?? 'UTC',
     locale: locale ?? 'en',
   });
@@ -41,10 +38,7 @@ export function AutomationSchedulePreview({ emails, timezone, locale, startAt, c
       <ul className="text-sm text-gray-700 space-y-1.5 mt-2">
         {items.map((item: EmailScheduleItem) => (
           <li key={item.index} className="flex flex-wrap gap-x-2 gap-y-0.5">
-            <span className="font-medium text-gray-900 shrink-0">
-              Email {item.index}
-              {item.index === 1 ? ' (now)' : ` (+${item.daysAfterPrevious}d)`}:
-            </span>
+            <span className="font-medium text-gray-900 shrink-0">Email {item.index}:</span>
             <span className="text-gray-600">{item.label}</span>
             {item.subject ? (
               <span className="text-gray-400 truncate w-full sm:w-auto">— {item.subject}</span>

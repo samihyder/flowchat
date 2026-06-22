@@ -233,13 +233,11 @@ export async function processWorkflowBatch(
           ${JSON.stringify({ workflowId: row.workflowId, stepOrder: nextStep.stepOrder })}::jsonb)
       `;
     } else if (nextStep.stepType === 'wait') {
-      const hours = Number(nextStep.config.hours ?? 24);
-      await advanceEnrollment(
-        sql,
-        row.enrollmentId,
-        nextStep.stepOrder,
-        new Date(Date.now() + hours * 3600 * 1000)
-      );
+      const until = typeof nextStep.config.until === 'string' ? nextStep.config.until : undefined;
+      const nextRunAt = until
+        ? new Date(until)
+        : new Date(Date.now() + Number(nextStep.config.hours ?? 24) * 3600 * 1000);
+      await advanceEnrollment(sql, row.enrollmentId, nextStep.stepOrder, nextRunAt);
       processed++;
       continue;
     } else if (nextStep.stepType === 'add_label') {

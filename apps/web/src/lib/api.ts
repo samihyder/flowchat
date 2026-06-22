@@ -1290,7 +1290,8 @@ export const api = {
           senderId?: string;
           contactIds: string[];
           emails: {
-            daysAfterPrevious: number;
+            daysAfterPrevious?: number;
+            sendAt: string;
             subject: string;
             htmlBody: string;
             templateId?: string;
@@ -1328,7 +1329,8 @@ export const api = {
             enabled: boolean;
             contactIds: string[];
             emails: {
-              daysAfterPrevious: number;
+              daysAfterPrevious?: number;
+              sendAt: string;
               subject: string;
               htmlBody: string;
               templateId?: string;
@@ -1344,7 +1346,8 @@ export const api = {
           senderId?: string;
           contactIds?: string[];
           emails?: {
-            daysAfterPrevious: number;
+            daysAfterPrevious?: number;
+            sendAt: string;
             subject: string;
             htmlBody: string;
             templateId?: string;

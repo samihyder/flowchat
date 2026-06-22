@@ -2,13 +2,13 @@ import type { AppSql } from '@/lib/db-sql';
 import { enrollContactInWorkflow, processWorkflowBatch } from '@/lib/marketing/workflow-engine';
 
 export type AutomationEmailInput = {
-  /** Days to wait after the previous email (0 = send immediately / first email) */
-  daysAfterPrevious: number;
+  /** ISO datetime when this email should send */
+  sendAt: string;
+  /** @deprecated Legacy relative scheduling */
+  daysAfterPrevious?: number;
   subject: string;
   htmlBody: string;
-  /** Reuse an existing template instead of inline htmlBody */
   templateId?: string;
-  /** Save this email as a reusable template */
   saveAsTemplate?: boolean;
   templateName?: string;
 };
@@ -28,6 +28,8 @@ export async function createEmailAutomation(
   if (!input.name.trim()) throw new Error('Automation name is required');
   if (!input.contactIds.length) throw new Error('Select at least one contact');
   if (!input.emails.length) throw new Error('Add at least one email');
+
+  validateEmailSchedule(input.emails);
 
   const wfRows = await sql`
     INSERT INTO marketing_workflows (
@@ -60,6 +62,33 @@ export async function createEmailAutomation(
   return { workflowId, enrolled, skipped };
 }
 
+function validateEmailSchedule(emails: AutomationEmailInput[]) {
+  let previous: Date | null = null;
+  for (let i = 0; i < emails.length; i++) {
+    const sendAt = resolveSendAt(emails, i);
+    if (!sendAt) throw new Error(`Email ${i + 1} needs a send date and time`);
+    if (sendAt.getTime() <= Date.now()) {
+      throw new Error(`Email ${i + 1} must be scheduled in the future`);
+    }
+    if (previous && sendAt.getTime() <= previous.getTime()) {
+      throw new Error(`Email ${i + 1} must be scheduled after email ${i}`);
+    }
+    previous = sendAt;
+  }
+}
+
+function resolveSendAt(emails: AutomationEmailInput[], index: number): Date | null {
+  const email = emails[index]!;
+  if (email.sendAt) {
+    const d = new Date(email.sendAt);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (index === 0) return new Date();
+  const days = Math.max(0, Number(email.daysAfterPrevious) || 0);
+  const prev = resolveSendAt(emails, index - 1) ?? new Date();
+  return new Date(prev.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
 async function insertAutomationSteps(
   sql: AppSql,
   accountId: string,
@@ -70,9 +99,10 @@ async function insertAutomationSteps(
   let stepOrder = 0;
   for (let i = 0; i < emails.length; i++) {
     const email = emails[i]!;
-    const days = Math.max(0, Number(email.daysAfterPrevious) || 0);
+    const sendAt = resolveSendAt(emails, i)!;
+    const sendAtIso = sendAt.toISOString();
 
-    if (i > 0 && days > 0) {
+    if (sendAt.getTime() > Date.now()) {
       stepOrder++;
       await sql`
         INSERT INTO marketing_workflow_steps (workflow_id, step_order, step_type, config)
@@ -80,7 +110,7 @@ async function insertAutomationSteps(
           ${workflowId}::uuid,
           ${stepOrder},
           'wait',
-          ${JSON.stringify({ hours: days * 24 })}::jsonb
+          ${JSON.stringify({ until: sendAtIso })}::jsonb
         )
       `;
     }
@@ -105,8 +135,8 @@ async function insertAutomationSteps(
 
     stepOrder++;
     const config: Record<string, unknown> = templateId
-      ? { templateId, subject: email.subject.trim() }
-      : { subject: email.subject.trim(), htmlBody: email.htmlBody.trim() };
+      ? { templateId, subject: email.subject.trim(), sendAt: sendAtIso }
+      : { subject: email.subject.trim(), htmlBody: email.htmlBody.trim(), sendAt: sendAtIso };
 
     await sql`
       INSERT INTO marketing_workflow_steps (workflow_id, step_order, step_type, config)
@@ -142,12 +172,21 @@ export async function getAutomationEditPayload(sql: AppSql, accountId: string, w
     ORDER BY step_order ASC
   `;
 
-  let pendingDays = 0;
+  let pendingUntil: string | undefined;
   const emails: AutomationEmailInput[] = [];
 
   for (const step of steps as { stepType: string; config: Record<string, unknown> }[]) {
     if (step.stepType === 'wait') {
-      pendingDays = Math.round(Number(step.config.hours ?? 0) / 24) || 0;
+      const until = step.config.until;
+      if (typeof until === 'string' && until) pendingUntil = until;
+      else {
+        const hours = Number(step.config.hours ?? 0);
+        if (hours > 0 && emails.length > 0) {
+          const last = emails[emails.length - 1]!;
+          const base = new Date(last.sendAt);
+          pendingUntil = new Date(base.getTime() + hours * 3600_000).toISOString();
+        }
+      }
     } else if (step.stepType === 'send_email') {
       const config = step.config;
       const templateId = typeof config.templateId === 'string' ? config.templateId : undefined;
@@ -160,13 +199,17 @@ export async function getAutomationEditPayload(sql: AppSql, accountId: string, w
         `;
         htmlBody = (tplRows[0] as { htmlBody: string } | undefined)?.htmlBody ?? htmlBody;
       }
+      const sendAt =
+        (typeof config.sendAt === 'string' && config.sendAt) ||
+        pendingUntil ||
+        new Date().toISOString();
       emails.push({
-        daysAfterPrevious: emails.length === 0 ? 0 : pendingDays,
+        sendAt,
         subject: String(config.subject ?? ''),
         htmlBody,
         templateId,
       });
-      pendingDays = 0;
+      pendingUntil = undefined;
     }
   }
 
@@ -181,7 +224,7 @@ export async function getAutomationEditPayload(sql: AppSql, accountId: string, w
     senderId: (wfRows[0] as { senderId: string | null }).senderId ?? '',
     enabled: Boolean((wfRows[0] as { enabled: boolean }).enabled),
     contactIds: (contactRows as { contactId: string }[]).map((r) => r.contactId),
-    emails: emails.length ? emails : [{ daysAfterPrevious: 0, subject: '', htmlBody: '<p></p>' }],
+    emails: emails.length ? emails : [{ sendAt: new Date(Date.now() + 3600_000).toISOString(), subject: '', htmlBody: '<p></p>' }],
   };
 }
 
@@ -194,6 +237,8 @@ export async function updateEmailAutomation(
   if (!input.name.trim()) throw new Error('Automation name is required');
   if (!input.contactIds.length) throw new Error('Select at least one contact');
   if (!input.emails.length) throw new Error('Add at least one email');
+
+  validateEmailSchedule(input.emails);
 
   const existing = await sql`
     SELECT id FROM marketing_workflows

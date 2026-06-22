@@ -10,27 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
 import { AutomationSchedulePreview } from '@/components/marketing/automation-schedule-preview';
-
-type EmailDraft = {
-  id: string;
-  daysAfterPrevious: number;
-  subject: string;
-  htmlBody: string;
-  templateId: string;
-  saveAsTemplate: boolean;
-};
-
-function newEmailDraft(days = 0, seed?: Partial<EmailDraft>): EmailDraft {
-  return {
-    id: crypto.randomUUID(),
-    daysAfterPrevious: days,
-    subject: '',
-    htmlBody: '<p>Hi {{first_name}},</p><p></p>',
-    templateId: '',
-    saveAsTemplate: false,
-    ...seed,
-  };
-}
+import {
+  type AutomationEmailDraft,
+  datetimeLocalToIso,
+  ensureFutureSendAt,
+  formatSendAtLabel,
+  isoToDatetimeLocal,
+  newAutomationEmailDraft,
+  validateAutomationSchedule,
+} from '@/lib/marketing/automation-email-draft';
 
 const STEPS = ['Select contacts', 'Build email sequence', 'Save'];
 
@@ -47,7 +35,7 @@ export default function EditAutomationPage() {
   const [contactSearch, setContactSearch] = useState('');
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [senders, setSenders] = useState<MarketingSender[]>([]);
-  const [emails, setEmails] = useState<EmailDraft[]>([newEmailDraft(0)]);
+  const [emails, setEmails] = useState<AutomationEmailDraft[]>([newAutomationEmailDraft(0)]);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -86,8 +74,9 @@ export default function EditAutomationPage() {
         setSenderId(edit.senderId || s.senders.find((x) => x.isDefault)?.id || '');
         setSelected(new Set(edit.contactIds));
         setEmails(
-          edit.emails.map((e) =>
-            newEmailDraft(e.daysAfterPrevious, {
+          edit.emails.map((e, i) =>
+            newAutomationEmailDraft(i, edit.emails[i - 1]?.sendAt, {
+              sendAt: ensureFutureSendAt(e.sendAt),
               subject: e.subject,
               htmlBody: e.htmlBody || '<p></p>',
               templateId: e.templateId ?? '',
@@ -108,7 +97,7 @@ export default function EditAutomationPage() {
     });
   };
 
-  const updateEmail = (id: string, patch: Partial<EmailDraft>) => {
+  const updateEmail = (id: string, patch: Partial<AutomationEmailDraft>) => {
     setEmails((list) => list.map((e) => (e.id === id ? { ...e, ...patch } : e)));
   };
 
@@ -123,7 +112,10 @@ export default function EditAutomationPage() {
   };
 
   const addFollowUpEmail = () => {
-    setEmails((list) => [...list, newEmailDraft(2)]);
+    setEmails((list) => {
+      const last = list[list.length - 1];
+      return [...list, newAutomationEmailDraft(list.length, last?.sendAt)];
+    });
   };
 
   const removeEmail = (id: string) => {
@@ -144,7 +136,7 @@ export default function EditAutomationPage() {
           senderId: senderId || undefined,
           contactIds: [...selected],
           emails: emails.map((e) => ({
-            daysAfterPrevious: e.daysAfterPrevious,
+            sendAt: e.sendAt,
             subject: e.subject,
             htmlBody: e.templateId ? '' : e.htmlBody,
             templateId: e.templateId || undefined,
@@ -247,15 +239,12 @@ export default function EditAutomationPage() {
         {step === 1 && (
           <div className="space-y-6">
             <p className="text-sm text-gray-600">
-              Edit emails in the sequence. Changes apply to contacts who have not yet received updated steps.
+              Edit emails and pick the <strong>exact date and time</strong> each should send.
             </p>
             {emails.map((email, index) => (
               <div key={email.id} className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">
-                    Email {index + 1}
-                    {index === 0 ? ' — sends immediately' : ''}
-                  </h3>
+                  <h3 className="font-semibold text-gray-900">Email {index + 1}</h3>
                   {emails.length > 1 && (
                     <button
                       type="button"
@@ -266,22 +255,23 @@ export default function EditAutomationPage() {
                     </button>
                   )}
                 </div>
-                {index > 0 && (
-                  <div>
-                    <label className="text-xs font-medium text-gray-600 block mb-1">
-                      Send after previous email (days)
-                    </label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={email.daysAfterPrevious}
-                      onChange={(e) =>
-                        updateEmail(email.id, { daysAfterPrevious: Number(e.target.value) || 0 })
-                      }
-                      className="w-32"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Send date & time *</label>
+                  <Input
+                    type="datetime-local"
+                    value={isoToDatetimeLocal(email.sendAt)}
+                    min={isoToDatetimeLocal(new Date(Date.now() + 60_000).toISOString())}
+                    onChange={(e) => {
+                      const iso = datetimeLocalToIso(e.target.value);
+                      if (iso) updateEmail(email.id, { sendAt: iso });
+                    }}
+                    className="max-w-xs"
+                    required
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    {formatSendAtLabel(email.sendAt, locale, timezone)}
+                  </p>
+                </div>
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Use saved template</label>
                   <select
@@ -332,7 +322,7 @@ export default function EditAutomationPage() {
               + Add follow-up email
             </Button>
             <AutomationSchedulePreview
-              emails={emails.map((e) => ({ daysAfterPrevious: e.daysAfterPrevious, subject: e.subject }))}
+              emails={emails.map((e) => ({ sendAt: e.sendAt, subject: e.subject }))}
               timezone={timezone}
               locale={locale}
             />
@@ -343,7 +333,15 @@ export default function EditAutomationPage() {
               <Button
                 type="button"
                 disabled={emails.some((e) => !e.subject.trim())}
-                onClick={() => setStep(2)}
+                onClick={() => {
+                  const scheduleError = validateAutomationSchedule(emails);
+                  if (scheduleError) {
+                    setError(scheduleError);
+                    return;
+                  }
+                  setError('');
+                  setStep(2);
+                }}
               >
                 Next: Review →
               </Button>
@@ -381,15 +379,14 @@ export default function EditAutomationPage() {
                 {emails.length === 1 ? '' : 's'}
               </p>
               <AutomationSchedulePreview
-                emails={emails.map((e) => ({ daysAfterPrevious: e.daysAfterPrevious, subject: e.subject }))}
+                emails={emails.map((e) => ({ sendAt: e.sendAt, subject: e.subject }))}
                 timezone={timezone}
                 locale={locale}
                 compact
               />
               {emails.map((e, i) => (
                 <p key={e.id} className="text-gray-600">
-                  {i + 1}. {e.subject}
-                  {i > 0 ? ` (after ${e.daysAfterPrevious} day${e.daysAfterPrevious === 1 ? '' : 's'})` : ' (now)'}
+                  {i + 1}. {e.subject} — {formatSendAtLabel(e.sendAt, locale, timezone)}
                 </p>
               ))}
             </div>

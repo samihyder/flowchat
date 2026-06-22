@@ -55,7 +55,7 @@ export default function AutomationDetailPage() {
   const [timezone, setTimezone] = useState('UTC');
   const [locale, setLocale] = useState('en');
   const [createdAt, setCreatedAt] = useState<string | undefined>();
-  const [scheduleEmails, setScheduleEmails] = useState<{ daysAfterPrevious: number; subject?: string }[]>([]);
+  const [scheduleEmails, setScheduleEmails] = useState<{ sendAt: string; subject?: string }[]>([]);
 
   const load = () => {
     if (!token || !accountId) return;
@@ -136,7 +136,6 @@ export default function AutomationDetailPage() {
               emails={scheduleEmails}
               timezone={timezone}
               locale={locale}
-              startAt={createdAt}
             />
           </div>
         )}
