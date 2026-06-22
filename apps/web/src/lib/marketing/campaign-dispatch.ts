@@ -262,6 +262,7 @@ export async function processCampaignBatch(
       html,
       text,
       senderId: campaign.senderId,
+      mergeContact: mergeCtx,
     });
 
     if (result.ok) {

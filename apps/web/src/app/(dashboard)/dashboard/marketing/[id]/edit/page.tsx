@@ -9,6 +9,7 @@ import { api, type Contact, type EmailTemplate, type MarketingSender } from '@/l
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
+import { AutomationSchedulePreview } from '@/components/marketing/automation-schedule-preview';
 
 type EmailDraft = {
   id: string;
@@ -50,6 +51,8 @@ export default function EditAutomationPage() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [timezone, setTimezone] = useState('UTC');
+  const [locale, setLocale] = useState('en');
 
   const loadContacts = useCallback(async () => {
     if (!token || !accountId) return;
@@ -71,10 +74,13 @@ export default function EditAutomationPage() {
       api.marketing.templates.list(accountId, token),
       api.marketing.senders.list(accountId, token),
       api.marketing.automations.getEdit(accountId, automationId, token),
+      api.account.get(accountId, token),
     ])
-      .then(([t, s, editRes]) => {
+      .then(([t, s, editRes, accountRes]) => {
         setTemplates(t.templates);
         setSenders(s.senders);
+        setTimezone(accountRes.account.timezone || 'UTC');
+        setLocale(accountRes.account.locale || 'en');
         const edit = editRes.edit;
         setName(edit.name);
         setSenderId(edit.senderId || s.senders.find((x) => x.isDefault)?.id || '');
@@ -325,6 +331,11 @@ export default function EditAutomationPage() {
             <Button type="button" variant="secondary" onClick={addFollowUpEmail}>
               + Add follow-up email
             </Button>
+            <AutomationSchedulePreview
+              emails={emails.map((e) => ({ daysAfterPrevious: e.daysAfterPrevious, subject: e.subject }))}
+              timezone={timezone}
+              locale={locale}
+            />
             <div className="flex justify-between">
               <Button type="button" variant="secondary" onClick={() => setStep(0)}>
                 ← Back
@@ -364,11 +375,17 @@ export default function EditAutomationPage() {
                 </div>
               )}
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700 space-y-1">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700 space-y-2">
               <p>
                 <strong>{selected.size}</strong> contacts · <strong>{emails.length}</strong> email
                 {emails.length === 1 ? '' : 's'}
               </p>
+              <AutomationSchedulePreview
+                emails={emails.map((e) => ({ daysAfterPrevious: e.daysAfterPrevious, subject: e.subject }))}
+                timezone={timezone}
+                locale={locale}
+                compact
+              />
               {emails.map((e, i) => (
                 <p key={e.id} className="text-gray-600">
                   {i + 1}. {e.subject}

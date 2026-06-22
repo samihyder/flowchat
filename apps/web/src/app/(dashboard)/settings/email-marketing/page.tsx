@@ -7,6 +7,11 @@ import { api, type MarketingSender, type ServiceCredential } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
+
+const DEFAULT_SIGNATURE = '<p>Best regards,<br/><strong>{{sender_name}}</strong></p>';
+const DEFAULT_CALENDLY = '<p><a href="{{calendly_url}}">Book a time on my calendar</a></p>';
+const DEFAULT_PORTFOLIO = '<p><a href="{{portfolio_url}}">View my portfolio</a></p>';
 
 const domainBadgeColor: Record<string, 'success' | 'warning' | 'gray'> = {
   verified: 'success',
@@ -33,6 +38,15 @@ export default function EmailMarketingSettingsPage() {
   const [suppressions, setSuppressions] = useState<{ id: string; email: string; reason: string }[]>([]);
   const [suppressEmail, setSuppressEmail] = useState('');
 
+  const [emailSignature, setEmailSignature] = useState(DEFAULT_SIGNATURE);
+  const [calendlyUrl, setCalendlyUrl] = useState('');
+  const [calendlyTemplate, setCalendlyTemplate] = useState(DEFAULT_CALENDLY);
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [portfolioTemplate, setPortfolioTemplate] = useState(DEFAULT_PORTFOLIO);
+  const [autoAppendTemplates, setAutoAppendTemplates] = useState(true);
+  const [savingTemplates, setSavingTemplates] = useState(false);
+  const [templateMessage, setTemplateMessage] = useState('');
+
   const load = () => {
     if (!token || !accountId) return;
     api.marketing.senders.list(accountId, token).then((r) => setSenders(r.senders));
@@ -44,6 +58,13 @@ export default function EmailMarketingSettingsPage() {
     api.marketing.suppressions.list(accountId, token).then((r) => setSuppressions(r.suppressions));
     api.account.get(accountId, token).then((r) => {
       setDoubleOptIn(Boolean(r.account.settings?.marketingDoubleOptIn));
+      const s = r.account.settings ?? {};
+      setEmailSignature(s.marketingEmailSignature ?? DEFAULT_SIGNATURE);
+      setCalendlyUrl(s.marketingCalendlyUrl ?? '');
+      setCalendlyTemplate(s.marketingCalendlyTemplate ?? DEFAULT_CALENDLY);
+      setPortfolioUrl(s.marketingPortfolioUrl ?? '');
+      setPortfolioTemplate(s.marketingPortfolioTemplate ?? DEFAULT_PORTFOLIO);
+      setAutoAppendTemplates(s.marketingAutoAppendTemplates !== false);
     });
   };
 
@@ -100,6 +121,34 @@ export default function EmailMarketingSettingsPage() {
     setDoubleOptIn(enabled);
     await api.account.update(accountId, { settings: { marketingDoubleOptIn: enabled } }, token);
     setSavingOptIn(false);
+  };
+
+  const saveEmailTemplates = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !accountId) return;
+    setSavingTemplates(true);
+    setTemplateMessage('');
+    try {
+      await api.account.update(
+        accountId,
+        {
+          settings: {
+            marketingEmailSignature: emailSignature.trim() || undefined,
+            marketingCalendlyUrl: calendlyUrl.trim() || undefined,
+            marketingCalendlyTemplate: calendlyTemplate.trim() || undefined,
+            marketingPortfolioUrl: portfolioUrl.trim() || undefined,
+            marketingPortfolioTemplate: portfolioTemplate.trim() || undefined,
+            marketingAutoAppendTemplates: autoAppendTemplates,
+          },
+        },
+        token
+      );
+      setTemplateMessage('Email templates saved. They will be added automatically to automations and campaigns.');
+    } catch (err) {
+      setTemplateMessage(err instanceof Error ? err.message : 'Failed to save templates');
+    } finally {
+      setSavingTemplates(false);
+    }
   };
 
   return (
@@ -197,6 +246,74 @@ export default function EmailMarketingSettingsPage() {
           {creating ? 'Adding…' : 'Add sender'}
         </Button>
         {message && <p className="text-sm text-green-600">{message}</p>}
+      </form>
+
+      <form onSubmit={saveEmailTemplates} className="bg-white border border-gray-200 rounded-xl p-5 space-y-5">
+        <div>
+          <h3 className="font-medium text-gray-900">Auto email footer templates</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Signature, Calendly, and portfolio links are appended automatically to every marketing email and
+            automation follow-up. Use merge tags:{' '}
+            <code className="text-xs">{'{{sender_name}}'}</code>,{' '}
+            <code className="text-xs">{'{{calendly_url}}'}</code>,{' '}
+            <code className="text-xs">{'{{portfolio_url}}'}</code>,{' '}
+            <code className="text-xs">{'{{first_name}}'}</code>.
+          </p>
+        </div>
+
+        <label className="flex items-center gap-3 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={autoAppendTemplates}
+            onChange={(e) => setAutoAppendTemplates(e.target.checked)}
+          />
+          Automatically append templates to outbound marketing emails
+        </label>
+
+        <div>
+          <label className="text-xs font-medium text-gray-600 block mb-1">Signature</label>
+          <EmailRichEditor value={emailSignature} onChange={setEmailSignature} minHeight="120px" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium text-gray-600 block mb-1">Calendly URL</label>
+            <Input
+              value={calendlyUrl}
+              onChange={(e) => setCalendlyUrl(e.target.value)}
+              placeholder="https://calendly.com/you/30min"
+              type="url"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-600 block mb-1">Portfolio URL</label>
+            <Input
+              value={portfolioUrl}
+              onChange={(e) => setPortfolioUrl(e.target.value)}
+              placeholder="https://yoursite.com/portfolio"
+              type="url"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-gray-600 block mb-1">Calendly link template</label>
+          <EmailRichEditor value={calendlyTemplate} onChange={setCalendlyTemplate} minHeight="80px" />
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-gray-600 block mb-1">Portfolio link template</label>
+          <EmailRichEditor value={portfolioTemplate} onChange={setPortfolioTemplate} minHeight="80px" />
+        </div>
+
+        <Button type="submit" disabled={savingTemplates}>
+          {savingTemplates ? 'Saving…' : 'Save email templates'}
+        </Button>
+        {templateMessage && (
+          <p className={`text-sm ${templateMessage.startsWith('Email templates saved') ? 'text-green-600' : 'text-red-600'}`}>
+            {templateMessage}
+          </p>
+        )}
       </form>
 
       <section className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">

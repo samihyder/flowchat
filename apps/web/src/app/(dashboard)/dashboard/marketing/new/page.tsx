@@ -9,6 +9,7 @@ import { api, type Contact, type EmailTemplate, type MarketingSender } from '@/l
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
+import { AutomationSchedulePreview } from '@/components/marketing/automation-schedule-preview';
 
 type EmailDraft = {
   id: string;
@@ -46,6 +47,8 @@ export default function NewAutomationPage() {
   const [emails, setEmails] = useState<EmailDraft[]>([newEmailDraft(0)]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [timezone, setTimezone] = useState('UTC');
+  const [locale, setLocale] = useState('en');
 
   const loadContacts = useCallback(async () => {
     if (!token || !accountId) return;
@@ -66,11 +69,14 @@ export default function NewAutomationPage() {
     Promise.all([
       api.marketing.templates.list(accountId, token),
       api.marketing.senders.list(accountId, token),
-    ]).then(([t, s]) => {
+      api.account.get(accountId, token),
+    ]).then(([t, s, accountRes]) => {
       setTemplates(t.templates);
       setSenders(s.senders);
       const def = s.senders.find((x) => x.isDefault);
       if (def) setSenderId(def.id);
+      setTimezone(accountRes.account.timezone || 'UTC');
+      setLocale(accountRes.account.locale || 'en');
     });
   }, [token, accountId]);
 
@@ -309,6 +315,11 @@ export default function NewAutomationPage() {
             <Button type="button" variant="secondary" onClick={addFollowUpEmail}>
               + Add follow-up email
             </Button>
+            <AutomationSchedulePreview
+              emails={emails.map((e) => ({ daysAfterPrevious: e.daysAfterPrevious, subject: e.subject }))}
+              timezone={timezone}
+              locale={locale}
+            />
             <div className="flex justify-between">
               <Button type="button" variant="secondary" onClick={() => setStep(0)}>
                 ← Back
@@ -358,11 +369,17 @@ export default function NewAutomationPage() {
                 </p>
               )}
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700 space-y-1">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700 space-y-2">
               <p>
                 <strong>{selected.size}</strong> contacts · <strong>{emails.length}</strong> email
                 {emails.length === 1 ? '' : 's'}
               </p>
+              <AutomationSchedulePreview
+                emails={emails.map((e) => ({ daysAfterPrevious: e.daysAfterPrevious, subject: e.subject }))}
+                timezone={timezone}
+                locale={locale}
+                compact
+              />
               {emails.map((e, i) => (
                 <p key={e.id} className="text-gray-600">
                   {i + 1}. {e.subject}

@@ -48,6 +48,7 @@ export async function POST(req: Request, { params }: Params) {
     html: applyMergeTags(template.htmlBody, mergeCtx),
     text: template.textBody ? applyMergeTags(template.textBody, mergeCtx) : undefined,
     senderId: body.senderId ?? null,
+    mergeContact: mergeCtx,
     isTest: true,
   });
 

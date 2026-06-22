@@ -5,6 +5,8 @@ import {
   resolveEmailCredential,
 } from '@/lib/credentials/store';
 import type { EmailProviderId } from '@/lib/credentials/types';
+import { buildMarketingEmailAppendix } from '@/lib/marketing/email-appendix';
+import type { MergeContact } from '@/lib/marketing/merge-tags';
 import { getOrCreateUnsubscribeToken, unsubscribeUrl } from '@/lib/marketing/unsubscribe';
 import { getMarketingSender, senderFromHeader, type SenderIdentity } from '@/lib/marketing/senders';
 import type { AppSql } from '@/lib/db-sql';
@@ -69,6 +71,8 @@ export async function sendMarketingEmail(
     senderId?: string | null;
     credentialId?: string | null;
     skipComplianceFooter?: boolean;
+    skipAutoAppendix?: boolean;
+    mergeContact?: MergeContact;
     isTest?: boolean;
   }
 ): Promise<MarketingSendResult> {
@@ -79,9 +83,16 @@ export async function sendMarketingEmail(
   const unsub = opts.isTest
     ? '#'
     : unsubscribeUrl(await getOrCreateUnsubscribeToken(sql, accountId, contactId));
-  const html = opts.skipComplianceFooter
-    ? opts.html
-    : `${opts.html}${complianceFooter(sender.physicalAddress, unsub)}`;
+
+  let html = opts.html;
+  if (!opts.skipAutoAppendix && opts.mergeContact) {
+    const appendix = buildMarketingEmailAppendix(settings, opts.mergeContact, {
+      senderName: sender.fromName,
+    });
+    if (appendix) html = `${html}${appendix}`;
+  }
+
+  html = opts.skipComplianceFooter ? html : `${html}${complianceFooter(sender.physicalAddress, unsub)}`;
   const text =
     opts.text ??
     html

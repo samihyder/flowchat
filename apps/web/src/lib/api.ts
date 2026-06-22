@@ -189,6 +189,12 @@ export type AccountCrmSettings = {
   marketingPhysicalAddress?: string;
   marketingDoubleOptIn?: boolean;
   marketingByokOnly?: boolean;
+  marketingEmailSignature?: string;
+  marketingCalendlyUrl?: string;
+  marketingCalendlyTemplate?: string;
+  marketingPortfolioUrl?: string;
+  marketingPortfolioTemplate?: string;
+  marketingAutoAppendTemplates?: boolean;
   aiCredentialId?: string;
   aiModel?: string;
   widgetAiEnabled?: boolean;
@@ -567,6 +573,12 @@ export const api = {
           marketingReplyTo?: string;
           marketingPhysicalAddress?: string;
           marketingDoubleOptIn?: boolean;
+          marketingEmailSignature?: string;
+          marketingCalendlyUrl?: string;
+          marketingCalendlyTemplate?: string;
+          marketingPortfolioUrl?: string;
+          marketingPortfolioTemplate?: string;
+          marketingAutoAppendTemplates?: boolean;
         };
       },
       token: string
@@ -1294,6 +1306,7 @@ export const api = {
       get: (accountId: string, automationId: string, token: string) =>
         request<{
           workflow: Record<string, unknown>;
+          steps?: { stepType: string; config: Record<string, unknown> }[];
           summary: {
             totalContacts: number;
             emailsSent: number;

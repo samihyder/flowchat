@@ -221,6 +221,7 @@ export async function processWorkflowBatch(
         html,
         text: textBody ? applyMergeTags(textBody, mergeCtx) : undefined,
         senderId: row.senderId,
+        mergeContact: mergeCtx,
       });
       if (!result.ok) {
         processed++;

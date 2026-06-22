@@ -8,6 +8,8 @@ import { useAuthStore } from '@/store/auth';
 import { api, type AutomationRecipient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
+import { AutomationSchedulePreview } from '@/components/marketing/automation-schedule-preview';
+import { emailsFromWorkflowSteps } from '@/lib/marketing/schedule';
 
 const STATUS_STYLES: Record<string, string> = {
   clicked: 'bg-green-100 text-green-800',
@@ -50,14 +52,25 @@ export default function AutomationDetailPage() {
   const [recipients, setRecipients] = useState<AutomationRecipient[]>([]);
   const [filter, setFilter] = useState<'all' | 'opened' | 'not_opened' | 'clicked' | 'bounced'>('all');
   const [loading, setLoading] = useState(true);
+  const [timezone, setTimezone] = useState('UTC');
+  const [locale, setLocale] = useState('en');
+  const [createdAt, setCreatedAt] = useState<string | undefined>();
+  const [scheduleEmails, setScheduleEmails] = useState<{ daysAfterPrevious: number; subject?: string }[]>([]);
 
   const load = () => {
     if (!token || !accountId) return;
-    api.marketing.automations.get(accountId, automationId, token).then((r) => {
+    Promise.all([
+      api.marketing.automations.get(accountId, automationId, token),
+      api.account.get(accountId, token),
+    ]).then(([r, accountRes]) => {
       setName(String(r.workflow.name ?? ''));
       setEnabled(Boolean(r.workflow.enabled));
       setSummary(r.summary);
       setRecipients(r.recipients);
+      setTimezone(accountRes.account.timezone || 'UTC');
+      setLocale(accountRes.account.locale || 'en');
+      setCreatedAt(typeof r.workflow.createdAt === 'string' ? r.workflow.createdAt : undefined);
+      if (r.steps?.length) setScheduleEmails(emailsFromWorkflowSteps(r.steps));
       setLoading(false);
     });
   };
@@ -117,6 +130,16 @@ export default function AutomationDetailPage() {
           <MetricCard label="Not opened" value={summary.notOpened} accent="amber" />
           <MetricCard label="Bounced" value={summary.bounced} accent="neutral" />
         </MetricGrid>
+        {scheduleEmails.length > 0 && (
+          <div className="mt-4 max-w-2xl">
+            <AutomationSchedulePreview
+              emails={scheduleEmails}
+              timezone={timezone}
+              locale={locale}
+              startAt={createdAt}
+            />
+          </div>
+        )}
       </div>
 
       <div className="px-6 pb-2 flex flex-wrap gap-2">

@@ -26,6 +26,18 @@ export type AccountSettings = {
   marketingDoubleOptIn?: boolean;
   /** When true, marketing sends require tenant-owned ESP credentials (no platform fallback) */
   marketingByokOnly?: boolean;
+  /** HTML signature block appended to marketing emails */
+  marketingEmailSignature?: string;
+  /** Calendly (or booking) URL used in {{calendly_url}} merge tag */
+  marketingCalendlyUrl?: string;
+  /** HTML template for Calendly link (supports {{calendly_url}}) */
+  marketingCalendlyTemplate?: string;
+  /** Portfolio URL used in {{portfolio_url}} merge tag */
+  marketingPortfolioUrl?: string;
+  /** HTML template for portfolio link (supports {{portfolio_url}}) */
+  marketingPortfolioTemplate?: string;
+  /** When true (default), append signature/calendly/portfolio to marketing emails */
+  marketingAutoAppendTemplates?: boolean;
   /** Default AI credential for widget / copilot */
   aiCredentialId?: string;
   /** Preferred Anthropic model id */
@@ -58,6 +70,17 @@ export function parseAccountSettings(raw: unknown): AccountSettings {
     marketingDoubleOptIn:
       typeof s.marketingDoubleOptIn === 'boolean' ? s.marketingDoubleOptIn : undefined,
     marketingByokOnly: typeof s.marketingByokOnly === 'boolean' ? s.marketingByokOnly : undefined,
+    marketingEmailSignature:
+      typeof s.marketingEmailSignature === 'string' ? s.marketingEmailSignature : undefined,
+    marketingCalendlyUrl: typeof s.marketingCalendlyUrl === 'string' ? s.marketingCalendlyUrl : undefined,
+    marketingCalendlyTemplate:
+      typeof s.marketingCalendlyTemplate === 'string' ? s.marketingCalendlyTemplate : undefined,
+    marketingPortfolioUrl:
+      typeof s.marketingPortfolioUrl === 'string' ? s.marketingPortfolioUrl : undefined,
+    marketingPortfolioTemplate:
+      typeof s.marketingPortfolioTemplate === 'string' ? s.marketingPortfolioTemplate : undefined,
+    marketingAutoAppendTemplates:
+      typeof s.marketingAutoAppendTemplates === 'boolean' ? s.marketingAutoAppendTemplates : undefined,
     aiCredentialId: typeof s.aiCredentialId === 'string' ? s.aiCredentialId : undefined,
     aiModel: typeof s.aiModel === 'string' ? s.aiModel : undefined,
     widgetAiEnabled: typeof s.widgetAiEnabled === 'boolean' ? s.widgetAiEnabled : undefined,
