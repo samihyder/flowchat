@@ -599,9 +599,10 @@ export const api = {
           };
         };
       }>(`/accounts/${accountId}`, { method: 'PATCH', body, token }),
-    getLogoUploadUrl: (accountId: string, token: string) =>
+    getLogoUploadUrl: (accountId: string, token: string, contentType?: string) =>
       request<{ uploadUrl: string; publicUrl: string }>(
-        `/accounts/${accountId}/logo-upload-url`, { method: 'POST', token }
+        `/accounts/${accountId}/logo-upload-url`,
+        { method: 'POST', body: contentType ? { contentType } : {}, token }
       ),
   },
 

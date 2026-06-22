@@ -91,11 +91,16 @@ export default function AccountSettingsPage() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !token || !accountId) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Logo must be 2 MB or smaller.');
+      return;
+    }
     setUploading(true);
     setError('');
     try {
-      const { uploadUrl, publicUrl } = await api.account.getLogoUploadUrl(accountId, token);
-      await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': 'image/png' } });
+      const contentType = file.type || 'image/png';
+      const { uploadUrl, publicUrl } = await api.account.getLogoUploadUrl(accountId, token, contentType);
+      await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': contentType } });
       await api.account.update(accountId, { logoUrl: publicUrl }, token);
       setLogoUrl(publicUrl);
       setSuccess('Logo updated.');
