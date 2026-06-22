@@ -82,6 +82,23 @@ export default function AutomationDetailPage() {
 
   useEffect(load, [token, accountId, automationId]);
 
+  // Hobby Vercel has no per-minute cron — poll while contacts are waiting for a due send.
+  useEffect(() => {
+    if (!token || !accountId || !enabled) return;
+    const hasDue = recipients.some(
+      (r) => r.status === 'waiting' && r.nextRunAt && new Date(r.nextRunAt).getTime() <= Date.now()
+    );
+    if (!hasDue) return;
+    const tick = () => {
+      void api.marketing.automations.processDue(accountId, automationId, token)
+        .then(() => load())
+        .catch(() => {});
+    };
+    tick();
+    const id = window.setInterval(tick, 30_000);
+    return () => window.clearInterval(id);
+  }, [token, accountId, automationId, enabled, recipients]);
+
   const filtered = recipients.filter((r) => {
     if (filter === 'opened') return r.opened && !r.bounced;
     if (filter === 'not_opened') return r.emailsSent > 0 && !r.opened && !r.bounced;
