@@ -1,3 +1,4 @@
+# Copy this file to .github/workflows/deploy-production.yml in GitHub (requires workflow OAuth scope to push via CLI).
 name: Deploy Production
 
 on:
