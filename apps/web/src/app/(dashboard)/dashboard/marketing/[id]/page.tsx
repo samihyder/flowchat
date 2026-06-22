@@ -95,9 +95,16 @@ export default function AutomationDetailPage() {
               {enabled ? 'Active — follow-up emails send on schedule' : 'Paused'}
             </p>
           </div>
-          <Button type="button" variant="secondary" size="sm" onClick={() => void togglePause()}>
-            {enabled ? 'Pause automation' : 'Resume automation'}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Link href={`/dashboard/marketing/${automationId}/edit` as Route}>
+              <Button type="button" variant="secondary" size="sm">
+                Edit automation
+              </Button>
+            </Link>
+            <Button type="button" variant="secondary" size="sm" onClick={() => void togglePause()}>
+              {enabled ? 'Pause automation' : 'Resume automation'}
+            </Button>
+          </div>
         </div>
       </div>
 

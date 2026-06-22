@@ -20,6 +20,12 @@ export default function TemplatesPage() {
   const [testingId, setTestingId] = useState<string | null>(null);
   const [testMsg, setTestMsg] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editSubject, setEditSubject] = useState('');
+  const [editHtmlBody, setEditHtmlBody] = useState('');
+  const [editError, setEditError] = useState('');
+  const [editBusy, setEditBusy] = useState(false);
 
   const load = () => {
     if (!token || !accountId) return;
@@ -38,6 +44,41 @@ export default function TemplatesPage() {
     setHtmlBody('<p>Hi {{first_name}},</p><p></p>');
     setShowCreate(false);
     load();
+  };
+
+  const startEdit = (template: EmailTemplate) => {
+    setEditingId(template.id);
+    setEditName(template.name);
+    setEditSubject(template.subject);
+    setEditHtmlBody(template.htmlBody ?? '<p></p>');
+    setEditError('');
+    setShowCreate(false);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditError('');
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !accountId || !editingId) return;
+    setEditBusy(true);
+    setEditError('');
+    try {
+      await api.marketing.templates.update(
+        accountId,
+        editingId,
+        { name: editName, subject: editSubject, htmlBody: editHtmlBody },
+        token
+      );
+      setEditingId(null);
+      load();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Failed to save template');
+    } finally {
+      setEditBusy(false);
+    }
   };
 
   const testSend = async (templateId: string) => {
@@ -94,17 +135,48 @@ export default function TemplatesPage() {
           </form>
         )}
 
+        {editingId && (
+          <form onSubmit={saveEdit} className="bg-white border border-primary-200 rounded-xl p-5 space-y-4 max-w-2xl">
+            <h2 className="font-semibold text-gray-900">Edit template</h2>
+            <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Template name" required />
+            <Input
+              value={editSubject}
+              onChange={(e) => setEditSubject(e.target.value)}
+              placeholder="Subject — Hi {{first_name}}"
+              required
+            />
+            <EmailRichEditor value={editHtmlBody} onChange={setEditHtmlBody} placeholder="Write your email…" />
+            {editError && <p className="text-sm text-red-600">{editError}</p>}
+            <div className="flex gap-2">
+              <Button type="submit" disabled={editBusy}>
+                {editBusy ? 'Saving…' : 'Save changes'}
+              </Button>
+              <Button type="button" variant="secondary" onClick={cancelEdit}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
+
         <p className="text-sm text-gray-500">{stats.templates} saved template{stats.templates === 1 ? '' : 's'}</p>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {templates.map((t) => (
-            <div key={t.id} className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
+            <div
+              key={t.id}
+              className={`bg-white border rounded-xl p-4 flex flex-col ${
+                editingId === t.id ? 'border-primary-300 ring-1 ring-primary-100' : 'border-gray-200'
+              }`}
+            >
               <p className="font-semibold text-gray-900">{t.name}</p>
               <p className="text-sm text-gray-600 mt-1 truncate">{t.subject}</p>
               <p className="text-xs text-gray-400 mt-2 flex-1 line-clamp-2">
                 {htmlToPlainPreview(t.htmlBody ?? '')}
               </p>
               <div className="mt-4 pt-3 border-t border-gray-100 space-y-2">
+                <Button type="button" size="sm" variant="secondary" onClick={() => startEdit(t)}>
+                  Edit
+                </Button>
                 <Input
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}

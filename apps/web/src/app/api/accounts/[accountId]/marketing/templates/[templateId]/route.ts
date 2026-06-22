@@ -28,7 +28,13 @@ export async function PATCH(req: Request, { params }: Params) {
   const auth = await authorizeAccount(token, accountId);
   if (!auth) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-  const body = (await req.json()) as { archived?: boolean; textBody?: string; htmlBody?: string; subject?: string };
+  const body = (await req.json()) as {
+    archived?: boolean;
+    textBody?: string;
+    htmlBody?: string;
+    subject?: string;
+    name?: string;
+  };
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
   const rows = await sql`
     UPDATE email_templates SET
@@ -36,9 +42,10 @@ export async function PATCH(req: Request, { params }: Params) {
       text_body = COALESCE(${body.textBody ?? null}, text_body),
       html_body = COALESCE(${body.htmlBody ?? null}, html_body),
       subject = COALESCE(${body.subject?.trim() ?? null}, subject),
+      name = COALESCE(${body.name?.trim() ?? null}, name),
       updated_at = NOW()
     WHERE id = ${templateId}::uuid AND account_id = ${accountId}::uuid
-    RETURNING id, name, subject, archived
+    RETURNING id, name, subject, html_body as "htmlBody", archived
   `;
   if (!rows[0]) return Response.json({ error: 'Not found' }, { status: 404 });
   return Response.json({ template: rows[0] });

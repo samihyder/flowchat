@@ -45,9 +45,31 @@ export async function createEmailAutomation(
   `;
   const workflowId = (wfRows[0] as { id: string }).id;
 
+  await insertAutomationSteps(sql, accountId, workflowId, input.name, input.emails);
+
+  let enrolled = 0;
+  let skipped = 0;
+  for (const contactId of input.contactIds) {
+    const result = await enrollContactInWorkflow(sql, accountId, workflowId, contactId);
+    if (result.enrolled) enrolled++;
+    else skipped++;
+  }
+
+  await processWorkflowBatch(sql, accountId, 50);
+
+  return { workflowId, enrolled, skipped };
+}
+
+async function insertAutomationSteps(
+  sql: AppSql,
+  accountId: string,
+  workflowId: string,
+  automationName: string,
+  emails: AutomationEmailInput[]
+) {
   let stepOrder = 0;
-  for (let i = 0; i < input.emails.length; i++) {
-    const email = input.emails[i]!;
+  for (let i = 0; i < emails.length; i++) {
+    const email = emails[i]!;
     const days = Math.max(0, Number(email.daysAfterPrevious) || 0);
 
     if (i > 0 && days > 0) {
@@ -66,9 +88,7 @@ export async function createEmailAutomation(
     let templateId = email.templateId ?? null;
     if (!templateId && email.htmlBody.trim()) {
       if (email.saveAsTemplate) {
-        const tplName =
-          email.templateName?.trim() ||
-          `${input.name.trim()} — Email ${i + 1}`;
+        const tplName = email.templateName?.trim() || `${automationName.trim()} — Email ${i + 1}`;
         const tplRows = await sql`
           INSERT INTO email_templates (account_id, name, subject, html_body)
           VALUES (
@@ -104,18 +124,134 @@ export async function createEmailAutomation(
     INSERT INTO marketing_workflow_steps (workflow_id, step_order, step_type, config)
     VALUES (${workflowId}::uuid, ${stepOrder}, 'exit', '{}'::jsonb)
   `;
+}
 
+export async function getAutomationEditPayload(sql: AppSql, accountId: string, workflowId: string) {
+  const wfRows = await sql`
+    SELECT id, name, enabled, sender_id as "senderId"
+    FROM marketing_workflows
+    WHERE id = ${workflowId}::uuid AND account_id = ${accountId}::uuid
+    LIMIT 1
+  `;
+  if (!wfRows[0]) return null;
+
+  const steps = await sql`
+    SELECT step_order as "stepOrder", step_type as "stepType", config
+    FROM marketing_workflow_steps
+    WHERE workflow_id = ${workflowId}::uuid
+    ORDER BY step_order ASC
+  `;
+
+  let pendingDays = 0;
+  const emails: AutomationEmailInput[] = [];
+
+  for (const step of steps as { stepType: string; config: Record<string, unknown> }[]) {
+    if (step.stepType === 'wait') {
+      pendingDays = Math.round(Number(step.config.hours ?? 0) / 24) || 0;
+    } else if (step.stepType === 'send_email') {
+      const config = step.config;
+      const templateId = typeof config.templateId === 'string' ? config.templateId : undefined;
+      let htmlBody = typeof config.htmlBody === 'string' ? config.htmlBody : '';
+      if (templateId) {
+        const tplRows = await sql`
+          SELECT html_body as "htmlBody" FROM email_templates
+          WHERE id = ${templateId}::uuid AND account_id = ${accountId}::uuid
+          LIMIT 1
+        `;
+        htmlBody = (tplRows[0] as { htmlBody: string } | undefined)?.htmlBody ?? htmlBody;
+      }
+      emails.push({
+        daysAfterPrevious: emails.length === 0 ? 0 : pendingDays,
+        subject: String(config.subject ?? ''),
+        htmlBody,
+        templateId,
+      });
+      pendingDays = 0;
+    }
+  }
+
+  const contactRows = await sql`
+    SELECT contact_id as "contactId"
+    FROM marketing_workflow_enrollments
+    WHERE workflow_id = ${workflowId}::uuid AND status IN ('active', 'completed')
+  `;
+
+  return {
+    name: (wfRows[0] as { name: string }).name,
+    senderId: (wfRows[0] as { senderId: string | null }).senderId ?? '',
+    enabled: Boolean((wfRows[0] as { enabled: boolean }).enabled),
+    contactIds: (contactRows as { contactId: string }[]).map((r) => r.contactId),
+    emails: emails.length ? emails : [{ daysAfterPrevious: 0, subject: '', htmlBody: '<p></p>' }],
+  };
+}
+
+export async function updateEmailAutomation(
+  sql: AppSql,
+  accountId: string,
+  workflowId: string,
+  input: CreateAutomationInput
+): Promise<{ enrolled: number; skipped: number }> {
+  if (!input.name.trim()) throw new Error('Automation name is required');
+  if (!input.contactIds.length) throw new Error('Select at least one contact');
+  if (!input.emails.length) throw new Error('Add at least one email');
+
+  const existing = await sql`
+    SELECT id FROM marketing_workflows
+    WHERE id = ${workflowId}::uuid AND account_id = ${accountId}::uuid
+    LIMIT 1
+  `;
+  if (!existing[0]) throw new Error('Automation not found');
+
+  await sql`
+    UPDATE marketing_workflows
+    SET name = ${input.name.trim()},
+        sender_id = ${input.senderId ?? null}::uuid,
+        updated_at = NOW()
+    WHERE id = ${workflowId}::uuid AND account_id = ${accountId}::uuid
+  `;
+
+  await sql`DELETE FROM marketing_workflow_steps WHERE workflow_id = ${workflowId}::uuid`;
+  await insertAutomationSteps(sql, accountId, workflowId, input.name, input.emails);
+
+  const enrolledRows = await sql`
+    SELECT contact_id as "contactId", status
+    FROM marketing_workflow_enrollments
+    WHERE workflow_id = ${workflowId}::uuid
+  `;
+  const enrolledMap = new Map(
+    (enrolledRows as { contactId: string; status: string }[]).map((r) => [r.contactId, r.status])
+  );
+  const desired = new Set(input.contactIds);
   let enrolled = 0;
   let skipped = 0;
+
   for (const contactId of input.contactIds) {
-    const result = await enrollContactInWorkflow(sql, accountId, workflowId, contactId);
-    if (result.enrolled) enrolled++;
-    else skipped++;
+    if (!enrolledMap.has(contactId)) {
+      const result = await enrollContactInWorkflow(sql, accountId, workflowId, contactId);
+      if (result.enrolled) enrolled++;
+      else skipped++;
+    } else if (enrolledMap.get(contactId) === 'cancelled') {
+      await sql`
+        UPDATE marketing_workflow_enrollments
+        SET status = 'active', current_step_order = 0, next_run_at = NOW(), completed_at = NULL
+        WHERE workflow_id = ${workflowId}::uuid AND contact_id = ${contactId}::uuid
+      `;
+      enrolled++;
+    }
+  }
+
+  for (const [contactId, status] of enrolledMap) {
+    if (!desired.has(contactId) && status === 'active') {
+      await sql`
+        UPDATE marketing_workflow_enrollments
+        SET status = 'cancelled'
+        WHERE workflow_id = ${workflowId}::uuid AND contact_id = ${contactId}::uuid
+      `;
+    }
   }
 
   await processWorkflowBatch(sql, accountId, 50);
-
-  return { workflowId, enrolled, skipped };
+  return { enrolled, skipped };
 }
 
 export async function getAutomationStats(sql: AppSql, accountId: string, workflowId: string) {

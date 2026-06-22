@@ -1187,6 +1187,17 @@ export const api = {
         request<{ template: EmailTemplate }>(`/accounts/${accountId}/marketing/templates/${templateId}`, {
           token,
         }),
+      update: (
+        accountId: string,
+        templateId: string,
+        body: { name?: string; subject?: string; htmlBody?: string; textBody?: string },
+        token: string
+      ) =>
+        request<{ template: EmailTemplate }>(`/accounts/${accountId}/marketing/templates/${templateId}`, {
+          method: 'PATCH',
+          body,
+          token,
+        }),
       duplicate: (accountId: string, templateId: string, token: string) =>
         request<{ template: EmailTemplate }>(
           `/accounts/${accountId}/marketing/templates/${templateId}/duplicate`,
@@ -1295,7 +1306,40 @@ export const api = {
           };
           recipients: AutomationRecipient[];
         }>(`/accounts/${accountId}/marketing/automations/${automationId}`, { token }),
-      update: (accountId: string, automationId: string, body: { enabled?: boolean }, token: string) =>
+      getEdit: (accountId: string, automationId: string, token: string) =>
+        request<{
+          edit: {
+            name: string;
+            senderId: string;
+            enabled: boolean;
+            contactIds: string[];
+            emails: {
+              daysAfterPrevious: number;
+              subject: string;
+              htmlBody: string;
+              templateId?: string;
+            }[];
+          };
+        }>(`/accounts/${accountId}/marketing/automations/${automationId}?edit=1`, { token }),
+      update: (
+        accountId: string,
+        automationId: string,
+        body: {
+          enabled?: boolean;
+          name?: string;
+          senderId?: string;
+          contactIds?: string[];
+          emails?: {
+            daysAfterPrevious: number;
+            subject: string;
+            htmlBody: string;
+            templateId?: string;
+            saveAsTemplate?: boolean;
+            templateName?: string;
+          }[];
+        },
+        token: string
+      ) =>
         request<{ ok: boolean }>(`/accounts/${accountId}/marketing/automations/${automationId}`, {
           method: 'PATCH',
           body,

@@ -89,7 +89,13 @@ export default function MarketingHomePage() {
                         {a.enabled ? 'Active' : 'Paused'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right space-x-3">
+                      <Link
+                        href={`/dashboard/marketing/${a.id}/edit` as Route}
+                        className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+                      >
+                        Edit
+                      </Link>
                       <Link
                         href={`/dashboard/marketing/${a.id}` as Route}
                         className="text-primary-600 hover:underline text-sm font-medium"
