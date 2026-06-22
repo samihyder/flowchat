@@ -9,6 +9,12 @@ export type AutomationEmailDraft = {
   saveAsTemplate: boolean;
 };
 
+const MIN_LEAD_MS = 2 * 60_000;
+
+export function minutesFromNow(minutes: number): string {
+  return new Date(Date.now() + minutes * 60_000).toISOString();
+}
+
 export function roundToNextHour(d = new Date()): Date {
   const next = new Date(d);
   next.setMinutes(0, 0, 0);
@@ -17,13 +23,13 @@ export function roundToNextHour(d = new Date()): Date {
 }
 
 export function defaultSendAtForIndex(index: number, previousSendAt?: string): string {
-  if (index === 0) return roundToNextHour().toISOString();
-  const base = previousSendAt ? new Date(previousSendAt) : roundToNextHour();
+  if (index === 0) return minutesFromNow(5);
+  const base = previousSendAt ? new Date(previousSendAt) : new Date();
   const next = new Date(base);
   next.setDate(next.getDate() + 2);
   next.setHours(9, 0, 0, 0);
-  if (next.getTime() <= Date.now()) {
-    return roundToNextHour(new Date(Date.now() + 3600_000)).toISOString();
+  if (next.getTime() <= Date.now() + MIN_LEAD_MS) {
+    return minutesFromNow(5);
   }
   return next.toISOString();
 }
@@ -73,8 +79,8 @@ export function formatSendAtLabel(iso: string, locale: string, timezone: string)
 
 export function ensureFutureSendAt(iso: string): string {
   const d = new Date(iso);
-  if (!Number.isNaN(d.getTime()) && d.getTime() > Date.now() + 60_000) return iso;
-  return roundToNextHour().toISOString();
+  if (!Number.isNaN(d.getTime()) && d.getTime() > Date.now() + MIN_LEAD_MS) return iso;
+  return minutesFromNow(5);
 }
 
 export function validateAutomationSchedule(emails: { sendAt: string }[]): string | null {

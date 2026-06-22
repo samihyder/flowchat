@@ -3,6 +3,9 @@ import { applyMergeTags, type MergeContact } from '@/lib/marketing/merge-tags';
 
 export type MarketingAppendixExtras = {
   senderName?: string;
+  senderEmail?: string;
+  companyName?: string;
+  logoUrl?: string;
 };
 
 /** HTML blocks appended to outbound marketing emails (signature, Calendly, portfolio). */
@@ -17,6 +20,9 @@ export function buildMarketingEmailAppendix(
     calendly_url: settings.marketingCalendlyUrl ?? '',
     portfolio_url: settings.marketingPortfolioUrl ?? '',
     sender_name: extras?.senderName ?? settings.marketingFromName ?? '',
+    sender_email: extras?.senderEmail ?? settings.marketingFromEmail ?? '',
+    company_name: extras?.companyName ?? '',
+    logo_url: extras?.logoUrl ?? '',
   };
 
   const parts: string[] = [];

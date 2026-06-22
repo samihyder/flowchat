@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { parseInviteDomainsText } from '@/lib/invite-domain';
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { labelClass, selectClass } from '@/components/ui/form-field';
 import { AnnotationBox, SettingsCard } from '@/components/ui/settings-page';
 import { Button } from '@/components/ui/button';
+import { getBrowserTimezone } from '@/lib/timezone';
 
 const TIMEZONES = [
   'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -46,12 +47,17 @@ export default function AccountSettingsPage() {
   const [inviteDomainsText, setInviteDomainsText] = useState('');
   const [dataRetentionDays, setDataRetentionDays] = useState(365);
   const fileRef = useRef<HTMLInputElement>(null);
+  const timezoneOptions = useMemo(() => {
+    const browser = getBrowserTimezone();
+    return TIMEZONES.includes(browser) ? TIMEZONES : [browser, ...TIMEZONES];
+  }, []);
 
   useEffect(() => {
     if (!token || !accountId) return;
     api.account.get(accountId, token).then((res) => {
       setName(res.account.name);
-      setTimezone(res.account.timezone);
+      const tz = res.account.timezone;
+      setTimezone(!tz || tz === 'UTC' ? getBrowserTimezone() : tz);
       setLocale(res.account.locale);
       setLogoUrl(res.account.logoUrl);
       setInviteDomainsText((res.account.settings?.allowedInviteDomains ?? []).join('\n'));
@@ -152,10 +158,13 @@ export default function AccountSettingsPage() {
           <div>
             <label className={labelClass}>Timezone</label>
             <select value={timezone} onChange={(e) => setTimezone(e.target.value)} className={selectClass}>
-              {TIMEZONES.map((tz) => (
+              {timezoneOptions.map((tz) => (
                 <option key={tz} value={tz}>{tz}</option>
               ))}
             </select>
+            <p className="text-[11px] text-gray-400 mt-1">
+              Used for campaign send-time rules. Email automations use your computer&apos;s local time when scheduling.
+            </p>
           </div>
           <div>
             <label className={labelClass}>Locale</label>

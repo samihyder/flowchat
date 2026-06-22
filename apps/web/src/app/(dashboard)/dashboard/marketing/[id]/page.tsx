@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
 import { AutomationSchedulePreview } from '@/components/marketing/automation-schedule-preview';
 import { emailsFromWorkflowSteps } from '@/lib/marketing/schedule';
+import { resolveScheduleTimezone } from '@/lib/timezone';
 
 const STATUS_STYLES: Record<string, string> = {
   clicked: 'bg-green-100 text-green-800',
@@ -52,7 +53,7 @@ export default function AutomationDetailPage() {
   const [recipients, setRecipients] = useState<AutomationRecipient[]>([]);
   const [filter, setFilter] = useState<'all' | 'opened' | 'not_opened' | 'clicked' | 'bounced'>('all');
   const [loading, setLoading] = useState(true);
-  const [timezone, setTimezone] = useState('UTC');
+  const [timezone, setTimezone] = useState(() => resolveScheduleTimezone());
   const [locale, setLocale] = useState('en');
   const [createdAt, setCreatedAt] = useState<string | undefined>();
   const [scheduleEmails, setScheduleEmails] = useState<{ sendAt: string; subject?: string }[]>([]);
@@ -67,7 +68,7 @@ export default function AutomationDetailPage() {
       setEnabled(Boolean(r.workflow.enabled));
       setSummary(r.summary);
       setRecipients(r.recipients);
-      setTimezone(accountRes.account.timezone || 'UTC');
+      setTimezone(resolveScheduleTimezone(accountRes.account.timezone));
       setLocale(accountRes.account.locale || 'en');
       setCreatedAt(typeof r.workflow.createdAt === 'string' ? r.workflow.createdAt : undefined);
       if (r.steps?.length) setScheduleEmails(emailsFromWorkflowSteps(r.steps));

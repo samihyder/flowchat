@@ -10,15 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
 import { AutomationSchedulePreview } from '@/components/marketing/automation-schedule-preview';
+import { SendDateTimeField } from '@/components/marketing/send-datetime-field';
 import {
   type AutomationEmailDraft,
-  datetimeLocalToIso,
   ensureFutureSendAt,
   formatSendAtLabel,
-  isoToDatetimeLocal,
   newAutomationEmailDraft,
   validateAutomationSchedule,
 } from '@/lib/marketing/automation-email-draft';
+import { resolveScheduleTimezone } from '@/lib/timezone';
 
 const STEPS = ['Select contacts', 'Build email sequence', 'Save'];
 
@@ -39,7 +39,7 @@ export default function EditAutomationPage() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [timezone, setTimezone] = useState('UTC');
+  const [timezone, setTimezone] = useState(() => resolveScheduleTimezone());
   const [locale, setLocale] = useState('en');
 
   const loadContacts = useCallback(async () => {
@@ -67,7 +67,7 @@ export default function EditAutomationPage() {
       .then(([t, s, editRes, accountRes]) => {
         setTemplates(t.templates);
         setSenders(s.senders);
-        setTimezone(accountRes.account.timezone || 'UTC');
+        setTimezone(resolveScheduleTimezone(accountRes.account.timezone));
         setLocale(accountRes.account.locale || 'en');
         const edit = editRes.edit;
         setName(edit.name);
@@ -239,7 +239,8 @@ export default function EditAutomationPage() {
         {step === 1 && (
           <div className="space-y-6">
             <p className="text-sm text-gray-600">
-              Edit emails and pick the <strong>exact date and time</strong> each should send.
+              Edit emails and pick the <strong>exact date and time</strong> each should send. Times use your
+              local timezone ({timezone}).
             </p>
             {emails.map((email, index) => (
               <div key={email.id} className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
@@ -255,23 +256,12 @@ export default function EditAutomationPage() {
                     </button>
                   )}
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Send date & time *</label>
-                  <Input
-                    type="datetime-local"
-                    value={isoToDatetimeLocal(email.sendAt)}
-                    min={isoToDatetimeLocal(new Date(Date.now() + 60_000).toISOString())}
-                    onChange={(e) => {
-                      const iso = datetimeLocalToIso(e.target.value);
-                      if (iso) updateEmail(email.id, { sendAt: iso });
-                    }}
-                    className="max-w-xs"
-                    required
-                  />
-                  <p className="text-[11px] text-gray-400 mt-1">
-                    {formatSendAtLabel(email.sendAt, locale, timezone)}
-                  </p>
-                </div>
+                <SendDateTimeField
+                  value={email.sendAt}
+                  onChange={(iso) => updateEmail(email.id, { sendAt: iso })}
+                  timezone={timezone}
+                  locale={locale}
+                />
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">Use saved template</label>
                   <select

@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
 
-const DEFAULT_SIGNATURE = '<p>Best regards,<br/><strong>{{sender_name}}</strong></p>';
+const DEFAULT_SIGNATURE = `<p>Best regards,</p>
+<p><img src="{{logo_url}}" alt="{{company_name}}" width="72" height="72" style="border-radius:8px" /></p>
+<p><strong>{{sender_name}}</strong><br/>{{company_name}}<br/><a href="mailto:{{sender_email}}">{{sender_email}}</a></p>`;
 const DEFAULT_CALENDLY = '<p><a href="{{calendly_url}}">Book a time on my calendar</a></p>';
 const DEFAULT_PORTFOLIO = '<p><a href="{{portfolio_url}}">View my portfolio</a></p>';
 
@@ -254,10 +256,20 @@ export default function EmailMarketingSettingsPage() {
           <p className="text-sm text-gray-500 mt-1">
             Signature, Calendly, and portfolio links are appended automatically to every marketing email and
             automation follow-up. Use merge tags:{' '}
+            <code className="text-xs">{'{{logo_url}}'}</code>,{' '}
+            <code className="text-xs">{'{{company_name}}'}</code>,{' '}
             <code className="text-xs">{'{{sender_name}}'}</code>,{' '}
+            <code className="text-xs">{'{{sender_email}}'}</code>,{' '}
             <code className="text-xs">{'{{calendly_url}}'}</code>,{' '}
             <code className="text-xs">{'{{portfolio_url}}'}</code>,{' '}
             <code className="text-xs">{'{{first_name}}'}</code>.
+          </p>
+          <p className="text-sm text-gray-500">
+            Upload your logo under{' '}
+            <a href="/settings/account" className="text-primary-600 hover:underline">
+              Settings → Account
+            </a>{' '}
+            first, then use <code className="text-xs">{'{{logo_url}}'}</code> in the signature below.
           </p>
         </div>
 

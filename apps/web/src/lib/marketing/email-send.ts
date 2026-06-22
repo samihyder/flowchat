@@ -86,8 +86,16 @@ export async function sendMarketingEmail(
 
   let html = opts.html;
   if (!opts.skipAutoAppendix && opts.mergeContact) {
+    const branding = await sql`
+      SELECT name, logo_url as "logoUrl"
+      FROM accounts WHERE id = ${accountId}::uuid LIMIT 1
+    `;
+    const account = branding[0] as { name: string; logoUrl: string | null } | undefined;
     const appendix = buildMarketingEmailAppendix(settings, opts.mergeContact, {
       senderName: sender.fromName,
+      senderEmail: sender.fromEmail,
+      companyName: account?.name ?? '',
+      logoUrl: account?.logoUrl ?? '',
     });
     if (appendix) html = `${html}${appendix}`;
   }
