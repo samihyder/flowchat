@@ -7,7 +7,7 @@ export type CsvContactRow = {
 
 export type CsvImportError = { row: number; message: string };
 
-const HEADERS = ['name', 'email', 'phone', 'type'] as const;
+const HEADERS = ['first_name', 'last_name', 'name', 'email', 'phone', 'type', 'record_id', 'external_id'] as const;
 
 function parseCsvLine(line: string): string[] {
   const out: string[] = [];
@@ -42,12 +42,20 @@ export function parseContactsCsv(text: string): { rows: CsvContactRow[]; errors:
     return { rows, errors: [{ row: 0, message: 'File is empty' }] };
   }
 
-  const headerCells = parseCsvLine(lines[0]!).map((h) => h.toLowerCase());
+  const headerCells = parseCsvLine(lines[0]!).map((h) => h.toLowerCase().replace(/\s+/g, '_'));
   const hasHeader = HEADERS.some((h) => headerCells.includes(h));
   const start = hasHeader ? 1 : 0;
 
-  if (hasHeader && !headerCells.includes('name')) {
-    errors.push({ row: 1, message: 'CSV must include a name column' });
+  if (hasHeader && !headerCells.includes('email')) {
+    errors.push({ row: 1, message: 'CSV must include an email column' });
+    return { rows, errors };
+  }
+  if (
+    hasHeader &&
+    !headerCells.includes('name') &&
+    !(headerCells.includes('first_name') && headerCells.includes('last_name'))
+  ) {
+    errors.push({ row: 1, message: 'CSV must include name or first_name + last_name columns' });
     return { rows, errors };
   }
 
@@ -64,7 +72,9 @@ export function parseContactsCsv(text: string): { rows: CsvContactRow[]; errors:
       headerCells.forEach((h, idx) => {
         map[h] = cells[idx] ?? '';
       });
-      name = (map.name ?? '').trim();
+      const first = (map.first_name ?? '').trim();
+      const last = (map.last_name ?? '').trim();
+      name = first || last ? `${first} ${last}`.trim() : (map.name ?? '').trim();
       email = (map.email ?? '').trim() || null;
       phone = (map.phone ?? '').trim() || null;
       const t = (map.type ?? '').trim().toLowerCase();
@@ -79,6 +89,10 @@ export function parseContactsCsv(text: string): { rows: CsvContactRow[]; errors:
 
     if (!name) {
       errors.push({ row: rowNum, message: 'Name is required' });
+      continue;
+    }
+    if (!email) {
+      errors.push({ row: rowNum, message: 'Email is required' });
       continue;
     }
     rows.push({ name, email, phone, type });

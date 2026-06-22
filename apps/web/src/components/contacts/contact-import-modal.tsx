@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { parseCsvRaw, type ColumnMapping } from '@/lib/csv-import-utils';
+import { parseCsvRaw, guessColumnMapping, type ColumnMapping } from '@/lib/csv-import-utils';
 import { Button } from '@/components/ui/button';
 
 const STANDARD_FIELDS = [
-  { key: 'name', label: 'Name', required: true },
-  { key: 'email', label: 'Email' },
+  { key: 'firstName', label: 'First Name', required: true },
+  { key: 'lastName', label: 'Last Name', required: true },
+  { key: 'email', label: 'Email', required: true },
+  { key: 'name', label: 'Full name (optional if First + Last mapped)' },
   { key: 'phone', label: 'Phone' },
   { key: 'type', label: 'Type' },
-  { key: 'externalId', label: 'External ID' },
+  { key: 'externalId', label: 'External ID / Record ID' },
 ] as const;
 
 type Props = {
@@ -35,30 +37,39 @@ export function ContactImportModal({ open, onClose, onImport, customAttrKeys = [
     const text = await f.text();
     const { headers: h } = parseCsvRaw(text);
     setHeaders(h);
-    const lower = h.map((x) => x.toLowerCase());
+    const guessed = guessColumnMapping(h, customAttrKeys);
     const auto: Record<string, string> = {};
-    for (const field of STANDARD_FIELDS) {
-      const idx = lower.indexOf(field.key === 'externalId' ? 'external_id' : field.key);
-      if (idx >= 0) auto[field.key] = h[idx]!;
-      else if (field.key === 'name' && h[0]) auto.name = h[0];
-    }
-    for (const attr of customAttrKeys) {
-      const idx = lower.indexOf(attr.key);
-      if (idx >= 0) auto[`custom:${attr.key}`] = h[idx]!;
+    if (guessed.firstName) auto.firstName = guessed.firstName;
+    if (guessed.lastName) auto.lastName = guessed.lastName;
+    if (guessed.name) auto.name = guessed.name;
+    if (guessed.email) auto.email = guessed.email;
+    if (guessed.phone) auto.phone = guessed.phone;
+    if (guessed.type) auto.type = guessed.type;
+    if (guessed.externalId) auto.externalId = guessed.externalId;
+    for (const [key, col] of Object.entries(guessed.custom ?? {})) {
+      auto[`custom:${key}`] = col;
     }
     setMapping(auto);
   };
 
   const handleSubmit = async () => {
-    if (!file || !mapping.name) {
-      setError('Map at least the Name column.');
+    const hasName = Boolean(mapping.name);
+    const hasFirstLast = Boolean(mapping.firstName && mapping.lastName);
+    if (!file || (!hasName && !hasFirstLast)) {
+      setError('Map First Name + Last Name (or Full name) and Email.');
+      return;
+    }
+    if (!mapping.email) {
+      setError('Email column is required.');
       return;
     }
     setImporting(true);
     setError('');
     try {
       const columnMapping: ColumnMapping = {
-        name: mapping.name!,
+        name: mapping.name,
+        firstName: mapping.firstName,
+        lastName: mapping.lastName,
         email: mapping.email,
         phone: mapping.phone,
         type: mapping.type,
@@ -97,12 +108,15 @@ export function ContactImportModal({ open, onClose, onImport, customAttrKeys = [
         />
         {headers.length > 0 && (
           <div className="space-y-3">
-            <p className="text-sm text-gray-500">Map CSV columns to contact fields:</p>
+            <p className="text-sm text-gray-500">
+              Map CSV columns to contact fields. Extra columns are ignored unless mapped to a custom attribute
+              defined in Settings → CRM.
+            </p>
             {STANDARD_FIELDS.map((field) => (
               <div key={field.key} className="flex items-center gap-3">
-                <span className="text-sm w-28 shrink-0">
+                <span className="text-sm w-36 shrink-0">
                   {field.label}
-                  {'required' in field && field.required && ' *'}
+                  {'required' in field && field.required ? ' *' : ''}
                 </span>
                 <select
                   value={mapping[field.key] ?? ''}

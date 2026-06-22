@@ -104,8 +104,9 @@ export default function CrmSettingsPage() {
       <div className="bg-primary-50 border border-primary-100 rounded-xl p-5 space-y-3">
         <h3 className="font-medium text-gray-900">Import a contact list</h3>
         <p className="text-sm text-gray-600">
-          Upload a CSV from Contacts, or send leads via API key (Settings → Integrations). Columns: name, email, phone,
-          type, labels, and custom fields.
+          Upload a CSV from Contacts, or send leads via API key (Settings → Integrations). Required columns:
+          <strong> First Name</strong>, <strong>Last Name</strong>, and <strong>Email</strong> (or a single Name column).
+          Optional: phone, type, Record ID / external_id, and custom attribute columns. Unmapped columns are ignored.
         </p>
         <div className="flex flex-wrap gap-2">
           <Link href={'/dashboard/contacts' as Route}>

@@ -30,7 +30,6 @@ export function applyColumnMapping(
 ): { parsed: ParsedImportRow[]; errors: CsvImportError[] } {
   const errors: CsvImportError[] = [];
   const parsed: ParsedImportRow[] = [];
-  const nameCol = mapping.name ?? 'name';
 
   for (let i = 0; i < rows.length; i++) {
     const cells = rows[i]!;
@@ -45,9 +44,30 @@ export function applyColumnMapping(
       return (map[field] ?? '').trim();
     };
 
-    const name = get(nameCol);
+    const firstName = get(mapping.firstName);
+    const lastName = get(mapping.lastName);
+    const fullName = get(mapping.name);
+    const name =
+      firstName || lastName
+        ? `${firstName} ${lastName}`.trim()
+        : fullName;
+
+    if (!firstName && mapping.firstName) {
+      errors.push({ row: rowNum, message: 'First Name is required' });
+      continue;
+    }
+    if (!lastName && mapping.lastName) {
+      errors.push({ row: rowNum, message: 'Last Name is required' });
+      continue;
+    }
     if (!name) {
-      errors.push({ row: rowNum, message: 'Name is required' });
+      errors.push({ row: rowNum, message: 'Name is required (map First Name + Last Name, or Name)' });
+      continue;
+    }
+
+    const email = get(mapping.email ?? 'email') || null;
+    if (!email) {
+      errors.push({ row: rowNum, message: 'Email is required' });
       continue;
     }
 
@@ -72,7 +92,7 @@ export function applyColumnMapping(
 
     parsed.push({
       name,
-      email: get(mapping.email ?? 'email') || null,
+      email,
       phone: get(mapping.phone ?? 'phone') || null,
       type,
       externalId: get(mapping.externalId ?? 'external_id') || null,

@@ -2,7 +2,7 @@ import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { getAccountSettings } from '@/lib/account-settings-db';
 import { canImportContacts } from '@/lib/crm-permissions';
-import { parseCsvRaw, type ColumnMapping } from '@/lib/csv-import-utils';
+import { parseCsvRaw, guessColumnMapping, type ColumnMapping } from '@/lib/csv-import-utils';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -61,16 +61,17 @@ export async function POST(req: Request, { params }: Params) {
     return Response.json({ error: 'CSV has no data rows' }, { status: 400 });
   }
 
-  if (!columnMapping.name) {
-    const lower = headers.map((h) => h.toLowerCase());
-    columnMapping = {
-      name: headers[lower.indexOf('name')] ?? headers[0],
-      email: headers[lower.indexOf('email')] ?? undefined,
-      phone: headers[lower.indexOf('phone')] ?? undefined,
-      type: headers[lower.indexOf('type')] ?? undefined,
-      externalId: headers[lower.indexOf('external_id')] ?? headers[lower.indexOf('externalid')] ?? undefined,
-      ...columnMapping,
-    };
+  if (!columnMapping.email) {
+    const attrRows = await sql`
+      SELECT key, label FROM custom_attribute_definitions
+      WHERE account_id = ${accountId}::uuid AND entity_type = 'contact'
+      ORDER BY sort_order ASC
+    `;
+    const guessed = guessColumnMapping(
+      headers,
+      (attrRows as { key: string; label: string }[]).map((r) => ({ key: r.key, label: r.label }))
+    );
+    columnMapping = { ...guessed, ...columnMapping };
   }
 
   const jobs = await sql`
