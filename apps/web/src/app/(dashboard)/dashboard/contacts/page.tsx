@@ -39,7 +39,7 @@ export default function ContactsPage() {
   const [sortKey, setSortKey] = useState('last_activity_at:desc');
   const [labels, setLabels] = useState<Label[]>([]);
   const [loading, setLoading] = useState(true);
-  const [access, setAccess] = useState({ canImport: false, canExport: false, isAdmin: false });
+  const [access, setAccess] = useState({ canImport: false, canExport: false, isAdmin: false, importEnabled: true });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [importOpen, setImportOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
@@ -234,6 +234,22 @@ export default function ContactsPage() {
           </div>
         }
       />
+
+      {access.isAdmin && !access.canImport && (
+        <div className="mx-6 mb-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          Contact import is turned off.{' '}
+          <Link href={'/settings/crm' as Route} className="font-medium underline">
+            Enable it in Settings → CRM
+          </Link>
+          .
+        </div>
+      )}
+
+      {!access.canImport && !access.isAdmin && (
+        <div className="mx-6 mb-4 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+          Ask an administrator to enable CSV import under Settings → CRM.
+        </div>
+      )}
 
       <div className="px-6 pb-4">
         <MetricGrid>

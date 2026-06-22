@@ -30,6 +30,8 @@ export default function IntegrationsPage() {
   const [keyName, setKeyName] = useState('HubSpot sync');
   const [apiKeySecret, setApiKeySecret] = useState<string | null>(null);
   const [tab, setTab] = useState('webhooks');
+  const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
+  const [editingKeyName, setEditingKeyName] = useState('');
   const baseUrl = typeof window !== 'undefined' ? getApiUrl() : 'https://your-app.vercel.app/api';
 
   const load = () => {
@@ -63,6 +65,14 @@ export default function IntegrationsPage() {
   const revokeKey = async (keyId: string) => {
     if (!token || !accountId) return;
     await api.apiKeys.remove(accountId, keyId, token);
+    if (editingKeyId === keyId) setEditingKeyId(null);
+    load();
+  };
+
+  const saveKeyName = async (keyId: string) => {
+    if (!token || !accountId || !editingKeyName.trim()) return;
+    await api.apiKeys.update(accountId, keyId, { name: editingKeyName.trim() }, token);
+    setEditingKeyId(null);
     load();
   };
 
@@ -72,7 +82,7 @@ export default function IntegrationsPage() {
 
       {tab === 'api-keys' && (
       <Card>
-        <CardHeader title="API keys (incoming)" description="External apps push/pull contacts into FlowChat" />
+        <CardHeader title="API keys (incoming)" description="Stored permanently in the database. Rename anytime; full key is only shown once at creation." />
         <CardBody className="space-y-4">
           <div className="text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 font-mono space-y-1 overflow-x-auto">
             <p>POST {baseUrl}/integrations/v1/contacts/inbound</p>
@@ -92,15 +102,43 @@ export default function IntegrationsPage() {
           )}
           <ul className="text-sm space-y-2">
             {apiKeys.map((k) => (
-              <li key={k.id} className="flex items-center justify-between gap-2">
-                <span>
-                  <span className="font-medium">{k.name}</span>{' '}
-                  <code className="text-gray-400">{k.keyPrefix}…</code>
-                  <span className="text-gray-400 ml-2">({k.scopes.join(', ')})</span>
-                </span>
-                <Button type="button" variant="danger" size="sm" onClick={() => void revokeKey(k.id)}>
-                  Revoke
-                </Button>
+              <li key={k.id} className="flex items-center justify-between gap-2 border border-gray-100 rounded-lg p-3">
+                {editingKeyId === k.id ? (
+                  <div className="flex flex-1 gap-2 items-center">
+                    <Input value={editingKeyName} onChange={(e) => setEditingKeyName(e.target.value)} />
+                    <Button type="button" size="sm" onClick={() => void saveKeyName(k.id)}>
+                      Save
+                    </Button>
+                    <Button type="button" size="sm" variant="secondary" onClick={() => setEditingKeyId(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <span>
+                      <span className="font-medium">{k.name}</span>{' '}
+                      <code className="text-gray-400">{k.keyPrefix}…</code>
+                      <span className="text-gray-400 ml-2">({k.scopes.join(', ')})</span>
+                      {!k.enabled && <span className="text-amber-600 ml-2">disabled</span>}
+                    </span>
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setEditingKeyId(k.id);
+                          setEditingKeyName(k.name);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button type="button" variant="danger" size="sm" onClick={() => void revokeKey(k.id)}>
+                        Revoke
+                      </Button>
+                    </div>
+                  </>
+                )}
               </li>
             ))}
             {apiKeys.length === 0 && <p className="text-gray-400">No API keys yet.</p>}

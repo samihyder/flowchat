@@ -33,6 +33,12 @@ export default function ConnectedServicesPage() {
   const [mailgunDomain, setMailgunDomain] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('');
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editSecret, setEditSecret] = useState('');
+  const [editWebhookSecret, setEditWebhookSecret] = useState('');
+  const [editMailgunDomain, setEditMailgunDomain] = useState('');
+
   const load = () => {
     if (!token || !accountId) return;
     api.serviceCredentials.list(accountId, token).then((r) => setCredentials(r.credentials));
@@ -121,7 +127,56 @@ export default function ConnectedServicesPage() {
   const remove = async (id: string) => {
     if (!token || !accountId || !confirm('Remove this connection?')) return;
     await api.serviceCredentials.remove(accountId, id, token);
+    if (editingId === id) setEditingId(null);
     load();
+  };
+
+  const startEdit = (c: ServiceCredential) => {
+    setEditingId(c.id);
+    setEditLabel(c.label);
+    setEditSecret('');
+    setEditWebhookSecret(
+      typeof c.config?.webhookSigningSecret === 'string' ? c.config.webhookSigningSecret : ''
+    );
+    setEditMailgunDomain(typeof c.config?.domain === 'string' ? c.config.domain : '');
+    setMessage('');
+    setMessageKind('');
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !accountId || !editingId) return;
+    const cred = credentials.find((c) => c.id === editingId);
+    if (!cred) return;
+    setBusy(true);
+    setMessage('');
+    setMessageKind('');
+    try {
+      const config: Record<string, unknown> = { ...cred.config };
+      if (cred.provider === 'mailgun' && editMailgunDomain.trim()) {
+        config.domain = editMailgunDomain.trim();
+      }
+      if (cred.category === 'email_marketing') {
+        config.webhookSigningSecret = editWebhookSecret.trim();
+      }
+      await api.serviceCredentials.update(
+        accountId,
+        editingId,
+        {
+          label: editLabel.trim(),
+          config,
+          ...(editSecret.trim() ? { secret: editSecret.trim() } : {}),
+        },
+        token
+      );
+      setEditingId(null);
+      showMessage('Connection updated and saved.', 'success');
+      load();
+    } catch (err) {
+      showMessage(err instanceof Error ? err.message : 'Failed to update connection', 'error');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const saveAiSettings = async (enabled: boolean) => {
@@ -178,9 +233,46 @@ export default function ConnectedServicesPage() {
       <div>
         <h2 className="text-base font-semibold text-gray-900">Connected services</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Bring your own API keys for email marketing (Resend, SendGrid, Mailgun) and AI (Claude). Keys are encrypted at rest.
+          Bring your own API keys for email marketing (Resend, SendGrid, Mailgun) and AI (Claude). Keys are encrypted and
+          stored permanently in the database — edit anytime to rotate a key or update webhook secrets.
         </p>
       </div>
+
+      {editingId && (
+        <form onSubmit={saveEdit} className="bg-white border border-primary-200 rounded-xl p-5 space-y-3">
+          <h3 className="font-medium text-gray-900">Edit connection</h3>
+          <Input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} placeholder="Label" required />
+          <Input
+            type="password"
+            value={editSecret}
+            onChange={(e) => setEditSecret(e.target.value)}
+            placeholder="New API key (leave blank to keep current)"
+            autoComplete="off"
+          />
+          {credentials.find((c) => c.id === editingId)?.provider === 'mailgun' && (
+            <Input
+              value={editMailgunDomain}
+              onChange={(e) => setEditMailgunDomain(e.target.value)}
+              placeholder="Mailgun sending domain"
+            />
+          )}
+          {credentials.find((c) => c.id === editingId)?.category === 'email_marketing' && (
+            <Input
+              value={editWebhookSecret}
+              onChange={(e) => setEditWebhookSecret(e.target.value)}
+              placeholder="Webhook signing secret (whsec_…)"
+            />
+          )}
+          <div className="flex gap-2">
+            <Button type="submit" disabled={busy}>
+              {busy ? 'Saving…' : 'Save changes'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      )}
 
       {message && (
         <p
@@ -221,6 +313,9 @@ export default function ConnectedServicesPage() {
                 <p className="text-xs text-gray-400">Used {c.usageCount} times</p>
               </div>
               <div className="flex flex-col gap-1 shrink-0">
+                <Button type="button" variant="ghost" size="sm" onClick={() => startEdit(c)}>
+                  Edit
+                </Button>
                 {!c.isDefault && (
                   <Button type="button" variant="ghost" size="sm" onClick={() => setDefault(c.id)}>
                     Set default
@@ -278,6 +373,9 @@ export default function ConnectedServicesPage() {
                 <p className="text-xs text-gray-500 mt-1">Key: {c.secretPrefix}</p>
               </div>
               <div className="flex flex-col gap-1 shrink-0">
+                <Button type="button" variant="ghost" size="sm" onClick={() => startEdit(c)}>
+                  Edit
+                </Button>
                 {!c.isDefault && (
                   <Button type="button" variant="ghost" size="sm" onClick={() => setDefault(c.id)}>
                     Set default
@@ -357,7 +455,8 @@ export default function ConnectedServicesPage() {
           />
           {category === 'email_marketing' && provider === 'resend' && (
             <p className="text-xs text-gray-500">
-              Resend &quot;Sending access&quot; keys are supported — full-access keys are not required.
+              Use a Resend key with <strong>Sending access</strong> — that is the correct key type for FlowChat email
+              marketing. Full-access keys also work.
             </p>
           )}
           {provider === 'mailgun' && (

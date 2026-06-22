@@ -5,8 +5,9 @@ export function canImportContacts(
   userId: string,
   role: string
 ): boolean {
-  if (!settings.crmImportEnabled) return false;
+  if (settings.crmImportEnabled === false) return false;
   if (role === 'administrator') return true;
+  if (settings.crmImportEnabled !== true) return false;
   return (settings.crmImportAllowedUserIds ?? []).includes(userId);
 }
 
@@ -15,7 +16,8 @@ export function canExportContacts(
   userId: string,
   role: string
 ): boolean {
-  if (!settings.crmExportEnabled) return false;
+  if (settings.crmExportEnabled === false) return false;
   if (role === 'administrator') return true;
+  if (settings.crmExportEnabled !== true) return false;
   return (settings.crmExportAllowedUserIds ?? []).includes(userId);
 }

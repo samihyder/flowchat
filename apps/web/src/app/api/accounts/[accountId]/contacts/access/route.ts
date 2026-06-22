@@ -18,8 +18,8 @@ export async function GET(req: Request, { params }: Params) {
   const settings = await getAccountSettings(sql, accountId);
 
   return Response.json({
-    importEnabled: settings.crmImportEnabled ?? false,
-    exportEnabled: settings.crmExportEnabled ?? false,
+    importEnabled: settings.crmImportEnabled !== false,
+    exportEnabled: settings.crmExportEnabled !== false,
     canImport: canImportContacts(settings, auth.userId, auth.role),
     canExport: canExportContacts(settings, auth.userId, auth.role),
     isAdmin: auth.role === 'administrator',

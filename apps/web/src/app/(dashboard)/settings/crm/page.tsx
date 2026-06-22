@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
@@ -32,8 +34,8 @@ export default function CrmSettingsPage() {
       .then(([account, agentRes, access]) => {
         setIsAdmin(access.isAdmin);
         const s = account.account.settings ?? {};
-        setCrmImportEnabled(s.crmImportEnabled ?? false);
-        setCrmExportEnabled(s.crmExportEnabled ?? false);
+        setCrmImportEnabled(s.crmImportEnabled !== false);
+        setCrmExportEnabled(s.crmExportEnabled !== false);
         setImportUserIds(s.crmImportAllowedUserIds ?? []);
         setExportUserIds(s.crmExportAllowedUserIds ?? []);
         setAgents(
@@ -95,8 +97,26 @@ export default function CrmSettingsPage() {
       <div>
         <h2 className="text-base font-semibold text-gray-900">CRM — Import & export</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Enable CSV import/export and choose which agents may use each feature. Administrators always have access when enabled.
+          Import contact lists (CSV), sync from LeadSnapper, or push via API. Administrators can import by default.
         </p>
+      </div>
+
+      <div className="bg-primary-50 border border-primary-100 rounded-xl p-5 space-y-3">
+        <h3 className="font-medium text-gray-900">Import a contact list</h3>
+        <p className="text-sm text-gray-600">
+          Upload a CSV from Contacts, or send leads via API key (Settings → Integrations). Columns: name, email, phone,
+          type, labels, and custom fields.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link href={'/dashboard/contacts' as Route}>
+            <Button type="button">Go to Contacts → Import CSV</Button>
+          </Link>
+          <Link href={'/settings/integrations' as Route}>
+            <Button type="button" variant="secondary">
+              API keys & inbound sync
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <form onSubmit={handleSave} className="bg-white border border-gray-200 rounded-xl p-5 space-y-6">
@@ -110,6 +130,7 @@ export default function CrmSettingsPage() {
             />
             Enable contact import (CSV)
           </label>
+          <p className="text-xs text-gray-500 pl-6">Off only if you want to block all imports. Admins can import when enabled.</p>
 
           {crmImportEnabled && (
             <div className="pl-6 space-y-2">

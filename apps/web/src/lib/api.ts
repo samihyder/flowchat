@@ -1546,7 +1546,7 @@ export const api = {
     update: (
       accountId: string,
       credentialId: string,
-      body: { label?: string; isDefault?: boolean; config?: Record<string, unknown> },
+      body: { label?: string; isDefault?: boolean; config?: Record<string, unknown>; secret?: string },
       token: string
     ) =>
       request<{ ok: boolean }>(`/accounts/${accountId}/service-credentials/${credentialId}`, {
@@ -1609,6 +1609,16 @@ export const api = {
 
     remove: (accountId: string, keyId: string, token: string) =>
       request<{ ok: boolean }>(`/accounts/${accountId}/api-keys/${keyId}`, { method: 'DELETE', token }),
+
+    update: (
+      accountId: string,
+      keyId: string,
+      body: { name?: string; enabled?: boolean },
+      token: string
+    ) =>
+      request<{
+        apiKey: { id: string; name: string; keyPrefix: string; scopes: string[]; enabled: boolean };
+      }>(`/accounts/${accountId}/api-keys/${keyId}`, { method: 'PATCH', body, token }),
   },
 
   auditLogs: {

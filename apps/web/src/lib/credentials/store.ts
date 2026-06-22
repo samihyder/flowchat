@@ -310,8 +310,31 @@ export async function updateCredential(
   if (patch.config) {
     await sql`
       UPDATE account_service_credentials
-      SET config_json = ${JSON.stringify(patch.config)}::jsonb, updated_at = NOW()
+      SET config_json = config_json || ${JSON.stringify(patch.config)}::jsonb, updated_at = NOW()
       WHERE id = ${credentialId}::uuid AND account_id = ${accountId}::uuid
     `;
   }
+}
+
+export async function updateCredentialSecret(
+  sql: AppSql,
+  accountId: string,
+  credentialId: string,
+  secret: string
+) {
+  const enc = encryptSecret(secret);
+  const prefix = secretPrefix(secret);
+  await sql`
+    UPDATE account_service_credentials
+    SET
+      secret_ciphertext = ${enc.ciphertext},
+      secret_iv = ${enc.iv},
+      secret_tag = ${enc.tag},
+      secret_prefix = ${prefix},
+      status = 'active',
+      last_verified_at = NOW(),
+      updated_at = NOW(),
+      config_json = config_json - 'lastVerificationError'
+    WHERE id = ${credentialId}::uuid AND account_id = ${accountId}::uuid
+  `;
 }
