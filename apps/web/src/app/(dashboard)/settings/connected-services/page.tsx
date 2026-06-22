@@ -23,6 +23,7 @@ export default function ConnectedServicesPage() {
   const [aiCredentialId, setAiCredentialId] = useState('');
   const [aiModel, setAiModel] = useState('claude-3-5-haiku-20241022');
   const [message, setMessage] = useState('');
+  const [messageKind, setMessageKind] = useState<'success' | 'error' | ''>('');
   const [busy, setBusy] = useState(false);
 
   const [category, setCategory] = useState<'email_marketing' | 'ai_chat'>('email_marketing');
@@ -48,11 +49,17 @@ export default function ConnectedServicesPage() {
   const emailCreds = credentials.filter((c) => c.category === 'email_marketing');
   const aiCreds = credentials.filter((c) => c.category === 'ai_chat');
 
+  const showMessage = (text: string, kind: 'success' | 'error') => {
+    setMessage(text);
+    setMessageKind(kind);
+  };
+
   const addCredential = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token || !accountId) return;
     setBusy(true);
     setMessage('');
+    setMessageKind('');
     try {
       const config: Record<string, unknown> = {};
       if (provider === 'mailgun' && mailgunDomain.trim()) {
@@ -82,10 +89,10 @@ export default function ConnectedServicesPage() {
       setSecret('');
       setMailgunDomain('');
       setWebhookSecret('');
-      setMessage('Connection added and verified.');
+      showMessage('Connection added and verified.', 'success');
       load();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Failed to add connection');
+      showMessage(err instanceof Error ? err.message : 'Failed to add connection', 'error');
     } finally {
       setBusy(false);
     }
@@ -94,12 +101,14 @@ export default function ConnectedServicesPage() {
   const testConnection = async (id: string) => {
     if (!token || !accountId) return;
     setMessage('');
+    setMessageKind('');
     try {
       await api.serviceCredentials.test(accountId, id, token);
-      setMessage('Connection test passed.');
+      showMessage('Connection test passed.', 'success');
       load();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Test failed');
+      showMessage(err instanceof Error ? err.message : 'Test failed', 'error');
+      load();
     }
   };
 
@@ -121,10 +130,10 @@ export default function ConnectedServicesPage() {
     setBusy(true);
     try {
       await api.account.update(accountId, { settings: { widgetAiEnabled: enabled } }, token);
-      setMessage(enabled ? 'AI enabled for chat widget.' : 'AI disabled for chat widget.');
+      showMessage(enabled ? 'AI enabled for chat widget.' : 'AI disabled for chat widget.', 'success');
     } catch (err) {
       setWidgetAiEnabled(!enabled);
-      setMessage(err instanceof Error ? err.message : 'Failed to save AI setting');
+      showMessage(err instanceof Error ? err.message : 'Failed to save AI setting', 'error');
     } finally {
       setBusy(false);
     }
@@ -145,21 +154,22 @@ export default function ConnectedServicesPage() {
       token
     );
     setBusy(false);
-    setMessage('Workspace policy saved.');
+    showMessage('Workspace policy saved.', 'success');
   };
 
   const testAi = async () => {
     if (!token || !accountId) return;
     setMessage('');
+    setMessageKind('');
     try {
       const r = await api.ai.chat(
         accountId,
         { messages: [{ role: 'user', content: 'Reply with exactly: OK' }], credentialId: aiCredentialId || undefined },
         token
       );
-      setMessage(`AI test: ${r.text.slice(0, 120)}`);
+      showMessage(`AI test: ${r.text.slice(0, 120)}`, 'success');
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'AI test failed');
+      showMessage(err instanceof Error ? err.message : 'AI test failed', 'error');
     }
   };
 
@@ -173,7 +183,15 @@ export default function ConnectedServicesPage() {
       </div>
 
       {message && (
-        <p className="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">{message}</p>
+        <p
+          className={`text-sm rounded-lg px-3 py-2 border ${
+            messageKind === 'error'
+              ? 'text-red-800 bg-red-50 border-red-200'
+              : 'text-green-800 bg-green-50 border-green-200'
+          }`}
+        >
+          {message}
+        </p>
       )}
 
       <section className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
@@ -192,8 +210,13 @@ export default function ConnectedServicesPage() {
                   <Badge color={c.status === 'active' ? 'success' : 'warning'}>{c.status}</Badge>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Key: {c.secretPrefix}</p>
+                {typeof c.config?.lastVerificationError === 'string' && c.config.lastVerificationError && (
+                  <p className="text-xs text-red-600 mt-1">Last error: {c.config.lastVerificationError}</p>
+                )}
                 {c.webhookUrl && (
-                  <p className="text-xs text-gray-400 mt-1 break-all">Webhook: {c.webhookUrl}</p>
+                  <p className="text-xs text-gray-400 mt-1 break-all">
+                    Webhook (paste in Resend): {c.webhookUrl}
+                  </p>
                 )}
                 <p className="text-xs text-gray-400">Used {c.usageCount} times</p>
               </div>
@@ -341,11 +364,16 @@ export default function ConnectedServicesPage() {
             />
           )}
           {category === 'email_marketing' && (
-            <Input
-              placeholder="Webhook signing secret (optional)"
-              value={webhookSecret}
-              onChange={(e) => setWebhookSecret(e.target.value)}
-            />
+            <>
+              <Input
+                placeholder="Webhook signing secret (whsec_… from Resend)"
+                value={webhookSecret}
+                onChange={(e) => setWebhookSecret(e.target.value)}
+              />
+              <p className="text-xs text-gray-500">
+                Optional. Add this after saving the connection — paste the webhook URL shown above into Resend, then enter the signing secret here via Edit or re-add.
+              </p>
+            </>
           )}
           <Button type="submit" disabled={busy}>
             {busy ? 'Verifying…' : 'Add & verify'}

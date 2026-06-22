@@ -81,19 +81,33 @@ export async function listCredentials(
 export async function getCredentialSecret(
   sql: AppSql,
   accountId: string,
-  credentialId: string
+  credentialId: string,
+  opts?: { activeOnly?: boolean }
 ): Promise<{ row: ServiceCredentialRow; secret: string } | null> {
-  const rows = await sql`
-    SELECT id, account_id as "accountId", category, provider, label,
-           secret_prefix as "secretPrefix",
-           secret_ciphertext as "secretCiphertext", secret_iv as "secretIv", secret_tag as "secretTag",
-           config_json as config, status, is_default as "isDefault",
-           last_verified_at as "lastVerifiedAt", last_used_at as "lastUsedAt",
-           usage_count as "usageCount", created_at as "createdAt", updated_at as "updatedAt"
-    FROM account_service_credentials
-    WHERE id = ${credentialId}::uuid AND account_id = ${accountId}::uuid AND status = 'active'
-    LIMIT 1
-  `;
+  const activeOnly = opts?.activeOnly !== false;
+  const rows = activeOnly
+    ? await sql`
+        SELECT id, account_id as "accountId", category, provider, label,
+               secret_prefix as "secretPrefix",
+               secret_ciphertext as "secretCiphertext", secret_iv as "secretIv", secret_tag as "secretTag",
+               config_json as config, status, is_default as "isDefault",
+               last_verified_at as "lastVerifiedAt", last_used_at as "lastUsedAt",
+               usage_count as "usageCount", created_at as "createdAt", updated_at as "updatedAt"
+        FROM account_service_credentials
+        WHERE id = ${credentialId}::uuid AND account_id = ${accountId}::uuid AND status = 'active'
+        LIMIT 1
+      `
+    : await sql`
+        SELECT id, account_id as "accountId", category, provider, label,
+               secret_prefix as "secretPrefix",
+               secret_ciphertext as "secretCiphertext", secret_iv as "secretIv", secret_tag as "secretTag",
+               config_json as config, status, is_default as "isDefault",
+               last_verified_at as "lastVerifiedAt", last_used_at as "lastUsedAt",
+               usage_count as "usageCount", created_at as "createdAt", updated_at as "updatedAt"
+        FROM account_service_credentials
+        WHERE id = ${credentialId}::uuid AND account_id = ${accountId}::uuid
+        LIMIT 1
+      `;
   const r = rows[0] as DbRow | undefined;
   if (!r) return null;
 
@@ -221,6 +235,35 @@ export async function setCredentialStatus(
   await sql`
     UPDATE account_service_credentials
     SET status = ${status}, updated_at = NOW()
+    WHERE id = ${credentialId}::uuid AND account_id = ${accountId}::uuid
+  `;
+}
+
+export async function recordCredentialVerification(
+  sql: AppSql,
+  accountId: string,
+  credentialId: string,
+  result: { ok: true } | { ok: false; error: string }
+) {
+  if (result.ok) {
+    await sql`
+      UPDATE account_service_credentials
+      SET
+        status = 'active',
+        last_verified_at = NOW(),
+        updated_at = NOW(),
+        config_json = config_json - 'lastVerificationError'
+      WHERE id = ${credentialId}::uuid AND account_id = ${accountId}::uuid
+    `;
+    return;
+  }
+
+  await sql`
+    UPDATE account_service_credentials
+    SET
+      status = 'invalid',
+      updated_at = NOW(),
+      config_json = config_json || ${JSON.stringify({ lastVerificationError: result.error })}::jsonb
     WHERE id = ${credentialId}::uuid AND account_id = ${accountId}::uuid
   `;
 }

@@ -1,20 +1,10 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { neon } from '@neondatabase/serverless';
 import { getCredentialSecret } from '@/lib/credentials/store';
+import { verifySvixWebhook } from '@/lib/credentials/webhook-signature';
 import { handleResendWebhookEvent } from '@/lib/marketing/resend-events';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ credentialId: string }> };
-
-function verifyResendSignature(payload: string, signature: string | null, secret: string): boolean {
-  if (!signature || !secret) return !secret;
-  const expected = createHmac('sha256', secret).update(payload).digest('hex');
-  try {
-    return timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-  } catch {
-    return false;
-  }
-}
 
 export async function POST(req: Request, { params }: Params) {
   const { credentialId } = await params;
@@ -37,9 +27,9 @@ export async function POST(req: Request, { params }: Params) {
       : '';
 
   if (webhookSecret) {
-    const sig = req.headers.get('svix-signature') ?? req.headers.get('resend-signature');
-    if (!verifyResendSignature(rawBody, sig, webhookSecret)) {
-      return Response.json({ error: 'Invalid signature' }, { status: 401 });
+    const verified = verifySvixWebhook(rawBody, req.headers, webhookSecret);
+    if (!verified) {
+      return Response.json({ error: 'Invalid webhook signature — check the whsec_ signing secret from Resend' }, { status: 401 });
     }
   }
 

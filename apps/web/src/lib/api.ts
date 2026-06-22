@@ -425,14 +425,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     throw new Error(`Cannot reach the API at ${apiUrl}. Check your connection and try again.`);
   }
 
-  let data: { error?: string };
+  let data: { error?: string; message?: string };
   try {
     data = await res.json();
   } catch {
     throw new Error(`Unexpected response from API (${res.status}). Try again in a moment.`);
   }
 
-  if (!res.ok) throw new Error(data.error ?? 'Request failed');
+  if (!res.ok) {
+    throw new Error(data.error ?? data.message ?? `Request failed (${res.status})`);
+  }
   return data as T;
 }
 

@@ -4,7 +4,7 @@ import { verifyEmailCredential } from '@/lib/credentials/providers/email';
 import { verifyAnthropicKey } from '@/lib/credentials/providers/ai/anthropic';
 import {
   getCredentialSecret,
-  setCredentialStatus,
+  recordCredentialVerification,
 } from '@/lib/credentials/store';
 import type { EmailProviderId } from '@/lib/credentials/types';
 import type { AppSql } from '@/lib/db-sql';
@@ -21,7 +21,7 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
-  const cred = await getCredentialSecret(sql, accountId, credentialId);
+  const cred = await getCredentialSecret(sql, accountId, credentialId, { activeOnly: false });
   if (!cred) return Response.json({ error: 'Credential not found' }, { status: 404 });
 
   let verify: { ok: true } | { ok: false; error: string };
@@ -38,15 +38,11 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   if (!verify.ok) {
-    await setCredentialStatus(sql, accountId, credentialId, 'invalid');
+    await recordCredentialVerification(sql, accountId, credentialId, verify);
     return Response.json({ ok: false, error: verify.error }, { status: 400 });
   }
 
-  await sql`
-    UPDATE account_service_credentials
-    SET status = 'active', last_verified_at = NOW(), updated_at = NOW()
-    WHERE id = ${credentialId}::uuid
-  `;
+  await recordCredentialVerification(sql, accountId, credentialId, { ok: true });
 
   return Response.json({ ok: true });
 }

@@ -8,13 +8,25 @@ export const resendEmailProvider: EmailProviderAdapter = {
       const res = await fetch('https://api.resend.com/domains', {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
+      const data = (await res.json().catch(() => ({}))) as { message?: string; statusCode?: number };
       if (res.status === 401 || res.status === 403) {
-        return { ok: false, error: 'Invalid Resend API key' };
+        return {
+          ok: false,
+          error: data.message ?? 'Invalid Resend API key — check the key starts with re_ and has sending access',
+        };
       }
-      if (!res.ok) return { ok: false, error: `Resend API error (${res.status})` };
+      if (!res.ok) {
+        return {
+          ok: false,
+          error: data.message ?? `Resend API error (${res.status})`,
+        };
+      }
       return { ok: true };
-    } catch {
-      return { ok: false, error: 'Could not reach Resend API' };
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : 'Could not reach Resend API',
+      };
     }
   },
 
