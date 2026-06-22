@@ -46,3 +46,26 @@ body {
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
+
+/* TipTap email editor */
+.tiptap p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap:focus {
+  outline: none;
+}
+
+.tiptap ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+
+.tiptap a {
+  color: #4f46e5;
+  text-decoration: underline;
+}

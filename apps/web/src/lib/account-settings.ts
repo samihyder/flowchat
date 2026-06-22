@@ -24,6 +24,14 @@ export type AccountSettings = {
   marketingPhysicalAddress?: string;
   /** When true, new contacts must confirm before marketing sends */
   marketingDoubleOptIn?: boolean;
+  /** When true, marketing sends require tenant-owned ESP credentials (no platform fallback) */
+  marketingByokOnly?: boolean;
+  /** Default AI credential for widget / copilot */
+  aiCredentialId?: string;
+  /** Preferred Anthropic model id */
+  aiModel?: string;
+  /** When true, chat widget uses AI to reply to visitor messages */
+  widgetAiEnabled?: boolean;
 };
 
 function parseStringArray(raw: unknown): string[] | undefined {
@@ -49,6 +57,10 @@ export function parseAccountSettings(raw: unknown): AccountSettings {
       typeof s.marketingPhysicalAddress === 'string' ? s.marketingPhysicalAddress : undefined,
     marketingDoubleOptIn:
       typeof s.marketingDoubleOptIn === 'boolean' ? s.marketingDoubleOptIn : undefined,
+    marketingByokOnly: typeof s.marketingByokOnly === 'boolean' ? s.marketingByokOnly : undefined,
+    aiCredentialId: typeof s.aiCredentialId === 'string' ? s.aiCredentialId : undefined,
+    aiModel: typeof s.aiModel === 'string' ? s.aiModel : undefined,
+    widgetAiEnabled: typeof s.widgetAiEnabled === 'boolean' ? s.widgetAiEnabled : undefined,
     autoMessages: parseStringArray(s.autoMessages),
     autoWelcomeTitle: typeof s.autoWelcomeTitle === 'string' ? s.autoWelcomeTitle : undefined,
     autoWelcomeTagline: typeof s.autoWelcomeTagline === 'string' ? s.autoWelcomeTagline : undefined,

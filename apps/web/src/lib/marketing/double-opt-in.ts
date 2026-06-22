@@ -28,7 +28,7 @@ export async function sendDoubleOptInEmail(
 ): Promise<{ ok: boolean; error?: string }> {
   const token = await createConfirmToken(sql, accountId, contactId);
   const link = confirmSubscribeUrl(token);
-  const sender = await getMarketingSender(sql, accountId, settings, opts.senderId);
+  const { identity: sender } = await getMarketingSender(sql, accountId, settings, opts.senderId);
 
   const html = `
     <p>Hi ${opts.name || 'there'},</p>

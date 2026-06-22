@@ -269,6 +269,8 @@ export async function processCampaignBatch(
         UPDATE email_campaign_recipients SET
           status = 'sent',
           resend_message_id = ${result.messageId},
+          provider = ${result.provider},
+          provider_message_id = ${result.messageId},
           sent_at = NOW()
         WHERE id = ${row.id}::uuid
       `;

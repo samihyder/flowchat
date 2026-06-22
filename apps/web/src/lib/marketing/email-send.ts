@@ -1,10 +1,16 @@
 import type { AccountSettings } from '@/lib/account-settings';
+import { checkEmailDomain, sendViaEmailProvider } from '@/lib/credentials/providers/email';
+import {
+  markCredentialUsed,
+  resolveEmailCredential,
+} from '@/lib/credentials/store';
+import type { EmailProviderId } from '@/lib/credentials/types';
 import { getOrCreateUnsubscribeToken, unsubscribeUrl } from '@/lib/marketing/unsubscribe';
 import { getMarketingSender, senderFromHeader, type SenderIdentity } from '@/lib/marketing/senders';
 import type { AppSql } from '@/lib/db-sql';
 
 export type MarketingSendResult =
-  | { ok: true; messageId: string }
+  | { ok: true; messageId: string; provider: EmailProviderId; credentialId?: string }
   | { ok: false; error: string };
 
 function complianceFooter(physicalAddress: string | undefined, unsubscribeLink: string): string {
@@ -16,6 +22,37 @@ function complianceFooter(physicalAddress: string | undefined, unsubscribeLink: 
       <a href="${unsubscribeLink}" style="color:#6b7280">Unsubscribe</a> from marketing emails.
     </p>
   `;
+}
+
+async function sendWithPlatformResend(
+  sender: SenderIdentity,
+  opts: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+    headers?: Record<string, string>;
+  }
+): Promise<MarketingSendResult> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return { ok: false, error: 'No tenant email connection and RESEND_API_KEY not configured' };
+
+  const result = await sendViaEmailProvider(
+    'resend',
+    apiKey,
+    {},
+    {
+      from: senderFromHeader(sender),
+      replyTo: sender.replyTo,
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+      text: opts.text,
+      headers: opts.headers,
+    }
+  );
+  if (!result.ok) return result;
+  return { ok: true, messageId: result.messageId, provider: 'resend' };
 }
 
 export async function sendMarketingEmail(
@@ -30,16 +67,14 @@ export async function sendMarketingEmail(
     text?: string;
     sender?: SenderIdentity;
     senderId?: string | null;
+    credentialId?: string | null;
     skipComplianceFooter?: boolean;
-    /** Test sends skip unsubscribe token persistence */
     isTest?: boolean;
   }
 ): Promise<MarketingSendResult> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return { ok: false, error: 'RESEND_API_KEY not configured' };
-
-  const sender =
-    opts.sender ?? (await getMarketingSender(sql, accountId, settings, opts.senderId));
+  const senderRow = await getMarketingSender(sql, accountId, settings, opts.senderId);
+  const sender = opts.sender ?? senderRow.identity;
+  const credentialId = opts.credentialId ?? senderRow.credentialId ?? null;
 
   const unsub = opts.isTest
     ? '#'
@@ -62,30 +97,35 @@ export async function sendMarketingEmail(
           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
         };
 
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: senderFromHeader(sender),
-        reply_to: sender.replyTo || undefined,
-        to: [opts.to],
-        subject: opts.subject,
-        html,
-        text,
-        headers: Object.keys(headers).length ? headers : undefined,
-      }),
-    });
+  const payload = {
+    from: senderFromHeader(sender),
+    replyTo: sender.replyTo,
+    to: opts.to,
+    subject: opts.subject,
+    html,
+    text,
+    headers: Object.keys(headers).length ? headers : undefined,
+  };
 
-    const data = (await res.json()) as { id?: string; message?: string };
-    if (!res.ok) {
-      return { ok: false, error: data.message ?? `Resend error ${res.status}` };
+  const byokOnly = settings.marketingByokOnly === true;
+  const cred = await resolveEmailCredential(sql, accountId, credentialId);
+
+  if (cred) {
+    const provider = cred.row.provider as EmailProviderId;
+    const result = await sendViaEmailProvider(provider, cred.secret, cred.row.config, payload);
+    if (result.ok) {
+      await markCredentialUsed(sql, cred.row.id);
+      return { ok: true, messageId: result.messageId, provider, credentialId: cred.row.id };
     }
-    return { ok: true, messageId: data.id ?? '' };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'Send failed' };
+    return result;
   }
+
+  if (byokOnly) {
+    return {
+      ok: false,
+      error: 'This workspace requires a connected email provider. Add one in Settings → Connected services.',
+    };
+  }
+
+  return sendWithPlatformResend(sender, payload);
 }

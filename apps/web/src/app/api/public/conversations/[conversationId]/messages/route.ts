@@ -8,6 +8,8 @@ import {
 } from '@/lib/conversations';
 import { guardPublicInboxRequest } from '@/lib/public-inbox-guard';
 import { maybeSendOfflineAutoReply } from '@/lib/offline-reply';
+import { maybeSendWidgetAiReply } from '@/lib/widget-ai-reply';
+import { parseAccountSettings } from '@/lib/account-settings';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ conversationId: string }> };
@@ -153,7 +155,14 @@ export async function POST(req: Request, { params }: Params) {
     sql,
   });
 
-  void maybeSendOfflineAutoReply(sql, conversationId, ctx.accountId);
+  const accountRows = await sql`SELECT settings FROM accounts WHERE id = ${ctx.accountId}::uuid LIMIT 1`;
+  const settings = parseAccountSettings((accountRows[0] as { settings?: unknown } | undefined)?.settings);
+
+  if (settings.widgetAiEnabled) {
+    void maybeSendWidgetAiReply(sql, conversationId, ctx.accountId);
+  } else {
+    void maybeSendOfflineAutoReply(sql, conversationId, ctx.accountId);
+  }
 
   return Response.json({ message }, { status: 201, headers: corsHeaders() });
 }

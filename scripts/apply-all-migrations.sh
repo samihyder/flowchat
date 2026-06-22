@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Apply every FlowChat SQL migration in order (0000–0017).
+# Apply every FlowChat SQL migration in order (0000–0018).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

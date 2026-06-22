@@ -2,6 +2,9 @@
 .env
 .env.local
 .env.*.local
+Logins.txt
+Logins.rtf
+secrets/
 
 # Dependencies
 node_modules/

@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
-import { checkResendDomainStatus } from '@/lib/marketing/senders';
+import { checkSenderDomainStatus } from '@/lib/marketing/senders';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -15,6 +15,7 @@ function serializeSender(row: Record<string, unknown>) {
     physicalAddress: (row.physicalAddress as string | null) ?? null,
     isDefault: Boolean(row.isDefault),
     domainStatus: row.domainStatus as string,
+    credentialId: (row.credentialId as string | null) ?? null,
     createdAt: new Date(row.createdAt as Date).toISOString(),
     updatedAt: new Date(row.updatedAt as Date).toISOString(),
   };
@@ -32,6 +33,7 @@ export async function GET(req: Request, { params }: Params) {
     SELECT id, label, from_name as "fromName", from_email as "fromEmail",
            reply_to as "replyTo", physical_address as "physicalAddress",
            is_default as "isDefault", domain_status as "domainStatus",
+           credential_id as "credentialId",
            created_at as "createdAt", updated_at as "updatedAt"
     FROM marketing_senders
     WHERE account_id = ${accountId}::uuid
@@ -55,12 +57,18 @@ export async function POST(req: Request, { params }: Params) {
     replyTo?: string;
     physicalAddress?: string;
     isDefault?: boolean;
+    credentialId?: string | null;
   };
   if (!body.label?.trim() || !body.fromName?.trim() || !body.fromEmail?.trim()) {
     return Response.json({ error: 'Label, from name, and from email are required' }, { status: 400 });
   }
 
-  const domainStatus = await checkResendDomainStatus(body.fromEmail.trim());
+  const domainStatus = await checkSenderDomainStatus(
+    neon(process.env.DATABASE_URL!) as AppSql,
+    accountId,
+    body.fromEmail.trim(),
+    body.credentialId
+  );
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
 
   if (body.isDefault) {
@@ -78,7 +86,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const rows = await sql`
     INSERT INTO marketing_senders (
-      account_id, label, from_name, from_email, reply_to, physical_address, is_default, domain_status
+      account_id, label, from_name, from_email, reply_to, physical_address, is_default, domain_status, credential_id
     ) VALUES (
       ${accountId}::uuid,
       ${body.label.trim()},
@@ -87,11 +95,13 @@ export async function POST(req: Request, { params }: Params) {
       ${body.replyTo?.trim() ?? null},
       ${body.physicalAddress?.trim() ?? null},
       ${makeDefault},
-      ${domainStatus}
+      ${domainStatus},
+      ${body.credentialId ?? null}::uuid
     )
     RETURNING id, label, from_name as "fromName", from_email as "fromEmail",
               reply_to as "replyTo", physical_address as "physicalAddress",
               is_default as "isDefault", domain_status as "domainStatus",
+              credential_id as "credentialId",
               created_at as "createdAt", updated_at as "updatedAt"
   `;
 

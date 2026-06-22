@@ -6,4 +6,5 @@ allowBuilds:
   '@biomejs/biome': true
   esbuild: true
   msgpackr-extract: set this to true or false
+  puppeteer: true
   sharp: true

@@ -10,11 +10,14 @@
     "test": "turbo test",
     "db:generate": "turbo db:generate",
     "db:migrate": "turbo db:migrate",
-    "db:studio": "pnpm --filter @flowchat/db studio"
+    "db:studio": "pnpm --filter @flowchat/db studio",
+    "docs:pdf": "node scripts/generate-user-guide-pdfs.mjs"
   },
   "devDependencies": {
-    "turbo": "^2.3.3",
     "@biomejs/biome": "^1.9.4",
+    "marked": "^18.0.5",
+    "md-to-pdf": "^5.2.5",
+    "turbo": "^2.3.3",
     "typescript": "^5.7.3"
   },
   "packageManager": "pnpm@11.5.0",

@@ -182,7 +182,7 @@ export function DashboardSidebar({
             label="Contacts"
           />
           <NavItem
-            href="/dashboard/marketing/campaigns"
+            href="/dashboard/marketing"
             active={isMarketing}
             icon="📧"
             label="Marketing"

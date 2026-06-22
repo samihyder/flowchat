@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
+import { isValidLabelColor, normalizeLabelColor } from '@/lib/labels/colors';
 
 type Params = { params: Promise<{ accountId: string }> };
 
@@ -32,10 +33,15 @@ export async function POST(req: Request, { params }: Params) {
   const name = body.name?.trim();
   if (!name) return Response.json({ error: 'Name is required' }, { status: 400 });
 
+  const color = normalizeLabelColor(body.color);
+  if (body.color && !isValidLabelColor(color)) {
+    return Response.json({ error: 'Invalid color' }, { status: 400 });
+  }
+
   const sql = neon(process.env.DATABASE_URL!);
   const rows = await sql`
     INSERT INTO labels (account_id, name, color)
-    VALUES (${accountId}::uuid, ${name}, ${body.color ?? '#6366F1'})
+    VALUES (${accountId}::uuid, ${name}, ${color})
     ON CONFLICT (account_id, name) DO UPDATE SET color = EXCLUDED.color
     RETURNING id, name, color
   `;

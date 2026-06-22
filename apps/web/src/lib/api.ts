@@ -188,6 +188,10 @@ export type AccountCrmSettings = {
   marketingReplyTo?: string;
   marketingPhysicalAddress?: string;
   marketingDoubleOptIn?: boolean;
+  marketingByokOnly?: boolean;
+  aiCredentialId?: string;
+  aiModel?: string;
+  widgetAiEnabled?: boolean;
 };
 
 export type MarketingSender = {
@@ -199,6 +203,25 @@ export type MarketingSender = {
   physicalAddress: string | null;
   isDefault: boolean;
   domainStatus: string;
+  credentialId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ServiceCredential = {
+  id: string;
+  accountId: string;
+  category: 'email_marketing' | 'ai_chat';
+  provider: string;
+  label: string;
+  secretPrefix: string;
+  config: Record<string, unknown>;
+  status: 'active' | 'invalid' | 'revoked';
+  isDefault: boolean;
+  lastVerifiedAt: string | null;
+  lastUsedAt: string | null;
+  usageCount: number;
+  webhookUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -342,6 +365,31 @@ export type EmailCampaign = {
   completedAt: string | null;
   createdAt: string;
   rates?: CampaignRates;
+};
+
+export type EmailAutomation = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  createdAt: string;
+  contactCount: number;
+  emailCount: number;
+  emailsSent: number;
+};
+
+export type AutomationRecipient = {
+  contactId: string;
+  name: string;
+  email: string | null;
+  enrollmentStatus: string;
+  currentStepOrder: number;
+  enrolledAt: string;
+  completedAt: string | null;
+  emailsSent: number;
+  opened: boolean;
+  clicked: boolean;
+  bounced: boolean;
+  status: string;
 };
 
 export type ContactEmailEvent = {
@@ -653,6 +701,30 @@ export const api = {
       request<{ labels: Label[] }>(`/accounts/${accountId}/labels`, { token }),
     create: (accountId: string, body: { name: string; color?: string }, token: string) =>
       request<{ label: Label }>(`/accounts/${accountId}/labels`, { method: 'POST', body, token }),
+    update: (
+      accountId: string,
+      labelId: string,
+      body: { name?: string; color?: string },
+      token: string
+    ) =>
+      request<{ label: Label }>(`/accounts/${accountId}/labels/${labelId}`, {
+        method: 'PATCH',
+        body,
+        token,
+      }),
+    delete: (accountId: string, labelId: string, token: string) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/labels/${labelId}`, {
+        method: 'DELETE',
+        token,
+      }),
+    seedRecommended: (accountId: string, token: string) =>
+      request<{
+        ok: boolean;
+        created: number;
+        updated: number;
+        skipped: number;
+        labels: Label[];
+      }>(`/accounts/${accountId}/labels/seed`, { method: 'POST', token }),
   },
 
   conversations: {
@@ -1006,6 +1078,7 @@ export const api = {
           replyTo?: string;
           physicalAddress?: string;
           isDefault?: boolean;
+          credentialId?: string | null;
         },
         token: string
       ) =>
@@ -1024,6 +1097,7 @@ export const api = {
           replyTo: string | null;
           physicalAddress: string | null;
           isDefault: boolean;
+          credentialId?: string | null;
         }>,
         token: string
       ) =>
@@ -1177,6 +1251,61 @@ export const api = {
         }),
     },
 
+    automations: {
+      list: (accountId: string, token: string) =>
+        request<{ automations: EmailAutomation[] }>(
+          `/accounts/${accountId}/marketing/automations`,
+          { token }
+        ),
+      create: (
+        accountId: string,
+        body: {
+          name: string;
+          senderId?: string;
+          contactIds: string[];
+          emails: {
+            daysAfterPrevious: number;
+            subject: string;
+            htmlBody: string;
+            templateId?: string;
+            saveAsTemplate?: boolean;
+            templateName?: string;
+          }[];
+        },
+        token: string
+      ) =>
+        request<{ workflowId: string; enrolled: number; skipped: number }>(
+          `/accounts/${accountId}/marketing/automations`,
+          { method: 'POST', body, token }
+        ),
+      get: (accountId: string, automationId: string, token: string) =>
+        request<{
+          workflow: Record<string, unknown>;
+          summary: {
+            totalContacts: number;
+            emailsSent: number;
+            opened: number;
+            clicked: number;
+            bounced: number;
+            notOpened: number;
+            openRate: number;
+            clickRate: number;
+          };
+          recipients: AutomationRecipient[];
+        }>(`/accounts/${accountId}/marketing/automations/${automationId}`, { token }),
+      update: (accountId: string, automationId: string, body: { enabled?: boolean }, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/automations/${automationId}`, {
+          method: 'PATCH',
+          body,
+          token,
+        }),
+      delete: (accountId: string, automationId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/automations/${automationId}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+
     workflows: {
       list: (accountId: string, token: string) =>
         request<{ workflows: MarketingWorkflow[] }>(`/accounts/${accountId}/marketing/workflows`, { token }),
@@ -1308,6 +1437,28 @@ export const api = {
         body,
         token,
       }),
+    update: (
+      accountId: string,
+      responseId: string,
+      body: { shortcut?: string; title?: string; content?: string },
+      token: string
+    ) =>
+      request<{ response: CannedResponse }>(
+        `/accounts/${accountId}/canned-responses/${responseId}`,
+        { method: 'PATCH', body, token }
+      ),
+    delete: (accountId: string, responseId: string, token: string) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/canned-responses/${responseId}`, {
+        method: 'DELETE',
+        token,
+      }),
+    seedRecommended: (accountId: string, token: string) =>
+      request<{
+        ok: boolean;
+        created: number;
+        skipped: number;
+        responses: CannedResponse[];
+      }>(`/accounts/${accountId}/canned-responses/seed`, { method: 'POST', token }),
   },
 
   webhooks: {
@@ -1319,6 +1470,69 @@ export const api = {
     create: (accountId: string, body: { url: string; events?: string[] }, token: string) =>
       request<{ webhook: { id: string; url: string; secret: string; events: string[] } }>(
         `/accounts/${accountId}/webhooks`,
+        { method: 'POST', body, token }
+      ),
+  },
+
+  serviceCredentials: {
+    list: (accountId: string, token: string, category?: string) =>
+      request<{ credentials: ServiceCredential[] }>(
+        `/accounts/${accountId}/service-credentials${category ? `?category=${category}` : ''}`,
+        { token }
+      ),
+    create: (
+      accountId: string,
+      body: {
+        category: 'email_marketing' | 'ai_chat';
+        provider: string;
+        label: string;
+        secret: string;
+        config?: Record<string, unknown>;
+        isDefault?: boolean;
+      },
+      token: string
+    ) =>
+      request<{ credential: ServiceCredential }>(`/accounts/${accountId}/service-credentials`, {
+        method: 'POST',
+        body,
+        token,
+      }),
+    update: (
+      accountId: string,
+      credentialId: string,
+      body: { label?: string; isDefault?: boolean; config?: Record<string, unknown> },
+      token: string
+    ) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/service-credentials/${credentialId}`, {
+        method: 'PATCH',
+        body,
+        token,
+      }),
+    remove: (accountId: string, credentialId: string, token: string) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/service-credentials/${credentialId}`, {
+        method: 'DELETE',
+        token,
+      }),
+    test: (accountId: string, credentialId: string, token: string) =>
+      request<{ ok: boolean; error?: string }>(
+        `/accounts/${accountId}/service-credentials/${credentialId}/test`,
+        { method: 'POST', token }
+      ),
+  },
+
+  ai: {
+    chat: (
+      accountId: string,
+      body: {
+        messages?: { role: 'user' | 'assistant'; content: string }[];
+        system?: string;
+        credentialId?: string;
+        model?: string;
+      },
+      token: string
+    ) =>
+      request<{ text: string; model: string; usage?: { inputTokens?: number; outputTokens?: number } }>(
+        `/accounts/${accountId}/ai/chat`,
         { method: 'POST', body, token }
       ),
   },

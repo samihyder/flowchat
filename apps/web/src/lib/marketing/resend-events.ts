@@ -57,6 +57,7 @@ export async function handleResendWebhookEvent(sql: AppSql, event: ResendEvent) 
     FROM email_campaign_recipients r
     LEFT JOIN contacts c ON c.id = r.contact_id
     WHERE r.resend_message_id = ${messageId}
+       OR r.provider_message_id = ${messageId}
     LIMIT 1
   `;
   let recipient = recipients[0] as

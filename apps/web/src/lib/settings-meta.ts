@@ -37,6 +37,10 @@ export const SETTINGS_META: Record<string, SettingsMeta> = {
     title: 'Integrations',
     description: 'Webhooks, API keys, and audit log',
   },
+  '/settings/connected-services': {
+    title: 'Connected services',
+    description: 'Tenant-owned API keys for email marketing and AI',
+  },
   '/settings/crm': {
     title: 'CRM settings',
     description: 'Custom contact attributes and import governance',

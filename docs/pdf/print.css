@@ -1,0 +1,166 @@
+@page {
+  margin: 18mm 16mm 20mm 16mm;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.55;
+  color: #1f2937;
+  max-width: 100%;
+}
+
+.doc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #6366f1;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.doc-header img.logo {
+  height: 36px;
+  width: auto;
+}
+
+.doc-header .brand-text {
+  font-size: 22pt;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #111827;
+}
+
+.doc-header .brand-text span {
+  color: #6366f1;
+}
+
+.doc-header .meta {
+  text-align: right;
+  font-size: 8.5pt;
+  color: #6b7280;
+}
+
+.doc-header .meta strong {
+  display: block;
+  color: #374151;
+  font-size: 9pt;
+}
+
+h1 {
+  font-size: 20pt;
+  color: #111827;
+  margin: 0 0 8px;
+  letter-spacing: -0.3px;
+}
+
+h2 {
+  font-size: 13pt;
+  color: #4338ca;
+  margin: 22px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+h3 {
+  font-size: 11pt;
+  color: #374151;
+  margin: 16px 0 6px;
+}
+
+p {
+  margin: 0 0 10px;
+}
+
+ul, ol {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+
+li {
+  margin-bottom: 4px;
+}
+
+a {
+  color: #4f46e5;
+  text-decoration: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 14px;
+  font-size: 9.5pt;
+}
+
+th, td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #f5f3ff;
+  color: #4338ca;
+  font-weight: 600;
+}
+
+tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 18px 0;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8.5pt;
+  background: #f3f4f6;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+blockquote, .callout {
+  background: #eef2ff;
+  border-left: 4px solid #6366f1;
+  padding: 10px 12px;
+  margin: 12px 0;
+  font-size: 9.5pt;
+  color: #3730a3;
+}
+
+.footer {
+  margin-top: 24px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 8pt;
+  color: #9ca3af;
+  text-align: center;
+}
+
+/* Quick reference — tighter one-pager */
+body.quick-ref h1 {
+  font-size: 17pt;
+}
+
+body.quick-ref h2 {
+  font-size: 11pt;
+  margin-top: 14px;
+}
+
+body.quick-ref table {
+  font-size: 9pt;
+}
+
+body.quick-ref p,
+body.quick-ref li {
+  font-size: 9.5pt;
+}

@@ -309,6 +309,25 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ---
 
+### Sprint 7B · Tenant BYOK (Connected services) · implemented
+**Goal:** Tenants bring their own API keys for outbound email marketing (Resend, SendGrid, Mailgun) and AI chat (Anthropic Claude). Platform `RESEND_API_KEY` remains optional fallback unless BYOK-only policy is enabled.
+
+| # | Story | Status |
+|---|---|---|
+| S7B-1 | Encrypted `account_service_credentials` store + migration | Done |
+| S7B-2 | Settings → Connected services UI + wireframe parity | Done |
+| S7B-3 | Resend BYOK send + domain check | Done |
+| S7B-4 | SendGrid + Mailgun provider adapters | Done |
+| S7B-5 | Marketing send path resolves tenant credential; sender `credential_id` | Done |
+| S7B-6 | Per-credential webhook URL `/api/webhooks/email/[credentialId]` | Done |
+| S7B-7 | Anthropic BYOK + `/api/accounts/.../ai/chat` proxy | Done |
+| S7B-8 | Admin RBAC, audit log on credential CRUD, test connection | Done |
+| S7B-9 | Workspace policy: `marketingByokOnly`, default AI credential/model | Done |
+
+**Env:** `CREDENTIALS_ENCRYPTION_KEY` (32-byte hex or strong secret; falls back to `SESSION_SECRET` in dev).
+
+---
+
 ### Sprint 8 · 2026-10-05 → 2026-10-18
 **Goal:** WhatsApp Cloud API channel — receive and send messages, templates.
 

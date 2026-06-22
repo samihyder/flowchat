@@ -1,0 +1,53 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'scripts/deploy-production.sh'
+      - '.github/workflows/deploy-production.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.repository == 'samihyder/flowchat'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migration 0018 (if needed)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "DATABASE_URL secret missing"; exit 1; fi
+          if psql "$DATABASE_URL" -tAc "SELECT 1 FROM account_service_credentials LIMIT 1" 2>/dev/null; then
+            echo "Migration 0018 already applied"
+          else
+            psql "$DATABASE_URL" -f packages/db/drizzle/0018_tenant_service_credentials.sql
+          fi
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npm i -g vercel@54
+          cd apps/web
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"

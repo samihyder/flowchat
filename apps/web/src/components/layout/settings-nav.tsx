@@ -31,7 +31,10 @@ const sections: NavSection[] = [
   },
   {
     title: 'Integrations',
-    items: [{ label: 'Integrations', href: '/settings/integrations' as Route, icon: '🔗' }],
+    items: [
+      { label: 'Connected services', href: '/settings/connected-services' as Route, icon: '🔌' },
+      { label: 'Integrations', href: '/settings/integrations' as Route, icon: '🔗' },
+    ],
   },
   {
     title: 'CRM',

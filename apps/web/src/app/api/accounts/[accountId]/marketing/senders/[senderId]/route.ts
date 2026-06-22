@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
-import { checkResendDomainStatus } from '@/lib/marketing/senders';
+import { checkSenderDomainStatus } from '@/lib/marketing/senders';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string; senderId: string }> };
@@ -19,13 +19,16 @@ export async function PATCH(req: Request, { params }: Params) {
     replyTo?: string | null;
     physicalAddress?: string | null;
     isDefault?: boolean;
+    credentialId?: string | null;
   };
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
-  const existing = await sql`
-    SELECT id FROM marketing_senders WHERE id = ${senderId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
+  const existingRow = await sql`
+    SELECT id, from_email as "fromEmail", credential_id as "credentialId"
+    FROM marketing_senders WHERE id = ${senderId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
   `;
-  if (!existing[0]) return Response.json({ error: 'Sender not found' }, { status: 404 });
+  const existingMeta = existingRow[0] as { fromEmail: string; credentialId: string | null } | undefined;
+  if (!existingMeta) return Response.json({ error: 'Sender not found' }, { status: 404 });
 
   if (body.isDefault) {
     await sql`
@@ -34,23 +37,29 @@ export async function PATCH(req: Request, { params }: Params) {
     `;
   }
 
-  const fromEmail = body.fromEmail?.trim();
-  const domainStatus = fromEmail ? await checkResendDomainStatus(fromEmail) : undefined;
+  const fromEmail = body.fromEmail?.trim() ?? existingMeta.fromEmail;
+  const credentialId = body.credentialId !== undefined ? body.credentialId : existingMeta.credentialId;
+  const domainStatus =
+    body.fromEmail || body.credentialId !== undefined
+      ? await checkSenderDomainStatus(sql, accountId, fromEmail, credentialId)
+      : undefined;
 
   const rows = await sql`
     UPDATE marketing_senders SET
       label = COALESCE(${body.label?.trim() ?? null}, label),
       from_name = COALESCE(${body.fromName?.trim() ?? null}, from_name),
-      from_email = COALESCE(${fromEmail ?? null}, from_email),
+      from_email = COALESCE(${body.fromEmail?.trim() ?? null}, from_email),
       reply_to = COALESCE(${body.replyTo ?? null}, reply_to),
       physical_address = COALESCE(${body.physicalAddress ?? null}, physical_address),
       is_default = COALESCE(${body.isDefault ?? null}, is_default),
+      credential_id = ${credentialId}::uuid,
       domain_status = COALESCE(${domainStatus ?? null}, domain_status),
       updated_at = NOW()
     WHERE id = ${senderId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, label, from_name as "fromName", from_email as "fromEmail",
               reply_to as "replyTo", physical_address as "physicalAddress",
-              is_default as "isDefault", domain_status as "domainStatus"
+              is_default as "isDefault", domain_status as "domainStatus",
+              credential_id as "credentialId"
   `;
 
   return Response.json({ sender: rows[0] });

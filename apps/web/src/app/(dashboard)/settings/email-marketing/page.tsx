@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { api, type MarketingSender } from '@/lib/api';
+import { api, type MarketingSender, type ServiceCredential } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,8 @@ const domainBadgeColor: Record<string, 'success' | 'warning' | 'gray'> = {
 export default function EmailMarketingSettingsPage() {
   const { token, accountId } = useAuthStore();
   const [senders, setSenders] = useState<MarketingSender[]>([]);
+  const [emailCredentials, setEmailCredentials] = useState<ServiceCredential[]>([]);
+  const [credentialId, setCredentialId] = useState('');
   const [doubleOptIn, setDoubleOptIn] = useState(false);
   const [savingOptIn, setSavingOptIn] = useState(false);
   const [message, setMessage] = useState('');
@@ -33,6 +36,11 @@ export default function EmailMarketingSettingsPage() {
   const load = () => {
     if (!token || !accountId) return;
     api.marketing.senders.list(accountId, token).then((r) => setSenders(r.senders));
+    api.serviceCredentials.list(accountId, token, 'email_marketing').then((r) => {
+      setEmailCredentials(r.credentials);
+      const def = r.credentials.find((c) => c.isDefault);
+      if (def) setCredentialId(def.id);
+    });
     api.marketing.suppressions.list(accountId, token).then((r) => setSuppressions(r.suppressions));
     api.account.get(accountId, token).then((r) => {
       setDoubleOptIn(Boolean(r.account.settings?.marketingDoubleOptIn));
@@ -56,6 +64,7 @@ export default function EmailMarketingSettingsPage() {
           replyTo: replyTo.trim() || undefined,
           physicalAddress: physicalAddress.trim() || undefined,
           isDefault: senders.length === 0,
+          credentialId: credentialId || null,
         },
         token
       );
@@ -98,7 +107,10 @@ export default function EmailMarketingSettingsPage() {
       <div>
         <h2 className="text-base font-semibold text-gray-900">Email marketing</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Provision multiple senders (from name + verified domain). Campaigns and workflows pick a sender per send.
+          Provision multiple senders (from name + verified domain). Campaigns and workflows pick a sender per send.{' '}
+          <Link href="/settings/connected-services" className="text-primary-600 hover:underline">
+            Manage email provider keys
+          </Link>
         </p>
       </div>
 
@@ -148,8 +160,23 @@ export default function EmailMarketingSettingsPage() {
             <Input value={fromName} onChange={(e) => setFromName(e.target.value)} placeholder="Your Company" required />
           </div>
           <div>
-            <label className="text-xs text-gray-500">From email (verified in Resend)</label>
+            <label className="text-xs text-gray-500">From email (verified with your ESP)</label>
             <Input value={fromEmail} onChange={(e) => setFromEmail(e.target.value)} placeholder="news@yourdomain.com" type="email" required />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500">Email provider connection</label>
+            <select
+              className="mt-1 w-full border border-gray-200 rounded-lg text-sm px-3 py-2"
+              value={credentialId}
+              onChange={(e) => setCredentialId(e.target.value)}
+            >
+              <option value="">Default workspace connection</option>
+              {emailCredentials.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label} ({c.provider})
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="text-xs text-gray-500">Reply-to</label>

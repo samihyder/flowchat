@@ -1,5 +1,11 @@
+import { getBasePath } from '@/lib/base-path';
+
 const COOKIE_NAME = 'fc_session';
 const MAX_AGE_DAYS = 30;
+
+function sessionCookiePath(): string {
+  return getBasePath() || '/';
+}
 
 export function getSessionCookie(): string | null {
   if (typeof document === 'undefined') return null;
@@ -14,9 +20,11 @@ export function getSessionCookie(): string | null {
 
 export function setSessionCookie(token: string) {
   const maxAge = MAX_AGE_DAYS * 24 * 60 * 60;
-  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(token)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  const path = sessionCookiePath();
+  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(token)}; path=${path}; max-age=${maxAge}; SameSite=Lax`;
 }
 
 export function clearSessionCookie() {
-  document.cookie = `${COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
+  const path = sessionCookiePath();
+  document.cookie = `${COOKIE_NAME}=; path=${path}; max-age=0; SameSite=Lax`;
 }
