@@ -7,7 +7,7 @@ export type AccountSettings = {
   autoWelcomeTagline?: string;
   /** When true, LeadSnapper extension may push qualified leads via integration API. */
   leadsnapperSyncEnabled?: boolean;
-  /** Minimum priority to accept: Hot, Warm, or all. */
+  /** Minimum priority to accept: Hot, Warm, or all (default all — no restriction). */
   leadsnapperMinPriority?: 'Hot' | 'Warm' | 'all';
   /** When true, CSV import is allowed for admins + crmImportAllowedUserIds */
   crmImportEnabled?: boolean;

@@ -205,7 +205,7 @@ export default function CrmSettingsPage() {
 function LeadSnapperProvisioningSection() {
   const { token, accountId } = useAuthStore();
   const [enabled, setEnabled] = useState(false);
-  const [minPriority, setMinPriority] = useState<'Hot' | 'Warm' | 'all'>('Warm');
+  const [minPriority, setMinPriority] = useState<'Hot' | 'Warm' | 'all'>('all');
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
@@ -272,10 +272,13 @@ function LeadSnapperProvisioningSection() {
           onChange={(e) => setMinPriority(e.target.value as 'Hot' | 'Warm' | 'all')}
           className="mt-1 block w-full max-w-xs px-3 py-2 text-sm border border-gray-200 rounded-lg"
         >
+          <option value="all">All priorities (Hot, Warm, and Cold)</option>
+          <option value="Warm">Hot + Warm only</option>
           <option value="Hot">Hot only</option>
-          <option value="Warm">Hot + Warm (qualified)</option>
-          <option value="all">All priorities</option>
         </select>
+        <p className="text-xs text-gray-400 mt-1">
+          Use <strong>All priorities</strong> to import every lead synced from LeadSnapper, including Cold and LinkedIn corporate captures.
+        </p>
       </div>
 
       <div className="text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 font-mono space-y-2 overflow-x-auto">

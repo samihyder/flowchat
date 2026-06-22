@@ -19,7 +19,7 @@ export async function GET(req: Request, { params }: Params) {
 
   return Response.json({
     leadsnapperSyncEnabled: settings.leadsnapperSyncEnabled ?? false,
-    leadsnapperMinPriority: settings.leadsnapperMinPriority ?? 'Warm',
+    leadsnapperMinPriority: settings.leadsnapperMinPriority ?? 'all',
   });
 }
 
@@ -67,7 +67,7 @@ export async function POST(req: Request, { params }: Params) {
   return Response.json({
     settings: {
       leadsnapperSyncEnabled: merged.leadsnapperSyncEnabled ?? false,
-      leadsnapperMinPriority: merged.leadsnapperMinPriority ?? 'Warm',
+      leadsnapperMinPriority: merged.leadsnapperMinPriority ?? 'all',
     },
     attributes,
   });
