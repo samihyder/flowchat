@@ -118,11 +118,16 @@ See [sprints.md](sprints.md) for full story breakdown.
 - **Analytics:** Campaign open/click/bounce rates; per-contact email timeline on profile
 
 ### Companies (CRM)
-- Name, domain, description
-- Favicon auto-fetch from domain
-- Custom attributes
-- Contact → Company M:N relationship
-- Company-level conversation view
+
+- **Global company registry** — one record per corporate domain, shared across all tenants (`companies` table).
+- **Auto-link** — contact with corporate email (non free-mail) links to global company on create/update/import.
+- **Enrichment (BYOK)** — Settings → Connected services → Data enrichment (Companies House, PDL, Lusha, Cognism, OpenMart, Explorium).
+- **Staged apply** — enrich fetches suggestions; agent reviews field-level proposals and applies selected values only.
+- Name, domain, HQ, industry, logo URL, LinkedIn (when enriched).
+- Custom attributes on contacts; person fields (job title, LinkedIn) via enrichment apply.
+- Company summary on contact profile.
+
+> Per-tenant company CRUD (Sprint 17) remains planned; global domain registry is live now.
 
 ---
 

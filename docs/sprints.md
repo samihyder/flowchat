@@ -65,7 +65,7 @@
 | S2-4 | Bun WebSocket service — room management keyed by `account:conversation`, Redis pub/sub backbone | 8 | Must |
 | S2-5 | Agent availability — online/busy/offline toggle, auto-offline on inactivity (Redis TTL) | 3 | Must |
 | S2-6 | Dashboard sidebar — inbox list, team list, unread badges, agent avatar + status dot | 5 | Should |
-| S2-7 | Account settings page — name, timezone, locale, logo upload (R2) | 3 | Should |
+| S2-7 | Account settings page — name, timezone, locale, logo upload (R2, 512×512px, max 10 MB) | 3 | Should |
 | S2-8 | Two-factor authentication — TOTP setup, backup codes (oslo) | 5 | Should |
 
 **Sprint total: 37 pts**
@@ -263,7 +263,17 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 | S6-22 | A/B subject test — two variants, winner by open rate after N hours | 5 | Should |
 | S6-23 | Send-time optimization — schedule in recipient timezone window (basic) | 3 | Should |
 
-**Sprint 6 total: ~108 pts (Must: ~88 · CRM ~24 + Email ~64)**
+#### CRM — global companies & enrichment *(shipped post–S6 close)*
+
+| # | Story | Points | Priority |
+|---|---|---|---|
+| S6-24 | Global `companies` registry (domain-keyed, shared across tenants) + `contacts.company_id` | 5 | Must |
+| S6-25 | Auto-link contact → company from corporate email on all save paths | 3 | Must |
+| S6-26 | Connected services — `data_enrichment` BYOK (Companies House, PDL, Lusha, Cognism, OpenMart, Explorium) | 5 | Must |
+| S6-27 | Contact enrich API — tenant picks provider; fetch via BYOK; no auto-apply | 5 | Must |
+| S6-28 | Staged enrichment suggestions — review table, apply/dismiss selected fields | 5 | Must |
+
+**Sprint 6 total: ~131 pts (Must: ~108 · CRM ~47 + Email ~64)**
 
 #### Definition of Done (Sprint 6)
 - [x] Admin can enable/disable CSV import and export in Settings → CRM and assign which agents may use each
@@ -280,6 +290,7 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 - [x] Admin can publish an automation workflow (welcome drip, post-chat follow-up) that runs on triggers
 - [x] Unsubscribe link works; suppressed contacts never receive marketing mail
 - [x] Campaign dashboard shows delivery and engagement metrics; contact profile shows email history
+- [x] Global company registry links contacts by corporate email domain; enrichment via Connected services with staged apply
 - [ ] All **Must** items in [email-marketing-standard.md](email-marketing-standard.md) verified in staging
 
 ---
@@ -323,6 +334,7 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 | S7B-7 | Anthropic BYOK + `/api/accounts/.../ai/chat` proxy | Done |
 | S7B-8 | Admin RBAC, audit log on credential CRUD, test connection | Done |
 | S7B-9 | Workspace policy: `marketingByokOnly`, default AI credential/model | Done |
+| S7B-10 | Data enrichment providers in Connected services (extends S6-26) | Done |
 
 **Env:** `CREDENTIALS_ENCRYPTION_KEY` (32-byte hex or strong secret; falls back to `SESSION_SECRET` in dev).
 
@@ -607,7 +619,7 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 | Capacity policies | Per-agent conversation caps, exclusion rules |
 | Multi-language portal | Locale routing on Help Center |
 | White-label / hide branding | Remove FlowChat badge for enterprise |
-| Contact enrichment | IP lookup, domain-based company auto-link |
+| Contact enrichment | ~~IP lookup, domain-based company auto-link~~ → **Done:** global companies (S6-24/25), BYOK enrichment + staged apply (S6-26–28) |
 | CSAT review notes | Agent annotates CSAT responses |
 | Conversation required attributes | Force custom field fill before resolution |
 
@@ -639,4 +651,4 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ---
 
-*Last updated: 2026-06-05 · 20 sprints · Sprint 6 extended: CRM + email marketing automation · Target launch: 2027-03-29*
+*Last updated: 2026-06-23 · S6 CRM extensions + S7B BYOK shipped · User stories workbook: 104 stories*

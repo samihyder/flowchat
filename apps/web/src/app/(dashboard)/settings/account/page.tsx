@@ -10,6 +10,7 @@ import { labelClass, selectClass } from '@/components/ui/form-field';
 import { AnnotationBox, SettingsCard } from '@/components/ui/settings-page';
 import { Button } from '@/components/ui/button';
 import { getBrowserTimezone } from '@/lib/timezone';
+import { ACCOUNT_LOGO_MAX_BYTES, ACCOUNT_LOGO_SERVER_MAX_BYTES, ACCOUNT_LOGO_SIZE_PX } from '@/lib/branding/logo';
 
 const TIMEZONES = [
   'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -97,24 +98,50 @@ export default function AccountSettingsPage() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !token || !accountId) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setError('Logo must be 2 MB or smaller.');
+    if (file.size > ACCOUNT_LOGO_MAX_BYTES) {
+      setError(`Logo must be ${ACCOUNT_LOGO_MAX_BYTES / (1024 * 1024)} MB or smaller.`);
       return;
     }
     setUploading(true);
     setError('');
     try {
+      if (file.size <= ACCOUNT_LOGO_SERVER_MAX_BYTES) {
+        const res = await api.account.uploadLogo(accountId, file, token);
+        setLogoUrl(res.publicUrl);
+        setSuccess('Logo updated.');
+        return;
+      }
+
       const contentType = file.type || 'image/png';
       const { uploadUrl, publicUrl } = await api.account.getLogoUploadUrl(accountId, token, contentType);
-      await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': contentType } });
+      let putRes: Response;
+      try {
+        putRes = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': contentType },
+        });
+      } catch {
+        throw new Error(
+          'Could not upload to storage. Enable CORS on your R2 bucket for browser uploads, or use a file under 4 MB.'
+        );
+      }
+      if (!putRes.ok) {
+        throw new Error(`Storage upload failed (${putRes.status}). Check R2 bucket CORS and public access.`);
+      }
       await api.account.update(accountId, { logoUrl: publicUrl }, token);
       setLogoUrl(publicUrl);
       setSuccess('Logo updated.');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Upload failed';
-      setError(msg === 'Storage not configured' ? 'Logo upload requires R2 configuration.' : msg);
+      setError(
+        msg === 'Storage not configured' || msg.includes('not configured')
+          ? 'Logo upload requires R2 configuration on the web service.'
+          : msg
+      );
     } finally {
       setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
     }
   };
 
@@ -135,9 +162,18 @@ export default function AccountSettingsPage() {
         <div>
           <label className={labelClass}>Logo</label>
           <div className="flex items-center gap-4">
-            <div className="w-[72px] h-[72px] rounded-xl border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0">
+            <div
+              className="rounded-xl border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0"
+              style={{ width: ACCOUNT_LOGO_SIZE_PX, height: ACCOUNT_LOGO_SIZE_PX, maxWidth: '100%' }}
+            >
               {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                <img
+                  src={logoUrl}
+                  alt="Logo"
+                  width={ACCOUNT_LOGO_SIZE_PX}
+                  height={ACCOUNT_LOGO_SIZE_PX}
+                  className="w-full h-full object-contain"
+                />
               ) : (
                 <span className="text-xs text-gray-400">Logo</span>
               )}
@@ -147,7 +183,10 @@ export default function AccountSettingsPage() {
               <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
                 {uploading ? 'Uploading…' : 'Upload logo'}
               </Button>
-              <p className="text-[11px] text-gray-400 mt-1.5">PNG or JPG, max 2MB. Recommended 200×200px.</p>
+              <p className="text-[11px] text-gray-400 mt-1.5">
+                PNG or JPG, max {ACCOUNT_LOGO_MAX_BYTES / (1024 * 1024)} MB. Recommended {ACCOUNT_LOGO_SIZE_PX}×
+                {ACCOUNT_LOGO_SIZE_PX}px.
+              </p>
             </div>
           </div>
         </div>

@@ -4,7 +4,7 @@
 **Workbook:** `FlowChat_User_Stories_S1_S6.xlsx`  
 **Index:** `index.html` (28 screens)  
 **Assessed against:** FlowChat app (`apps/web`) + `docs/sprints.md`  
-**Date:** 13 June 2026
+**Date:** 23 June 2026
 
 ---
 
@@ -12,10 +12,10 @@
 
 | Metric | Value |
 |--------|-------|
-| Wireframe screens | **28** |
-| Sprints covered | **6** (S1–S6) |
-| User stories (S1–S6) | **87** in `docs/sprints.md` (workbook cites 89) |
-| Story points (workbook) | **430** |
+| Wireframe screens | **30** |
+| Sprints covered | **6** (S1–S6) + **S7B** stories in workbook |
+| User stories (workbook) | **104** (S1–S6 + S7B BYOK) |
+| Story points (workbook) | **491** |
 | **Wireframe coverage of UI-facing stories** | **✅ Complete** — every developed product module has a wireframe |
 | **Blocking wireframe gaps** | **None** |
 | **Recommended new wireframes** | **2** (email marketing settings, pending approval) |
@@ -40,7 +40,7 @@
 | **S3** | Widget & real-time | 2 | 7 | 4 | ✅ 100% |
 | **S4** | Conversations & teams | 4 | 19 | 14 | ✅ 100% (composite screens) |
 | **S5** | Advanced messaging | 4 | 21 | 12 | ✅ 100% (composite screens) |
-| **S6** | CRM & email marketing | 9 | 23 | 18 | ⚠️ 95% — see S6-10, S6-13 |
+| **S6** | CRM & email marketing | 9 | 28 | 18 | ⚠️ 95% — enrichment review UI not wireframed (S6-28) |
 
 ---
 
@@ -409,7 +409,7 @@ Legend: **●** dedicated wireframe · **◐** composite / embedded · **○** b
 
 ## Conclusion
 
-**The wireframe set is complete for all developed S1–S6 product modules.** Twenty-eight screens correctly map to 76 UI-facing user stories via dedicated or composite layouts. Three admin-facing gaps are minor: email marketing settings (recommended new wireframe), pending approval page, and public unsubscribe/confirm pages.
+**The wireframe set is complete for all developed S1–S6 product modules.** Thirty screens map to UI-facing user stories via dedicated or composite layouts. Minor gaps: email marketing settings wireframe, enrichment review UI on contact profile (S6-28), and public unsubscribe/confirm pages.
 
 **No sprint module is missing a wireframe.** Proceeding with UI implementation against existing wireframes is approved; add wireframe `29` for email marketing settings if design review requires full parity.
 

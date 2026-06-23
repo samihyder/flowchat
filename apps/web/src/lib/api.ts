@@ -659,6 +659,29 @@ export const api = {
         `/accounts/${accountId}/logo-upload-url`,
         { method: 'POST', body: contentType ? { contentType } : {}, token }
       ),
+    uploadLogo: async (
+      accountId: string,
+      file: File,
+      token: string
+    ): Promise<{ account: { logoUrl: string | null }; publicUrl: string }> => {
+      const form = new FormData();
+      form.append('file', file);
+      const apiUrl = getApiUrl();
+      let res: Response;
+      try {
+        res = await fetch(`${apiUrl}/accounts/${accountId}/logo`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: form,
+        });
+      } catch {
+        throw new Error('Logo upload failed — check your connection and try again.');
+      }
+      const data = (await res.json()) as { error?: string; account?: { logoUrl: string | null }; publicUrl?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Logo upload failed');
+      if (!data.account || !data.publicUrl) throw new Error('Logo upload failed');
+      return { account: data.account, publicUrl: data.publicUrl };
+    },
   },
 
   twoFa: {

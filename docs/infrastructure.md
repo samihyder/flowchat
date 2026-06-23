@@ -269,6 +269,16 @@ pnpm --filter @flowchat/db db:push
 pnpm db:studio
 ```
 
+### Recent migrations (CRM companies & enrichment)
+
+| Migration | Purpose |
+|---|---|
+| `0019_global_companies.sql` | Global `companies` table; `contacts.company_id` FK |
+| `0020_enrichment_providers.sql` | `data_enrichment` credential category + provider metadata |
+| `0021_contact_enrichment_suggestions.sql` | Staged field-level enrichment proposals |
+
+Production deploy applies these via `scripts/deploy-production.sh` when tables are missing.
+
 ---
 
 ## Environment Variables Reference
@@ -288,7 +298,28 @@ pnpm db:studio
 | `GOOGLE_CLIENT_SECRET` | API | Google OAuth client secret (optional) |
 | `NEXT_PUBLIC_API_URL` | Web (Vercel) | Railway API public URL |
 | `NEXT_PUBLIC_WS_URL` | Web (Vercel) | Railway WS public URL (`wss://` in prod) |
-| `R2_*` | API | Cloudflare R2 credentials for logo upload (optional) |
+| `R2_*` | API, Web (Vercel) | Cloudflare R2 credentials for logo upload (optional) |
+
+### R2 CORS (required for large logo / attachment uploads)
+
+Browser uploads use a presigned PUT directly to R2. Add this CORS policy on the bucket (Cloudflare dashboard → R2 → bucket → Settings → CORS):
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://www.digitalbrandcast.com",
+      "http://localhost:3100"
+    ],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Logos **≤ 4 MB** upload through the Next.js API (`POST /api/accounts/:id/logo`) and do not need CORS. Larger files (up to 10 MB) use presigned upload and require the policy above.
 
 ---
 
@@ -316,7 +347,7 @@ pnpm db:studio
 | S2-4 WebSocket service — Redis pub/sub | ✅ Done |
 | S2-5 Agent availability — online/busy/offline | ✅ Done |
 | S2-6 Dashboard sidebar — inboxes, teams, presence | ✅ Done (unread counts ship with Sprint 3) |
-| S2-7 Account settings — name, timezone, locale, R2 logo | ✅ Done |
+| S2-7 Account settings — name, timezone, locale, R2 logo (512×512px, max 10 MB) | ✅ Done |
 | S2-8 Two-factor authentication — TOTP + backup codes | ✅ Done |
 
 ### Sprint 2 extras completed

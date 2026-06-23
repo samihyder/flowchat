@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
+import { ACCOUNT_LOGO_SIZE_PX } from '@/lib/branding/logo';
 
 const DEFAULT_SIGNATURE = `<p>Best regards,</p>
-<p><img src="{{logo_url}}" alt="{{company_name}}" width="72" height="72" style="border-radius:8px" /></p>
+<p><img src="{{logo_url}}" alt="{{company_name}}" width="${ACCOUNT_LOGO_SIZE_PX}" height="${ACCOUNT_LOGO_SIZE_PX}" style="border-radius:8px;max-width:100%;height:auto" /></p>
 <p><strong>{{sender_name}}</strong><br/>{{company_name}}<br/><a href="mailto:{{sender_email}}">{{sender_email}}</a></p>`;
 const DEFAULT_CALENDLY = '<p><a href="{{calendly_url}}">Book a time on my calendar</a></p>';
 const DEFAULT_PORTFOLIO = '<p><a href="{{portfolio_url}}">View my portfolio</a></p>';

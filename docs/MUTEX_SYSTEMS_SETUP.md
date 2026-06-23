@@ -443,13 +443,13 @@ See full checklist: [docs/chat-module-standard.md](chat-module-standard.md)
 
 ---
 
-### Sprint 6 — CRM & email marketing (S6-1 – S6-23)
+### Sprint 6 — CRM & email marketing (S6-1 – S6-28)
 
 **Goal:** Contact management, LeadSnapper sync, outbound email automation.
 
 **Prerequisite:** S5 chat module gate passed.
 
-**Migrations:** `0010`–`0017` — see Part 1.3 Sprint 6 bundles.
+**Migrations:** `0010`–`0017`, `0019`–`0021` — see Part 1.3 Sprint 6 bundles + companies/enrichment.
 
 **Additional env:** `RESEND_API_KEY`, `RESEND_FROM_EMAIL`; verify sending domain in Resend.
 
@@ -479,6 +479,14 @@ Authorization: Bearer fc_live_…
 
 See **Part 3** for LeadSnapper extension setup and full API payload.
 
+#### S6 — Global companies & enrichment (S6-24 – S6-28)
+
+| Step | Path | Action |
+|---|---|---|
+| Companies | Auto on contact save | Corporate email domain links contact → global `companies` row |
+| Enrichment BYOK | **Settings → Connected services** | Add Companies House, PDL, Lusha, Cognism, OpenMart, or Explorium API key |
+| Enrich contact | **Contacts → [contact] → Enrich** | Fetch suggestions; review table; **Apply selected** or **Dismiss** |
+
 #### S6 — Email marketing (S6-10 – S6-23)
 
 | Pillar | Path | Mutex setup |
@@ -501,10 +509,11 @@ Example Mutex workflows:
 
 #### Verify S6
 
-- [ ] All Sprint 6 migrations applied (`0010`–`0017`)
+- [ ] All Sprint 6 migrations applied (`0010`–`0017`, `0019`–`0021`)
 - [ ] CSV import/export with governance works
 - [ ] Contact merge, notes, custom attributes on profile
 - [ ] LeadSnapper sync creates contacts with enrichment fields
+- [ ] Contact with corporate email shows linked company; enrich + staged apply works
 - [ ] Resend sender verified; test email delivers
 - [ ] Segment + template + broadcast campaign completes
 - [ ] Workflow runs on contact-created trigger

@@ -99,10 +99,12 @@ Open a contact to see:
 
 - Phone numbers (business and owner mobile from LeadSnapper)  
 - Email and website  
+- **Linked company** — auto-linked from corporate email domain  
 - LinkedIn and social links  
 - **Lead score** and **priority** (Hot / Warm)  
 - **Notes** — add your call notes here  
-- **Conversation history** and **email history** (if marketing is enabled)
+- **Conversation history** and **email history** (if marketing is enabled)  
+- **Enrichment suggestions** — review and apply selected firmographic/person fields (when admin connected a provider)
 
 ### Common actions
 
@@ -112,6 +114,13 @@ Open a contact to see:
 | Add a label | Contact profile or list bulk actions |
 | Merge duplicates | Contact profile → Merge (admin) |
 | Export list | Contacts → Export (if your admin enabled it) |
+| Enrich contact | Contact profile → Enrich → review table → Apply selected |
+
+### Contact enrichment
+
+**Admin (once):** **Settings → Connected services** → add a **Data enrichment** provider (Companies House, PDL, Lusha, Cognism, OpenMart, or Explorium) with your API key.
+
+**Agents:** Open a contact → **Enrich** → choose provider and scope. Review proposed fields in the suggestions table; check what you want and **Apply selected**. Use **Dismiss** to discard. Nothing is saved until you apply.
 
 ---
 
@@ -162,7 +171,7 @@ Open **Settings** from the sidebar. Most items are **admin-only**; sales uses th
 
 | Page | Purpose |
 |------|---------|
-| **Account** | Company name, timezone (e.g. UK), logo |
+| **Account** | Company name, timezone (e.g. UK), logo (512×512px recommended, max 10 MB) |
 | **Agents** | Invite teammates, set roles |
 | **Teams** | Groups like “UK Sales” for routing |
 | **Security** | Two-factor login for admins |
@@ -188,7 +197,7 @@ Open **Settings** from the sidebar. Most items are **admin-only**; sales uses th
 | Page | Purpose |
 |------|---------|
 | **Integrations** | API keys — including the key for **LeadSnapper** |
-| **Connected services** | Your company’s email provider and optional AI for the widget |
+| **Connected services** | Email provider, AI for the widget, and **data enrichment APIs** (Companies House, PDL, Lusha, etc.) |
 
 ### CRM (admin)
 

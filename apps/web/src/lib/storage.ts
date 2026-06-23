@@ -37,3 +37,23 @@ export async function getAttachmentUploadUrl(key: string, contentType: string) {
 
   return { uploadUrl, publicUrl };
 }
+
+export async function putObject(
+  key: string,
+  body: Buffer | Uint8Array,
+  contentType: string
+): Promise<{ publicUrl: string }> {
+  if (!client || !R2_BUCKET_NAME) throw new Error('Storage not configured');
+  if (!R2_PUBLIC_URL?.trim()) throw new Error('R2_PUBLIC_URL is not configured');
+
+  await client.send(
+    new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    })
+  );
+
+  return { publicUrl: `${R2_PUBLIC_URL.replace(/\/$/, '')}/${key}` };
+}
