@@ -55,21 +55,21 @@ export async function POST(req: Request, { params }: Params) {
   await writeAuditLog(sql, {
     accountId,
     actorId: auth.userId,
-    action: 'contact.enriched',
+    action: 'contact.enrichment_fetched',
     resourceType: 'contact',
     resourceId: contactId,
     metadata: {
+      suggestionId: result.suggestion.id,
       scope: result.scope,
-      enrichmentStatus: result.enrichmentStatus,
-      companyId: result.company?.id ?? null,
+      fieldCount: result.fieldCount,
+      provider: result.suggestion.provider,
     },
   });
 
   return Response.json({
     ok: true,
     scope: result.scope,
-    enrichmentStatus: result.enrichmentStatus,
-    company: result.company,
-    person: result.person,
+    fieldCount: result.fieldCount,
+    suggestion: result.suggestion,
   });
 }

@@ -1,7 +1,11 @@
 import type { AppSql } from '@/lib/db-sql';
 import { extractCorporateDomain } from '@/lib/companies/domain';
-import { getGlobalCompanyById, linkContactToGlobalCompany, toCompanySummary } from '@/lib/companies/resolve';
-import type { GlobalCompany, GlobalCompanySummary } from '@/lib/companies/types';
+import {
+  buildSuggestionFields,
+  createEnrichmentSuggestion,
+  type EnrichmentSuggestion,
+} from '@/lib/companies/enrichment-suggestions';
+import { getGlobalCompanyById, linkContactToGlobalCompany } from '@/lib/companies/resolve';
 import {
   enrichmentError,
   enrichmentErrorFromException,
@@ -27,39 +31,9 @@ export type EnrichmentRunInput = {
 export type EnrichmentRunSuccess = {
   ok: true;
   scope: EnrichmentScope | 'both';
-  company: GlobalCompanySummary | null;
-  person: {
-    jobTitle: string | null;
-    linkedinUrl: string | null;
-    phone: string | null;
-    companyName: string | null;
-  } | null;
-  enrichmentStatus: 'enriched' | 'partial';
+  suggestion: EnrichmentSuggestion;
+  fieldCount: number;
 };
-
-function hasCompanyFields(fields: Record<string, unknown>): boolean {
-  return Object.values(fields).some((v) => v != null && v !== '');
-}
-
-function mergeCompanyPatch(
-  existing: GlobalCompany,
-  patch: Record<string, string | null | undefined>
-): { status: 'enriched' | 'partial'; fields: Record<string, string | null> } {
-  const merged: Record<string, string | null> = {};
-  let filled = 0;
-  let attempted = 0;
-  for (const [key, value] of Object.entries(patch)) {
-    if (value == null || value === '') continue;
-    attempted++;
-    const current = (existing as unknown as Record<string, unknown>)[key];
-    if (current == null || current === '') {
-      merged[key] = value;
-      filled++;
-    }
-  }
-  const status = attempted > 0 && filled < attempted ? 'partial' : filled > 0 ? 'enriched' : 'partial';
-  return { status, fields: merged };
-}
 
 export async function runContactEnrichment(
   sql: AppSql,
@@ -79,7 +53,7 @@ export async function runContactEnrichment(
   }
 
   const provider = cred.row.provider as EnrichmentProviderId;
-  const adapter = getEnrichmentAdapter(provider);
+  getEnrichmentAdapter(provider);
 
   const contactRows = await sql`
     SELECT id, name, email, phone, company_id as "companyId"
@@ -154,100 +128,36 @@ export async function runContactEnrichment(
 
   await markCredentialUsed(sql, input.credentialId);
 
-  let companySummary: GlobalCompanySummary | null = null;
-  let enrichmentStatus: 'enriched' | 'partial' = 'partial';
-  let personResult: EnrichmentRunSuccess['person'] = null;
+  const fields = buildSuggestionFields({
+    provider,
+    contact: { phone: contact.phone },
+    company,
+    companyFields:
+      adapterResult.company && enrichmentProviderSupports(provider, 'company')
+        ? adapterResult.company
+        : null,
+    personFields: adapterResult.person ?? null,
+  });
 
-  if (adapterResult.company && enrichmentProviderSupports(provider, 'company')) {
-    const patch = {
-      name: adapterResult.company.name ?? undefined,
-      website: adapterResult.company.website ?? undefined,
-      logoUrl: adapterResult.company.logoUrl ?? undefined,
-      hqCity: adapterResult.company.hqCity ?? undefined,
-      hqRegion: adapterResult.company.hqRegion ?? undefined,
-      hqCountry: adapterResult.company.hqCountry ?? undefined,
-      hqAddress: adapterResult.company.hqAddress ?? undefined,
-      industry: adapterResult.company.industry ?? undefined,
-      linkedinUrl: adapterResult.company.linkedinUrl ?? undefined,
-      phone: adapterResult.company.phone ?? undefined,
-    };
-    const { status, fields } = mergeCompanyPatch(company, patch);
-    enrichmentStatus = status;
-
-    if (hasCompanyFields(fields)) {
-      await sql`
-        UPDATE companies SET
-          name = COALESCE(${fields.name ?? null}, name),
-          website = COALESCE(${fields.website ?? null}, website),
-          logo_url = COALESCE(${fields.logoUrl ?? null}, logo_url),
-          hq_city = COALESCE(${fields.hqCity ?? null}, hq_city),
-          hq_region = COALESCE(${fields.hqRegion ?? null}, hq_region),
-          hq_country = COALESCE(${fields.hqCountry ?? null}, hq_country),
-          hq_address = COALESCE(${fields.hqAddress ?? null}, hq_address),
-          industry = COALESCE(${fields.industry ?? null}, industry),
-          linkedin_url = COALESCE(${fields.linkedinUrl ?? null}, linkedin_url),
-          phone = COALESCE(${fields.phone ?? null}, phone),
-          enrichment_status = ${status},
-          enrichment_provider = ${provider},
-          enrichment_error = NULL,
-          enriched_at = NOW(),
-          raw_enrichment = raw_enrichment || ${JSON.stringify({ [provider]: adapterResult.raw })}::jsonb,
-          updated_at = NOW()
-        WHERE id = ${companyId}::uuid
-      `;
-    } else if (hasCompanyFields(patch as Record<string, unknown>)) {
-      await sql`
-        UPDATE companies SET
-          enrichment_status = 'partial',
-          enrichment_provider = ${provider},
-          enrichment_error = NULL,
-          enriched_at = NOW(),
-          raw_enrichment = raw_enrichment || ${JSON.stringify({ [provider]: adapterResult.raw })}::jsonb,
-          updated_at = NOW()
-        WHERE id = ${companyId}::uuid
-      `;
-    }
-
-    const updated = await getGlobalCompanyById(sql, companyId);
-    companySummary = updated ? toCompanySummary(updated) : toCompanySummary(company);
+  if (fields.length === 0) {
+    return enrichmentError('not_found', { provider });
   }
 
-  if (adapterResult.person) {
-    personResult = {
-      jobTitle: adapterResult.person.jobTitle ?? null,
-      linkedinUrl: adapterResult.person.linkedinUrl ?? null,
-      phone: adapterResult.person.phone ?? null,
-      companyName: adapterResult.person.companyName ?? null,
-    };
-
-    const personStatus =
-      personResult.jobTitle || personResult.linkedinUrl || personResult.phone ? 'enriched' : 'partial';
-    if (personStatus === 'enriched') enrichmentStatus = 'enriched';
-
-    const phoneUpdate = adapterResult.person.phone && !contact.phone ? adapterResult.person.phone : null;
-    await sql`
-      UPDATE contacts SET
-        phone = COALESCE(${phoneUpdate}, phone),
-        enrichment_status = ${personStatus},
-        enrichment_provider = ${provider},
-        enriched_at = NOW(),
-        custom_attributes = COALESCE(custom_attributes, '{}'::jsonb) || ${JSON.stringify({
-          __flowchat_enrichment: {
-            provider,
-            at: new Date().toISOString(),
-            person: personResult,
-          },
-        })}::jsonb,
-        updated_at = NOW()
-      WHERE id = ${contact.id}::uuid
-    `;
-  }
+  const suggestion = await createEnrichmentSuggestion(sql, {
+    accountId: input.accountId,
+    contactId: input.contactId,
+    companyId,
+    credentialId: input.credentialId,
+    provider,
+    scope: adapterResult.scope,
+    fields,
+    rawPayload: adapterResult.raw,
+  });
 
   return {
     ok: true,
     scope: adapterResult.scope,
-    company: companySummary,
-    person: personResult,
-    enrichmentStatus,
+    suggestion,
+    fieldCount: fields.length,
   };
 }

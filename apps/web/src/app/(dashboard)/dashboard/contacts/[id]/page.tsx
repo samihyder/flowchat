@@ -5,7 +5,7 @@ import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { api, type ContactDetail, type ContactNote, type CustomAttributeDefinition, type Label, type ContactEmailEvent, type MarketingWorkflow, type ServiceCredential } from '@/lib/api';
+import { api, type ContactDetail, type ContactNote, type CustomAttributeDefinition, type Label, type ContactEmailEvent, type MarketingWorkflow, type ServiceCredential, type EnrichmentSuggestion } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CustomAttributeFields } from '@/components/contacts/custom-attribute-fields';
@@ -43,10 +43,13 @@ export default function ContactProfilePage() {
   const [enrichBusy, setEnrichBusy] = useState(false);
   const [enrichMsg, setEnrichMsg] = useState('');
   const [enrichError, setEnrichError] = useState(false);
+  const [suggestions, setSuggestions] = useState<EnrichmentSuggestion[]>([]);
+  const [selectedFields, setSelectedFields] = useState<Record<string, Set<string>>>({});
+  const [applyBusy, setApplyBusy] = useState(false);
 
   const load = async () => {
     if (!token || !accountId) return;
-    const [res, labelRes, attrRes, access, eventsRes, workflowsRes, enrichCredsRes] = await Promise.all([
+    const [res, labelRes, attrRes, access, eventsRes, workflowsRes, enrichCredsRes, suggestionsRes] = await Promise.all([
       api.contacts.get(accountId, contactId, token),
       api.labels.list(accountId, token),
       api.customAttributes.list(accountId, token),
@@ -54,6 +57,7 @@ export default function ContactProfilePage() {
       api.contacts.listEmailEvents(accountId, contactId, token),
       api.marketing.workflows.list(accountId, token),
       api.serviceCredentials.list(accountId, token, 'data_enrichment'),
+      api.contacts.listEnrichmentSuggestions(accountId, contactId, token),
     ]);
     setContact({ ...res.contact, labels: res.labels } as ContactDetail);
     setNotes(res.notes);
@@ -73,6 +77,12 @@ export default function ContactProfilePage() {
     setEnrichmentCreds(activeEnrich);
     const defaultEnrich = activeEnrich.find((c) => c.isDefault) ?? activeEnrich[0];
     setEnrichCredentialId((prev) => prev || defaultEnrich?.id || '');
+    setSuggestions(suggestionsRes.suggestions);
+    const initial: Record<string, Set<string>> = {};
+    for (const s of suggestionsRes.suggestions) {
+      initial[s.id] = new Set(s.fields.map((f) => f.key));
+    }
+    setSelectedFields(initial);
   };
 
   const enrollInWorkflow = async () => {
@@ -104,9 +114,7 @@ export default function ContactProfilePage() {
         return;
       }
       setEnrichMsg(
-        res.enrichmentStatus === 'partial'
-          ? 'Enrichment completed with partial data.'
-          : 'Enrichment completed successfully.'
+        `Found ${res.fieldCount ?? 0} field(s) to review. Select what to add below.`
       );
       await load();
     } catch (err) {
@@ -115,6 +123,52 @@ export default function ContactProfilePage() {
     } finally {
       setEnrichBusy(false);
     }
+  };
+
+  const toggleField = (suggestionId: string, fieldKey: string) => {
+    setSelectedFields((prev) => {
+      const next = { ...prev };
+      const set = new Set(next[suggestionId] ?? []);
+      if (set.has(fieldKey)) set.delete(fieldKey);
+      else set.add(fieldKey);
+      next[suggestionId] = set;
+      return next;
+    });
+  };
+
+  const applySuggestion = async (suggestionId: string) => {
+    if (!token || !accountId) return;
+    const keys = [...(selectedFields[suggestionId] ?? [])];
+    if (keys.length === 0) {
+      setEnrichError(true);
+      setEnrichMsg('Select at least one field to apply.');
+      return;
+    }
+    setApplyBusy(true);
+    setEnrichMsg('');
+    setEnrichError(false);
+    try {
+      const res = await api.contacts.applyEnrichmentSuggestion(
+        accountId,
+        contactId,
+        suggestionId,
+        keys,
+        token
+      );
+      setEnrichMsg(`Applied ${res.appliedCount} field(s) to this contact.`);
+      await load();
+    } catch (err) {
+      setEnrichError(true);
+      setEnrichMsg(err instanceof Error ? err.message : 'Failed to apply fields.');
+    } finally {
+      setApplyBusy(false);
+    }
+  };
+
+  const dismissSuggestion = async (suggestionId: string) => {
+    if (!token || !accountId) return;
+    await api.contacts.dismissEnrichmentSuggestion(accountId, contactId, suggestionId, token);
+    await load();
   };
 
   useEffect(() => {
@@ -334,6 +388,74 @@ export default function ContactProfilePage() {
                   {enrichMsg}
                 </p>
               )}
+            </div>
+          )}
+
+          {suggestions.length > 0 && (
+            <div className="space-y-4 pt-3 border-t border-gray-100">
+              <h3 className="text-sm font-medium text-gray-900">Review enrichment data</h3>
+              <p className="text-xs text-gray-500">
+                Choose which suggested values to add. Nothing is saved until you click Apply selected.
+              </p>
+              {suggestions.map((s) => (
+                <div key={s.id} className="border border-gray-100 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-gray-800">
+                      {s.providerLabel} · {s.fields.length} field(s)
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(s.fetchedAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+                          <th className="py-1 pr-2 w-8" />
+                          <th className="py-1 pr-2">Field</th>
+                          <th className="py-1 pr-2">Current</th>
+                          <th className="py-1">Suggested</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {s.fields.map((f) => (
+                          <tr key={f.key} className="border-b border-gray-50">
+                            <td className="py-2 pr-2">
+                              <input
+                                type="checkbox"
+                                checked={selectedFields[s.id]?.has(f.key) ?? false}
+                                onChange={() => toggleField(s.id, f.key)}
+                              />
+                            </td>
+                            <td className="py-2 pr-2 text-gray-700">{f.label}</td>
+                            <td className="py-2 pr-2 text-gray-400">{f.current ?? '—'}</td>
+                            <td className="py-2 text-gray-900">{f.proposed}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={applyBusy}
+                      onClick={() => void applySuggestion(s.id)}
+                    >
+                      {applyBusy ? 'Applying…' : 'Apply selected'}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={applyBusy}
+                      onClick={() => void dismissSuggestion(s.id)}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </section>

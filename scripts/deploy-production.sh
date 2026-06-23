@@ -41,6 +41,13 @@ else
   echo "enrichment columns exist — skipping 0020"
 fi
 
+if ! psql "$DATABASE_URL" -tAc "SELECT 1 FROM contact_enrichment_suggestions LIMIT 1" >/dev/null 2>&1; then
+  echo "Applying 0021_contact_enrichment_suggestions.sql..."
+  psql "$DATABASE_URL" -f "$ROOT/packages/db/drizzle/0021_contact_enrichment_suggestions.sql"
+else
+  echo "contact_enrichment_suggestions exists — skipping 0021"
+fi
+
 echo "Cleaning legacy workflow_sent rows without Resend message IDs..."
 psql "$DATABASE_URL" -c "
   DELETE FROM contact_email_events

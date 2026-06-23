@@ -297,6 +297,26 @@ export type GlobalCompanySummary = {
   enrichmentStatus: string;
 };
 
+export type EnrichmentSuggestionField = {
+  key: string;
+  label: string;
+  entity: 'contact' | 'company' | 'person';
+  current: string | null;
+  proposed: string;
+  source: string;
+};
+
+export type EnrichmentSuggestion = {
+  id: string;
+  provider: string;
+  providerLabel: string;
+  scope: 'company' | 'person' | 'both';
+  status: 'pending' | 'applied' | 'dismissed' | 'expired';
+  fields: EnrichmentSuggestionField[];
+  fetchedAt: string;
+  expiresAt: string;
+};
+
 export type ContactDetail = Contact & {
   avatarUrl: string | null;
   blockedAt: string | null;
@@ -1001,15 +1021,38 @@ export const api = {
         error?: string;
         code?: string;
         scope?: string;
-        enrichmentStatus?: string;
-        company?: GlobalCompanySummary | null;
-        person?: {
-          jobTitle: string | null;
-          linkedinUrl: string | null;
-          phone: string | null;
-          companyName: string | null;
-        } | null;
+        fieldCount?: number;
+        suggestion?: EnrichmentSuggestion;
       }>(`/accounts/${accountId}/contacts/${contactId}/enrich`, { method: 'POST', body, token }),
+
+    listEnrichmentSuggestions: (accountId: string, contactId: string, token: string) =>
+      request<{ suggestions: EnrichmentSuggestion[] }>(
+        `/accounts/${accountId}/contacts/${contactId}/enrichment-suggestions`,
+        { token }
+      ),
+
+    applyEnrichmentSuggestion: (
+      accountId: string,
+      contactId: string,
+      suggestionId: string,
+      fieldKeys: string[],
+      token: string
+    ) =>
+      request<{ ok: boolean; appliedCount: number; company?: GlobalCompanySummary | null }>(
+        `/accounts/${accountId}/contacts/${contactId}/enrichment-suggestions/${suggestionId}`,
+        { method: 'POST', body: { fieldKeys }, token }
+      ),
+
+    dismissEnrichmentSuggestion: (
+      accountId: string,
+      contactId: string,
+      suggestionId: string,
+      token: string
+    ) =>
+      request<{ ok: boolean }>(
+        `/accounts/${accountId}/contacts/${contactId}/enrichment-suggestions/${suggestionId}`,
+        { method: 'DELETE', token }
+      ),
 
     remove: (accountId: string, contactId: string, token: string) =>
       request<{ ok: boolean }>(`/accounts/${accountId}/contacts/${contactId}`, { method: 'DELETE', token }),
