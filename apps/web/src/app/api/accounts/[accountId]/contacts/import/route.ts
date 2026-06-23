@@ -4,6 +4,7 @@ import { getAccountSettings } from '@/lib/account-settings-db';
 import { canImportContacts } from '@/lib/crm-permissions';
 import { parseContactsCsv } from '@/lib/csv-contacts';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
+import { linkContactToGlobalCompany } from '@/lib/companies/resolve';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -84,6 +85,8 @@ export async function POST(req: Request, { params }: Params) {
                   created_at as "createdAt", updated_at as "updatedAt"
       `;
       if (inserted[0]) {
+        const row0 = inserted[0] as { id: string; email: string | null };
+        await linkContactToGlobalCompany(sql, row0.id, row0.email, accountId);
         await emitContactEvent(
           sql,
           accountId,

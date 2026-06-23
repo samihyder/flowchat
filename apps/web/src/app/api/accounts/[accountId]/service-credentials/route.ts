@@ -3,12 +3,13 @@ import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { writeAuditLog } from '@/lib/audit-log';
 import { verifyEmailCredential } from '@/lib/credentials/providers/email';
 import { verifyAnthropicKey } from '@/lib/credentials/providers/ai/anthropic';
+import { verifyEnrichmentCredential } from '@/lib/credentials/providers/enrichment';
 import {
   createCredential,
   listCredentials,
 } from '@/lib/credentials/store';
 import { withBasePath } from '@/lib/base-path';
-import type { EmailProviderId, ServiceCategory, ServiceProviderId } from '@/lib/credentials/types';
+import type { EmailProviderId, EnrichmentProviderId, ServiceCategory, ServiceProviderId } from '@/lib/credentials/types';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -71,6 +72,13 @@ export async function POST(req: Request, { params }: Params) {
       if (!verify.ok) return Response.json({ error: verify.error }, { status: 400 });
     } else if (body.category === 'ai_chat' && body.provider === 'anthropic') {
       const verify = await verifyAnthropicKey(body.secret.trim());
+      if (!verify.ok) return Response.json({ error: verify.error }, { status: 400 });
+    } else if (body.category === 'data_enrichment') {
+      const verify = await verifyEnrichmentCredential(
+        body.provider as EnrichmentProviderId,
+        body.secret.trim(),
+        body.config ?? {}
+      );
       if (!verify.ok) return Response.json({ error: verify.error }, { status: 400 });
     } else {
       return Response.json({ error: 'Unsupported provider for category' }, { status: 400 });

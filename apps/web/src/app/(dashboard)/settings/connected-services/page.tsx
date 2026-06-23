@@ -15,6 +15,15 @@ const EMAIL_PROVIDERS = [
 
 const AI_PROVIDERS = [{ id: 'anthropic', label: 'Anthropic (Claude)' }] as const;
 
+const ENRICHMENT_PROVIDERS = [
+  { id: 'companies_house', label: 'Companies House (UK)' },
+  { id: 'people_data_labs', label: 'People Data Labs' },
+  { id: 'lusha', label: 'Lusha' },
+  { id: 'cognism', label: 'Cognism' },
+  { id: 'openmart', label: 'OpenMart' },
+  { id: 'explorium', label: 'Explorium' },
+] as const;
+
 export default function ConnectedServicesPage() {
   const { token, accountId } = useAuthStore();
   const [credentials, setCredentials] = useState<ServiceCredential[]>([]);
@@ -26,12 +35,13 @@ export default function ConnectedServicesPage() {
   const [messageKind, setMessageKind] = useState<'success' | 'error' | ''>('');
   const [busy, setBusy] = useState(false);
 
-  const [category, setCategory] = useState<'email_marketing' | 'ai_chat'>('email_marketing');
+  const [category, setCategory] = useState<'email_marketing' | 'ai_chat' | 'data_enrichment'>('email_marketing');
   const [provider, setProvider] = useState('resend');
   const [label, setLabel] = useState('');
   const [secret, setSecret] = useState('');
   const [mailgunDomain, setMailgunDomain] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('');
+  const [enrichmentBaseUrl, setEnrichmentBaseUrl] = useState('');
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
@@ -54,6 +64,7 @@ export default function ConnectedServicesPage() {
 
   const emailCreds = credentials.filter((c) => c.category === 'email_marketing');
   const aiCreds = credentials.filter((c) => c.category === 'ai_chat');
+  const enrichmentCreds = credentials.filter((c) => c.category === 'data_enrichment');
 
   const showMessage = (text: string, kind: 'success' | 'error') => {
     setMessage(text);
@@ -77,6 +88,9 @@ export default function ConnectedServicesPage() {
       if (category === 'ai_chat') {
         config.model = aiModel;
       }
+      if (category === 'data_enrichment' && enrichmentBaseUrl.trim()) {
+        config.baseUrl = enrichmentBaseUrl.trim();
+      }
       await api.serviceCredentials.create(
         accountId,
         {
@@ -87,7 +101,8 @@ export default function ConnectedServicesPage() {
           config,
           isDefault:
             (category === 'email_marketing' && emailCreds.length === 0) ||
-            (category === 'ai_chat' && aiCreds.length === 0),
+            (category === 'ai_chat' && aiCreds.length === 0) ||
+            (category === 'data_enrichment' && enrichmentCreds.length === 0),
         },
         token
       );
@@ -95,6 +110,7 @@ export default function ConnectedServicesPage() {
       setSecret('');
       setMailgunDomain('');
       setWebhookSecret('');
+      setEnrichmentBaseUrl('');
       showMessage('Connection added and verified.', 'success');
       load();
     } catch (err) {
@@ -233,8 +249,8 @@ export default function ConnectedServicesPage() {
       <div>
         <h2 className="text-base font-semibold text-gray-900">Connected services</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Bring your own API keys for email marketing (Resend, SendGrid, Mailgun) and AI (Claude). Keys are encrypted and
-          stored permanently in the database — edit anytime to rotate a key or update webhook secrets.
+          Bring your own API keys for email marketing, AI, and CRM data enrichment. Keys are encrypted and stored
+          permanently — edit anytime to rotate a key.
         </p>
       </div>
 
@@ -311,6 +327,50 @@ export default function ConnectedServicesPage() {
                   </p>
                 )}
                 <p className="text-xs text-gray-400">Used {c.usageCount} times</p>
+              </div>
+              <div className="flex flex-col gap-1 shrink-0">
+                <Button type="button" variant="ghost" size="sm" onClick={() => startEdit(c)}>
+                  Edit
+                </Button>
+                {!c.isDefault && (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setDefault(c.id)}>
+                    Set default
+                  </Button>
+                )}
+                <Button type="button" variant="ghost" size="sm" onClick={() => testConnection(c.id)}>
+                  Test
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => remove(c.id)}>
+                  Remove
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+        <h3 className="font-medium text-gray-900">Data enrichment</h3>
+        <p className="text-sm text-gray-500">
+          Connect firmographic and contact enrichment APIs. Users pick a provider when enriching a contact from the CRM.
+        </p>
+        <ul className="space-y-3">
+          {enrichmentCreds.length === 0 && (
+            <li className="text-sm text-gray-500">No enrichment providers connected yet.</li>
+          )}
+          {enrichmentCreds.map((c) => (
+            <li key={c.id} className="border border-gray-100 rounded-lg p-3 flex justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-gray-900">{c.label}</p>
+                  <Badge color="gray">{c.provider}</Badge>
+                  {c.isDefault && <Badge color="primary">Default</Badge>}
+                  <Badge color={c.status === 'active' ? 'success' : 'warning'}>{c.status}</Badge>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Key: {c.secretPrefix}</p>
+                {typeof c.config?.lastVerificationError === 'string' && c.config.lastVerificationError && (
+                  <p className="text-xs text-red-600 mt-1">Last error: {c.config.lastVerificationError}</p>
+                )}
               </div>
               <div className="flex flex-col gap-1 shrink-0">
                 <Button type="button" variant="ghost" size="sm" onClick={() => startEdit(c)}>
@@ -425,19 +485,28 @@ export default function ConnectedServicesPage() {
               className="border border-gray-200 rounded-lg text-sm px-2 py-1.5"
               value={category}
               onChange={(e) => {
-                setCategory(e.target.value as 'email_marketing' | 'ai_chat');
-                setProvider(e.target.value === 'ai_chat' ? 'anthropic' : 'resend');
+                const cat = e.target.value as 'email_marketing' | 'ai_chat' | 'data_enrichment';
+                setCategory(cat);
+                setProvider(
+                  cat === 'ai_chat' ? 'anthropic' : cat === 'data_enrichment' ? 'people_data_labs' : 'resend'
+                );
               }}
             >
               <option value="email_marketing">Email marketing</option>
               <option value="ai_chat">AI chat</option>
+              <option value="data_enrichment">Data enrichment</option>
             </select>
             <select
               className="border border-gray-200 rounded-lg text-sm px-2 py-1.5"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
             >
-              {(category === 'email_marketing' ? EMAIL_PROVIDERS : AI_PROVIDERS).map((p) => (
+              {(category === 'email_marketing'
+                ? EMAIL_PROVIDERS
+                : category === 'ai_chat'
+                  ? AI_PROVIDERS
+                  : ENRICHMENT_PROVIDERS
+              ).map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.label}
                 </option>
@@ -465,6 +534,13 @@ export default function ConnectedServicesPage() {
               value={mailgunDomain}
               onChange={(e) => setMailgunDomain(e.target.value)}
               required
+            />
+          )}
+          {category === 'data_enrichment' && (provider === 'openmart' || provider === 'explorium') && (
+            <Input
+              placeholder="Optional API base URL (leave blank for default)"
+              value={enrichmentBaseUrl}
+              onChange={(e) => setEnrichmentBaseUrl(e.target.value)}
             />
           )}
           {category === 'email_marketing' && (

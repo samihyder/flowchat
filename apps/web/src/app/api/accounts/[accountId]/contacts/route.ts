@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
+import { linkContactToGlobalCompany } from '@/lib/companies/resolve';
 import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
 import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-attributes';
 import { listContacts } from '@/lib/contacts-query';
@@ -118,6 +119,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const contact = rows[0] as { id: string };
   if (rows[0]) {
+    await linkContactToGlobalCompany(sql, contact.id, body.email?.trim() || null, accountId);
     await emitContactEvent(
       sql,
       accountId,

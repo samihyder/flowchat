@@ -27,6 +27,20 @@ else
   echo "account_service_credentials exists — skipping 0018"
 fi
 
+if ! psql "$DATABASE_URL" -tAc "SELECT 1 FROM companies LIMIT 1" >/dev/null 2>&1; then
+  echo "Applying 0019_global_companies.sql..."
+  psql "$DATABASE_URL" -f "$ROOT/packages/db/drizzle/0019_global_companies.sql"
+else
+  echo "companies table exists — skipping 0019"
+fi
+
+if ! psql "$DATABASE_URL" -tAc "SELECT 1 FROM information_schema.columns WHERE table_name='contacts' AND column_name='enrichment_status'" >/dev/null 2>&1; then
+  echo "Applying 0020_enrichment_providers.sql..."
+  psql "$DATABASE_URL" -f "$ROOT/packages/db/drizzle/0020_enrichment_providers.sql"
+else
+  echo "enrichment columns exist — skipping 0020"
+fi
+
 echo "Cleaning legacy workflow_sent rows without Resend message IDs..."
 psql "$DATABASE_URL" -c "
   DELETE FROM contact_email_events

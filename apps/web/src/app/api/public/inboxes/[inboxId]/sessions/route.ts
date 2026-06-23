@@ -5,6 +5,7 @@ import { getClientIp } from '@/lib/request-ip';
 import { getClientGeo } from '@/lib/request-geo';
 import { sendWelcomeMessages } from '@/lib/welcome-messages';
 import { guardPublicInboxRequest } from '@/lib/public-inbox-guard';
+import { linkContactToGlobalCompany } from '@/lib/companies/resolve';
 import { pickRoundRobinAssignee } from '@/lib/assign';
 import type { AppSql } from '@/lib/db-sql';
 
@@ -176,6 +177,8 @@ export async function POST(req: Request, { params }: Params) {
   if (!contact) {
     return Response.json({ error: 'Failed to create contact' }, { status: 500, headers: corsHeaders() });
   }
+
+  await linkContactToGlobalCompany(sql, contact.id, email, inbox.accountId);
 
   const visitorToken = newVisitorToken();
   await sql`

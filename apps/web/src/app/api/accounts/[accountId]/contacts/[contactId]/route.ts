@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
+import { getGlobalCompanyById, linkContactToGlobalCompany, toCompanySummary } from '@/lib/companies/resolve';
 import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
 import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-attributes';
 import type { AppSql } from '@/lib/db-sql';
@@ -20,7 +21,10 @@ export async function GET(req: Request, { params }: Params) {
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
   const rows = await sql`
     SELECT c.id, c.name, c.email, c.phone, c.type, c.external_id as "externalId",
-           c.avatar_url as "avatarUrl",
+           c.avatar_url as "avatarUrl", c.company_id as "companyId",
+           c.enrichment_status as "enrichmentStatus",
+           c.enrichment_provider as "enrichmentProvider",
+           c.enriched_at as "enrichedAt",
            c.custom_attributes as "customAttributes",
            c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
            c.blocked_at as "blockedAt", c.created_at as "createdAt", c.updated_at as "updatedAt"
@@ -29,6 +33,9 @@ export async function GET(req: Request, { params }: Params) {
     LIMIT 1
   `;
   if (!rows[0]) return Response.json({ error: 'Contact not found' }, { status: 404 });
+
+  const companyId = (rows[0] as { companyId?: string | null }).companyId;
+  const company = companyId ? await getGlobalCompanyById(sql, companyId) : null;
 
   const [labels, conversations, notes] = await Promise.all([
     sql`
@@ -68,6 +75,10 @@ export async function GET(req: Request, { params }: Params) {
       blockedAt: (rows[0] as { blockedAt: Date | null }).blockedAt
         ? new Date((rows[0] as { blockedAt: Date }).blockedAt).toISOString()
         : null,
+      enrichedAt: (rows[0] as { enrichedAt: Date | null }).enrichedAt
+        ? new Date((rows[0] as { enrichedAt: Date }).enrichedAt).toISOString()
+        : null,
+      company: company ? toCompanySummary(company) : null,
     },
     labels,
     conversations: (conversations as { lastMessageAt: Date | null; createdAt: Date }[]).map((c) => ({
@@ -149,6 +160,13 @@ export async function PATCH(req: Request, { params }: Params) {
   `;
 
   if (rows[0]) {
+    const updated = rows[0] as { id: string; email: string | null };
+    await linkContactToGlobalCompany(
+      sql,
+      updated.id,
+      body.email !== undefined ? body.email?.trim() || null : updated.email,
+      accountId
+    );
     await emitContactEvent(
       sql,
       accountId,

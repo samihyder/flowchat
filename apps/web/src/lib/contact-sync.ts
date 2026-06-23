@@ -1,4 +1,5 @@
 import type { AppSql } from '@/lib/db-sql';
+import { linkContactToGlobalCompany } from '@/lib/companies/resolve';
 import { dispatchWebhooks } from '@/lib/webhooks';
 
 export type ContactRecord = {
@@ -138,6 +139,7 @@ export async function upsertIntegrationContact(
                 created_at as "createdAt", updated_at as "updatedAt"
     `;
     const contact = serializeContactRow(rows[0] as Record<string, unknown>);
+    await linkContactToGlobalCompany(sql, contact.id, contact.email, accountId);
     await emitContactEvent(sql, accountId, 'contact.updated', contact);
     return { contact, created: false };
   }
@@ -161,6 +163,7 @@ export async function upsertIntegrationContact(
               created_at as "createdAt", updated_at as "updatedAt"
   `;
   const contact = serializeContactRow(rows[0] as Record<string, unknown>);
+  await linkContactToGlobalCompany(sql, contact.id, contact.email, accountId);
   await emitContactEvent(sql, accountId, 'contact.created', contact);
   return { contact, created: true };
 }

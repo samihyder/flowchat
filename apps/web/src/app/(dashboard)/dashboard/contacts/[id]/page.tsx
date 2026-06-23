@@ -5,7 +5,7 @@ import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { api, type ContactDetail, type ContactNote, type CustomAttributeDefinition, type Label, type ContactEmailEvent, type MarketingWorkflow } from '@/lib/api';
+import { api, type ContactDetail, type ContactNote, type CustomAttributeDefinition, type Label, type ContactEmailEvent, type MarketingWorkflow, type ServiceCredential } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CustomAttributeFields } from '@/components/contacts/custom-attribute-fields';
@@ -37,16 +37,23 @@ export default function ContactProfilePage() {
   const [workflows, setWorkflows] = useState<MarketingWorkflow[]>([]);
   const [enrollWorkflowId, setEnrollWorkflowId] = useState('');
   const [enrollMsg, setEnrollMsg] = useState('');
+  const [enrichmentCreds, setEnrichmentCreds] = useState<ServiceCredential[]>([]);
+  const [enrichCredentialId, setEnrichCredentialId] = useState('');
+  const [enrichScope, setEnrichScope] = useState<'auto' | 'company' | 'person'>('auto');
+  const [enrichBusy, setEnrichBusy] = useState(false);
+  const [enrichMsg, setEnrichMsg] = useState('');
+  const [enrichError, setEnrichError] = useState(false);
 
   const load = async () => {
     if (!token || !accountId) return;
-    const [res, labelRes, attrRes, access, eventsRes, workflowsRes] = await Promise.all([
+    const [res, labelRes, attrRes, access, eventsRes, workflowsRes, enrichCredsRes] = await Promise.all([
       api.contacts.get(accountId, contactId, token),
       api.labels.list(accountId, token),
       api.customAttributes.list(accountId, token),
       api.contacts.access(accountId, token),
       api.contacts.listEmailEvents(accountId, contactId, token),
       api.marketing.workflows.list(accountId, token),
+      api.serviceCredentials.list(accountId, token, 'data_enrichment'),
     ]);
     setContact({ ...res.contact, labels: res.labels } as ContactDetail);
     setNotes(res.notes);
@@ -62,6 +69,10 @@ export default function ContactProfilePage() {
     setCustomAttributes((res.contact.customAttributes as Record<string, unknown>) ?? {});
     setEmailEvents(eventsRes.events);
     setWorkflows(workflowsRes.workflows);
+    const activeEnrich = enrichCredsRes.credentials.filter((c) => c.status === 'active');
+    setEnrichmentCreds(activeEnrich);
+    const defaultEnrich = activeEnrich.find((c) => c.isDefault) ?? activeEnrich[0];
+    setEnrichCredentialId((prev) => prev || defaultEnrich?.id || '');
   };
 
   const enrollInWorkflow = async () => {
@@ -72,6 +83,37 @@ export default function ContactProfilePage() {
       setEnrollMsg('Enrolled in workflow.');
     } catch (err) {
       setEnrollMsg(err instanceof Error ? err.message : 'Enrollment failed');
+    }
+  };
+
+  const runEnrichment = async () => {
+    if (!token || !accountId || !enrichCredentialId) return;
+    setEnrichBusy(true);
+    setEnrichMsg('');
+    setEnrichError(false);
+    try {
+      const res = await api.contacts.enrich(
+        accountId,
+        contactId,
+        { credentialId: enrichCredentialId, scope: enrichScope },
+        token
+      );
+      if (!res.ok) {
+        setEnrichError(true);
+        setEnrichMsg(res.error ?? 'Enrichment failed.');
+        return;
+      }
+      setEnrichMsg(
+        res.enrichmentStatus === 'partial'
+          ? 'Enrichment completed with partial data.'
+          : 'Enrichment completed successfully.'
+      );
+      await load();
+    } catch (err) {
+      setEnrichError(true);
+      setEnrichMsg(err instanceof Error ? err.message : 'Enrichment failed.');
+    } finally {
+      setEnrichBusy(false);
     }
   };
 
@@ -212,6 +254,88 @@ export default function ContactProfilePage() {
           <Button type="button" onClick={() => void handleSave()} disabled={saving}>
             {saving ? 'Saving…' : 'Save changes'}
           </Button>
+        </section>
+
+        <section className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+          <h2 className="font-semibold text-gray-900">Company & enrichment</h2>
+          {contact.company ? (
+            <div className="text-sm space-y-1">
+              <p className="font-medium text-gray-900">{contact.company.name}</p>
+              <p className="text-gray-500">{contact.company.domain}</p>
+              {(contact.company.hqCity || contact.company.hqCountry) && (
+                <p className="text-gray-500">
+                  {[contact.company.hqCity, contact.company.hqCountry].filter(Boolean).join(', ')}
+                </p>
+              )}
+              <p className="text-xs text-gray-400 capitalize">
+                Status: {contact.company.enrichmentStatus.replace(/_/g, ' ')}
+              </p>
+              {contact.company.website && (
+                <a
+                  href={contact.company.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary-600 hover:underline text-sm"
+                >
+                  {contact.company.website}
+                </a>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">
+              No company linked. Save a corporate email (not Gmail, etc.) to auto-link a global company record.
+            </p>
+          )}
+
+          {enrichmentCreds.length === 0 ? (
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              Add an enrichment API in Settings → Connected services to enrich this contact.
+            </p>
+          ) : (
+            <div className="space-y-2 pt-2 border-t border-gray-100">
+              <p className="text-xs text-gray-500">Run enrichment with a connected provider</p>
+              <div className="flex flex-wrap gap-2">
+                <select
+                  value={enrichCredentialId}
+                  onChange={(e) => setEnrichCredentialId(e.target.value)}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
+                >
+                  {enrichmentCreds.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label} ({c.provider})
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={enrichScope}
+                  onChange={(e) => setEnrichScope(e.target.value as 'auto' | 'company' | 'person')}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
+                >
+                  <option value="auto">Auto</option>
+                  <option value="company">Company only</option>
+                  <option value="person">Person only</option>
+                </select>
+                <Button
+                  type="button"
+                  disabled={enrichBusy || !enrichCredentialId || !contact.email}
+                  onClick={() => void runEnrichment()}
+                >
+                  {enrichBusy ? 'Enriching…' : 'Enrich'}
+                </Button>
+              </div>
+              {enrichMsg && (
+                <p
+                  className={`text-sm rounded-lg px-3 py-2 border ${
+                    enrichError
+                      ? 'text-red-800 bg-red-50 border-red-200'
+                      : 'text-green-800 bg-green-50 border-green-200'
+                  }`}
+                >
+                  {enrichMsg}
+                </p>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="bg-white border border-gray-200 rounded-xl p-4">

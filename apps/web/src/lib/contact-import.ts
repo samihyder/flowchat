@@ -1,4 +1,5 @@
 import type { AppSql } from '@/lib/db-sql';
+import { linkContactToGlobalCompany } from '@/lib/companies/resolve';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
 import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
 import { validateCustomAttributes, type CustomAttributeDefinition } from '@/lib/custom-attributes';
@@ -205,6 +206,8 @@ export async function processImportJobBatch(
                     created_at as "createdAt", updated_at as "updatedAt"
         `;
         if (updated[0]) {
+          const row0 = updated[0] as { id: string; email: string | null };
+          await linkContactToGlobalCompany(sql, row0.id, row0.email, accountId);
           await emitContactEvent(
             sql,
             accountId,
@@ -245,6 +248,8 @@ export async function processImportJobBatch(
         `;
         if (inserted[0]) {
           const contactId = (inserted[0] as { id: string }).id;
+          const contactEmail = (inserted[0] as { email: string | null }).email;
+          await linkContactToGlobalCompany(sql, contactId, contactEmail, accountId);
           await emitContactEvent(
             sql,
             accountId,

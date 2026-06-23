@@ -2,11 +2,12 @@ import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { verifyEmailCredential } from '@/lib/credentials/providers/email';
 import { verifyAnthropicKey } from '@/lib/credentials/providers/ai/anthropic';
+import { verifyEnrichmentCredential } from '@/lib/credentials/providers/enrichment';
 import {
   getCredentialSecret,
   recordCredentialVerification,
 } from '@/lib/credentials/store';
-import type { EmailProviderId } from '@/lib/credentials/types';
+import type { EmailProviderId, EnrichmentProviderId } from '@/lib/credentials/types';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string; credentialId: string }> };
@@ -33,6 +34,12 @@ export async function POST(req: Request, { params }: Params) {
     );
   } else if (cred.row.provider === 'anthropic') {
     verify = await verifyAnthropicKey(cred.secret);
+  } else if (cred.row.category === 'data_enrichment') {
+    verify = await verifyEnrichmentCredential(
+      cred.row.provider as EnrichmentProviderId,
+      cred.secret,
+      cred.row.config
+    );
   } else {
     return Response.json({ error: 'Unsupported provider' }, { status: 400 });
   }

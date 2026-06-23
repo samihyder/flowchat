@@ -217,7 +217,7 @@ export type MarketingSender = {
 export type ServiceCredential = {
   id: string;
   accountId: string;
-  category: 'email_marketing' | 'ai_chat';
+  category: 'email_marketing' | 'ai_chat' | 'data_enrichment';
   provider: string;
   label: string;
   secretPrefix: string;
@@ -286,11 +286,26 @@ export type ContactNote = {
   updatedAt: string;
 };
 
+export type GlobalCompanySummary = {
+  id: string;
+  domain: string;
+  name: string;
+  website: string | null;
+  logoUrl: string | null;
+  hqCity: string | null;
+  hqCountry: string | null;
+  enrichmentStatus: string;
+};
+
 export type ContactDetail = Contact & {
   avatarUrl: string | null;
   blockedAt: string | null;
   externalId?: string | null;
   customAttributes?: Record<string, unknown>;
+  company?: GlobalCompanySummary | null;
+  enrichmentStatus?: string | null;
+  enrichmentProvider?: string | null;
+  enrichedAt?: string | null;
   labels: Label[];
   conversations: {
     id: string;
@@ -975,6 +990,27 @@ export const api = {
         token,
       }),
 
+    enrich: (
+      accountId: string,
+      contactId: string,
+      body: { credentialId: string; scope?: 'company' | 'person' | 'auto' },
+      token: string
+    ) =>
+      request<{
+        ok: boolean;
+        error?: string;
+        code?: string;
+        scope?: string;
+        enrichmentStatus?: string;
+        company?: GlobalCompanySummary | null;
+        person?: {
+          jobTitle: string | null;
+          linkedinUrl: string | null;
+          phone: string | null;
+          companyName: string | null;
+        } | null;
+      }>(`/accounts/${accountId}/contacts/${contactId}/enrich`, { method: 'POST', body, token }),
+
     remove: (accountId: string, contactId: string, token: string) =>
       request<{ ok: boolean }>(`/accounts/${accountId}/contacts/${contactId}`, { method: 'DELETE', token }),
 
@@ -1577,7 +1613,7 @@ export const api = {
     create: (
       accountId: string,
       body: {
-        category: 'email_marketing' | 'ai_chat';
+        category: 'email_marketing' | 'ai_chat' | 'data_enrichment';
         provider: string;
         label: string;
         secret: string;
