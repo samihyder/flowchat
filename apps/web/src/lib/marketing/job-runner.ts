@@ -1,5 +1,6 @@
 import type { AppSql } from '@/lib/db-sql';
 import { prepareCampaignSend, processCampaignBatch, pickAbTestWinner } from '@/lib/marketing/campaign-dispatch';
+import { processS6mCampaignBatch } from '@/lib/marketing/s6m-campaign-dispatch';
 import { processWorkflowBatch } from '@/lib/marketing/workflow-engine';
 
 const BATCH_SIZE = Number(process.env.MARKETING_BATCH_SIZE ?? 25);
@@ -8,10 +9,14 @@ export async function runMarketingJobs(sql: AppSql): Promise<{
   scheduledStarted: number;
   campaignsProcessed: number;
   workflowsProcessed: number;
+  s6mProcessed: number;
+  s6mSent: number;
 }> {
   let scheduledStarted = 0;
   let campaignsProcessed = 0;
   let workflowsProcessed = 0;
+
+  const s6m = await processS6mCampaignBatch(sql);
 
   const dueScheduled = await sql`
     SELECT id, account_id as "accountId"
@@ -58,5 +63,11 @@ export async function runMarketingJobs(sql: AppSql): Promise<{
     workflowsProcessed += result.processed;
   }
 
-  return { scheduledStarted, campaignsProcessed, workflowsProcessed };
+  return {
+    scheduledStarted,
+    campaignsProcessed,
+    workflowsProcessed,
+    s6mProcessed: s6m.processed,
+    s6mSent: s6m.sent,
+  };
 }

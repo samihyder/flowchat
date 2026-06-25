@@ -12,7 +12,8 @@ type Tab = 'overview' | 'steps' | 'recipients' | 'activity';
 
 type Props = {
   campaign: MarketingCampaign;
-  stats: CampaignStatsResult;
+  stats: CampaignStatsResult | null;
+  loading?: boolean;
   isAdmin: boolean;
   onPause: () => void;
   onResume?: () => void;
@@ -73,6 +74,7 @@ const TABS: { id: Tab; label: string }[] = [
 export function CampaignStatsView({
   campaign,
   stats,
+  loading,
   isAdmin,
   onPause,
   onResume,
@@ -83,6 +85,29 @@ export function CampaignStatsView({
   const [tab, setTab] = useState<Tab>('overview');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [recipientFilter, setRecipientFilter] = useState('all');
+
+  if (loading || !stats) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-10 bg-gray-100 rounded w-2/3" />
+        <div className="h-8 bg-gray-100 rounded w-full" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-8 h-64 bg-gray-50 rounded-xl border border-gray-200" />
+          <div className="lg:col-span-4 h-64 bg-gray-50 rounded-xl border border-gray-200" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center text-sm text-on-surface-variant">
+        <MarketingIcon name="analytics" className="text-[40px] text-gray-300 mx-auto mb-3" />
+        <p className="font-medium text-on-surface mb-1">Stats unavailable</p>
+        <p>Launch the campaign to view performance data.</p>
+      </div>
+    );
+  }
 
   const { overview, steps, recipients, activity } = stats;
 

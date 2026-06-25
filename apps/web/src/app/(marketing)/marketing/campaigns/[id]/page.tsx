@@ -131,24 +131,17 @@ export default function CampaignDetailPage() {
         Campaigns
       </Link>
 
-      {stats ? (
-        <CampaignStatsView
-          campaign={campaign}
-          stats={stats}
-          isAdmin={isAdmin}
-          onPause={() => void openControl('pause')}
-          onResume={isAdmin ? () => void handleResume() : undefined}
-          onCancel={() => void openControl('cancel')}
-          onExport={() => void handleExport()}
-          exporting={exporting}
-        />
-      ) : (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center text-sm text-on-surface-variant">
-          <MarketingIcon name="analytics" className="text-[40px] text-gray-300 mx-auto mb-3" />
-          <p className="font-medium text-on-surface mb-1">Stats unavailable</p>
-          <p>Launch the campaign to view performance data.</p>
-        </div>
-      )}
+      <CampaignStatsView
+        campaign={campaign}
+        stats={stats}
+        loading={loading}
+        isAdmin={isAdmin}
+        onPause={() => void openControl('pause')}
+        onResume={isAdmin ? () => void handleResume() : undefined}
+        onCancel={() => void openControl('cancel')}
+        onExport={() => void handleExport()}
+        exporting={exporting}
+      />
 
       <CampaignControlModal
         open={controlOpen}

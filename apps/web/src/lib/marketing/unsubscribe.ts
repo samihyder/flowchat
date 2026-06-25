@@ -1,6 +1,7 @@
 import { createId } from '@paralleldrive/cuid2';
 import type { AppSql } from '@/lib/db-sql';
 import { getWebAppOrigin } from '@/lib/marketing/origin';
+import { handleS6mUnsubscribe } from '@/lib/marketing/s6m-resend-events';
 import { suppressEmail } from '@/lib/marketing/suppressions';
 
 export async function getOrCreateUnsubscribeToken(
@@ -50,6 +51,7 @@ export async function unsubscribeByToken(sql: AppSql, token: string): Promise<bo
 
   if (row.email) {
     await suppressEmail(sql, row.accountId, row.email, 'unsubscribe');
+    await handleS6mUnsubscribe(sql, row.accountId, row.contactId, row.email);
   }
 
   await sql`

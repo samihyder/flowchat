@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
+import { MarketingHealthPanel, type MarketingHealthData } from '@/components/marketing/marketing-health-panel';
 import { ACCOUNT_LOGO_SIZE_PX } from '@/lib/branding/logo';
 
 const DEFAULT_SIGNATURE = `<p>Best regards,</p>
@@ -49,9 +50,12 @@ export default function EmailMarketingSettingsPage() {
   const [autoAppendTemplates, setAutoAppendTemplates] = useState(true);
   const [savingTemplates, setSavingTemplates] = useState(false);
   const [templateMessage, setTemplateMessage] = useState('');
+  const [health, setHealth] = useState<MarketingHealthData | null>(null);
+  const [healthLoading, setHealthLoading] = useState(true);
 
   const load = () => {
     if (!token || !accountId) return;
+    setHealthLoading(true);
     api.marketing.senders.list(accountId, token).then((r) => setSenders(r.senders));
     api.serviceCredentials.list(accountId, token, 'email_marketing').then((r) => {
       setEmailCredentials(r.credentials);
@@ -69,6 +73,11 @@ export default function EmailMarketingSettingsPage() {
       setPortfolioTemplate(s.marketingPortfolioTemplate ?? DEFAULT_PORTFOLIO);
       setAutoAppendTemplates(s.marketingAutoAppendTemplates !== false);
     });
+    api.marketing
+      .getHealth(accountId, token)
+      .then(setHealth)
+      .catch(() => setHealth(null))
+      .finally(() => setHealthLoading(false));
   };
 
   useEffect(load, [token, accountId]);
@@ -165,6 +174,8 @@ export default function EmailMarketingSettingsPage() {
           </Link>
         </p>
       </div>
+
+      <MarketingHealthPanel health={health} loading={healthLoading} />
 
       <section className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
         <h3 className="font-medium text-gray-900">Senders</h3>

@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type CampaignControlPreview, type MarketingCampaign } from '@/lib/api';
 import { CampaignControlModal } from '@/components/marketing/campaign-control-modal';
+import { CampaignMobileList } from '@/components/marketing/campaign-mobile-list';
 import { CampaignRowActionsMenu } from '@/components/marketing/campaign-row-actions-menu';
 import { CampaignStatusBadge } from '@/components/marketing/ui/campaign-status-badge';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
@@ -298,7 +299,19 @@ export default function CampaignsPage() {
             </div>
           </section>
         ) : (
-          <section className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+          <>
+            <div className="md:hidden p-4">
+              <CampaignMobileList
+                campaigns={paged}
+                isAdmin={isAdmin}
+                actionBusy={actionBusy}
+                onDuplicate={(c) => void handleDuplicate(c)}
+                onPause={(c) => void openControl(c, 'pause')}
+                onCancel={(c) => void openControl(c, 'cancel')}
+                onResume={(c) => void handleResume(c)}
+              />
+            </div>
+          <section className="hidden md:block bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-4 overflow-x-auto">
                 {STATUS_TABS.map((tab) => (
@@ -467,6 +480,7 @@ export default function CampaignsPage() {
               </div>
             </div>
           </section>
+          </>
         )}
       </div>
 

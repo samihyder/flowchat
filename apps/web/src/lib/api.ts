@@ -590,6 +590,18 @@ export type ContactEmailEvent = {
   createdAt: string;
 };
 
+export type MarketingTimelineEvent = {
+  id: string;
+  eventType: string;
+  campaignId: string;
+  campaignName: string;
+  stepOrder: number | null;
+  subject: string | null;
+  status: string | null;
+  createdAt: string;
+  detail: string | null;
+};
+
 type RequestOptions = {
   method?: string;
   body?: unknown;
@@ -1328,9 +1340,27 @@ export const api = {
         `/accounts/${accountId}/contacts/${contactId}/email-events`,
         { token }
       ),
+    getMarketingTimeline: (accountId: string, contactId: string, token: string) =>
+      request<{ events: MarketingTimelineEvent[] }>(
+        `/accounts/${accountId}/contacts/${contactId}/marketing-timeline`,
+        { token }
+      ),
   },
 
   marketing: {
+    getHealth: (accountId: string, token: string) =>
+      request<{
+        providerOk: boolean;
+        providerLabel: string;
+        domainStatus: string;
+        domainOk: boolean;
+        cronOk: boolean;
+        cronLastAt: string | null;
+        cronLastProcessed: number;
+        cronError: string | null;
+        webhookUrl: string;
+        fromEmail: string;
+      }>(`/accounts/${accountId}/marketing/health`, { token }),
     senders: {
       list: (accountId: string, token: string) =>
         request<{ senders: MarketingSender[] }>(`/accounts/${accountId}/marketing/senders`, { token }),

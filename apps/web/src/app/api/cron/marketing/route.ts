@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { runMarketingJobs } from '@/lib/marketing/job-runner';
+import { recordMarketingCronRun } from '@/lib/marketing/marketing-cron-state';
 import type { AppSql } from '@/lib/db-sql';
 
 export async function GET(req: Request) {
@@ -12,6 +13,13 @@ export async function GET(req: Request) {
   }
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
-  const result = await runMarketingJobs(sql);
-  return Response.json({ ok: true, ...result });
+  try {
+    const result = await runMarketingJobs(sql);
+    await recordMarketingCronRun(sql, result.s6mProcessed).catch(() => undefined);
+    return Response.json({ ok: true, ...result });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Cron failed';
+    await recordMarketingCronRun(sql, 0, message).catch(() => undefined);
+    return Response.json({ ok: false, error: message }, { status: 500 });
+  }
 }

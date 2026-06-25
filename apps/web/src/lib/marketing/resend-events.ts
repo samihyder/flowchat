@@ -1,5 +1,6 @@
 import type { AppSql } from '@/lib/db-sql';
 import { refreshCampaignStats } from '@/lib/marketing/campaign-dispatch';
+import { handleS6mResendWebhookEvent } from '@/lib/marketing/s6m-resend-events';
 import { suppressEmail } from '@/lib/marketing/suppressions';
 
 type ResendEvent = {
@@ -50,6 +51,9 @@ async function logContactEvent(
 export async function handleResendWebhookEvent(sql: AppSql, event: ResendEvent) {
   const messageId = event.data?.email_id;
   if (!messageId) return;
+
+  const handledS6m = await handleS6mResendWebhookEvent(sql, event);
+  if (handledS6m) return;
 
   const recipients = await sql`
     SELECT r.id, r.campaign_id as "campaignId", r.contact_id as "contactId",

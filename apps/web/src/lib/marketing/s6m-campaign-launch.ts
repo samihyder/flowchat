@@ -13,6 +13,7 @@ import {
 import { getMarketingCampaign } from '@/lib/marketing/s6m-campaigns';
 import { canLaunchCampaign } from '@/lib/marketing/permissions';
 import { getAccountSettings } from '@/lib/account-settings-db';
+import { getMarketingCronState, isCronHealthy } from '@/lib/marketing/marketing-cron-state';
 
 export type PreflightCheck = {
   id: string;
@@ -61,10 +62,15 @@ export async function getCampaignPreflight(
           : `Domain status: ${status}`;
   }
 
-  const cronOk = Boolean(
-    process.env.CRON_SECRET || process.env.VERCEL || process.env.NODE_ENV === 'development'
-  );
-  const cronDetail = cronOk ? 'Scheduler configured' : 'Background scheduler not configured';
+  const cronState = await getMarketingCronState(sql);
+  const cronOk =
+    isCronHealthy(cronState) ||
+    Boolean(process.env.CRON_SECRET || process.env.VERCEL || process.env.NODE_ENV === 'development');
+  const cronDetail = cronOk
+    ? cronState.lastRunAt
+      ? `Last run ${new Date(cronState.lastRunAt).toLocaleString()}`
+      : 'Scheduler configured'
+    : 'Background scheduler not running recently';
 
   const checks: PreflightCheck[] = [
     { id: 'provider', label: 'Provider Connection', ok: providerOk, detail: providerDetail },

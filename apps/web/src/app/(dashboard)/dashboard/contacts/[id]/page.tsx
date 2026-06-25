@@ -5,7 +5,8 @@ import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { api, type ContactDetail, type ContactNote, type CustomAttributeDefinition, type Label, type ContactEmailEvent, type ServiceCredential, type EnrichmentSuggestion } from '@/lib/api';
+import { api, type ContactDetail, type ContactNote, type CustomAttributeDefinition, type Label, type ContactEmailEvent, type MarketingTimelineEvent, type ServiceCredential, type EnrichmentSuggestion } from '@/lib/api';
+import { ContactMarketingTimeline } from '@/components/marketing/contact-marketing-timeline';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CustomAttributeFields } from '@/components/contacts/custom-attribute-fields';
@@ -34,6 +35,7 @@ export default function ContactProfilePage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editNoteContent, setEditNoteContent] = useState('');
   const [emailEvents, setEmailEvents] = useState<ContactEmailEvent[]>([]);
+  const [marketingTimeline, setMarketingTimeline] = useState<MarketingTimelineEvent[]>([]);
   const [enrichmentCreds, setEnrichmentCreds] = useState<ServiceCredential[]>([]);
   const [enrichCredentialId, setEnrichCredentialId] = useState('');
   const [enrichScope, setEnrichScope] = useState<'auto' | 'company' | 'person'>('auto');
@@ -46,12 +48,13 @@ export default function ContactProfilePage() {
 
   const load = async () => {
     if (!token || !accountId) return;
-    const [res, labelRes, attrRes, access, eventsRes, enrichCredsRes, suggestionsRes] = await Promise.all([
+    const [res, labelRes, attrRes, access, eventsRes, timelineRes, enrichCredsRes, suggestionsRes] = await Promise.all([
       api.contacts.get(accountId, contactId, token),
       api.labels.list(accountId, token),
       api.customAttributes.list(accountId, token),
       api.contacts.access(accountId, token),
       api.contacts.listEmailEvents(accountId, contactId, token),
+      api.contacts.getMarketingTimeline(accountId, contactId, token).catch(() => ({ events: [] })),
       api.serviceCredentials.list(accountId, token, 'data_enrichment'),
       api.contacts.listEnrichmentSuggestions(accountId, contactId, token),
     ]);
@@ -68,6 +71,7 @@ export default function ContactProfilePage() {
     setSelectedLabelIds(res.labels.map((l) => l.id));
     setCustomAttributes((res.contact.customAttributes as Record<string, unknown>) ?? {});
     setEmailEvents(eventsRes.events);
+    setMarketingTimeline(timelineRes.events);
     const activeEnrich = enrichCredsRes.credentials.filter((c) => c.status === 'active');
     setEnrichmentCreds(activeEnrich);
     const defaultEnrich = activeEnrich.find((c) => c.isDefault) ?? activeEnrich[0];
@@ -467,8 +471,11 @@ export default function ContactProfilePage() {
           )}
         </section>
 
+        <ContactMarketingTimeline events={marketingTimeline} />
+
+        {emailEvents.length > 0 && (
         <section className="bg-white border border-gray-200 rounded-xl p-4 lg:col-span-2">
-          <h2 className="font-semibold text-gray-900 mb-3">Email marketing activity</h2>
+          <h2 className="font-semibold text-gray-900 mb-3">Legacy email events</h2>
           <ul className="space-y-2 text-sm">
             {emailEvents.map((e) => (
               <li key={e.id} className="flex justify-between gap-4 border-b border-gray-100 pb-2">
@@ -480,9 +487,9 @@ export default function ContactProfilePage() {
                 <span className="text-gray-400 shrink-0">{new Date(e.createdAt).toLocaleString()}</span>
               </li>
             ))}
-            {emailEvents.length === 0 && <p className="text-sm text-gray-400">No marketing emails yet.</p>}
           </ul>
         </section>
+        )}
 
         <section className="bg-white border border-gray-200 rounded-xl p-4 lg:col-span-2">
           <h2 className="font-semibold text-gray-900 mb-3">Notes</h2>
