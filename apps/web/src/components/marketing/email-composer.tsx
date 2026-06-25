@@ -2,8 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { EmailRichEditor, htmlToPlainPreview } from '@/components/marketing/email-rich-editor';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import {
   MERGE_TAG_CHIPS,
   htmlToPlainText,
@@ -103,80 +102,106 @@ export function EmailComposer({
   const previewHtml = previewWithSampleMergeTags(htmlBody);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-surface">
-      <header className="shrink-0 border-b border-gray-200 bg-white px-4 py-3 flex flex-wrap items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</p>
-          {showTemplateName && (
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Template name"
-              className="mt-1 max-w-md font-semibold border-0 shadow-none px-0 h-8 focus-visible:ring-0"
-            />
+    <div className="fixed inset-0 z-50 flex flex-col bg-white shadow-xl animate-marketing-slide-up">
+      {/* Composer top bar — Stitch campaign_wizard_full_screen_composer */}
+      <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-white shrink-0 gap-4">
+        <div className="flex items-center gap-3 flex-1 min-w-0 max-w-3xl">
+          {showTemplateName ? (
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{title}</p>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Template name"
+                className="w-full border-none focus:ring-0 text-headline-sm font-semibold placeholder-gray-300 p-0 bg-transparent"
+              />
+            </div>
+          ) : (
+            <>
+              <span className="text-gray-400 font-medium whitespace-nowrap text-sm hidden sm:inline">
+                Subject:
+              </span>
+              <input
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Enter campaign subject line…"
+                className="w-full border-none focus:ring-0 text-headline-sm font-semibold placeholder-gray-300 min-w-0"
+              />
+            </>
           )}
         </div>
-        <div className="flex items-center gap-2 ml-auto">
-          <Button
+        <div className="flex items-center gap-2 shrink-0">
+          <button
             type="button"
-            variant="secondary"
-            size="sm"
             onClick={() => setShowPreview((v) => !v)}
+            className="hidden sm:inline-flex text-on-surface-variant hover:bg-gray-50 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             {showPreview ? 'Edit' : 'Preview'}
-          </Button>
-          <Button type="button" size="sm" disabled={saving} onClick={() => void handleSave()} className="bg-primary hover:bg-primary-hover text-white">
-            {saving ? 'Saving…' : 'Save'}
-          </Button>
-          <Button type="button" variant="secondary" size="sm" onClick={handleClose}>
-            Close
-          </Button>
+          </button>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="text-on-surface-variant hover:bg-gray-50 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void handleSave()}
+            className="bg-gray-900 text-white px-4 sm:px-5 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-black transition-all disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Save & Close'}
+          </button>
         </div>
       </header>
 
       {error && (
-        <div className="shrink-0 bg-red-50 border-b border-red-100 px-4 py-2 text-sm text-red-700">
+        <div className="shrink-0 bg-status-danger-bg border-b border-status-danger-text/20 px-4 py-2 text-sm text-status-danger-text flex items-center gap-2">
+          <MarketingIcon name="error" className="text-[18px]" />
           {error}
         </div>
       )}
 
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
-        <div className="flex-1 min-h-0 flex flex-col p-4 gap-3 overflow-hidden">
-          <Input
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="Subject — Hi {{first_name}}"
-            className="bg-white"
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
+        {showTemplateName && (
+          <div className="shrink-0 border-b lg:border-b-0 border-gray-100 px-4 sm:px-6 py-3 lg:hidden">
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Subject — Hi {{first_name}}"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-border"
+            />
+          </div>
+        )}
+
+        {showPreview ? (
+          <div className="flex-1 overflow-auto composer-scrollbar p-6 sm:p-12 max-w-4xl mx-auto w-full">
+            <p className="text-label-caps text-gray-500 mb-1">Subject preview</p>
+            <p className="text-headline-sm font-semibold text-gray-900 mb-8">{previewSubject || '—'}</p>
+            <p className="text-label-caps text-gray-500 mb-3">Body preview</p>
+            <div
+              className="prose prose-sm max-w-none text-gray-800"
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
+            />
+          </div>
+        ) : (
+          <EmailRichEditor
+            value={htmlBody}
+            onChange={handleHtmlChange}
+            variant="composer"
+            hideMergeTags
+            onInsertTag={(fn) => {
+              insertRef.current = fn;
+            }}
           />
+        )}
 
-          {showPreview ? (
-            <div className="flex-1 min-h-0 overflow-auto bg-white border border-gray-200 rounded-xl p-6">
-              <p className="text-sm font-medium text-gray-500 mb-1">Subject preview</p>
-              <p className="text-lg font-semibold text-gray-900 mb-6">{previewSubject || '—'}</p>
-              <p className="text-sm font-medium text-gray-500 mb-2">Body preview</p>
-              <div
-                className="prose prose-sm max-w-none text-gray-800"
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
-              />
-            </div>
-          ) : (
-            <div className="flex-1 min-h-0 overflow-auto">
-              <EmailRichEditor
-                value={htmlBody}
-                onChange={handleHtmlChange}
-                minHeight="min(60vh, 480px)"
-                hideMergeTags
-                onInsertTag={(fn) => {
-                  insertRef.current = fn;
-                }}
-              />
-            </div>
-          )}
-        </div>
-
-        <aside className="w-full lg:w-72 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 bg-white p-4 overflow-y-auto">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Merge tags
+        {/* Merge tags rail */}
+        <aside className="w-full lg:w-80 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 bg-primary-surface/30 p-5 sm:p-6 overflow-y-auto composer-scrollbar">
+          <h3 className="text-body-lg font-semibold text-on-surface mb-1">Available tags</h3>
+          <p className="text-xs text-on-surface-variant mb-4">
+            Click a chip to insert at the cursor.
           </p>
           <div className="flex flex-wrap gap-2">
             {MERGE_TAG_CHIPS.map((chip) => (
@@ -185,56 +210,49 @@ export function EmailComposer({
                 type="button"
                 title={chip.label}
                 onClick={() => insertTag(chip.tag)}
-                className="px-2 py-1 text-[11px] font-mono rounded-lg bg-primary-surface text-primary border border-primary-border hover:bg-primary-border/40"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-surface border border-primary-border text-primary rounded-full font-data-mono text-data-mono hover:bg-primary-fixed transition-all group"
               >
+                <MarketingIcon name="add_circle" className="text-sm group-hover:scale-110 transition-transform" />
                 {chip.tag}
               </button>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-4">
-            Click a chip to insert at the cursor. Sample values appear in preview mode.
-          </p>
-          <div className="mt-6 pt-4 border-t border-gray-100">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-              Sample snippet
-            </p>
-            <p className="text-xs text-gray-600 line-clamp-4">
-              {htmlToPlainPreview(previewWithSampleMergeTags(htmlBody), 160)}
+
+          <div className="mt-8 pt-6 border-t border-primary-border/50">
+            <p className="text-label-caps text-on-surface-variant mb-2">Live preview</p>
+            <p className="text-xs text-gray-600 line-clamp-5 leading-relaxed">
+              {htmlToPlainPreview(previewWithSampleMergeTags(htmlBody), 200)}
             </p>
           </div>
-        </aside>
-      </div>
 
-      <footer className="shrink-0 border-t border-gray-200 bg-white px-4 py-3 space-y-3">
-        {showSaveAsTemplate && (
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={saveAsTemplate}
-                onChange={(e) => setSaveAsTemplate(e.target.checked)}
-                className="rounded border-gray-300"
-              />
-              Save as template
-            </label>
-            {saveAsTemplate && (
-              <Input
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                placeholder="Template name"
-                className="max-w-xs h-9"
-              />
-            )}
-          </div>
-        )}
+          {showSaveAsTemplate && (
+            <div className="mt-6 pt-4 border-t border-primary-border/50 space-y-3">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={saveAsTemplate}
+                  onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                  className="rounded border-gray-300 text-primary"
+                />
+                Save as template
+              </label>
+              {saveAsTemplate && (
+                <input
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="Template name"
+                  className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2"
+                />
+              )}
+            </div>
+          )}
 
-        <div>
           <button
             type="button"
             onClick={() => setShowPlainText((v) => !v)}
-            className="text-sm text-primary hover:underline"
+            className="mt-4 text-xs text-primary font-semibold hover:underline"
           >
-            {showPlainText ? 'Hide' : 'Show'} plain-text version (advanced)
+            {showPlainText ? 'Hide' : 'Show'} plain-text version
           </button>
           {showPlainText && (
             <textarea
@@ -243,13 +261,19 @@ export function EmailComposer({
                 setTextTouched(true);
                 setTextBody(e.target.value);
               }}
-              rows={5}
-              className="mt-2 w-full border border-gray-200 rounded-lg text-sm px-3 py-2 font-mono"
-              placeholder="Plain-text fallback for email clients without HTML"
+              rows={4}
+              className="mt-2 w-full border border-gray-200 rounded-lg text-xs px-3 py-2 font-mono"
+              placeholder="Plain-text fallback"
             />
           )}
+        </aside>
+      </div>
+
+      {!showTemplateName && (
+        <div className="hidden lg:block shrink-0 border-t border-gray-100 px-6 py-2 bg-gray-50/50">
+          <p className="text-[10px] text-gray-400 font-data-mono">{title}</p>
         </div>
-      </footer>
+      )}
     </div>
   );
 }

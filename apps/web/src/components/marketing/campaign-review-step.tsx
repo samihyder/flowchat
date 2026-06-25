@@ -120,6 +120,7 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
     const eligibleRecipients = recipients.filter((r) => r.recipientStatus === 'subscribed');
     const displayRecipients = eligibleRecipients.length > 0 ? eligibleRecipients : recipients;
     const allChecksPass = preflight?.checks.every((c) => c.ok) ?? false;
+    const testInvalidated = Boolean(sender?.testSentAt && preflight && !preflight.testValid);
 
     const renderCheck = (check: PreflightCheck) => (
       <div
@@ -163,6 +164,19 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
           </div>
         )}
 
+        {testInvalidated && (
+          <div className="bg-status-bounced-bg border-l-4 border-status-bounced-text p-4 rounded-lg flex items-start gap-4 shadow-sm mb-6">
+            <MarketingIcon name="warning" className="text-status-bounced-text shrink-0" />
+            <div>
+              <h3 className="font-bold text-status-bounced-text">Action required: test invalidated</h3>
+              <p className="text-sm text-status-bounced-text opacity-90 mt-1">
+                Sequence or sender changed after your last test. Send another test email before
+                launching to verify deliverability and formatting.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 lg:col-span-8 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
@@ -171,10 +185,12 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
                 className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
                   allChecksPass
                     ? 'bg-status-success-bg text-status-success-text'
-                    : 'bg-status-draft-bg text-status-draft-text'
+                    : testInvalidated
+                      ? 'bg-status-danger-bg text-status-danger-text'
+                      : 'bg-status-draft-bg text-status-draft-text'
                 }`}
               >
-                {allChecksPass ? 'System Ready' : 'Action Required'}
+                {allChecksPass ? 'System Ready' : testInvalidated ? 'Invalidated' : 'Action Required'}
               </span>
             </div>
             <div className="divide-y divide-gray-100">

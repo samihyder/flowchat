@@ -115,6 +115,13 @@ export function CampaignSequenceStep({
     .map((r) => ({ contactId: r.contactId, name: r.name }));
 
   const allErrors = fieldErrors.length > 0 ? fieldErrors : validateCampaignStepDrafts(sortedSteps);
+  const scheduleErrors = allErrors.filter((e) => e.field === 'send_at');
+  const mergeErrors = allErrors.filter(
+    (e) => e.field === 'html_body' || e.field === 'merge_config'
+  );
+  const otherErrors = allErrors.filter(
+    (e) => e.field !== 'send_at' && e.field !== 'html_body' && e.field !== 'merge_config'
+  );
   const editingStep = editingIndex !== null ? steps[editingIndex] : null;
 
   return (
@@ -126,14 +133,52 @@ export function CampaignSequenceStep({
         </p>
       </div>
 
-      {allErrors.length > 0 && (
+      {scheduleErrors.length > 0 && (
+        <div className="rounded-xl border-2 border-status-danger-text/40 bg-status-danger-bg/30 px-4 py-3 text-sm text-status-danger-text">
+          <p className="font-semibold flex items-center gap-2 mb-2">
+            <MarketingIcon name="schedule" className="text-[20px]" />
+            Schedule validation errors
+          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            {scheduleErrors.map((e, i) => (
+              <li key={`sched-${e.stepOrder}-${i}`}>
+                Email {e.stepOrder}: {e.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {mergeErrors.length > 0 && (
+        <div className="rounded-xl border-2 border-status-danger-text bg-white px-4 py-3 text-sm shadow-sm ring-4 ring-status-danger-bg/50">
+          <p className="font-semibold flex items-center gap-2 mb-2 text-status-danger-text">
+            <MarketingIcon name="warning" className="text-[20px]" />
+            Merge tag validation — action required
+          </p>
+          <ul className="space-y-2">
+            {mergeErrors.map((e, i) => (
+              <li
+                key={`merge-${e.stepOrder}-${i}`}
+                className="flex items-center gap-2 text-status-danger-text"
+              >
+                <MarketingIcon name="info" className="text-sm shrink-0" />
+                <span>
+                  Email {e.stepOrder}: {e.message}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {otherErrors.length > 0 && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <p className="font-semibold flex items-center gap-2 mb-2">
             <MarketingIcon name="error" className="text-[20px]" />
             Fix these issues before continuing
           </p>
           <ul className="list-disc pl-5 space-y-1">
-            {allErrors.map((e, i) => (
+            {otherErrors.map((e, i) => (
               <li key={`${e.stepOrder}-${e.field}-${i}`}>
                 Email {e.stepOrder}: {e.message}
               </li>
@@ -143,7 +188,7 @@ export function CampaignSequenceStep({
       )}
 
       {/* Timeline visualization */}
-      <div className="flex justify-center items-center gap-2 py-2 overflow-x-auto">
+      <div className="flex justify-center items-center gap-2 py-2 overflow-x-auto animate-marketing-stagger-in" style={{ animationDelay: '0ms' }}>
         {sortedSteps.map((step, i) => (
           <div key={step.id} className="flex items-center gap-2 shrink-0">
             <div
@@ -195,43 +240,65 @@ export function CampaignSequenceStep({
       </div>
 
       <div className="flex flex-col gap-6">
-        {sortedSteps.map((step) => {
+        {sortedSteps.map((step, stepIdx) => {
           const index = steps.findIndex((s) => s.id === step.id);
           if (index < 0) return null;
           const errs = stepErrors(allErrors, step.stepOrder);
           const needsMessageSource = requiresContactMessageMode(step.htmlBody, step.subject);
           const missingFirstName = !requiresFirstNameInBody(step.htmlBody);
+          const hasScheduleErr = errs.some((e) => e.field === 'send_at');
+          const hasMergeErr = errs.some(
+            (e) => e.field === 'html_body' || e.field === 'merge_config'
+          );
 
           return (
             <section
               key={step.id}
-              className={`bg-white rounded-xl border shadow-sm overflow-hidden transition-all hover:border-primary-border ${
-                errs.length > 0 ? 'border-red-300 ring-1 ring-red-100' : 'border-gray-200'
+              className={`bg-white rounded-xl border shadow-sm overflow-hidden transition-all hover:border-primary-border animate-marketing-stagger-in ${
+                errs.length > 0
+                  ? 'border-2 border-status-danger-text/40 ring-2 ring-status-danger-bg/30'
+                  : 'border-gray-200'
               }`}
+              style={{ animationDelay: `${(stepIdx + 1) * 80}ms` }}
             >
-              <header className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded bg-primary-surface text-primary flex items-center justify-center">
-                    <MarketingIcon name="drag_indicator" className="text-[20px]" />
+              <header className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                      errs.length > 0
+                        ? 'bg-status-danger-text text-white'
+                        : 'bg-primary-surface text-primary'
+                    }`}
+                  >
+                    {step.stepOrder}
                   </div>
-                  <h3 className="text-headline-sm text-on-surface">Step {step.stepOrder}: Email</h3>
-                  {step.sendAt && (
-                    <span
-                      className="text-xs text-gray-500 hidden sm:inline font-data-mono"
-                    >
-                      {formatSendAtLabel(step.sendAt, locale, timezone)}
+                  <div className="min-w-0">
+                    <h3 className="text-headline-sm text-on-surface">
+                      {step.stepOrder === 1 ? 'Initial send' : `Follow-up ${step.stepOrder - 1}`}
+                    </h3>
+                    {step.sendAt && (
+                      <span className="text-xs text-gray-500 font-data-mono">
+                        {formatSendAtLabel(step.sendAt, locale, timezone)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {errs.length > 0 && (
+                    <span className="bg-status-danger-bg text-status-danger-text px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                      {hasScheduleErr ? 'Schedule error' : hasMergeErr ? 'Merge error' : 'Error'}
                     </span>
                   )}
+                  <button
+                    type="button"
+                    disabled={steps.length <= 1}
+                    onClick={() => removeStep(index)}
+                    className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-30 transition-colors"
+                    aria-label="Remove step"
+                  >
+                    <MarketingIcon name="delete" className="text-[20px]" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  disabled={steps.length <= 1}
-                  onClick={() => removeStep(index)}
-                  className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-30 transition-colors"
-                  aria-label="Remove step"
-                >
-                  <MarketingIcon name="delete" className="text-[20px]" />
-                </button>
               </header>
 
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -272,10 +339,13 @@ export function CampaignSequenceStep({
                   </div>
 
                   {missingFirstName && (
-                    <p className="text-xs text-amber-700 flex items-center gap-1">
-                      <MarketingIcon name="warning" className="text-[16px]" />
-                      Add {'{{first_name}}'} in the editor — required.
-                    </p>
+                    <div className="flex items-center gap-2 text-status-danger-text text-xs bg-status-danger-bg/40 rounded-lg px-3 py-2">
+                      <MarketingIcon name="info" className="text-[16px] shrink-0" />
+                      <span>
+                        Add <code className="font-data-mono font-bold">{'{{first_name}}'}</code> in
+                        the editor to resolve this error.
+                      </span>
+                    </div>
                   )}
 
                   {needsMessageSource && (
@@ -323,7 +393,11 @@ export function CampaignSequenceStep({
                   )}
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div
+                  className={`bg-gray-50 p-4 rounded-xl border ${
+                    hasScheduleErr ? 'border-status-danger-text ring-1 ring-status-danger-text/30' : 'border-gray-200'
+                  }`}
+                >
                   <div className="flex items-center gap-2 mb-4">
                     <MarketingIcon name="calendar_today" className="text-primary" />
                     <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
@@ -336,6 +410,14 @@ export function CampaignSequenceStep({
                     timezone={timezone}
                     locale={locale}
                   />
+                  {hasScheduleErr && (
+                    <div className="mt-2 flex items-center gap-2 text-status-danger-text">
+                      <MarketingIcon name="warning" className="text-sm" />
+                      <span className="text-xs font-bold">
+                        {errs.find((e) => e.field === 'send_at')?.message}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>

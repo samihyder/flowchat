@@ -32,8 +32,12 @@ export function CampaignMobileList({
   onResume,
 }: Props) {
   return (
-    <div className="md:hidden space-y-3">
-      {campaigns.map((c) => {
+    <div className="md:hidden space-y-4">
+      <p className="text-label-caps text-gray-400 uppercase flex items-center justify-center gap-1 py-1">
+        <MarketingIcon name="sync" className="text-[14px]" />
+        Campaign list
+      </p>
+      {campaigns.map((c, i) => {
         const href = (
           c.status === 'draft'
             ? marketingRoutes.campaignEdit(c.id, c.currentStep)
@@ -42,16 +46,18 @@ export function CampaignMobileList({
         return (
           <article
             key={c.id}
-            className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col gap-3"
+            className="group bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:border-primary-border transition-all duration-200 flex flex-col gap-4 animate-marketing-stagger-in"
+            style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex items-start justify-between gap-3">
               <Link href={href} className="min-w-0 flex-1">
-                <p className="font-body-lg text-body-lg text-on-surface font-semibold truncate">
-                  {c.name}
-                </p>
-                <p className="text-xs font-data-mono text-gray-400 mt-0.5">
-                  {formatCampaignId(c.id)}
-                </p>
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <h3 className="font-headline-sm text-on-surface font-semibold truncate">
+                    {c.name}
+                  </h3>
+                  <CampaignStatusBadge status={c.status} />
+                </div>
+                <p className="text-xs font-data-mono text-gray-400">{formatCampaignId(c.id)}</p>
               </Link>
               <CampaignRowActionsMenu
                 campaign={c}
@@ -63,24 +69,37 @@ export function CampaignMobileList({
                 onResume={onResume}
               />
             </div>
-            <div className="flex items-center justify-between gap-2">
-              <CampaignStatusBadge status={c.status} />
-              <span className="text-xs text-gray-500">{c.recipientCount} recipients</span>
+
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              <div className="flex items-center gap-1.5 text-gray-700">
+                <MarketingIcon name="group" className="text-gray-400 text-[18px]" />
+                <span className="font-data-mono">{c.recipientCount ?? 0} Recipients</span>
+              </div>
+              {c.status === 'draft' && (
+                <div className="flex items-center gap-1.5 text-primary">
+                  <MarketingIcon name="edit_note" className="text-[18px]" />
+                  <span className="font-data-mono">Step {c.currentStep}/4</span>
+                </div>
+              )}
             </div>
+
             {c.status === 'draft' && (
               <div>
                 <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-primary h-full"
+                    className="bg-primary h-full transition-all duration-300"
                     style={{ width: `${Math.min(100, c.currentStep * 25)}%` }}
                   />
                 </div>
-                <p className="text-[10px] mt-1 text-gray-500">Setup {c.currentStep * 25}% complete</p>
+                <p className="text-[10px] mt-1 text-gray-500 font-label-caps uppercase">
+                  Setup {c.currentStep * 25}% complete
+                </p>
               </div>
             )}
+
             <Link
               href={href}
-              className="text-sm text-primary font-medium inline-flex items-center gap-1"
+              className="text-sm text-primary font-semibold inline-flex items-center gap-1 hover:underline"
             >
               {c.status === 'draft' ? 'Continue setup' : 'View stats'}
               <MarketingIcon name="chevron_right" className="text-[18px]" />

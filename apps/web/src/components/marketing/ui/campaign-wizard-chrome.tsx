@@ -28,6 +28,7 @@ type CampaignWizardChromeProps = {
   suppressedWarning?: boolean;
   onLaunch?: () => void;
   launchDisabled?: boolean;
+  autosaveStatus?: 'idle' | 'saving' | 'saved';
 };
 
 function formatCampaignId(id: string) {
@@ -49,6 +50,7 @@ export function CampaignWizardChrome({
   suppressedWarning,
   onLaunch,
   launchDisabled,
+  autosaveStatus = 'idle',
 }: CampaignWizardChromeProps) {
   const [copied, setCopied] = useState(false);
   const formattedId = formatCampaignId(campaignId);
@@ -162,6 +164,21 @@ export function CampaignWizardChrome({
 
       <footer className="fixed bottom-0 left-0 lg:left-64 right-0 h-16 bg-white border-t border-gray-200 px-8 flex items-center justify-between shadow-2xl z-50">
         <div className="flex items-center gap-6 min-w-0">
+          {autosaveStatus !== 'idle' && (
+            <span
+              className={`text-xs font-medium flex items-center gap-1.5 ${
+                autosaveStatus === 'saving'
+                  ? 'text-gray-500 animate-marketing-pulse-subtle'
+                  : 'text-status-success-text'
+              }`}
+            >
+              <MarketingIcon
+                name={autosaveStatus === 'saving' ? 'sync' : 'cloud_done'}
+                className={`text-[16px] ${autosaveStatus === 'saving' ? 'animate-spin' : ''}`}
+              />
+              {autosaveStatus === 'saving' ? 'Saving…' : 'All changes saved'}
+            </span>
+          )}
           {footerLeft}
           {suppressedWarning ? (
             <div className="flex items-center gap-2 px-3 py-1 bg-status-danger-bg text-status-danger-text rounded-lg text-xs font-bold">

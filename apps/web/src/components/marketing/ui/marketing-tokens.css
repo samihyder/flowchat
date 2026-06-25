@@ -29,6 +29,8 @@
   --color-status-success-text: #16a34a;
   --color-status-danger-bg: #fee2e2;
   --color-status-danger-text: #dc2626;
+  --color-status-bounced-bg: #fef3c7;
+  --color-status-bounced-text: #d97706;
   --font-data-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
@@ -98,4 +100,82 @@
 
 .marketing-module .max-w-container-max-wizard {
   max-width: 1024px;
+}
+
+.marketing-module .text-headline-lg {
+  font-size: 30px;
+  line-height: 36px;
+  font-weight: 700;
+}
+
+.marketing-module .composer-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.marketing-module .composer-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.marketing-module .composer-scrollbar::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+.marketing-module .composer-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
+}
+
+@keyframes marketing-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes marketing-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marketing-pulse-subtle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.marketing-module .animate-marketing-slide-up {
+  animation: marketing-slide-up 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.marketing-module .animate-marketing-stagger-in {
+  animation: marketing-stagger-in 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+}
+
+.marketing-module .animate-marketing-pulse-subtle {
+  animation: marketing-pulse-subtle 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.marketing-module .marketing-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .marketing-module .marketing-bento-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }

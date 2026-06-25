@@ -76,6 +76,10 @@ export default function CampaignWizardPage() {
   const [stepFieldErrors, setStepFieldErrors] = useState<StepFieldError[]>([]);
   const [senderConfig, setSenderConfig] = useState<CampaignSenderConfig | null>(null);
   const [preflight, setPreflight] = useState<PreflightResult | null>(null);
+  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedFadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipAutosave = useRef(true);
 
   const load = useCallback(() => {
     if (!token || !accountId) return;
@@ -260,11 +264,75 @@ export default function CampaignWizardPage() {
     }
   };
 
-  const patchName = () => {
+  const patchName = useCallback(() => {
     if (name !== campaign?.name && token && accountId) {
       void api.marketing.campaigns.patch(accountId, campaignId, { name }, token);
     }
-  };
+  }, [accountId, campaign?.name, campaignId, name, token]);
+
+  const runAutosave = useCallback(async () => {
+    if (!token || !accountId || !campaign || campaign.status !== 'draft') return;
+    setAutosaveStatus('saving');
+    try {
+      if (activeStep === 1 && selectedIds.size > 0) {
+        await api.marketing.campaigns.putRecipients(
+          accountId,
+          campaignId,
+          [...selectedIds],
+          token
+        );
+      } else if (activeStep === 2) {
+        try {
+          await api.marketing.campaigns.putSteps(
+            accountId,
+            campaignId,
+            sequenceSteps.map((s) => ({
+              stepOrder: s.stepOrder,
+              sendAt: s.sendAt,
+              subject: s.subject,
+              htmlBody: s.htmlBody,
+              plainBody: s.plainBody,
+              mergeConfig: s.mergeConfig,
+              saveAsTemplate: s.saveAsTemplate,
+              templateName: s.templateName,
+              sourceTemplateId: s.sourceTemplateId,
+            })),
+            token
+          );
+        } catch {
+          /* draft autosave — sequence may be incomplete */
+        }
+      } else if (activeStep === 3 && senderStepRef.current) {
+        await senderStepRef.current.save();
+      }
+      await api.marketing.campaigns.patch(
+        accountId,
+        campaignId,
+        { name, currentStep: activeStep },
+        token
+      );
+      setAutosaveStatus('saved');
+      if (savedFadeTimer.current) clearTimeout(savedFadeTimer.current);
+      savedFadeTimer.current = setTimeout(() => setAutosaveStatus('idle'), 3000);
+    } catch {
+      setAutosaveStatus('idle');
+    }
+  }, [accountId, activeStep, campaign, campaignId, name, selectedIds, sequenceSteps, token]);
+
+  useEffect(() => {
+    if (loading || !campaign || campaign.status !== 'draft') return;
+    if (skipAutosave.current) {
+      skipAutosave.current = false;
+      return;
+    }
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => {
+      void runAutosave();
+    }, 1500);
+    return () => {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    };
+  }, [name, sequenceSteps, selectedIds, activeStep, loading, campaign, runAutosave]);
 
   if (loading || !campaign) {
     return (
@@ -331,6 +399,7 @@ export default function CampaignWizardPage() {
       campaignId={campaignId}
       status={campaign.status}
       activeStep={activeStep}
+      autosaveStatus={autosaveStatus}
       onStepClick={(step) => void goToStep(step)}
       error={error}
       suppressedWarning={activeStep === 1 && recipientSummary.suppressed > 0}

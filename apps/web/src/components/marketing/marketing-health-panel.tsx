@@ -33,68 +33,102 @@ export function MarketingHealthPanel({ health, loading }: Props) {
     );
   }
 
+  const hasProviderError = !health.providerOk;
+  const hasDomainError = !health.domainOk && Boolean(health.fromEmail);
+  const hasCronError = !health.cronOk;
+
   return (
-    <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="font-headline-sm text-headline-sm text-on-surface">Marketing Health</h2>
-        <MarketingIcon name="monitor_heart" className="text-primary" />
+    <section className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+        <div className="flex items-center gap-3">
+          <MarketingIcon name="monitor_heart" className="text-primary text-[24px]" />
+          <h2 className="font-headline-sm text-headline-sm text-on-surface">Marketing Health</h2>
+        </div>
+        {(hasProviderError || hasDomainError || hasCronError) && (
+          <span className="bg-status-danger-bg text-status-danger-text px-3 py-1 rounded-full text-[10px] font-bold uppercase">
+            Attention needed
+          </span>
+        )}
       </div>
 
-      {!health.domainOk && health.fromEmail && (
-        <div className="rounded-lg border border-status-danger-text/20 bg-status-danger-bg px-4 py-3 text-sm text-status-danger-text flex items-start gap-2">
-          <MarketingIcon name="error" className="shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold">Domain verification required</p>
-            <p className="text-xs mt-0.5 opacity-90">
-              Sending domain for {health.fromEmail} is {health.domainStatus}. Verify DNS before launching campaigns.
+      <div className="p-6 space-y-6">
+        {hasProviderError && (
+          <div className="rounded-xl border border-status-danger-text/30 bg-status-danger-bg/40 p-5 flex flex-col sm:flex-row gap-4 items-start">
+            <div className="w-12 h-12 rounded-full bg-status-danger-bg flex items-center justify-center shrink-0">
+              <MarketingIcon name="link_off" className="text-status-danger-text text-[28px]" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-status-danger-text">Email provider not connected</p>
+              <p className="text-sm text-status-danger-text/90 mt-1">
+                Connect Resend or another ESP in Connected services before launching campaigns.
+              </p>
+              <a
+                href="/dashboard/settings/connected-services"
+                className="inline-flex mt-3 text-sm font-bold text-primary hover:underline"
+              >
+                Re-verify connection →
+              </a>
+            </div>
+          </div>
+        )}
+
+        {hasDomainError && (
+          <div className="rounded-lg border border-status-danger-text/20 bg-status-danger-bg px-4 py-3 text-sm text-status-danger-text flex items-start gap-2">
+            <MarketingIcon name="error" className="shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Domain verification required</p>
+              <p className="text-xs mt-0.5 opacity-90">
+                Sending domain for {health.fromEmail} is {health.domainStatus}. Verify DNS before
+                launching campaigns.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
+            <p className="text-label-caps text-gray-400 uppercase text-xs mb-2">Provider</p>
+            <div className="flex items-center gap-2">
+              <span
+                className={`w-2 h-2 rounded-full ${health.providerOk ? 'bg-status-success-text' : 'bg-status-danger-text'}`}
+              />
+              <p className="font-semibold text-on-surface">{health.providerLabel}</p>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              {health.providerOk ? 'Connected and ready' : 'Add a provider in Connected services'}
             </p>
           </div>
-        </div>
-      )}
 
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
-          <p className="text-label-caps text-gray-400 uppercase text-xs mb-2">Provider</p>
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-2 h-2 rounded-full ${health.providerOk ? 'bg-status-success-text' : 'bg-status-danger-text'}`}
-            />
-            <p className="font-semibold text-on-surface">{health.providerLabel}</p>
+          <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
+            <p className="text-label-caps text-gray-400 uppercase text-xs mb-2">Cron scheduler</p>
+            <div className="flex items-center gap-2">
+              <span
+                className={`w-2 h-2 rounded-full ${health.cronOk ? 'bg-status-success-text' : 'bg-status-paused-text'}`}
+              />
+              <p className="font-semibold text-on-surface">
+                {health.cronOk ? 'Healthy' : 'Stale or offline'}
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 font-data-mono">
+              {health.cronLastAt
+                ? `Last run ${new Date(health.cronLastAt).toLocaleString()} · ${health.cronLastProcessed} processed`
+                : 'No cron runs recorded yet'}
+            </p>
+            {health.cronError && (
+              <p className="text-xs text-status-danger-text mt-1">{health.cronError}</p>
+            )}
           </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 p-4">
+          <p className="text-label-caps text-gray-400 uppercase text-xs mb-2">Inbound webhook URL</p>
+          <p className="text-xs font-data-mono text-gray-600 break-all bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+            {health.webhookUrl}
+          </p>
           <p className="text-xs text-gray-500 mt-2">
-            {health.providerOk ? 'Connected and ready' : 'Add a provider in Connected services'}
+            Configure this URL in your ESP for delivery, bounce, and complaint events.
           </p>
         </div>
-
-        <div className="rounded-xl border border-gray-200 p-4 bg-gray-50/50">
-          <p className="text-label-caps text-gray-400 uppercase text-xs mb-2">Cron scheduler</p>
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-2 h-2 rounded-full ${health.cronOk ? 'bg-status-success-text' : 'bg-status-paused-text'}`}
-            />
-            <p className="font-semibold text-on-surface">
-              {health.cronOk ? 'Healthy' : 'Stale or offline'}
-            </p>
-          </div>
-          <p className="text-xs text-gray-500 mt-2 font-data-mono">
-            {health.cronLastAt
-              ? `Last run ${new Date(health.cronLastAt).toLocaleString()} · ${health.cronLastProcessed} processed`
-              : 'No cron runs recorded yet'}
-          </p>
-          {health.cronError && (
-            <p className="text-xs text-status-danger-text mt-1">{health.cronError}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-gray-200 p-4">
-        <p className="text-label-caps text-gray-400 uppercase text-xs mb-2">Inbound webhook URL</p>
-        <p className="text-xs font-data-mono text-gray-600 break-all bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-          {health.webhookUrl}
-        </p>
-        <p className="text-xs text-gray-500 mt-2">
-          Configure this URL in your ESP for delivery, bounce, and complaint events.
-        </p>
       </div>
     </section>
   );
