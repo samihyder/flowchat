@@ -10,6 +10,7 @@ import {
   type CampaignSenderConfig,
   type CampaignStep,
   type MarketingCampaign,
+  type PreflightResult,
 } from '@/lib/api';
 import { CampaignRecipientsStep } from '@/components/marketing/campaign-recipients-step';
 import { CampaignSequenceStep } from '@/components/marketing/campaign-sequence-step';
@@ -17,8 +18,12 @@ import {
   CampaignSenderStep,
   type CampaignSenderStepHandle,
 } from '@/components/marketing/campaign-sender-step';
-import { CampaignReviewStep } from '@/components/marketing/campaign-review-step';
+import {
+  CampaignReviewStep,
+  type CampaignReviewStepHandle,
+} from '@/components/marketing/campaign-review-step';
 import { CampaignWizardChrome } from '@/components/marketing/ui/campaign-wizard-chrome';
+import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import {
   type CampaignStepDraft,
   type StepFieldError,
@@ -50,6 +55,7 @@ export default function CampaignWizardPage() {
   const campaignId = params.id as string;
   const { token, accountId } = useAuthStore();
   const senderStepRef = useRef<CampaignSenderStepHandle>(null);
+  const reviewStepRef = useRef<CampaignReviewStepHandle>(null);
 
   const stepParam = Number(searchParams.get('step') ?? '1');
   const activeStep = Number.isFinite(stepParam) ? Math.min(4, Math.max(1, stepParam)) : 1;
@@ -69,6 +75,7 @@ export default function CampaignWizardPage() {
   const [savedSteps, setSavedSteps] = useState<CampaignStep[]>([]);
   const [stepFieldErrors, setStepFieldErrors] = useState<StepFieldError[]>([]);
   const [senderConfig, setSenderConfig] = useState<CampaignSenderConfig | null>(null);
+  const [preflight, setPreflight] = useState<PreflightResult | null>(null);
 
   const load = useCallback(() => {
     if (!token || !accountId) return;
@@ -205,6 +212,20 @@ export default function CampaignWizardPage() {
         token
       );
       setCampaign(res.campaign);
+
+      if (step === 4) {
+        const [stepsRes, senderRes, recipientsRes] = await Promise.all([
+          api.marketing.campaigns.getSteps(accountId, campaignId, token),
+          api.marketing.campaigns.getSender(accountId, campaignId, token),
+          api.marketing.campaigns.getRecipients(accountId, campaignId, token),
+        ]);
+        setSavedSteps(stepsRes.steps);
+        setSequenceSteps(stepsRes.steps.map(apiStepToDraft));
+        setSenderConfig(senderRes.sender);
+        setLastPutRecipients(recipientsRes.recipients);
+        setRecipientSummary(recipientsRes.summary);
+      }
+
       router.push(
         `/marketing/campaigns/${campaignId}/edit?step=${step}` as Route
       );
@@ -258,6 +279,14 @@ export default function CampaignWizardPage() {
     return null;
   }
 
+  const canProceedStep1 = selectedIds.size > 0;
+  const canProceedStep3 = Boolean(senderConfig?.fromEmail?.trim());
+  const nextDisabled =
+    saving ||
+    (activeStep === 1 && !canProceedStep1) ||
+    (activeStep === 3 && !canProceedStep3);
+  const launchReady = Boolean(preflight?.ready && isAdmin);
+
   const footerSummary =
     activeStep === 1 ? (
       <div className="flex items-center gap-2">
@@ -275,10 +304,24 @@ export default function CampaignWizardPage() {
       <span className="text-on-surface-variant text-sm">
         Sending as {senderConfig.fromName} &lt;{senderConfig.fromEmail}&gt;
       </span>
+    ) : activeStep === 4 ? (
+      <div className="hidden sm:block">
+        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest leading-none">
+          Ready to deploy
+        </p>
+        <p
+          className={`text-xs font-medium mt-1 ${
+            launchReady ? 'text-status-success-text' : 'text-on-surface-variant'
+          }`}
+        >
+          {launchReady ? 'All checks passed' : 'Complete pre-flight checks'}
+        </p>
+      </div>
     ) : null;
 
-  const canProceedStep1 = selectedIds.size > 0;
-  const nextDisabled = saving || (activeStep === 1 && !canProceedStep1);
+  const handleLaunched = () => {
+    router.push(`/marketing/campaigns/${campaignId}?launched=1` as Route);
+  };
 
   return (
     <CampaignWizardChrome
@@ -291,7 +334,8 @@ export default function CampaignWizardPage() {
       onStepClick={(step) => void goToStep(step)}
       error={error}
       suppressedWarning={activeStep === 1 && recipientSummary.suppressed > 0}
-      onLaunch={activeStep === 4 ? () => void goToStep(4) : undefined}
+      onLaunch={activeStep === 4 && isAdmin ? () => reviewStepRef.current?.openLaunch() : undefined}
+      launchDisabled={!launchReady}
       footerLeft={footerSummary}
       footerRight={
         <>
@@ -316,7 +360,7 @@ export default function CampaignWizardPage() {
           {activeStep < 4 ? (
             <button
               type="button"
-              className={`px-8 py-2 rounded-lg font-bold transition-all ${
+              className={`px-8 py-2 rounded-lg font-bold transition-all flex items-center gap-2 ${
                 nextDisabled
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   : 'bg-primary text-on-primary hover:bg-primary-hover'
@@ -324,7 +368,24 @@ export default function CampaignWizardPage() {
               disabled={nextDisabled}
               onClick={() => void goToStep(activeStep + 1)}
             >
-              Next
+              {activeStep === 3 ? (
+                <>
+                  Next: Review &amp; Launch
+                  <MarketingIcon name="arrow_forward" className="text-lg" />
+                </>
+              ) : (
+                'Next'
+              )}
+            </button>
+          ) : isAdmin ? (
+            <button
+              type="button"
+              className="flex items-center gap-3 bg-primary hover:bg-primary-hover text-white px-8 py-2 rounded-lg font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!launchReady}
+              onClick={() => reviewStepRef.current?.openLaunch()}
+            >
+              Launch Campaign
+              <MarketingIcon name="rocket_launch" />
             </button>
           ) : null}
         </>
@@ -353,10 +414,32 @@ export default function CampaignWizardPage() {
         />
       )}
       {activeStep === 3 && token && accountId && (
-        <CampaignSenderStep ref={senderStepRef} accountId={accountId} campaignId={campaignId} token={token} />
+        <CampaignSenderStep
+          ref={senderStepRef}
+          accountId={accountId}
+          campaignId={campaignId}
+          token={token}
+          onConfigChange={(partial) =>
+            setSenderConfig((prev) => ({
+              fromName: partial.fromName ?? prev?.fromName ?? null,
+              fromEmail: partial.fromEmail ?? prev?.fromEmail ?? null,
+              replyTo: partial.replyTo ?? prev?.replyTo ?? null,
+              signatureHtml: partial.signatureHtml ?? prev?.signatureHtml ?? null,
+              useWorkspaceSignature:
+                partial.useWorkspaceSignature ?? prev?.useWorkspaceSignature ?? true,
+              meetingLink: partial.meetingLink ?? prev?.meetingLink ?? null,
+              portfolioLink: partial.portfolioLink ?? prev?.portfolioLink ?? null,
+              credentialId: prev?.credentialId ?? null,
+              testSentAt: prev?.testSentAt ?? null,
+              testSentBy: prev?.testSentBy ?? null,
+              testSentTo: prev?.testSentTo ?? null,
+            }))
+          }
+        />
       )}
       {activeStep === 4 && token && accountId && (
         <CampaignReviewStep
+          ref={reviewStepRef}
           accountId={accountId}
           campaignId={campaignId}
           token={token}
@@ -366,9 +449,8 @@ export default function CampaignWizardPage() {
           recipientSummary={recipientSummary}
           sender={senderConfig}
           isAdmin={isAdmin}
-          onLaunched={() => {
-            router.push(`/marketing/campaigns/${campaignId}` as Route);
-          }}
+          onPreflightChange={setPreflight}
+          onLaunched={handleLaunched}
         />
       )}
     </CampaignWizardChrome>

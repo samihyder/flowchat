@@ -17,10 +17,11 @@ type Props = {
   accountId: string;
   campaignId: string;
   token: string;
+  onConfigChange?: (config: Partial<CampaignSenderConfig>) => void;
 };
 
 export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
-  function CampaignSenderStep({ accountId, campaignId, token }, ref) {
+  function CampaignSenderStep({ accountId, campaignId, token, onConfigChange }, ref) {
     const [senders, setSenders] = useState<MarketingSender[]>([]);
     const [selectedSenderId, setSelectedSenderId] = useState('');
     const [fromName, setFromName] = useState('');
@@ -32,7 +33,9 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
     const [portfolioLink, setPortfolioLink] = useState('');
     const [workspaceSignature, setWorkspaceSignature] = useState(DEFAULT_SIGNATURE);
     const [physicalAddress, setPhysicalAddress] = useState('');
-    const [providerLabel, setProviderLabel] = useState('Platform Resend');
+    const [providerTitle, setProviderTitle] = useState('Resend — Managed Domain');
+    const [providerDetail, setProviderDetail] = useState('Verified sender identity');
+    const [domainVerified, setDomainVerified] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -64,11 +67,22 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
             (x) => x.fromEmail === s.fromEmail && x.fromName === s.fromName
           );
           const defaultSender = sendersRes.senders.find((x) => x.isDefault) ?? sendersRes.senders[0];
-          setSelectedSenderId(match?.id ?? defaultSender?.id ?? '');
+          const selected = match ?? defaultSender;
+          setSelectedSenderId(selected?.id ?? '');
+          setDomainVerified(selected?.domainStatus === 'verified');
 
           const cred = credsRes.credentials.find((c) => c.isDefault) ?? credsRes.credentials[0];
+          const email = s.fromEmail ?? accountRes.account.settings?.marketingFromEmail ?? '';
           if (cred) {
-            setProviderLabel(`Connected ${cred.provider} (${cred.label})`);
+            setProviderTitle(`${cred.provider} — Connected`);
+            setProviderDetail(cred.label);
+          } else {
+            setProviderTitle('Resend — Managed Domain');
+            setProviderDetail(
+              email
+                ? `Verified sender identity via ${email.split('@')[1] ?? 'domain'}`
+                : 'Platform email provider'
+            );
           }
         })
         .finally(() => setLoading(false));
@@ -81,6 +95,16 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
       setFromName(row.fromName);
       setFromEmail(row.fromEmail);
       setReplyTo(row.replyTo ?? '');
+      setDomainVerified(row.domainStatus === 'verified');
+      setProviderDetail(`Verified sender identity via ${row.fromEmail.split('@')[1] ?? 'domain'}`);
+    };
+
+    const autoGenerateSignature = () => {
+      const name = fromName.trim() || 'Your Name';
+      const company = 'FlowChat';
+      const generated = `<p>Best regards,</p><p><strong>${name}</strong><br/>${company}</p>`;
+      setUseWorkspaceSignature(false);
+      setSignatureHtml(generated);
     };
 
     const save = async (): Promise<boolean> => {
@@ -120,38 +144,56 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
       portfolioLink,
     ]);
 
+    useEffect(() => {
+      onConfigChange?.({
+        fromName,
+        fromEmail,
+        replyTo: replyTo || null,
+        useWorkspaceSignature,
+        signatureHtml: useWorkspaceSignature ? null : signatureHtml,
+        meetingLink: meetingLink || null,
+        portfolioLink: portfolioLink || null,
+        credentialId: null,
+        testSentAt: null,
+        testSentBy: null,
+        testSentTo: null,
+      });
+    }, [
+      fromName,
+      fromEmail,
+      replyTo,
+      useWorkspaceSignature,
+      signatureHtml,
+      meetingLink,
+      portfolioLink,
+      onConfigChange,
+    ]);
+
     if (loading) {
       return <p className="text-sm text-gray-400 py-8 text-center">Loading sender settings…</p>;
     }
 
     const previewSignature = useWorkspaceSignature ? workspaceSignature : signatureHtml;
+    const previewPlain = previewSignature.replace(/<[^>]+>/g, '\n').replace(/\n+/g, '\n').trim();
 
     return (
-      <div className="max-w-[1024px] mx-auto space-y-8">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">Sender &amp; signature</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Choose who emails come from and preview how your signature appears.
-          </p>
-        </div>
+      <div className="max-w-container-max-wizard mx-auto space-y-6">
+        <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="mb-6">
+            <h3 className="text-headline-sm text-on-surface mb-1">Sender Information</h3>
+            <p className="text-sm text-on-surface-variant">
+              Configure how your emails appear in the recipient&apos;s inbox.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
-            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <MarketingIcon name="send" className="text-primary" />
-              Sender identity
-            </h3>
-
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Verified sender
-              </span>
+          {senders.length > 0 && (
+            <label className="block space-y-2 mb-6">
+              <span className="text-label-caps text-on-surface-variant">VERIFIED SENDER</span>
               <select
                 value={selectedSenderId}
                 onChange={(e) => applySenderSelection(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:ring-2 focus:ring-primary-border focus:border-primary"
+                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none text-sm"
               >
-                <option value="">Custom / manual</option>
                 {senders.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.label} — {s.fromEmail}
@@ -160,131 +202,151 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
                 ))}
               </select>
             </label>
+          )}
 
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                From name
-              </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="space-y-2">
+              <label className="text-label-caps text-on-surface-variant">FROM NAME</label>
               <input
                 value={fromName}
                 onChange={(e) => setFromName(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2.5"
+                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none font-body-md"
               />
-            </label>
-
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                From email
-              </span>
+            </div>
+            <div className="space-y-2">
+              <label className="text-label-caps text-on-surface-variant">FROM EMAIL</label>
               <input
                 type="email"
                 value={fromEmail}
                 onChange={(e) => setFromEmail(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2.5"
+                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none font-body-md"
               />
-            </label>
-
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Reply-to (optional)
-              </span>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-label-caps text-on-surface-variant">REPLY-TO (OPTIONAL)</label>
               <input
                 type="email"
                 value={replyTo}
                 onChange={(e) => setReplyTo(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2.5"
+                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none font-body-md"
               />
-            </label>
-
-            <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs text-gray-600 flex items-center gap-2">
-              <MarketingIcon name="dns" className="text-gray-400" />
-              <span>
-                Sending via <strong>{providerLabel}</strong>
-              </span>
             </div>
+          </div>
 
-            <Link
-              href={'/settings/email-marketing' as Route}
-              className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+          <div className="bg-surface-container-low border border-primary-border rounded-lg p-4 flex items-center gap-4">
+            <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center shadow-sm shrink-0">
+              <MarketingIcon name="dns" className="text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-bold text-on-surface">{providerTitle}</h4>
+              <p className="text-xs text-on-surface-variant truncate">{providerDetail}</p>
+            </div>
+            {domainVerified ? (
+              <MarketingIcon name="verified" className="text-status-success-text shrink-0" />
+            ) : null}
+          </div>
+
+          <Link
+            href={'/settings/email-marketing' as Route}
+            className="text-xs text-primary font-bold hover:underline inline-flex items-center gap-1 mt-4"
+          >
+            Manage senders in settings
+            <MarketingIcon name="open_in_new" className="text-[14px]" />
+          </Link>
+        </section>
+
+        <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="mb-6 flex justify-between items-end gap-4">
+            <div>
+              <h3 className="text-headline-sm text-on-surface mb-1">Email Signature</h3>
+              <p className="text-sm text-on-surface-variant">
+                Personalize your outreach with a professional signature.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={autoGenerateSignature}
+              className="text-primary text-xs font-bold flex items-center gap-1 hover:underline shrink-0"
             >
-              Manage senders in settings
-              <MarketingIcon name="open_in_new" className="text-[14px]" />
-            </Link>
-          </section>
+              <MarketingIcon name="auto_fix" className="text-sm" />
+              Auto-Generate
+            </button>
+          </div>
 
-          <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
-            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <MarketingIcon name="draw" className="text-primary" />
-              Signature
-            </h3>
+          <label className="flex items-center gap-2 text-sm text-on-surface-variant mb-4">
+            <input
+              type="checkbox"
+              checked={useWorkspaceSignature}
+              onChange={(e) => setUseWorkspaceSignature(e.target.checked)}
+              className="rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            Use workspace default signature
+          </label>
 
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={useWorkspaceSignature}
-                onChange={(e) => setUseWorkspaceSignature(e.target.checked)}
-                className="rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              Use workspace default signature
-            </label>
-
-            {!useWorkspaceSignature && (
+          {!useWorkspaceSignature && (
+            <div className="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary-border transition-all">
               <EmailRichEditor
                 value={signatureHtml}
                 onChange={setSignatureHtml}
-                minHeight="140px"
+                minHeight="192px"
                 placeholder="Your email signature…"
               />
-            )}
+            </div>
+          )}
 
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Meeting link
-              </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div className="space-y-2">
+              <label className="text-label-caps text-on-surface-variant">MEETING LINK</label>
               <input
                 value={meetingLink}
                 onChange={(e) => setMeetingLink(e.target.value)}
                 placeholder="https://calendly.com/…"
-                className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2.5"
+                className="w-full h-11 px-4 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-border"
               />
-            </label>
-
-            <label className="block space-y-1.5">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Portfolio link
-              </span>
+            </div>
+            <div className="space-y-2">
+              <label className="text-label-caps text-on-surface-variant">PORTFOLIO LINK</label>
               <input
                 value={portfolioLink}
                 onChange={(e) => setPortfolioLink(e.target.value)}
                 placeholder="https://…"
-                className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2.5"
+                className="w-full h-11 px-4 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-border"
               />
-            </label>
-          </section>
-        </div>
+            </div>
+          </div>
+        </section>
 
         <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Email preview</h3>
-          <div className="border border-gray-100 rounded-lg p-4 bg-gray-50 text-sm space-y-3">
-            <p className="text-gray-600">Hi Alex,</p>
-            <p className="text-gray-500 italic">[Email body content]</p>
-            <div
-              className="border-t border-gray-200 pt-3 text-gray-700 prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: previewSignature }}
-            />
-            {meetingLink && (
-              <p className="text-primary text-xs">
-                <a href={meetingLink}>Book a meeting</a>
-              </p>
-            )}
-            {portfolioLink && (
-              <p className="text-primary text-xs">
-                <a href={portfolioLink}>View portfolio</a>
-              </p>
-            )}
-            <div className="border-t border-dashed border-gray-300 pt-3 text-xs text-gray-400">
-              {physicalAddress || 'Physical mailing address'} ·{' '}
-              <span className="underline">Unsubscribe</span>
+          <div className="mb-4">
+            <h3 className="text-headline-sm text-on-surface mb-1">Compliance &amp; Footer Preview</h3>
+            <p className="text-sm text-on-surface-variant">
+              Mandatory legal footer as required by CAN-SPAM / GDPR.
+            </p>
+          </div>
+          <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-8 relative overflow-hidden">
+            <div className="absolute top-0 left-0 bg-gray-200 text-gray-500 text-[10px] px-2 py-1 font-bold uppercase tracking-wider">
+              Email Footer Preview
+            </div>
+            <div className="mt-4 space-y-4">
+              <div className="font-body-md text-on-surface opacity-80 whitespace-pre-wrap">
+                {previewPlain || 'Your signature will appear here.'}
+              </div>
+              {(meetingLink || portfolioLink) && (
+                <div className="text-xs text-primary space-y-1">
+                  {meetingLink && <p>Book a call: {meetingLink}</p>}
+                  {portfolioLink && <p>Portfolio: {portfolioLink}</p>}
+                </div>
+              )}
+              <div className="pt-6 border-t border-gray-200 space-y-2">
+                <p className="text-xs text-gray-400">
+                  {physicalAddress || 'Your physical mailing address'}
+                </p>
+                <p className="text-xs text-gray-400">
+                  You received this because you are subscribed to our marketing updates.{' '}
+                  <span className="text-primary hover:underline cursor-pointer">Unsubscribe from this list</span>{' '}
+                  or <span className="text-primary hover:underline cursor-pointer">Manage preferences</span>.
+                </p>
+              </div>
             </div>
           </div>
         </section>

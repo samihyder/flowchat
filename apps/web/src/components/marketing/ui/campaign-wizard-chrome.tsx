@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { CampaignStatusBadge } from '@/components/marketing/ui/campaign-status-badge';
 import { CampaignBuilderTopBar } from '@/components/marketing/ui/campaign-builder-topbar';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
@@ -50,6 +50,19 @@ export function CampaignWizardChrome({
   onLaunch,
   launchDisabled,
 }: CampaignWizardChromeProps) {
+  const [copied, setCopied] = useState(false);
+  const formattedId = formatCampaignId(campaignId);
+
+  const copyCampaignId = async () => {
+    try {
+      await navigator.clipboard.writeText(campaignId);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <CampaignBuilderTopBar onLaunch={onLaunch} launchDisabled={launchDisabled} />
@@ -66,9 +79,15 @@ export function CampaignWizardChrome({
                 className="text-headline-md text-on-surface border-none p-0 focus:ring-0 focus:border-b-2 focus:border-primary-border w-auto min-w-[200px] bg-transparent"
               />
               <CampaignStatusBadge status={status} />
-              <span className="font-data-mono text-data-mono text-gray-400 ml-4">
-                {formatCampaignId(campaignId)}
-              </span>
+              <button
+                type="button"
+                onClick={() => void copyCampaignId()}
+                className="font-data-mono text-data-mono text-gray-400 ml-4 hover:text-primary transition-colors flex items-center gap-1"
+                title="Copy campaign ID"
+              >
+                {formattedId}
+                <MarketingIcon name={copied ? 'check' : 'content_copy'} className="text-[14px]" />
+              </button>
             </div>
             <button
               type="button"

@@ -50,20 +50,26 @@ export async function getCampaignPreflight(
       sender.fromEmail,
       sender.credentialId
     );
-    domainOk = status === 'verified';
+    const usingPlatform = !cred && Boolean(process.env.RESEND_API_KEY);
+    domainOk =
+      status === 'verified' || (usingPlatform && status !== 'failed');
     domainDetail =
       status === 'verified'
         ? `Verified domain for ${sender.fromEmail}`
-        : `Domain status: ${status}`;
+        : usingPlatform && status !== 'failed'
+          ? `Platform sender for ${sender.fromEmail}`
+          : `Domain status: ${status}`;
   }
 
-  const cronOk = Boolean(process.env.CRON_SECRET || process.env.VERCEL);
+  const cronOk = Boolean(
+    process.env.CRON_SECRET || process.env.VERCEL || process.env.NODE_ENV === 'development'
+  );
   const cronDetail = cronOk ? 'Scheduler configured' : 'Background scheduler not configured';
 
   const checks: PreflightCheck[] = [
-    { id: 'provider', label: 'Email provider connected', ok: providerOk, detail: providerDetail },
-    { id: 'domain', label: 'Sending domain verified', ok: domainOk, detail: domainDetail },
-    { id: 'cron', label: 'Background scheduler', ok: cronOk, detail: cronDetail },
+    { id: 'provider', label: 'Provider Connection', ok: providerOk, detail: providerDetail },
+    { id: 'domain', label: 'Domain Verification', ok: domainOk, detail: domainDetail },
+    { id: 'cron', label: 'Scheduler Health', ok: cronOk, detail: cronDetail },
     {
       id: 'test',
       label: 'Test email sent',
