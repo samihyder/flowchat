@@ -3,7 +3,11 @@ import type { NextConfig } from 'next';
 const PRODUCTION_API_URL = 'https://flowchat-production-be88.up.railway.app';
 const PRODUCTION_WS_URL = 'wss://flowchat-ws-production.up.railway.app';
 
-const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? '').replace(/\/$/, '') || undefined;
+/** On Vercel (preview + prod), default /FlowChat unless env overrides. Local dev uses empty .env. */
+const basePathRaw =
+  process.env.NEXT_PUBLIC_BASE_PATH ??
+  (process.env.VERCEL ? '/FlowChat' : '');
+const basePath = basePathRaw.replace(/\/$/, '') || undefined;
 const apiOrigin = process.env.NEXT_PUBLIC_API_URL ?? PRODUCTION_API_URL;
 
 const nextConfig: NextConfig = {
