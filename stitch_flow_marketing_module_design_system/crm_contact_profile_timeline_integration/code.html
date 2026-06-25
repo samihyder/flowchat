@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Contact Profile - SalesHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "status-success-text": "#16A34A",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "status-paused-bg": "#FEF9C3",
+                    "surface-variant": "#d9e3f7",
+                    "secondary-fixed-dim": "#4fdbc8",
+                    "primary-border": "#C7D2FE",
+                    "secondary": "#006b5f",
+                    "error-container": "#ffdad6",
+                    "status-scheduled-text": "#2563EB",
+                    "gray-900": "#111827",
+                    "surface": "#f9f9ff",
+                    "outline": "#767586",
+                    "on-secondary-fixed": "#00201c",
+                    "status-draft-text": "#4B5563",
+                    "on-error": "#ffffff",
+                    "on-primary-container": "#fffbff",
+                    "secondary-container": "#6df5e1",
+                    "primary-fixed": "#e1e0ff",
+                    "primary-container": "#6063ee",
+                    "on-tertiary-fixed-variant": "#703700",
+                    "gray-500": "#6B7280",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#e6eeff",
+                    "status-paused-text": "#CA8A04",
+                    "status-danger-text": "#DC2626",
+                    "status-danger-bg": "#FEE2E2",
+                    "background": "#f9f9ff",
+                    "on-tertiary": "#ffffff",
+                    "inverse-surface": "#273140",
+                    "surface-container-low": "#eff3ff",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "on-primary-fixed": "#07006c",
+                    "outline-variant": "#c7c4d7",
+                    "surface-container-highest": "#d9e3f7",
+                    "surface-container-high": "#dee9fd",
+                    "status-success-bg": "#DCFCE7",
+                    "primary": "#4648d4",
+                    "tertiary-container": "#b55d00",
+                    "status-bounced-text": "#D97706",
+                    "status-bounced-bg": "#FEF3C7",
+                    "on-error-container": "#93000a",
+                    "on-surface": "#121c2a",
+                    "gray-400": "#9CA3AF",
+                    "status-draft-bg": "#F3F4F6",
+                    "on-secondary-container": "#006f64",
+                    "on-surface-variant": "#464554",
+                    "tertiary": "#904900",
+                    "surface-bright": "#f9f9ff",
+                    "on-tertiary-fixed": "#301400",
+                    "gray-200": "#E5E7EB",
+                    "secondary-fixed": "#71f8e4",
+                    "status-scheduled-bg": "#DBEAFE",
+                    "gray-50": "#F9FAFB",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "on-tertiary-container": "#fffbff",
+                    "tertiary-fixed": "#ffdcc5",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#ebf1ff",
+                    "primary-hover": "#4F46E5",
+                    "primary-surface": "#EEF2FF",
+                    "on-background": "#121c2a",
+                    "status-reply-text": "#A855F7",
+                    "inverse-primary": "#c0c1ff",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed-variant": "#005048",
+                    "surface-tint": "#494bd6",
+                    "surface-dim": "#d0daef",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max-wizard": "1024px",
+                    "container-max-list": "1280px",
+                    "gap-section": "24px",
+                    "padding-card": "24px",
+                    "gap-form": "16px"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #f9f9ff; color: #121c2a; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .timeline-line::before {
+            content: '';
+            position: absolute;
+            left: 19px;
+            top: 40px;
+            bottom: 0;
+            width: 2px;
+            background-color: #E5E7EB;
+        }
+        .timeline-item:last-child .timeline-line::before { display: none; }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- Side Navigation Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface border-r border-gray-200 flex flex-col p-4 z-50">
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg">bolt</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">SalesHub</h1>
+<p class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Campaign Manager</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-gray-50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-primary bg-primary-surface rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span>Contacts</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-gray-50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+<span>Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-gray-50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Templates</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-gray-200">
+<div class="flex items-center gap-3 px-2">
+<img class="w-10 h-10 rounded-full border-2 border-primary-surface object-cover" data-alt="Professional headshot of a sales executive in a modern office, soft bokeh background with corporate interior design, high-quality professional lighting, warm and approachable atmosphere, minimalist corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6lnhjb0kc0XSYuKniRKiCcBOTNWi9-86tzfh84Wfcu7wDkQ9XrWkrgmvLxBTlD4P32WsrJsLfdTWV_ueDw2Jpj9vQ7kL7UyZ3p5xfb_9XmyDxVlz-jzlK0cZ6lg9ZdlTIantxxnzbZWswMiGQM31OjNxmqP1urrnaQmy7NPw5qs-Z5UZtUKmtaibE6RSgjIpU0cYmBAIZ066XwCpXISfZFd3YRxk_mcft5AAb6oRGCEAgSMlwS0Xsj8Ra_RV6UVX4dduBFOdxdfcG"/>
+<div class="overflow-hidden">
+<p class="font-bold text-on-surface truncate">Alex Sterling</p>
+<p class="text-xs text-gray-500 truncate">Account Executive</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Header / Top Bar -->
+<header class="flex justify-between items-center h-16 px-8 ml-64 bg-surface sticky top-0 z-40 border-b border-gray-200">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-gray-50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary">Contact Profile</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-gray-50 border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-border focus:border-primary-border w-64 outline-none transition-all" placeholder="Search activities..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="ml-4 bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-primary-hover transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                    Launch
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-8 min-h-[calc(100vh-64px)] bg-gray-50">
+<div class="max-w-container-max-list mx-auto">
+<!-- Contact Header Card -->
+<section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-gap-section">
+<div class="flex flex-col md:flex-row gap-6 items-start">
+<div class="w-24 h-24 rounded-2xl bg-primary-surface flex items-center justify-center border border-primary-border">
+<img class="w-full h-full rounded-2xl object-cover" data-alt="Headshot of a middle-aged tech executive with a friendly smile, wearing a casual navy blazer, soft studio lighting, clean white background, high-end professional corporate photography style, sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-AKerh4EVdZelzuAT0LvYVZyqARs40FgDpEtsPm4q6V0t_3QJyKHgNckZ4lVLZ299DYVoxzPaDzCkAuYQlA0DeGGkqWkijW0Nc1H7O5Nf5NTLAaQHk_PuaWspHm3923tE5tvxVO3mJepNm82W4-UocWHu7BWyCrENE5vMF8IuOj2RQNrtfmrem2IlUHsK6HcaltgrLtGJbVfLsbdBUwrQ3OjRe8Wtzfr56Hx-Z5k7qL-HivyK_plpNixu_qPyShAM5ercWCsInUnd"/>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Jordan Henderson</h3>
+<p class="text-gray-500 font-medium">Chief Operations Officer at TechStream Global</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-status-success-bg text-status-success-text rounded-full text-xs font-bold uppercase tracking-wide">Active</span>
+<span class="px-3 py-1 bg-primary-surface text-primary rounded-full text-xs font-bold uppercase tracking-wide">High Intent</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-primary" data-icon="mail">mail</span>
+<span class="font-data-mono text-data-mono">j.henderson@techstream.io</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-primary" data-icon="call">call</span>
+<span class="font-data-mono text-data-mono">+1 (555) 012-3456</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+<span>San Francisco, CA</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Tabs Navigation -->
+<div class="flex border-b border-gray-200 mb-6 gap-8">
+<button class="pb-3 text-on-surface-variant font-bold hover:text-primary transition-colors">Overview</button>
+<button class="pb-3 text-primary border-b-2 border-primary font-bold">Timeline</button>
+<button class="pb-3 text-on-surface-variant font-bold hover:text-primary transition-colors">Sequences</button>
+<button class="pb-3 text-on-surface-variant font-bold hover:text-primary transition-colors">Notes</button>
+<button class="pb-3 text-on-surface-variant font-bold hover:text-primary transition-colors">Tasks</button>
+</div>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-12 gap-6 items-start">
+<!-- Main Timeline Column -->
+<div class="col-span-12 lg:col-span-8">
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+<div class="p-4 border-b border-gray-200 bg-gray-50/50 flex justify-between items-center">
+<h4 class="font-body-lg text-body-lg text-on-surface">Marketing Activity Timeline</h4>
+<div class="flex gap-2">
+<button class="p-1.5 rounded bg-white border border-gray-200 text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+</button>
+</div>
+</div>
+<div class="p-8 relative">
+<!-- Timeline Entries -->
+<div class="space-y-10">
+<!-- Timeline Item: Link Clicked -->
+<div class="timeline-item flex gap-6 relative timeline-line">
+<div class="relative z-10 w-10 h-10 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center shrink-0 border-4 border-white shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="link">link</span>
+</div>
+<div class="flex-1 pt-1">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-bold text-on-surface">Link Clicked</p>
+<p class="text-sm text-gray-500">Contact clicked on <span class="text-primary font-medium hover:underline cursor-pointer">"Annual Q4 Logistics Report.pdf"</span></p>
+</div>
+<span class="font-data-mono text-xs text-gray-400">2 mins ago</span>
+</div>
+<div class="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg border border-gray-200">
+<span class="material-symbols-outlined text-xs text-secondary" data-icon="campaign">campaign</span>
+<span class="text-xs text-on-surface-variant font-medium">Enterprise Growth 2024</span>
+<span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+<span class="text-xs text-gray-500">Step 3 (Auto-Follow-up)</span>
+</div>
+</div>
+</div>
+<!-- Timeline Item: Email Opened -->
+<div class="timeline-item flex gap-6 relative timeline-line">
+<div class="relative z-10 w-10 h-10 rounded-full bg-primary-surface text-primary flex items-center justify-center shrink-0 border-4 border-white shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="drafts">drafts</span>
+</div>
+<div class="flex-1 pt-1">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-bold text-on-surface">Email Opened</p>
+<p class="text-sm text-gray-500">Subject: <span class="italic">"Tailored logistics solutions for TechStream"</span></p>
+</div>
+<span class="font-data-mono text-xs text-gray-400">1 hour ago</span>
+</div>
+<div class="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg border border-gray-200">
+<span class="material-symbols-outlined text-xs text-primary" data-icon="campaign">campaign</span>
+<span class="text-xs text-on-surface-variant font-medium">Enterprise Growth 2024</span>
+<span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+<span class="text-xs text-gray-500">Step 3 (Auto-Follow-up)</span>
+</div>
+<!-- Open Count Badge -->
+<div class="mt-2 text-[11px] font-bold text-status-success-text flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="trending_up">trending_up</span>
+                                            Opened 4 times (Multiple IPs)
+                                        </div>
+</div>
+</div>
+<!-- Timeline Item: Campaign Sent -->
+<div class="timeline-item flex gap-6 relative timeline-line">
+<div class="relative z-10 w-10 h-10 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 border-4 border-white shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="send">send</span>
+</div>
+<div class="flex-1 pt-1">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-bold text-on-surface">Campaign Sent</p>
+<p class="text-sm text-gray-500">Automated sequence email dispatched via SendGrid node.</p>
+</div>
+<span class="font-data-mono text-xs text-gray-400">2 hours ago</span>
+</div>
+<div class="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg border border-gray-200">
+<span class="material-symbols-outlined text-xs text-gray-400" data-icon="campaign">campaign</span>
+<span class="text-xs text-on-surface-variant font-medium">Enterprise Growth 2024</span>
+<span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+<span class="text-xs text-gray-500">Step 3 (Auto-Follow-up)</span>
+</div>
+</div>
+</div>
+<!-- Timeline Item: Campaign Sent (Previous Step) -->
+<div class="timeline-item flex gap-6 relative timeline-line">
+<div class="relative z-10 w-10 h-10 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 border-4 border-white shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="send">send</span>
+</div>
+<div class="flex-1 pt-1">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-bold text-on-surface">Campaign Sent</p>
+<p class="text-sm text-gray-500">Initial outreach email delivered successfully.</p>
+</div>
+<span class="font-data-mono text-xs text-gray-400">2 days ago</span>
+</div>
+<div class="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg border border-gray-200">
+<span class="material-symbols-outlined text-xs text-gray-400" data-icon="campaign">campaign</span>
+<span class="text-xs text-on-surface-variant font-medium">Enterprise Growth 2024</span>
+<span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+<span class="text-xs text-gray-500">Step 1 (Outreach)</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 bg-gray-50 border-t border-gray-200 text-center">
+<button class="text-primary font-bold text-xs hover:underline flex items-center justify-center gap-2 mx-auto">
+                                View Full Activity History
+                                <span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Sidebar column -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<!-- Engagement Score Card -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+<h4 class="font-body-lg text-body-lg text-on-surface mb-4">Engagement Score</h4>
+<div class="flex items-end gap-2">
+<span class="text-4xl font-bold text-primary">82</span>
+<span class="text-status-success-text text-sm font-bold flex items-center mb-1">
+<span class="material-symbols-outlined text-xs" data-icon="arrow_upward">arrow_upward</span> 
+                                12%
+                            </span>
+</div>
+<p class="text-xs text-gray-500 mt-2">Top 5% of your active leads this week.</p>
+<div class="mt-6 space-y-3">
+<div class="flex justify-between items-center text-xs">
+<span class="text-gray-500">Email Opens</span>
+<span class="font-bold text-on-surface">14</span>
+</div>
+<div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[70%]"></div>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-gray-500">Link Clicks</span>
+<span class="font-bold text-on-surface">3</span>
+</div>
+<div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full w-[40%]"></div>
+</div>
+</div>
+</div>
+<!-- Tags & Categorization -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-body-lg text-body-lg text-on-surface">Tags</h4>
+<button class="text-primary text-xs font-bold">Edit</button>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded font-medium">Logistics Tech</span>
+<span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded font-medium">Series C</span>
+<span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded font-medium">Decision Maker</span>
+<span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded font-medium">Webinar Attendee</span>
+<button class="px-3 py-1 border border-dashed border-gray-300 text-gray-400 text-xs rounded font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[10px]" data-icon="add">add</span> Tag
+                            </button>
+</div>
+</div>
+<!-- Upcoming Schedule -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+<h4 class="font-body-lg text-body-lg text-on-surface mb-4">Upcoming Sequence</h4>
+<div class="relative pl-4 border-l-2 border-status-scheduled-text">
+<p class="text-xs font-bold text-status-scheduled-text uppercase">Scheduled</p>
+<p class="font-bold text-on-surface mt-1">LinkedIn Connection Request</p>
+<p class="text-xs text-gray-500">Enterprise Growth 2024 • Step 4</p>
+<div class="mt-3 flex items-center gap-2 text-xs text-on-surface-variant bg-status-scheduled-bg/50 p-2 rounded">
+<span class="material-symbols-outlined text-sm" data-icon="event">event</span>
+                                Tomorrow at 09:30 AM
+                            </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Global Footer -->
+<footer class="flex items-center justify-between px-8 ml-64 h-16 bg-surface sticky bottom-0 z-40 border-t border-gray-200">
+<div class="flex items-center gap-6">
+<span class="font-label-caps text-label-caps text-gray-500">© 2024 SalesHub Automation</span>
+<div class="h-4 w-px bg-gray-200"></div>
+<a class="font-label-caps text-label-caps text-gray-500 hover:text-primary transition-colors" href="#">Help Center</a>
+<a class="font-label-caps text-label-caps text-gray-500 hover:text-primary transition-colors" href="#">Privacy Policy</a>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-status-success-text"></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Systems Operational</span>
+</div>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+</footer>
+<script>
+        // Micro-interactions and simple state handling
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Flash effect
+                this.classList.add('opacity-50');
+                setTimeout(() => this.classList.remove('opacity-50'), 150);
+            });
+        });
+
+        // Search bar focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary-border');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary-border');
+        });
+    </script>
+</body></html>

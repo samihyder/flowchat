@@ -1,0 +1,476 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SalesHub - Template Library</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary-container": "#6df5e1",
+            "tertiary-fixed-dim": "#ffb783",
+            "surface-container": "#e6eeff",
+            "inverse-surface": "#273140",
+            "on-secondary-fixed-variant": "#005048",
+            "primary-fixed": "#e1e0ff",
+            "on-tertiary-fixed-variant": "#703700",
+            "status-bounced-bg": "#FEF3C7",
+            "on-secondary-fixed": "#00201c",
+            "gray-400": "#9CA3AF",
+            "status-scheduled-bg": "#DBEAFE",
+            "gray-50": "#F9FAFB",
+            "gray-200": "#E5E7EB",
+            "status-reply-text": "#A855F7",
+            "on-tertiary-container": "#fffbff",
+            "tertiary-container": "#b55d00",
+            "on-surface": "#121c2a",
+            "gray-900": "#111827",
+            "on-tertiary": "#ffffff",
+            "on-primary-container": "#fffbff",
+            "status-bounced-text": "#D97706",
+            "status-danger-text": "#DC2626",
+            "status-success-bg": "#DCFCE7",
+            "status-draft-bg": "#F3F4F6",
+            "surface-tint": "#494bd6",
+            "surface-variant": "#d9e3f7",
+            "surface-bright": "#f9f9ff",
+            "status-danger-bg": "#FEE2E2",
+            "on-error": "#ffffff",
+            "inverse-primary": "#c0c1ff",
+            "tertiary": "#904900",
+            "error": "#ba1a1a",
+            "status-success-text": "#16A34A",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a",
+            "status-paused-bg": "#FEF9C3",
+            "status-scheduled-text": "#2563EB",
+            "outline-variant": "#c7c4d7",
+            "primary": "#4648d4",
+            "on-surface-variant": "#464554",
+            "on-primary-fixed": "#07006c",
+            "primary-hover": "#4F46E5",
+            "gray-500": "#6B7280",
+            "background": "#f9f9ff",
+            "status-draft-text": "#4B5563",
+            "primary-fixed-dim": "#c0c1ff",
+            "on-primary": "#ffffff",
+            "secondary-fixed": "#71f8e4",
+            "surface-container-high": "#dee9fd",
+            "outline": "#767586",
+            "surface-container-low": "#eff3ff",
+            "surface": "#f9f9ff",
+            "primary-border": "#C7D2FE",
+            "inverse-on-surface": "#ebf1ff",
+            "status-paused-text": "#CA8A04",
+            "tertiary-fixed": "#ffdcc5",
+            "surface-container-highest": "#d9e3f7",
+            "secondary-fixed-dim": "#4fdbc8",
+            "on-secondary": "#ffffff",
+            "primary-container": "#6063ee",
+            "on-secondary-container": "#006f64",
+            "secondary": "#006b5f",
+            "surface-dim": "#d0daef",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "surface-container-lowest": "#ffffff",
+            "on-background": "#121c2a",
+            "primary-surface": "#EEF2FF",
+            "on-tertiary-fixed": "#301400"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "container-max-list": "1280px",
+            "padding-card": "24px",
+            "gap-section": "24px",
+            "container-max-wizard": "1024px",
+            "gap-form": "16px"
+          },
+          "fontFamily": {
+            "headline-md": ["Inter"],
+            "data-mono": ["JetBrains Mono"],
+            "body-md": ["Inter"],
+            "headline-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "label-caps": ["Inter"],
+            "headline-lg": ["Inter"]
+          },
+          "fontSize": {
+            "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+            "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+            "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #E5E7EB;
+      border-radius: 10px;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-on-surface font-body-md min-h-screen">
+<!-- Side Navigation Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-gray-200 bg-surface flex flex-col p-4 z-50">
+<div class="mb-8 px-4">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">SalesHub</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant opacity-70">Campaign Manager</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<!-- Campaigns Tab -->
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-gray-50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+<span class="font-body-md">Campaigns</span>
+</a>
+<!-- Templates Tab (Active) -->
+<a class="flex items-center gap-3 px-4 py-2 text-primary bg-primary-surface rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md">Templates</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-gray-100 px-4 flex items-center gap-3">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="Close-up professional headshot of a friendly female sales agent with a soft blurred office background, high-key studio lighting, modern minimalist professional aesthetic, focused on corporate reliability and approachability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuXz-X0ctMabS5bFhT1slEc6MNX62V67oZH5vvER35CCMp6xesi3hOarC46wXL3cBFysdawPrlFzbJDsudKymAOMOIJ87qJbWg09e9KEfvMiKHxAxcFHzY51wAC2T6YqCyfb6ks9htIeDVp3145sb_30LC-ZqDTI9e_dmlNv4rzlHSqMW1H-3SYg3ScfHaklC6B-ROkuGH1pZs_s8grTuavfmUDzHuuibI9F8islwT4O5jfFBlOYQQ-HK4kxIbikgr-thUVT3eKXqm">
+<div>
+<p class="font-body-md font-bold text-on-surface">Alex Rivera</p>
+<p class="text-[10px] uppercase tracking-wider text-on-surface-variant font-medium">Pro Plan</p>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 left-0 right-0 h-16 bg-surface border-b border-gray-200 flex justify-between items-center px-8 ml-64 z-40">
+<div class="flex items-center gap-8">
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary">Campaign Builder</h2>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-surface-variant hover:text-primary transition-colors text-body-md" href="#">Drafts</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-body-md" href="#">Scheduled</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-body-md" href="#">Sent</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-body-md focus:ring-2 focus:ring-primary-border outline-none w-64 transition-all" placeholder="Search templates..." type="text">
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-gray-50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-gray-50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="flex items-center gap-2 bg-primary text-on-primary px-6 py-2 rounded-lg font-bold hover:bg-primary-hover transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+Create template
+</button><button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-bold hover:bg-primary-hover transition-all shadow-sm">
+        Launch
+      </button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 pb-16 px-8 min-h-screen">
+<div class="max-w-[1280px] mx-auto">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface mb-2">Template Library</h3>
+<p class="text-on-surface-variant max-w-lg">Manage your reusable email modules and sequences. Drag-and-drop these into any active campaign to maintain brand consistency.</p>
+</div>
+
+</div>
+<!-- Template Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Template Card 1 -->
+<div class="group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary-border transition-all duration-300">
+<div class="h-48 bg-gray-50 relative overflow-hidden">
+<div class="absolute inset-0 p-6 flex flex-col gap-2 scale-90 group-hover:scale-95 transition-transform origin-top-left">
+<div class="h-4 w-3/4 bg-gray-200 rounded"></div>
+<div class="h-3 w-1/2 bg-gray-200 rounded"></div>
+<div class="mt-4 h-2 w-full bg-gray-100 rounded"></div>
+<div class="h-2 w-full bg-gray-100 rounded"></div>
+<div class="h-2 w-3/4 bg-gray-100 rounded"></div>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-white/80 to-transparent"></div>
+<div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 text-on-surface-variant" title="Duplicate">
+<span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-2 bg-white rounded-lg shadow-sm hover:bg-status-danger-bg text-status-danger-text" title="Archive">
+<span class="material-symbols-outlined text-[18px]" data-icon="archive">archive</span>
+</button>
+</div>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-headline-sm text-headline-sm text-on-surface truncate pr-4">Welcome Sequence #1</h4>
+<span class="px-2 py-1 bg-status-success-bg text-status-success-text text-[10px] font-bold rounded uppercase">Active</span>
+</div>
+<p class="text-on-surface-variant text-body-md mb-4 truncate italic">Subject: Welcome to the family! 👋</p>
+<div class="flex justify-between items-center pt-4 border-t border-gray-50">
+<span class="font-label-caps text-label-caps text-gray-400">Edited Oct 24, 2023</span>
+<button class="text-primary font-bold text-body-md hover:underline">Edit Template</button>
+</div>
+</div>
+</div>
+<!-- Template Card 2 -->
+<div class="group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary-border transition-all duration-300">
+<div class="h-48 bg-gray-50 relative overflow-hidden">
+<div class="absolute inset-0 p-6 flex flex-col gap-2 scale-90 group-hover:scale-95 transition-transform origin-top-left">
+<div class="h-8 w-8 bg-primary/10 rounded-full mb-2"></div>
+<div class="h-4 w-full bg-gray-200 rounded"></div>
+<div class="h-3 w-3/4 bg-gray-200 rounded"></div>
+<div class="mt-4 flex gap-2">
+<div class="h-8 w-20 bg-primary/20 rounded"></div>
+<div class="h-8 w-20 bg-gray-100 rounded"></div>
+</div>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-white/80 to-transparent"></div>
+<div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 text-on-surface-variant" title="Duplicate">
+<span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-2 bg-white rounded-lg shadow-sm hover:bg-status-danger-bg text-status-danger-text" title="Archive">
+<span class="material-symbols-outlined text-[18px]" data-icon="archive">archive</span>
+</button>
+</div>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-headline-sm text-headline-sm text-on-surface truncate pr-4">Cold Outreach B2B</h4>
+<span class="px-2 py-1 bg-status-draft-bg text-status-draft-text text-[10px] font-bold rounded uppercase">Draft</span>
+</div>
+<p class="text-on-surface-variant text-body-md mb-4 truncate italic">Subject: Quick question regarding {{company}}</p>
+<div class="flex justify-between items-center pt-4 border-t border-gray-50">
+<span class="font-label-caps text-label-caps text-gray-400">Edited Nov 02, 2023</span>
+<button class="text-primary font-bold text-body-md hover:underline">Edit Template</button>
+</div>
+</div>
+</div>
+<!-- Template Card 3 -->
+<div class="group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary-border transition-all duration-300">
+<div class="h-48 bg-gray-50 relative overflow-hidden">
+<div class="absolute inset-0 p-6 flex flex-col items-center justify-center gap-3">
+<span class="material-symbols-outlined text-gray-300 text-[48px]" data-icon="insert_chart">insert_chart</span>
+<div class="h-2 w-32 bg-gray-200 rounded"></div>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-white/80 to-transparent"></div>
+<div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 text-on-surface-variant" title="Duplicate">
+<span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-2 bg-white rounded-lg shadow-sm hover:bg-status-danger-bg text-status-danger-text" title="Archive">
+<span class="material-symbols-outlined text-[18px]" data-icon="archive">archive</span>
+</button>
+</div>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-headline-sm text-headline-sm text-on-surface truncate pr-4">Quarterly Report Update</h4>
+<span class="px-2 py-1 bg-status-scheduled-bg text-status-scheduled-text text-[10px] font-bold rounded uppercase">System</span>
+</div>
+<p class="text-on-surface-variant text-body-md mb-4 truncate italic">Subject: Your Q3 Performance Summary</p>
+<div class="flex justify-between items-center pt-4 border-t border-gray-50">
+<span class="font-label-caps text-label-caps text-gray-400">Edited Sep 28, 2023</span>
+<button class="text-primary font-bold text-body-md hover:underline">Edit Template</button>
+</div>
+</div>
+</div>
+<!-- Template Card 4 -->
+<div class="group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary-border transition-all duration-300">
+<div class="h-48 bg-gray-50 relative overflow-hidden">
+<div class="absolute inset-0 p-6 flex flex-col gap-2">
+<div class="flex justify-between">
+<div class="h-6 w-6 bg-gray-200 rounded"></div>
+<div class="h-6 w-20 bg-gray-200 rounded-full"></div>
+</div>
+<div class="h-20 w-full bg-white border border-gray-100 rounded mt-2"></div>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-white/80 to-transparent"></div>
+<div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 text-on-surface-variant" title="Duplicate">
+<span class="material-symbols-outlined text-[18px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-2 bg-white rounded-lg shadow-sm hover:bg-status-danger-bg text-status-danger-text" title="Archive">
+<span class="material-symbols-outlined text-[18px]" data-icon="archive">archive</span>
+</button>
+</div>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-1">
+<h4 class="font-headline-sm text-headline-sm text-on-surface truncate pr-4">Feature Announcement</h4>
+<span class="px-2 py-1 bg-status-success-bg text-status-success-text text-[10px] font-bold rounded uppercase">Active</span>
+</div>
+<p class="text-on-surface-variant text-body-md mb-4 truncate italic">Subject: Introducing FlowChat 2.0</p>
+<div class="flex justify-between items-center pt-4 border-t border-gray-50">
+<span class="font-label-caps text-label-caps text-gray-400">Edited Oct 15, 2023</span>
+<button class="text-primary font-bold text-body-md hover:underline">Edit Template</button>
+</div>
+</div>
+</div>
+<!-- Empty State / Create New -->
+<button class="group border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center p-8 hover:border-primary/40 hover:bg-primary-surface/30 transition-all min-h-[340px]">
+<div class="w-16 h-16 rounded-full bg-gray-100 group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors text-[32px]" data-icon="add_circle">add_circle</span>
+</div>
+<span class="font-headline-sm text-on-surface">Start from scratch</span>
+<p class="text-on-surface-variant text-center mt-2 max-w-[200px]">Design a new custom template with our visual editor.</p>
+</button>
+</div>
+<!-- Advanced Filters / Grid Toggle -->
+<div class="mt-12 mb-6 flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Recent Templates (Table View)</h3>
+<div class="flex border border-gray-200 rounded-lg p-1 bg-white">
+<button class="p-1.5 px-3 rounded-md text-on-surface-variant hover:bg-gray-50">
+<span class="material-symbols-outlined text-[20px]" data-icon="grid_view">grid_view</span>
+</button>
+<button class="p-1.5 px-3 rounded-md bg-primary-surface text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="list">list</span>
+</button>
+</div>
+</div>
+<!-- Table Layout -->
+<div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-gray-50 border-b border-gray-200">
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant">Template Name</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant">Subject Line</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant">Last Edited</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<tr class="hover:bg-gray-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary-surface flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="draft">draft</span>
+</div>
+<span class="font-bold text-on-surface">Abandoned Cart Reminder</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Don't leave your items behind!</td>
+<td class="px-6 py-4 text-on-surface-variant text-body-md">2 days ago</td>
+<td class="px-6 py-4">
+<div class="flex justify-end gap-2"><button class="p-2 hover:bg-primary-surface/30 rounded-lg transition-colors text-primary" title="Edit">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+</button>
+<button class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-2 hover:bg-status-danger-bg rounded-lg transition-colors text-status-danger-text">
+<span class="material-symbols-outlined text-[20px]" data-icon="archive">archive</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500">
+<span class="material-symbols-outlined text-[20px]" data-icon="schedule">schedule</span>
+</div>
+<span class="font-bold text-on-surface">Webinar Confirmation</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">See you at the live demo tomorrow</td>
+<td class="px-6 py-4 text-on-surface-variant text-body-md">5 days ago</td>
+<td class="px-6 py-4">
+<div class="flex justify-end gap-2"><button class="p-2 hover:bg-primary-surface/30 rounded-lg transition-colors text-primary" title="Edit">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+</button>
+<button class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-2 hover:bg-status-danger-bg rounded-lg transition-colors text-status-danger-text">
+<span class="material-symbols-outlined text-[20px]" data-icon="archive">archive</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-gray-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500">
+<span class="material-symbols-outlined text-[20px]" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<span class="font-bold text-on-surface">Weekly Newsletter V2</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">This week's top marketing insights</td>
+<td class="px-6 py-4 text-on-surface-variant text-body-md">Oct 28, 2023</td>
+<td class="px-6 py-4">
+<div class="flex justify-end gap-2"><button class="p-2 hover:bg-primary-surface/30 rounded-lg transition-colors text-primary" title="Edit">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+</button>
+<button class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="p-2 hover:bg-status-danger-bg rounded-lg transition-colors text-status-danger-text">
+<span class="material-symbols-outlined text-[20px]" data-icon="archive">archive</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<!-- Footer Shell -->
+<footer class="fixed bottom-0 left-0 right-0 h-16 bg-surface border-t border-gray-200 flex items-center justify-between px-8 ml-64 z-40"><div class="flex items-center gap-2">
+<input type="checkbox" id="save-template" class="rounded border-gray-300 text-primary focus:ring-primary">
+<label for="save-template" class="font-label-caps text-label-caps text-on-surface-variant">Save as template</label>
+</div>
+<span class="font-label-caps text-label-caps text-gray-500">© 2024 SalesHub Automation</span>
+<div class="flex gap-6">
+<a class="font-label-caps text-label-caps text-gray-500 hover:text-primary transition-colors" href="#">Help Center</a>
+<a class="font-label-caps text-label-caps text-gray-500 hover:text-primary transition-colors" href="#">Privacy Policy</a>
+</div>
+</footer>
+<script>
+    // Micro-interactions for hovering and dynamic states
+    document.querySelectorAll('.group').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-4px)';
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'translateY(0)';
+      });
+    });
+
+    // Mobile Navigation Suppression Logic (Implicit)
+    // As per instructions: "On MOBILE (md:hidden), prohibit top-row text links and use the BottomNavBar."
+    // For this dashboard view on desktop, we use SideNav.
+  </script>
+
+
+</body></html>

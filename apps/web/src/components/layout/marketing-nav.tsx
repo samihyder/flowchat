@@ -5,7 +5,7 @@ import type { Route } from 'next';
 import { usePathname } from 'next/navigation';
 
 const items: { label: string; href: Route; icon: string }[] = [
-  { label: 'Email automations', href: '/dashboard/marketing', icon: '📧' },
+  { label: 'Campaigns', href: '/dashboard/marketing/campaigns', icon: '📣' },
   { label: 'Templates', href: '/dashboard/marketing/templates', icon: '📝' },
 ];
 
@@ -17,12 +17,9 @@ export function MarketingNav() {
       <div className="flex gap-1 overflow-x-auto">
         {items.map((item) => {
           const active =
-            item.href === '/dashboard/marketing'
-              ? pathname === '/dashboard/marketing' ||
-                pathname.startsWith('/dashboard/marketing/new') ||
-                (pathname.startsWith('/dashboard/marketing/') &&
-                  !pathname.includes('/templates'))
-              : pathname.startsWith(item.href);
+            item.href === '/dashboard/marketing/campaigns'
+              ? pathname.startsWith('/dashboard/marketing/campaigns')
+              : pathname.startsWith('/dashboard/marketing/templates');
           return (
             <Link
               key={item.href}

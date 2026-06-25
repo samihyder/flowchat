@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Campaign Builder - Step 1: Recipients</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#4fdbc8",
+                    "tertiary-fixed": "#ffdcc5",
+                    "primary": "#4648d4",
+                    "status-reply-text": "#A855F7",
+                    "surface-tint": "#494bd6",
+                    "secondary-fixed": "#71f8e4",
+                    "surface-container-high": "#dee9fd",
+                    "surface-bright": "#f9f9ff",
+                    "surface-container-low": "#eff3ff",
+                    "on-primary": "#ffffff",
+                    "status-scheduled-text": "#2563EB",
+                    "surface-dim": "#d0daef",
+                    "status-scheduled-bg": "#DBEAFE",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "status-paused-bg": "#FEF9C3",
+                    "outline-variant": "#c7c4d7",
+                    "status-draft-bg": "#F3F4F6",
+                    "on-primary-container": "#fffbff",
+                    "tertiary-container": "#b55d00",
+                    "status-success-bg": "#DCFCE7",
+                    "inverse-surface": "#273140",
+                    "status-danger-bg": "#FEE2E2",
+                    "on-secondary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "status-draft-text": "#4B5563",
+                    "status-success-text": "#16A34A",
+                    "gray-50": "#F9FAFB",
+                    "secondary-container": "#6df5e1",
+                    "on-error": "#ffffff",
+                    "inverse-primary": "#c0c1ff",
+                    "gray-200": "#E5E7EB",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "surface-container": "#e6eeff",
+                    "secondary": "#006b5f",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#e1e0ff",
+                    "outline": "#767586",
+                    "on-secondary-fixed": "#00201c",
+                    "primary-surface": "#EEF2FF",
+                    "on-surface": "#121c2a",
+                    "primary-container": "#6063ee",
+                    "status-bounced-text": "#D97706",
+                    "gray-500": "#6B7280",
+                    "background": "#f9f9ff",
+                    "on-tertiary-fixed": "#301400",
+                    "primary-hover": "#4F46E5",
+                    "gray-900": "#111827",
+                    "on-secondary-container": "#006f64",
+                    "on-tertiary-container": "#fffbff",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#464554",
+                    "on-error-container": "#93000a",
+                    "inverse-on-surface": "#ebf1ff",
+                    "surface": "#f9f9ff",
+                    "primary-border": "#C7D2FE",
+                    "status-bounced-bg": "#FEF3C7",
+                    "on-primary-fixed": "#07006c",
+                    "on-secondary-fixed-variant": "#005048",
+                    "gray-400": "#9CA3AF",
+                    "status-danger-text": "#DC2626",
+                    "status-paused-text": "#CA8A04",
+                    "on-tertiary-fixed-variant": "#703700",
+                    "tertiary": "#904900",
+                    "on-background": "#121c2a",
+                    "surface-variant": "#d9e3f7",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "surface-container-highest": "#d9e3f7"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max-wizard": "1024px",
+                    "gap-form": "16px",
+                    "padding-card": "24px",
+                    "gap-section": "24px",
+                    "container-max-list": "1280px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "body-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .step-active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #4648d4;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+<!-- SideNavBar (Shared Component) -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-gray-200 dark:border-outline-variant bg-surface dark:bg-inverse-surface flex flex-col p-4 z-50">
+<div class="mb-8 px-4">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">SalesHub</h1>
+<p class="text-xs text-on-surface-variant opacity-70">Campaign Manager</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-primary dark:text-inverse-primary bg-primary-surface dark:bg-primary-container rounded-lg font-bold transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+<span>Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-gray-50 dark:hover:bg-surface-container-low transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Templates</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-gray-100">
+<button class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-on-primary font-bold hover:bg-primary-hover transition-colors">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span>New Campaign</span>
+</button>
+<div class="flex items-center gap-3 mt-6 px-4">
+<img class="w-8 h-8 rounded-full border border-gray-200" data-alt="A professional profile photo of a smiling male sales agent in a business casual outfit, set against a clean, softly lit studio background with professional cool-toned lighting, reflecting high-end enterprise software branding." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYL6HQmxefTT9RnjE5l5VqjWElCUN95xt_5LBeQOpat_QYrYVDh5aSpEFxGUXrKiREThFyKrB96s0rTQT6wDjIobEiI1y7mFnJrBOhQm_h-7Ky8ky9Vr1jCTOm744-Dhf4J4lETpi1SdzZKmWt5ZOUrg1ngRod3UPA01TKgyTKLj11ZlgqcYCapQ_uzfi3tq7Q-dpLdz_nB3sh4_77wmyUMWfwQvRfL-cZBuKasVUAmVOJhMBTtCgGHX8S8hnD2i_aWyegYlRviLtH"/>
+<div class="overflow-hidden">
+<p class="font-bold text-sm truncate">Alex Rivera</p>
+<p class="text-xs text-on-surface-variant truncate">Sales Agent</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (Shared Component) -->
+<header class="flex justify-between items-center h-16 px-8 ml-64 bg-surface dark:bg-inverse-surface border-b border-gray-200 dark:border-outline-variant sticky top-0 z-40 transition-opacity duration-150">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">Campaign Builder</span>
+<div class="h-4 w-px bg-gray-300 mx-2"></div>
+<nav class="flex gap-6">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors" href="#">Drafts</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors" href="#">Scheduled</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors" href="#">Sent</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm w-64 focus:ring-2 focus:ring-primary-200 focus:outline-none transition-all" placeholder="Global search..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-gray-50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-gray-50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="bg-primary text-on-primary px-6 py-1.5 rounded-lg font-bold hover:bg-primary-hover transition-colors">Launch</button>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 pb-24">
+<!-- Wizard Header Bar -->
+<div class="bg-white border-b border-gray-200 px-8 py-6 sticky top-16 z-30">
+<div class="max-w-container-max-list mx-auto flex flex-col gap-6">
+<!-- Title Row -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<input class="font-headline-md text-headline-md text-on-surface border-none p-0 focus:ring-0 focus:border-b-2 focus:border-primary-200 w-auto min-w-[200px]" placeholder="Enter campaign name..." type="text" value="Untitled Campaign"/>
+<span class="px-2 py-0.5 bg-status-draft-bg text-status-draft-text text-label-caps rounded-full">Draft</span>
+<span class="font-data-mono text-data-mono text-gray-400 ml-4">CAM-10293</span>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-gray-400 hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span></button>
+</div>
+</div>
+<!-- Stepper -->
+<nav class="flex items-center">
+<div class="flex-1 flex items-center relative pb-1 border-b-2 border-primary">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-on-primary text-[10px] font-bold mr-3">1</span>
+<span class="font-bold text-primary">Recipients</span>
+</div>
+<div class="flex-1 flex items-center relative pb-1 border-b-2 border-gray-100 opacity-50">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold mr-3">2</span>
+<span class="font-medium text-on-surface-variant">Sequence</span>
+</div>
+<div class="flex-1 flex items-center relative pb-1 border-b-2 border-gray-100 opacity-50">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold mr-3">3</span>
+<span class="font-medium text-on-surface-variant">Sender</span>
+</div>
+<div class="flex-1 flex items-center relative pb-1 border-b-2 border-gray-100 opacity-50">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold mr-3">4</span>
+<span class="font-medium text-on-surface-variant">Review</span>
+</div>
+</nav>
+</div>
+</div>
+<!-- Content Canvas -->
+<div class="px-8 py-8 max-w-container-max-list mx-auto space-y-6">
+<!-- Bento Search & Import -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Import Panel -->
+<div class="md:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-padding-card flex items-center justify-between hover:border-primary-border transition-colors">
+<div class="flex gap-4">
+<div class="w-12 h-12 rounded-lg bg-primary-surface flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="group_add">group_add</span>
+</div>
+<div>
+<h3 class="font-body-lg text-body-lg text-on-surface">Import from segment</h3>
+<p class="text-sm text-on-surface-variant mt-1">Select an existing audience group from your CRM or mailing list.</p>
+</div>
+</div>
+<button class="px-6 py-2 border border-gray-300 rounded-lg font-bold hover:bg-gray-50 transition-colors">Browse Segments</button>
+</div>
+<!-- Quick Stats / Secondary Card -->
+<div class="bg-gray-50 rounded-xl border border-dashed border-gray-300 p-padding-card flex flex-col justify-center items-center text-center">
+<p class="text-sm text-on-surface-variant mb-2">Total Contacts Available</p>
+<p class="font-headline-md text-headline-md text-primary">12,482</p>
+<button class="mt-2 text-xs text-primary font-bold hover:underline">View CRM Analytics</button>
+</div>
+</div>
+<!-- Recipient Table Container -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+<div class="p-4 border-b border-gray-200 flex flex-col md:flex-row justify-between gap-4">
+<div class="relative flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-200 focus:outline-none text-sm" placeholder="Search recipients by name or email..." type="text"/>
+</div>
+<div class="flex gap-2">
+<button class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"><span class="material-symbols-outlined" data-icon="filter_list">filter_list</span></button>
+<button class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"><span class="material-symbols-outlined" data-icon="download">download</span></button>
+</div>
+</div>
+<table class="w-full text-left">
+<thead class="bg-gray-50 text-label-caps text-on-surface-variant border-b border-gray-200">
+<tr>
+<th class="px-6 py-3 w-12"><input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox"/></th>
+<th class="px-6 py-3">Name</th>
+<th class="px-6 py-3">Email Address</th>
+<th class="px-6 py-3">Status</th>
+<th class="px-6 py-3 text-right">Last Activity</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<tr class="hover:bg-gray-50 transition-colors group">
+<td class="px-6 py-4"><input class="recipient-checkbox rounded border-gray-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">JD</div>
+<span class="font-medium">Jane Doe</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">jane.doe@enterprise.com</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 bg-status-success-bg text-status-success-text text-xs font-bold rounded-full">Subscribed</span>
+</td>
+<td class="px-6 py-4 text-right text-sm text-gray-400">2 days ago</td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors group">
+<td class="px-6 py-4"><input class="recipient-checkbox rounded border-gray-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs">MK</div>
+<span class="font-medium">Mark Kaplan</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">m.kaplan@startup.io</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 bg-status-danger-bg text-status-danger-text text-xs font-bold rounded-full">Suppressed</span>
+</td>
+<td class="px-6 py-4 text-right text-sm text-gray-400">Yesterday</td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors group">
+<td class="px-6 py-4"><input class="recipient-checkbox rounded border-gray-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-xs">ST</div>
+<span class="font-medium">Sarah Tan</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">sarah@creative-agency.com</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 bg-status-success-bg text-status-success-text text-xs font-bold rounded-full">Subscribed</span>
+</td>
+<td class="px-6 py-4 text-right text-sm text-gray-400">4h ago</td>
+</tr>
+<!-- Repeat rows for visual weight -->
+<tr class="hover:bg-gray-50 transition-colors group">
+<td class="px-6 py-4"><input class="recipient-checkbox rounded border-gray-300 text-primary focus:ring-primary" type="checkbox"/></td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-xs">BW</div>
+<span class="font-medium">Bruce Wayne</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">b.wayne@waynecorp.com</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 bg-status-success-bg text-status-success-text text-xs font-bold rounded-full">Subscribed</span>
+</td>
+<td class="px-6 py-4 text-right text-sm text-gray-400">1 week ago</td>
+</tr>
+</tbody>
+</table>
+<div class="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+<p class="text-xs text-on-surface-variant">Showing 1-4 of 4 results</p>
+<div class="flex gap-2">
+<button class="p-1 px-3 border border-gray-300 rounded text-xs hover:bg-white transition-colors">Previous</button>
+<button class="p-1 px-3 border border-gray-300 rounded text-xs hover:bg-white transition-colors">Next</button>
+</div>
+</div>
+</div>
+<!-- Empty State / Suggestion -->
+<div class="p-padding-card bg-primary-surface border border-primary-border rounded-xl flex items-start gap-4">
+<span class="material-symbols-outlined text-primary mt-1" data-icon="lightbulb">lightbulb</span>
+<div>
+<h4 class="font-bold text-primary">Pro Tip: Personalization</h4>
+<p class="text-sm text-on-surface-variant mt-1">Make sure your recipients have a 'First Name' property set to use dynamic merge tags in your sequence. <a class="text-primary font-bold hover:underline" href="#">Manage Fields →</a></p>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Wizard Footer -->
+<footer class="fixed bottom-0 left-64 right-0 h-16 bg-white border-t border-gray-200 px-8 flex items-center justify-between shadow-2xl z-50">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="font-bold text-on-surface" id="selection-count">0</span>
+<span class="text-on-surface-variant">recipients selected</span>
+</div>
+<!-- Warning Banner (Dynamic) -->
+<div class="hidden flex items-center gap-2 px-3 py-1 bg-status-danger-bg text-status-danger-text rounded-lg text-xs font-bold animate-pulse" id="suppressed-warning">
+<span class="material-symbols-outlined text-sm" data-icon="warning">warning</span>
+<span>1 suppressed contact found. They will be automatically excluded.</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-6 py-2 text-on-surface-variant hover:text-on-surface font-bold transition-colors">Save draft</button>
+<button class="px-8 py-2 bg-gray-200 text-gray-400 cursor-not-allowed rounded-lg font-bold transition-all" disabled="" id="next-button">Next</button>
+</div>
+</footer>
+<script>
+        // Simple selection logic to simulate interactivity
+        const checkboxes = document.querySelectorAll('.recipient-checkbox');
+        const countDisplay = document.getElementById('selection-count');
+        const nextButton = document.getElementById('next-button');
+        const warning = document.getElementById('suppressed-warning');
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                const checkedCount = document.querySelectorAll('.recipient-checkbox:checked').length;
+                countDisplay.textContent = checkedCount;
+
+                // Update Button State
+                if (checkedCount > 0) {
+                    nextButton.disabled = false;
+                    nextButton.classList.remove('bg-gray-200', 'text-gray-400', 'cursor-not-allowed');
+                    nextButton.classList.add('bg-primary', 'text-on-primary', 'hover:bg-primary-hover');
+                } else {
+                    nextButton.disabled = true;
+                    nextButton.classList.add('bg-gray-200', 'text-gray-400', 'cursor-not-allowed');
+                    nextButton.classList.remove('bg-primary', 'text-on-primary', 'hover:bg-primary-hover');
+                }
+
+                // Toggle warning if suppressed row is selected (mock logic)
+                const suppressedSelected = Array.from(checkboxes).some(checkbox => {
+                    const row = checkbox.closest('tr');
+                    return checkbox.checked && row.innerText.includes('Suppressed');
+                });
+
+                if (suppressedSelected) {
+                    warning.classList.remove('hidden');
+                } else {
+                    warning.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body></html>

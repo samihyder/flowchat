@@ -1,0 +1,440 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Campaign Stats Detail | SalesHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#4fdbc8",
+                    "tertiary-fixed": "#ffdcc5",
+                    "primary": "#4648d4",
+                    "status-reply-text": "#A855F7",
+                    "surface-tint": "#494bd6",
+                    "secondary-fixed": "#71f8e4",
+                    "surface-container-high": "#dee9fd",
+                    "surface-bright": "#f9f9ff",
+                    "surface-container-low": "#eff3ff",
+                    "on-primary": "#ffffff",
+                    "status-scheduled-text": "#2563EB",
+                    "surface-dim": "#d0daef",
+                    "status-scheduled-bg": "#DBEAFE",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "status-paused-bg": "#FEF9C3",
+                    "outline-variant": "#c7c4d7",
+                    "status-draft-bg": "#F3F4F6",
+                    "on-primary-container": "#fffbff",
+                    "tertiary-container": "#b55d00",
+                    "status-success-bg": "#DCFCE7",
+                    "inverse-surface": "#273140",
+                    "status-danger-bg": "#FEE2E2",
+                    "on-secondary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "status-draft-text": "#4B5563",
+                    "status-success-text": "#16A34A",
+                    "gray-50": "#F9FAFB",
+                    "secondary-container": "#6df5e1",
+                    "on-error": "#ffffff",
+                    "inverse-primary": "#c0c1ff",
+                    "gray-200": "#E5E7EB",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "surface-container": "#e6eeff",
+                    "secondary": "#006b5f",
+                    "on-tertiary": "#ffffff",
+                    "primary-fixed": "#e1e0ff",
+                    "outline": "#767586",
+                    "on-secondary-fixed": "#00201c",
+                    "primary-surface": "#EEF2FF",
+                    "on-surface": "#121c2a",
+                    "primary-container": "#6063ee",
+                    "status-bounced-text": "#D97706",
+                    "gray-500": "#6B7280",
+                    "background": "#f9f9ff",
+                    "on-tertiary-fixed": "#301400",
+                    "primary-hover": "#4F46E5",
+                    "gray-900": "#111827",
+                    "on-secondary-container": "#006f64",
+                    "on-tertiary-container": "#fffbff",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#464554",
+                    "on-error-container": "#93000a",
+                    "inverse-on-surface": "#ebf1ff",
+                    "surface": "#f9f9ff",
+                    "primary-border": "#C7D2FE",
+                    "status-bounced-bg": "#FEF3C7",
+                    "on-primary-fixed": "#07006c",
+                    "on-secondary-fixed-variant": "#005048",
+                    "gray-400": "#9CA3AF",
+                    "status-danger-text": "#DC2626",
+                    "status-paused-text": "#CA8A04",
+                    "on-tertiary-fixed-variant": "#703700",
+                    "tertiary": "#904900",
+                    "on-background": "#121c2a",
+                    "surface-variant": "#d9e3f7",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "surface-container-highest": "#d9e3f7"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max-wizard": "1024px",
+                    "gap-form": "16px",
+                    "padding-card": "24px",
+                    "gap-section": "24px",
+                    "container-max-list": "1280px"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "body-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .active-tab {
+            border-bottom: 2px solid #4648d4;
+            color: #4648d4;
+            font-weight: 600;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c7c4d7;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-on-surface font-body-md overflow-x-hidden">
+<!-- Persistent SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-gray-200 dark:border-outline-variant bg-surface dark:bg-inverse-surface z-50">
+<div class="flex flex-col h-full p-4">
+<div class="mb-8 px-2">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">SalesHub</h1>
+<p class="text-xs text-on-surface-variant opacity-70">Campaign Manager</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-primary dark:text-inverse-primary bg-primary-surface dark:bg-primary-container rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span class="font-body-md">Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-gray-50 dark:hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-body-md">Templates</span>
+</a>
+</nav>
+<button class="mt-4 w-full py-2.5 bg-primary text-on-primary rounded-lg font-bold shadow-sm hover:bg-primary-hover transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span>
+                New Campaign
+            </button>
+<div class="mt-auto pt-4 border-t border-gray-200 flex items-center gap-3 px-2">
+<img class="w-10 h-10 rounded-full border border-primary-border object-cover" data-alt="Professional headshot of a sales executive in a modern office setting, soft natural lighting, high resolution, minimalist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_piAF1s0LpJNImXNVF2WcHdLxvUpPFNlX3zFVgji3BZGPwLsoRYn4PCzSWl1vspMhjcUZnYVhuDKlEqTWYI6t_fPKjZjoJK6Fzlrc0r4jxEcuVwPs_1uMYb5xhDXHt2R75UVWiTw2WbZrevV9R4WKmAtBxeYXnMiNVbYei1m-2UxJ2xFfE7erY1gkzAarvnMiTEHAzWw6iyUEhMLUD9aGRCNd75IhG5-U9g5Zlp8szfofBBmQ4GbrkiNnrmuVaW-SHWVyBeuYu0Z_">
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">Alex Sterling</p>
+<p class="text-xs text-on-surface-variant truncate">Senior Sales Agent</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Shell -->
+<main class="ml-64 min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center h-16 px-8 sticky top-0 z-40 bg-surface dark:bg-inverse-surface border-b border-gray-200 dark:border-outline-variant">
+<div class="flex items-center gap-4">
+<a class="p-1 hover:bg-gray-100 rounded-full transition-colors" href="#">
+<span class="material-symbols-outlined text-on-surface-variant">arrow_back</span>
+</a>
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">Campaign Builder</h2>
+</div>
+<div class="flex items-center gap-4"><button class="px-3 py-1.5 border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm font-bold"><span class="material-symbols-outlined text-sm">download</span>Export</button>
+<div class="relative">
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-gray-200 rounded-full text-sm w-64 focus:ring-2 focus:ring-primary-200 focus:outline-none outline-none" placeholder="Search data..." type="text">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">settings</button>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="p-8 max-w-container-max-list mx-auto w-full flex-1">
+<!-- Hero Section / Header Details -->
+<section class="mb-8">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<h3 class="font-headline-lg text-headline-lg tracking-tight">Q4 Outreach - Fintech Enterprise</h3>
+<span class="px-3 py-1 bg-status-success-bg text-status-success-text rounded-full text-xs font-bold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-status-success-text animate-pulse"></span>
+                                Running
+                            </span>
+</div>
+<div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">person</span>
+<span class="text-body-md">Launched by Alex Sterling</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+<span class="text-body-md font-data-mono">Oct 24, 2024</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">group</span>
+<span class="text-body-md font-bold text-on-surface">1,240 Recipients</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 border border-gray-200 rounded-lg flex items-center gap-2 hover:bg-white transition-colors">
+<span class="material-symbols-outlined text-sm">pause</span>
+                            Pause
+                        </button>
+<button class="px-4 py-2 border border-error text-error rounded-lg flex items-center gap-2 hover:bg-error-container transition-colors">
+<span class="material-symbols-outlined text-sm">cancel</span>
+                            Cancel
+                        </button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg flex items-center gap-2 hover:bg-primary-hover shadow-sm transition-all">
+<span class="material-symbols-outlined text-sm">download</span>
+                            Export
+                        </button>
+</div>
+</div>
+</section>
+<!-- Tabs Navigation -->
+<div class="border-b border-gray-200 mb-8 overflow-x-auto">
+<nav class="flex gap-8 min-w-max">
+<button class="pb-4 px-1 active-tab font-body-lg text-body-lg">Overview</button>
+<button class="pb-4 px-1 text-on-surface-variant hover:text-primary transition-colors font-body-lg text-body-lg">Email Steps</button>
+<button class="pb-4 px-1 text-on-surface-variant hover:text-primary transition-colors font-body-lg text-body-lg">Recipients</button>
+<button class="pb-4 px-1 text-on-surface-variant hover:text-primary transition-colors font-body-lg text-body-lg">Activity Log</button>
+</nav>
+</div>
+<!-- Dashboard Content (Overview) -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Metric Cards -->
+<div class="col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">SENT</span>
+<span class="p-2 bg-primary-surface text-primary rounded-lg material-symbols-outlined">send</span>
+</div>
+<p class="text-headline-md font-headline-md">1,028</p>
+<p class="text-xs text-status-success-text font-bold mt-1">+12% from yesterday</p>
+</div>
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">DELIVERED</span>
+<span class="p-2 bg-surface-container-high text-on-secondary-container rounded-lg material-symbols-outlined">mark_email_read</span>
+</div>
+<p class="text-headline-md font-headline-md">992</p>
+<p class="text-xs text-on-surface-variant mt-1">96.5% delivery rate</p>
+</div>
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">OPENED</span>
+<span class="p-2 bg-status-scheduled-bg text-status-scheduled-text rounded-lg material-symbols-outlined">visibility</span>
+</div>
+<p class="text-headline-md font-headline-md">645</p>
+<p class="text-xs text-status-success-text font-bold mt-1">62.4% open rate</p>
+</div>
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-transform hover:-translate-y-1">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">CLICKED</span>
+<span class="p-2 bg-status-reply-text/10 text-status-reply-text rounded-lg material-symbols-outlined">ads_click</span>
+</div>
+<p class="text-headline-md font-headline-md">184</p>
+<p class="text-xs text-status-bounced-text font-bold mt-1">17.9% CTR</p>
+</div>
+</div>
+<!-- Funnel Visualization (Bento Style) -->
+<div class="col-span-12 lg:col-span-8 bg-white p-8 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden"><h4 class="font-headline-sm text-headline-sm mb-8">Sequence Conversion Funnel</h4><div class="space-y-6"><div class="relative"><div class="flex justify-between items-end mb-2"><span class="text-sm font-bold">Total Recipients</span><span class="font-data-mono text-sm">1,240</span></div><div class="w-full bg-gray-100 rounded-full h-12 overflow-hidden border border-gray-200"><div class="bg-primary h-full transition-all duration-1000" style="width: 100%"></div></div></div><div class="relative pl-12"><div class="absolute left-6 top-0 h-full w-px bg-gray-200"></div><div class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-px bg-gray-200"></div><div class="flex justify-between items-end mb-2"><span class="text-sm font-bold">Delivered</span><span class="font-data-mono text-sm">96.5% (1,196)</span></div><div class="w-full bg-gray-100 rounded-full h-10 overflow-hidden border border-gray-200"><div class="bg-secondary h-full transition-all duration-1000" style="width: 96.5%"></div></div></div><div class="relative pl-24"><div class="absolute left-12 top-0 h-full w-px bg-gray-200"></div><div class="absolute left-10 top-1/2 -translate-y-1/2 w-4 h-px bg-gray-200"></div><div class="flex justify-between items-end mb-2"><span class="text-sm font-bold">Opened</span><span class="font-data-mono text-sm">62.4% (773)</span></div><div class="w-full bg-gray-100 rounded-full h-8 overflow-hidden border border-gray-200"><div class="bg-primary-container h-full transition-all duration-1000" style="width: 62.4%"></div></div></div><div class="relative pl-36"><div class="absolute left-18 top-0 h-full w-px bg-gray-200"></div><div class="absolute left-16 top-1/2 -translate-y-1/2 w-4 h-px bg-gray-200"></div><div class="flex justify-between items-end mb-2"><span class="text-sm font-bold">Clicked</span><span class="font-data-mono text-sm">17.9% (221)</span></div><div class="w-full bg-gray-100 rounded-full h-6 overflow-hidden border border-gray-200"><div class="bg-status-scheduled-text h-full transition-all duration-1000" style="width: 17.9%"></div></div></div></div></div>
+<!-- Secondary Info Card -->
+<div class="col-span-12 lg:col-span-4 space-y-6">
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+<h4 class="font-headline-sm text-headline-sm mb-4">Top Performing Times</h4>
+<div class="space-y-4">
+<div class="flex items-center gap-4">
+<div class="w-12 text-center font-data-mono text-xs text-on-surface-variant">09:00</div>
+<div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 75%"></div>
+</div>
+<div class="w-8 text-right font-data-mono text-xs font-bold">75%</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 text-center font-data-mono text-xs text-on-surface-variant">11:00</div>
+<div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 90%"></div>
+</div>
+<div class="w-8 text-right font-data-mono text-xs font-bold">90%</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 text-center font-data-mono text-xs text-on-surface-variant">14:00</div>
+<div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 40%"></div>
+</div>
+<div class="w-8 text-right font-data-mono text-xs font-bold">40%</div>
+</div>
+</div>
+<p class="mt-6 text-xs text-on-surface-variant italic">Most engagement occurs within the first 45 minutes of send time on Tuesdays.</p>
+</div>
+<div class="bg-primary-surface p-6 rounded-xl border border-primary-border shadow-sm">
+<h4 class="font-headline-sm text-headline-sm text-primary mb-2">Campaign Insights</h4>
+<p class="text-sm text-on-surface mb-4">Your current reply rate is 12.4%, which is 2% higher than your industry average.</p>
+<button class="w-full py-2 bg-white text-primary font-bold rounded-lg border border-primary-border hover:bg-primary-surface transition-colors">
+                            View Industry Benchmarks
+                        </button>
+</div>
+</div>
+<!-- Recipients Mini Table / Preview -->
+<div class="col-span-12 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+<div class="px-8 py-6 border-b border-gray-200 flex justify-between items-center">
+<h4 class="font-headline-sm text-headline-sm">Active Recipients</h4>
+<button class="text-primary font-bold text-sm hover:underline">View All Recipients</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-gray-50 border-b border-gray-200">
+<tr>
+<th class="px-8 py-4 text-label-caps font-label-caps text-on-surface-variant">RECIPIENT</th>
+<th class="px-8 py-4 text-label-caps font-label-caps text-on-surface-variant">LAST ACTIVITY</th>
+<th class="px-8 py-4 text-label-caps font-label-caps text-on-surface-variant">CURRENT STEP</th>
+<th class="px-8 py-4 text-label-caps font-label-caps text-on-surface-variant">STATUS</th>
+<th class="px-8 py-4"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-primary">JD</div>
+<div>
+<p class="text-sm font-bold">Jane Doe</p>
+<p class="text-xs text-on-surface-variant">jane@acmecorp.com</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-4 font-data-mono text-xs">2 hours ago</td>
+<td class="px-8 py-4 text-sm">Step 2: Follow-up</td>
+<td class="px-8 py-4">
+<span class="px-2 py-0.5 bg-status-reply-text/10 text-status-reply-text rounded-full text-[10px] font-bold uppercase tracking-wider">Replied</span>
+</td>
+<td class="px-8 py-4 text-right">
+<button class="material-symbols-outlined text-gray-400 hover:text-primary">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-primary">RK</div>
+<div>
+<p class="text-sm font-bold">Robert King</p>
+<p class="text-xs text-on-surface-variant">robert.k@fintech.io</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-4 font-data-mono text-xs">5 mins ago</td>
+<td class="px-8 py-4 text-sm">Step 1: Initial</td>
+<td class="px-8 py-4">
+<span class="px-2 py-0.5 bg-status-scheduled-bg text-status-scheduled-text rounded-full text-[10px] font-bold uppercase tracking-wider">Opened</span>
+</td>
+<td class="px-8 py-4 text-right">
+<button class="material-symbols-outlined text-gray-400 hover:text-primary">more_vert</button>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-8 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center font-bold text-xs text-primary">LM</div>
+<div>
+<p class="text-sm font-bold">Lisa Miller</p>
+<p class="text-xs text-on-surface-variant">lisa@futurestack.com</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-4 font-data-mono text-xs">1 day ago</td>
+<td class="px-8 py-4 text-sm">Step 3: Demo Request</td>
+<td class="px-8 py-4">
+<span class="px-2 py-0.5 bg-status-success-bg text-status-success-text rounded-full text-[10px] font-bold uppercase tracking-wider">Sent</span>
+</td>
+<td class="px-8 py-4 text-right">
+<button class="material-symbols-outlined text-gray-400 hover:text-primary">more_vert</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Shell -->
+<footer class="flex items-center justify-between px-8 bg-surface dark:bg-inverse-surface border-t border-gray-200 dark:border-outline-variant h-16 sticky bottom-0 z-40">
+<span class="font-label-caps text-label-caps text-on-surface-variant">© 2024 SalesHub Automation</span>
+<div class="flex gap-6">
+<a class="font-label-caps text-label-caps text-gray-500 hover:text-primary transition-colors" href="#">Help Center</a>
+<a class="font-label-caps text-label-caps text-gray-500 hover:text-primary transition-colors" href="#">Privacy Policy</a>
+</div>
+</footer>
+</main>
+<!-- Floating Micro-interaction Background Effect -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden z-[-1] opacity-30">
+<div class="absolute top-1/4 right-1/4 w-96 h-96 bg-primary opacity-5 rounded-full blur-[100px] animate-pulse"></div>
+<div class="absolute bottom-1/4 left-1/4 w-64 h-64 bg-secondary opacity-5 rounded-full blur-[100px] animate-pulse" style="animation-delay: 2s"></div>
+</div>
+<script>
+        // Tab Switching Logic (Simulated)
+        const tabs = document.querySelectorAll('nav button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active-tab', 'text-primary', 'font-bold'));
+                tabs.forEach(t => t.classList.add('text-on-surface-variant'));
+                tab.classList.add('active-tab');
+                tab.classList.remove('text-on-surface-variant');
+            });
+        });
+
+        // Add small hover effects to table rows
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            row.addEventListener('mouseenter', () => row.style.backgroundColor = 'rgba(70, 72, 212, 0.02)');
+            row.addEventListener('mouseleave', () => row.style.backgroundColor = '');
+        });
+    </script>
+
+
+</body></html>

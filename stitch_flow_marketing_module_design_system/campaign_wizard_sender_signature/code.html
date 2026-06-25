@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Campaign Builder - Step 3: Sender &amp; Signature</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#4fdbc8",
+                        "tertiary-fixed": "#ffdcc5",
+                        "primary": "#4648d4",
+                        "status-reply-text": "#A855F7",
+                        "surface-tint": "#494bd6",
+                        "secondary-fixed": "#71f8e4",
+                        "surface-container-high": "#dee9fd",
+                        "surface-bright": "#f9f9ff",
+                        "surface-container-low": "#eff3ff",
+                        "on-primary": "#ffffff",
+                        "status-scheduled-text": "#2563EB",
+                        "surface-dim": "#d0daef",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "status-paused-bg": "#FEF9C3",
+                        "outline-variant": "#c7c4d7",
+                        "status-draft-bg": "#F3F4F6",
+                        "on-primary-container": "#fffbff",
+                        "tertiary-container": "#b55d00",
+                        "status-success-bg": "#DCFCE7",
+                        "inverse-surface": "#273140",
+                        "status-danger-bg": "#FEE2E2",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "status-draft-text": "#4B5563",
+                        "status-success-text": "#16A34A",
+                        "gray-50": "#F9FAFB",
+                        "secondary-container": "#6df5e1",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#c0c1ff",
+                        "gray-200": "#E5E7EB",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "surface-container": "#e6eeff",
+                        "secondary": "#006b5f",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#e1e0ff",
+                        "outline": "#767586",
+                        "on-secondary-fixed": "#00201c",
+                        "primary-surface": "#EEF2FF",
+                        "on-surface": "#121c2a",
+                        "primary-container": "#6063ee",
+                        "status-bounced-text": "#D97706",
+                        "gray-500": "#6B7280",
+                        "background": "#f9f9ff",
+                        "on-tertiary-fixed": "#301400",
+                        "primary-hover": "#4F46E5",
+                        "gray-900": "#111827",
+                        "on-secondary-container": "#006f64",
+                        "on-tertiary-container": "#fffbff",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#464554",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#ebf1ff",
+                        "surface": "#f9f9ff",
+                        "primary-border": "#C7D2FE",
+                        "status-bounced-bg": "#FEF3C7",
+                        "on-primary-fixed": "#07006c",
+                        "on-secondary-fixed-variant": "#005048",
+                        "gray-400": "#9CA3AF",
+                        "status-danger-text": "#DC2626",
+                        "status-paused-text": "#CA8A04",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "tertiary": "#904900",
+                        "on-background": "#121c2a",
+                        "surface-variant": "#d9e3f7",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "surface-container-highest": "#d9e3f7"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-wizard": "1024px",
+                        "gap-form": "16px",
+                        "padding-card": "24px",
+                        "gap-section": "24px",
+                        "container-max-list": "1280px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-on-surface">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-gray-200 dark:border-outline-variant bg-surface dark:bg-inverse-surface z-50">
+<div class="flex flex-col h-full p-4">
+<div class="mb-8 px-4">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">SalesHub</h1>
+<p class="text-xs text-on-surface-variant font-medium">Campaign Manager</p>
+</div>
+<nav class="space-y-1 flex-1">
+<a class="flex items-center gap-3 px-4 py-2 text-primary dark:text-inverse-primary bg-primary-surface dark:bg-primary-container rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span class="font-body-md text-body-md">Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-gray-50 dark:hover:bg-surface-container-low transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Templates</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-gray-200 dark:border-outline-variant">
+<div class="flex items-center gap-3 px-4 py-2">
+<img class="w-8 h-8 rounded-full bg-gray-200 object-cover" data-alt="A professional headshot of a sales executive for a high-end marketing automation dashboard. The lighting is soft and corporate, set against a clean, modern office background. The executive wears a minimalist navy blazer, conveying authority and confidence in a brightly lit, professional light-mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAn4JITD6qkEomURGpu07A99kk-CuT5bJuqZ7AGAIZTvTk0a0trAKdpP_IF6ZHiDfnWK88BYbGxwW26GIGn7CvBgGOBriPLU0M4J5r0ZEujx4fGe6707yPvEGc7Lqtgw-FnwA4AS4AbXImEpbvHmZUPoLISMX_gVX_CBmD7mRmwuujwiM3MlKpSSA8Aarm3lNJEA_yF9NIswHeZlDWwSn6dI7AlFnaaVCHaVNUJpUosQvotV5StrJ4tBRsx1cnFSiB2r8yIblB-X0CQ"/>
+<div class="flex-1 overflow-hidden">
+<p class="text-sm font-bold truncate">Alex Rivera</p>
+<p class="text-xs text-on-surface-variant truncate">Sales Agent</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">settings</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-16 px-8 ml-64 bg-surface dark:bg-inverse-surface border-b border-gray-200 dark:border-outline-variant sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">Campaign Builder</h2>
+<div class="h-6 w-[1px] bg-gray-200 mx-2"></div>
+<nav class="flex items-center gap-6">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">Drafts</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">Scheduled</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">Sent</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-opacity duration-150">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="bg-primary text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-primary-hover transition-colors">
+                Launch
+            </button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 pb-24">
+<div class="max-w-[1024px] mx-auto py-8 px-8">
+<!-- Wizard Stepper -->
+<div class="flex items-center justify-between mb-10 w-full max-w-3xl mx-auto">
+<div class="flex items-center gap-2 group">
+<div class="w-8 h-8 rounded-full bg-status-success-bg text-status-success-text flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-lg">check</span>
+</div>
+<span class="font-body-md text-body-md font-bold text-on-surface">Recipients</span>
+</div>
+<div class="flex-1 h-[2px] bg-status-success-bg mx-4"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-status-success-bg text-status-success-text flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-lg">check</span>
+</div>
+<span class="font-body-md text-body-md font-bold text-on-surface">Sequence</span>
+</div>
+<div class="flex-1 h-[2px] bg-primary-surface mx-4"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+                        3
+                    </div>
+<span class="font-body-md text-body-md font-bold text-primary">Sender</span>
+</div>
+<div class="flex-1 h-[2px] bg-gray-200 mx-4"></div>
+<div class="flex items-center gap-2 opacity-50">
+<div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold">
+                        4
+                    </div>
+<span class="font-body-md text-body-md font-bold text-on-surface-variant">Review</span>
+</div>
+</div>
+<!-- Wizard Card Content -->
+<div class="space-y-6">
+<!-- Section 1: Sender Details -->
+<section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+<div class="mb-6">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Sender Information</h3>
+<p class="text-sm text-on-surface-variant">Configure how your emails appear in the recipient's inbox.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">FROM NAME</label>
+<input class="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 focus:border-primary outline-none transition-all placeholder-gray-400 font-body-md" type="text" value="Alex Rivera"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">FROM EMAIL</label>
+<input class="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 focus:border-primary outline-none transition-all placeholder-gray-400 font-body-md" type="email" value="alex.rivera@saleshub.co"/>
+</div>
+</div>
+<!-- Provider Info Box -->
+<div class="bg-surface-container-low border border-primary-border rounded-lg p-4 flex items-center gap-4">
+<div class="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary">dns</span>
+</div>
+<div class="flex-1">
+<h4 class="text-sm font-bold text-on-surface">Resend - Managed Domain</h4>
+<p class="text-xs text-on-surface-variant">Verified Sender Identity via saleshub.co</p>
+</div>
+<span class="material-symbols-outlined text-status-success-text">verified</span>
+</div>
+</section>
+<!-- Section 2: Signature Editor -->
+<section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+<div class="mb-6 flex justify-between items-end">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Email Signature</h3>
+<p class="text-sm text-on-surface-variant">Personalize your outreach with a professional signature.</p>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm">auto_fix</span>
+                            Auto-Generate
+                        </button>
+</div>
+<!-- Rich Text Editor Mockup -->
+<div class="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary-200 transition-all">
+<div class="bg-gray-50 border-b border-gray-200 px-4 py-2 flex items-center gap-4 overflow-x-auto">
+<div class="flex items-center gap-1 border-r border-gray-200 pr-4">
+<button class="p-1 hover:bg-gray-200 rounded transition-colors"><span class="material-symbols-outlined text-xl">format_bold</span></button>
+<button class="p-1 hover:bg-gray-200 rounded transition-colors"><span class="material-symbols-outlined text-xl">format_italic</span></button>
+<button class="p-1 hover:bg-gray-200 rounded transition-colors"><span class="material-symbols-outlined text-xl">format_underlined</span></button>
+</div>
+<div class="flex items-center gap-1 border-r border-gray-200 pr-4">
+<button class="p-1 hover:bg-gray-200 rounded transition-colors"><span class="material-symbols-outlined text-xl">link</span></button>
+<button class="p-1 hover:bg-gray-200 rounded transition-colors"><span class="material-symbols-outlined text-xl">image</span></button>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 hover:bg-gray-200 rounded transition-colors"><span class="material-symbols-outlined text-xl">format_list_bulleted</span></button>
+<button class="p-1 hover:bg-gray-200 rounded transition-colors"><span class="material-symbols-outlined text-xl">format_list_numbered</span></button>
+</div>
+<div class="ml-auto flex gap-2">
+<span class="px-2 py-1 bg-primary-surface text-primary text-[10px] font-bold rounded uppercase">Agent_Name</span>
+<span class="px-2 py-1 bg-primary-surface text-primary text-[10px] font-bold rounded uppercase">Company</span>
+</div>
+</div>
+<textarea class="w-full h-48 p-6 focus:outline-none resize-none font-body-md border-none" spellcheck="false">Best regards,
+
+Alex Rivera
+Senior Sales Account Executive
+SalesHub Automation Engine
+
+Book a call: calendly.com/arivera-saleshub</textarea>
+</div>
+</section>
+<!-- Section 3: Footer Preview -->
+<section class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+<div class="mb-4">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Compliance &amp; Footer Preview</h3>
+<p class="text-sm text-on-surface-variant">Mandatory legal footer as required by CAN-SPAM / GDPR.</p>
+</div>
+<div class="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-8 relative overflow-hidden">
+<div class="absolute top-0 left-0 bg-gray-200 text-gray-500 text-[10px] px-2 py-1 font-bold uppercase tracking-wider">Email Footer Preview</div>
+<!-- Preview Content -->
+<div class="mt-4 space-y-4">
+<div class="font-body-md text-on-surface opacity-80 whitespace-pre-wrap">Best regards,
+
+Alex Rivera
+Senior Sales Account Executive
+SalesHub Automation Engine
+
+Book a call: calendly.com/arivera-saleshub</div>
+<div class="pt-6 border-t border-gray-200 space-y-2">
+<p class="text-xs text-gray-400">
+                                    SalesHub Automation, 123 Tech Plaza, Floor 4, San Francisco, CA 94105, USA
+                                </p>
+<p class="text-xs text-gray-400">
+                                    You received this because you are subscribed to our marketing updates. 
+                                    <a class="text-primary hover:underline" href="#">Unsubscribe from this list</a> or 
+                                    <a class="text-primary hover:underline" href="#">Manage preferences</a>.
+                                </p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Sticky Wizard Footer -->
+<footer class="fixed bottom-0 left-64 right-0 h-16 bg-white border-t border-gray-200 flex items-center justify-between px-8 z-40">
+<div class="flex items-center gap-4">
+<button class="px-6 h-10 border border-gray-200 rounded-lg text-sm font-bold text-on-surface-variant hover:bg-gray-50 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">arrow_back</span>
+                Back
+            </button>
+<button class="px-4 h-10 text-sm font-bold text-primary hover:bg-primary-surface rounded-lg transition-colors">
+                Save draft
+            </button>
+</div>
+<button class="px-8 h-10 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-hover shadow-sm flex items-center gap-2">
+            Next: Review &amp; Launch
+            <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+</footer>
+<script>
+        // Micro-interaction for the "Auto-Generate" button
+        document.querySelector('button:contains("Auto-Generate")')?.addEventListener('click', function() {
+            const textarea = document.querySelector('textarea');
+            if(textarea) {
+                textarea.classList.add('opacity-50');
+                setTimeout(() => {
+                    textarea.value = "Sincerely,\n\nAlex Rivera\nSales Lead | SalesHub\nHelping you automate with precision.\nsaleshub.co";
+                    textarea.classList.remove('opacity-50');
+                }, 400);
+            }
+        });
+
+        // Search highlight behavior mock
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.querySelector('label').classList.add('text-primary');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.querySelector('label').classList.remove('text-primary');
+            });
+        });
+    </script>
+</body></html>

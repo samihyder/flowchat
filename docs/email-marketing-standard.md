@@ -1,157 +1,182 @@
-# FlowChat — Industry Standard Email Marketing Automation
+# FlowChat — Industry Standard Email Marketing
 
-> **Purpose:** Define what “email marketing automation complete” means for Sprint 6.  
-> **Scope:** Outbound marketing email on CRM contacts — **not** the email support inbox (Sprint 7).  
-> **Reference:** Stories tracked in [sprints.md](sprints.md) Sprint 6 (S6-10 – S6-23).  
+> **Purpose:** Define what “email marketing complete” means for FlowChat outbound marketing.  
+> **Scope:** Campaign-based marketing on CRM contacts — **not** the email support inbox (Sprint 7).  
+> **Primary stories:** S6M-1 … S6M-44 (Marketing Campaign Redesign). Foundation CRM/consent from S6-10 – S6-13 remains in force.  
 > **Benchmark:** HubSpot Marketing Hub, Mailchimp, Brevo (Sendinblue), ActiveCampaign — SMB tier.
 
 ---
 
 ## Gate rule
 
-Sprint 6 email marketing is **complete** when every **Must** item below is implemented and verified in staging.
+Email marketing is **complete** when every **Must** S6M story is implemented and verified in staging.
 
-Transactional mail (agent invites, missed-chat alerts) already uses Resend — marketing mail reuses the same provider with separate templates, suppression, and tracking.
+**Campaign-only model (locked):** No marketing email is sent when a contact is created, imported, or resolved in chat. All outreach starts from **Marketing → Campaigns** with explicit recipient selection.
+
+Transactional mail (agent invites, missed-chat alerts, double opt-in confirm) uses separate paths — not marketing campaigns.
 
 ---
 
-## 1. Audience & consent (S6-10, S6-11)
+## 1. Audience & consent (S6-10, S6M-6 – S6M-10)
 
 | Requirement | Standard | Story |
 |---|---|---|
 | Contact email status | subscribed / unsubscribed / bounced / complained | S6-10 |
-| Global suppression | Hard-bounced and complained addresses never emailed | S6-10 |
-| Static lists | Manual lists; add/remove contacts | S6-11 |
-| Dynamic segments | Filter by label, attribute, last seen, subscription, conversation history | S6-11 |
-| Segment preview | Count + sample contacts before send | S6-11 |
-| Lawful send | Only `subscribed` contacts in marketing sends | S6-10 |
+| Global suppression | Hard-bounced and complained addresses never emailed | S6-10, S6M-8, S6M-44 |
+| Explicit recipients | Agent selects contacts in campaign wizard | S6M-6 |
+| Static segments | Optional import into recipient picker (not auto-send) | S6M-7 |
+| Segment preview | Count before import | S6M-7 |
+| Lawful send | Only `subscribed` contacts at launch | S6M-8 |
+| No CRM triggers | Contact create/import/chat does not enroll or send | S6M-9 |
 
 ---
 
-## 2. Content & sender (S6-12, S6-13)
+## 2. Content & sender (S6M-11 – S6M-15, S6M-21 – S6M-25)
 
 | Requirement | Standard | Story |
 |---|---|---|
-| HTML + plain-text | Both versions; auto text fallback from HTML | S6-12 |
-| Merge tags | `{{first_name}}`, `{{email}}`, custom contact attributes | S6-12 |
-| Template library | Reusable templates; duplicate / archive | S6-12 |
-| Test send | Send preview to agent email before campaign | S6-12 |
-| Verified domain | Send from workspace verified domain (Resend) | S6-13 |
-| From / reply-to | Configurable per workspace | S6-13 |
-| Compliance footer | Physical address + unsubscribe link in every marketing email | S6-13, S6-17 |
+| HTML + plain-text | Both versions; plain text auto-generated from HTML (editable) | S6M-11 |
+| Merge tags | first_name (required), last_name, email, phone, contact_message, links, agent | S6M-15, S6M-41 |
+| contact_message | Per-recipient resolution via source mode (note / chat / fallback) | S6M-19, §6.1 screens |
+| Template library | Standalone reusable templates; duplicate / archive | S6M-11 |
+| Save as template | In-wizard checkbox per step | S6M-13 |
+| Snapshot at launch | Running campaign immune to later template edits | S6M-14 |
+| Full-screen composer | Enterprise rich editor overlay | S6M-12 |
+| Test send | Mandatory per campaign draft before admin launch | S6M-23 |
+| Verified domain | Send from workspace verified domain | S6M-24 |
+| From / reply-to | Configurable per campaign / workspace | S6M-21 |
+| Signature footer | Agent name + signature HTML | S6M-21 |
+| Compliance footer | Physical address + unsubscribe (system-appended) | S6M-25 |
+| No attachments | Disabled in UI and API | S6M-20 |
 
 ---
 
-## 3. Broadcast campaigns (S6-14)
+## 3. Multi-step campaigns (S6M-1 – S6M-5, S6M-16 – S6M-18, S6M-39)
 
 | Requirement | Standard | Story |
 |---|---|---|
-| One-time send | Pick segment + template → send now or schedule | S6-14 |
-| Queue & throttle | BullMQ dispatch; respect provider rate limits | S6-14 |
-| Per-recipient status | queued → sent → delivered / bounced / failed | S6-14, S6-18 |
-| Pause / cancel | Stop in-flight campaign where provider allows | S6-14 |
+| Campaign wizard | Recipients → Sequence → Sender → Review | S6M-39 |
+| Campaign ID on create | Draft persisted immediately | S6M-1 |
+| Multi-step sequence | 1..N emails with explicit date+time per step | S6M-16, S6M-17 |
+| Schedule validation | Each step after previous; all future at launch | S6M-18 |
+| Bulk template apply | Multi-select templates → multiple steps | S6M-16 |
+| Admin launch only | Agents draft; administrators launch/pause/cancel | S6M-3, S6M-32 |
+| Pause / cancel | Stop pending sends; summary of impact | S6M-4 |
+| Duplicate campaign | Copy steps/snapshots; recipients not copied | S6M-5 |
 
 ---
 
-## 4. Automation workflows (S6-15, S6-16)
+## 4. Delivery infrastructure (S6M-24, S6M-31 – S6M-34)
 
 | Requirement | Standard | Story |
 |---|---|---|
-| Triggers | Contact created, label added, conversation resolved, manual enrollment | S6-15 |
-| Steps | Send email, wait (delay), branch (opened / clicked / not opened), add label, exit | S6-15 |
-| Drip sequences | Multi-step delays (e.g. day 0, 3, 7) | S6-16 |
-| Re-entry rules | Configurable: once per contact vs allow re-enroll | S6-16 |
-| Enable / disable | Toggle workflow without deleting | S6-15 |
-| CRM integration | Workflows can use segment membership and contact attributes | S6-11, S6-15 |
+| BYOK providers | Resend, SendGrid, Mailgun per tenant | S7B, S6M-24 |
+| Background scheduler | Worker + Vercel Cron backup | S6M-33 |
+| Idempotent sends | No double-send per step+recipient | S6M-33, S6M-42 |
+| Webhooks | delivered, opened, clicked, bounced, complained | S6M-34 |
+| Pre-flight health | Provider, domain, cron on review + settings | S6M-24 |
+| Safe errors | No raw provider JSON to client | S6M-31 |
 
 ---
 
-## 5. Compliance & deliverability (S6-17, S6-10)
+## 5. Stop rules & deliverability (S6M-36 – S6M-38, S6M-42, S6M-44)
 
 | Requirement | Standard | Story |
 |---|---|---|
-| One-click unsubscribe | Public page; instant suppression | S6-17 |
-| List-Unsubscribe header | RFC 8058 one-click where supported | S6-17 |
-| Preference center | Opt out of marketing; transactional may still send | S6-17 |
-| Bounce handling | Hard bounce → suppress contact automatically | S6-18 |
-| Complaint handling | Spam complaint → suppress + alert admin | S6-18 |
-| Double opt-in | Optional confirm-before-subscribe flow | S6-21 |
+| Hard bounce | Stop remaining steps for recipient in campaign; global suppress | S6M-36 |
+| Soft bounce | Retry once; second soft → hard bounce treatment | S6M-36 |
+| Unsubscribe | One-click; global suppress + stop campaign steps | S6M-37, S6M-25 |
+| Reply stop | In-Reply-To match (Sprint 7 inbox); ESP fallback until live | S6M-38 |
+| Spam complaint | Global suppress + stop campaign steps (ESP standard) | S6M-44 |
+| Send engine guard | Skip stopped recipients before each step | S6M-42 |
 
 ---
 
-## 6. Analytics & contact history (S6-19, S6-20)
+## 6. Analytics & contact history (S6M-26 – S6M-30, S6M-43)
 
 | Requirement | Standard | Story |
 |---|---|---|
-| Campaign metrics | Sent, delivered, open rate, click rate, bounce, unsubscribe | S6-19 |
-| Live progress | Recipients processed vs total during send | S6-19 |
-| Contact timeline | All marketing emails, opens, clicks on profile | S6-20 |
-| Export | CSV of campaign results | S6-5 (contact export pattern) |
+| Campaign overview | Funnel + stop metrics + live progress | S6M-26 |
+| Per-step stats | Open/click/stopped by reason | S6M-27 |
+| Recipient table | Filters + stopped reasons | S6M-28 |
+| Per-recipient drill-down | Expand row per-step timeline | S6M-43 |
+| Activity log | Send attempts, webhooks, errors (sanitized) | S6M-26 |
+| Contact timeline | Campaign events on profile | S6M-30 |
+| CSV export | Recipient × step × status | S6M-29 |
+
+**Canonical enums, API contract, and full story traceability:** [marketing-module-screens.md](marketing-module-screens.md) §0.1, §1.2, §1.3, §3.1, §7.1.  
+**Visual design, branding, components:** [marketing-module-design.md](marketing-module-design.md).  
+**Database schema (planned):** [marketing-module-migration.md](marketing-module-migration.md).
 
 ---
 
-## 7. Should-have (stretch)
+## 7. Deprecated (superseded by S6M)
 
-| Requirement | Story |
+The following **S6-15 / S6-16 CRM-triggered workflow** capabilities are **retired** in favour of campaign-only outreach:
+
+| Retired | Replacement |
 |---|---|
-| A/B subject line test | S6-22 |
-| Send-time window (recipient timezone) | S6-23 |
+| Contact created → welcome drip | Manual campaign with explicit recipients |
+| Label added / conversation resolved triggers | Campaign wizard only |
+| Workflow builder in Marketing nav | Campaigns + Templates |
+| `triggerMarketingWorkflows` on CRM paths | Removed (S6M-9) |
+
+Historical S6-14 broadcast and S6-15/16 workflow stories remain in the workbook as completed foundation work; S6M is the authoritative model going forward.
 
 ---
 
 ## Definition of Done (sign-off checklist)
 
 ### Marketer journey
-- [ ] Create segment from CRM filters; preview count
-- [ ] Build HTML template with merge tags; send test to self
-- [ ] Launch broadcast to segment; schedule for later works
-- [ ] View campaign report with open/click rates within 24 h of send
-
-### Automation journey
-- [ ] Publish welcome drip: contact created → email day 0 → wait 3 days → follow-up
-- [ ] Branch: if opened → send offer; if not → send reminder
-- [ ] Conversation resolved trigger enrolls contact in post-chat survey email
+- [ ] Create campaign draft; campaign ID assigned immediately
+- [ ] Select recipients explicitly (optional segment import)
+- [ ] Build multi-step sequence with date+time per email
+- [ ] Configure message source mode for `{{contact_message}}` if used
+- [ ] Send mandatory test email; admin launches campaign
+- [ ] View campaign report with per-step and per-recipient stats
 
 ### Contact journey
-- [ ] Unsubscribe link in email suppresses future marketing
-- [ ] Resubscribe only via explicit opt-in (or double opt-in if enabled)
-- [ ] Bounced address suppressed automatically
+- [ ] New CRM contact receives **no** marketing email automatically
+- [ ] Unsubscribe link suppresses future marketing
+- [ ] Hard bounce and spam complaint suppress address
+- [ ] Reply to campaign email stops follow-ups for that recipient only
 
 ### Administrator journey
-- [ ] Sending domain verified in Resend; from-address matches brand
-- [ ] Suppression list visible; can manually add email
+- [ ] Sending domain verified; BYOK or platform provider connected
+- [ ] Cron health green on settings panel
 - [ ] Webhook events update delivery status within 5 min
+- [ ] Launch audit shows who launched and when
 
 ---
 
-## Explicitly out of scope (Sprint 6)
+## Explicitly out of scope (S6M v1)
 
 | Item | Where |
 |---|---|
-| Inbound email support inbox | Sprint 7 |
+| CRM-triggered automations | Retired — S6M-9 |
+| Inbound email support inbox | Sprint 7 (reply-stop primary path) |
+| A/B subject tests | Backlog |
+| Send-time timezone optimization | Backlog |
+| File attachments in campaigns | S6M-20 |
 | WhatsApp / SMS campaigns | Sprint 14 |
-| Chat widget proactive drip | Sprint 14 |
-| Full marketing automation rule engine (non-email actions) | Sprint 10 |
-| Landing page builder | Backlog |
-| SMS marketing | Sprint 14 / backlog |
-| Advanced lead scoring | Backlog |
 
 ---
 
 ## Comparison to market
 
-| Capability | Mailchimp / Brevo | FlowChat target (Sprint 6) |
+| Capability | Mailchimp / Brevo | FlowChat target (S6M) |
 |---|---|---|
 | Contact CRM | ✅ | S6-1 – S6-7 |
-| Segments | ✅ | S6-11 |
-| Email templates + merge tags | ✅ | S6-12 |
-| Broadcast campaigns | ✅ | S6-14 |
-| Automation workflows | ✅ | S6-15, S6-16 |
-| Unsubscribe + compliance | ✅ | S6-17 |
-| Open/click tracking | ✅ | S6-18, S6-19 |
-| A/B testing | ✅ | S6-22 (Should) |
+| Explicit recipient campaigns | ✅ | S6M-6 – S6M-10 |
+| Multi-step dated sequences | ✅ | S6M-16 – S6M-18 |
+| Template library + merge tags | ✅ | S6M-11 – S6M-15 |
+| Mandatory test send | ✅ | S6M-23 |
+| Stop on bounce/unsub/reply | ✅ | S6M-36 – S6M-38 |
+| Stop on spam complaint | ✅ | S6M-44 |
+| Open/click tracking | ✅ | S6M-34, S6M-26 |
+| CRM auto-drip on signup | ✅ | **No** — campaign-only by design |
 | Support inbox email | ✅ (different product) | Sprint 7 |
 
 ---
 
-*Last updated: 2026-06-05 · Sprint 6 module · Resend provider · BullMQ dispatch*
+*Last updated: 2026-06-13 · S6M Marketing Campaign Redesign · Resend/SendGrid/Mailgun BYOK · Worker + Vercel Cron*

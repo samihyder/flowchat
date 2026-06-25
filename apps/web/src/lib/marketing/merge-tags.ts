@@ -39,3 +39,28 @@ export function htmlToPlainText(html: string): string {
     .replace(/&gt;/g, '>')
     .trim();
 }
+
+/** Merge tags available in composer chip rail (S6M-15). */
+export const MERGE_TAG_CHIPS = [
+  { tag: '{{first_name}}', label: 'First name', sample: 'Alex' },
+  { tag: '{{last_name}}', label: 'Last name', sample: 'Rivera' },
+  { tag: '{{email}}', label: 'Email', sample: 'alex@example.com' },
+  { tag: '{{phone}}', label: 'Phone', sample: '+1 555 0100' },
+  { tag: '{{contact_message}}', label: 'Contact message', sample: 'Thanks for reaching out!' },
+  { tag: '{{meeting_link}}', label: 'Meeting link', sample: 'https://cal.example/meet' },
+  { tag: '{{portfolio_link}}', label: 'Portfolio link', sample: 'https://example.com/work' },
+  { tag: '{{agent_name}}', label: 'Agent name', sample: 'Jordan Lee' },
+  { tag: '{{agent_email}}', label: 'Agent email', sample: 'jordan@company.com' },
+] as const;
+
+export const SAMPLE_MERGE_CONTEXT: Record<string, string> = Object.fromEntries(
+  MERGE_TAG_CHIPS.map((c) => [c.tag.replace(/\{\{|\}\}/g, ''), c.sample])
+);
+
+export function previewWithSampleMergeTags(text: string): string {
+  return applyMergeTags(text, {
+    name: 'Alex Rivera',
+    email: 'alex@example.com',
+    phone: '+1 555 0100',
+  }, SAMPLE_MERGE_CONTEXT);
+}

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FlowChat Campaign Stats - Email Steps</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#d9e3f7",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#4fdbc8",
+                    "on-tertiary": "#ffffff",
+                    "status-scheduled-bg": "#DBEAFE",
+                    "outline-variant": "#c7c4d7",
+                    "gray-200": "#E5E7EB",
+                    "gray-400": "#9CA3AF",
+                    "primary-surface": "#EEF2FF",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "status-success-text": "#16A34A",
+                    "status-bounced-bg": "#FEF3C7",
+                    "primary-fixed": "#e1e0ff",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "on-tertiary-container": "#fffbff",
+                    "on-background": "#121c2a",
+                    "primary-container": "#6063ee",
+                    "outline": "#767586",
+                    "status-bounced-text": "#D97706",
+                    "surface": "#f9f9ff",
+                    "inverse-surface": "#273140",
+                    "secondary-container": "#6df5e1",
+                    "error-container": "#ffdad6",
+                    "status-danger-bg": "#FEE2E2",
+                    "surface-container-low": "#eff3ff",
+                    "status-reply-text": "#A855F7",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed": "#00201c",
+                    "on-tertiary-fixed-variant": "#703700",
+                    "tertiary": "#904900",
+                    "surface-container": "#e6eeff",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#ebf1ff",
+                    "on-primary": "#ffffff",
+                    "on-surface": "#121c2a",
+                    "gray-900": "#111827",
+                    "tertiary-container": "#b55d00",
+                    "status-paused-bg": "#FEF9C3",
+                    "primary-border": "#C7D2FE",
+                    "status-success-bg": "#DCFCE7",
+                    "status-danger-text": "#DC2626",
+                    "primary-hover": "#4F46E5",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "surface-container-high": "#dee9fd",
+                    "surface-bright": "#f9f9ff",
+                    "secondary-fixed": "#71f8e4",
+                    "background": "#f9f9ff",
+                    "surface-container-highest": "#d9e3f7",
+                    "status-paused-text": "#CA8A04",
+                    "on-tertiary-fixed": "#301400",
+                    "on-primary-container": "#fffbff",
+                    "inverse-primary": "#c0c1ff",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "surface-tint": "#494bd6",
+                    "status-scheduled-text": "#2563EB",
+                    "secondary": "#006b5f",
+                    "on-secondary-container": "#006f64",
+                    "on-surface-variant": "#464554",
+                    "primary": "#4648d4",
+                    "on-primary-fixed": "#07006c",
+                    "status-draft-text": "#4B5563",
+                    "status-draft-bg": "#F3F4F6",
+                    "gray-500": "#6B7280",
+                    "tertiary-fixed": "#ffdcc5",
+                    "on-secondary-fixed-variant": "#005048",
+                    "gray-50": "#F9FAFB",
+                    "surface-dim": "#d0daef"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "padding-card": "24px",
+                    "gap-section": "24px",
+                    "gap-form": "16px",
+                    "container-max-wizard": "1024px",
+                    "container-max-list": "1280px"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .active-tab-indicator {
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #4648d4;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-on-surface font-body-md overflow-x-hidden">
+<div class="flex h-screen overflow-hidden">
+<!-- Side Navigation (Shared Component Logic) -->
+<aside class="w-[256px] h-screen sticky left-0 top-0 flex flex-col h-full border-r border-gray-200 bg-surface shadow-sm">
+<div class="p-6">
+<div class="text-headline-sm font-headline-sm text-on-surface font-bold">FlowChat Marketing</div>
+<div class="text-on-surface-variant font-body-md text-sm mt-1">Campaign Management</div>
+</div>
+<nav class="flex-1 mt-4">
+<a class="flex items-center px-6 py-3 text-primary font-bold border-r-4 border-primary bg-primary-surface transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3">campaign</span>
+<span class="font-body-md">Campaigns</span>
+</a>
+<a class="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary hover:bg-gray-50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3">dashboard_customize</span>
+<span class="font-body-md">Templates</span>
+</a>
+</nav><div class="px-6 py-8 border-t border-gray-200"><p class="text-label-caps text-gray-500 mb-4 uppercase">Test Send</p><div class="space-y-3"><input class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-200 outline-none" placeholder="Enter email..." type="email"/><button class="w-full py-2 bg-primary text-on-primary rounded-lg font-label-caps text-xs hover:bg-primary-hover transition-all shadow-sm">Send Test</button></div></div>
+<div class="mt-auto border-t border-gray-200">
+<a class="flex items-center px-6 py-6 text-on-surface-variant hover:text-primary hover:bg-gray-50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col overflow-y-auto">
+<!-- Top Navigation Bar (Shared Component Logic) -->
+<header class="sticky top-0 w-full z-40 bg-white border-b border-gray-200 flex justify-between items-center px-8 h-[64px] min-h-[64px]">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">FlowChat Marketing</span>
+<div class="h-6 w-px bg-gray-200 mx-2"></div>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-gray-50 border-gray-200 rounded-lg text-sm w-64 focus:ring-2 focus:ring-primary-200 outline-none" placeholder="Search analytics..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 mr-4">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">help_outline</span></button>
+</div>
+<button class="px-4 py-2 border border-gray-200 text-on-surface-variant rounded-lg font-label-caps text-xs hover:bg-gray-50 transition-all">Save Draft</button>
+<button class="px-4 py-2 border border-gray-200 text-on-surface-variant rounded-lg font-label-caps text-xs hover:bg-gray-50 transition-all">Pause</button><button class="px-4 py-2 bg-status-danger-bg text-status-danger-text rounded-lg font-label-caps text-xs hover:opacity-80 transition-all shadow-sm">Cancel</button><button class="px-4 py-2 border border-primary text-primary rounded-lg font-label-caps text-xs hover:bg-primary-surface transition-all">Export</button>
+<img class="w-8 h-8 rounded-full border border-gray-200 object-cover ml-2" data-alt="A professional business headshot of a marketing executive in their 30s, wearing clean business casual attire, set against a blurred modern office background with soft cinematic lighting. The image maintains a high-end corporate aesthetic with a neutral color palette of grays and whites, reflecting a professional and authoritative tone." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWUnequv8HciZkhVsto6KPQNSOh9AV3gVRXsIdd2YbEer8__8kxLXyWRjDEM2Hp1YcG-HXO6Rzko1qBR4hn3kINzwMVPcnuCFguE-LoC--APzhPbMakPE5zUf1RL4BmKHYaxFKt5BcXb_ArioIAkdBf7SxFyG7usew77JC7Jyb5sHsvKRAFzqlBF3CdZY0q9HIdy1bXfvOall1mKlf6-uzIcfB4auTas2soRnkOQqJ1Kg3z0LMnSpqz-aNrk7K6ghUd1ONlxKyYe6A"/>
+</div>
+</header>
+<!-- Page Content -->
+<main class="p-8 max-w-container-max-list mx-auto w-full">
+<!-- Header Section -->
+<div class="mb-8">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Q4 Outreach — Fintech Enterprise</h1>
+<span class="px-3 py-1 bg-status-success-bg text-status-success-text text-xs font-bold rounded-full uppercase tracking-wider flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 bg-status-success-text rounded-full animate-pulse"></span>
+                                Running
+                            </span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 bg-white border border-gray-200 rounded-lg text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
+<button class="p-2 bg-white border border-gray-200 rounded-lg text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">more_horiz</span></button>
+</div>
+</div>
+<div class="flex items-center gap-6 mt-3 text-gray-500 font-body-md">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-lg">calendar_today</span>
+<span>Started Oct 12, 2023</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-lg">group</span>
+<span>4,280 Total Recipients</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-lg">schedule</span>
+<span>Last activity: 14 mins ago</span>
+</div>
+</div>
+</div>
+<!-- Tabs -->
+<div class="border-b border-gray-200 mb-8 flex gap-8 relative">
+<button class="pb-3 text-on-surface-variant font-body-lg hover:text-primary transition-colors relative">Overview</button>
+<button class="pb-3 text-primary font-body-lg relative">
+                        Email Steps
+                        <div class="active-tab-indicator"></div>
+</button>
+<button class="pb-3 text-on-surface-variant font-body-lg hover:text-primary transition-colors relative">Recipients</button>
+<button class="pb-3 text-on-surface-variant font-body-lg hover:text-primary transition-colors relative">Activity Log</button>
+</div>
+<!-- Email Steps Vertical List -->
+<div class="space-y-6">
+<!-- Card 1: Active Step -->
+<div class="bg-white border-2 border-primary-border rounded-xl shadow-sm overflow-hidden flex flex-col md:flex-row">
+<div class="w-1.5 bg-primary"></div>
+<div class="flex-1 p-padding-card">
+<div class="flex items-start justify-between mb-6">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="flex items-center justify-center w-8 h-8 bg-primary-surface text-primary rounded-full font-bold text-sm">1</span>
+<h3 class="font-headline-sm text-headline-sm">Subject: <span class="text-on-surface-variant">Quick question about {{company}}</span></h3>
+</div>
+<p class="text-sm text-gray-500 ml-11">Sent immediately after campaign launch</p>
+</div>
+<div class="px-3 py-1 bg-status-success-bg text-status-success-text rounded-full text-xs font-bold">COMPLETED</div>
+</div>
+<!-- Main Metrics Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8 ml-11 mb-8">
+<div>
+<p class="text-label-caps text-gray-500 uppercase">Sent</p>
+<p class="text-headline-md font-bold mt-1">1,240</p>
+</div>
+<div>
+<p class="text-label-caps text-gray-500 uppercase">Delivered</p>
+<p class="text-headline-md font-bold mt-1">1,196 <span class="text-sm font-normal text-gray-400 ml-1">96.5%</span></p>
+</div>
+<div>
+<p class="text-label-caps text-primary-hover uppercase">Opened</p>
+<p class="text-headline-md font-bold mt-1 text-primary">773 <span class="text-sm font-normal text-primary-fixed-dim ml-1">62%</span></p>
+</div>
+<div>
+<p class="text-label-caps text-primary-hover uppercase">Clicked</p>
+<p class="text-headline-md font-bold mt-1 text-primary">221 <span class="text-sm font-normal text-primary-fixed-dim ml-1">18%</span></p>
+</div>
+</div>
+<!-- Bar Chart Visual -->
+<div class="ml-11 h-2 bg-gray-100 rounded-full flex overflow-hidden mb-8">
+<div class="h-full bg-primary" style="width: 62%;"></div>
+<div class="h-full bg-primary-border" style="width: 18%;"></div>
+<div class="h-full bg-gray-200" style="width: 20%;"></div>
+</div>
+<!-- Stopped Breakdown -->
+<div class="ml-11 border-t border-gray-100 pt-6">
+<p class="text-label-caps text-gray-400 mb-4 uppercase">Stopped Engagement Breakdown</p>
+<div class="flex flex-wrap gap-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-status-bounced-bg flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-status-bounced-text">move_to_inbox</span>
+</div>
+<div>
+<p class="text-headline-sm font-bold">4</p>
+<p class="text-xs text-gray-500">Bounces</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-status-danger-bg flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-status-danger-text">person_remove</span>
+</div>
+<div>
+<p class="text-headline-sm font-bold">2</p>
+<p class="text-xs text-gray-500">Unsubs</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-surface flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-status-reply-text">reply</span>
+</div>
+<div>
+<p class="text-headline-sm font-bold">5</p>
+<p class="text-xs text-gray-500">Replies</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-orange-100 flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-orange-600">report</span>
+</div>
+<div>
+<p class="text-headline-sm font-bold">1</p>
+<p class="text-xs text-gray-500">Complaints</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2: In Progress -->
+<div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col md:flex-row">
+<div class="w-1.5 bg-status-scheduled-text"></div>
+<div class="flex-1 p-padding-card">
+<div class="flex items-start justify-between mb-4">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="flex items-center justify-center w-8 h-8 bg-gray-100 text-gray-500 rounded-full font-bold text-sm">2</span>
+<h3 class="font-headline-sm text-headline-sm">Subject: <span class="text-on-surface-variant">Following up on our fintech research</span></h3>
+</div>
+<p class="text-sm text-gray-500 ml-11">Scheduled 3 days after Step 1</p>
+</div>
+<div class="px-3 py-1 bg-status-scheduled-bg text-status-scheduled-text rounded-full text-xs font-bold uppercase">In Progress</div>
+</div>
+<div class="ml-11 flex gap-12 items-center">
+<div>
+<p class="text-label-caps text-gray-400 uppercase">Processing</p>
+<p class="text-headline-md font-bold mt-1">842 <span class="text-sm font-normal text-gray-400">/ 1,240</span></p>
+</div>
+<div class="flex-1 max-w-xs">
+<div class="flex justify-between text-xs mb-1">
+<span class="text-gray-500">Sending queue...</span>
+<span class="font-bold text-primary">68%</span>
+</div>
+<div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-status-scheduled-text" style="width: 68%;"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Scheduled -->
+<div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col md:flex-row opacity-80">
+<div class="w-1.5 bg-gray-300"></div>
+<div class="flex-1 p-padding-card">
+<div class="flex items-start justify-between mb-2">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="flex items-center justify-center w-8 h-8 bg-gray-100 text-gray-400 rounded-full font-bold text-sm">3</span>
+<h3 class="font-headline-sm text-headline-sm">Subject: <span class="text-on-surface-variant">Demo request for {{company}} Team</span></h3>
+</div>
+<p class="text-sm text-gray-500 ml-11">Wait 7 days after Step 2</p>
+</div>
+<div class="px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-bold uppercase">Scheduled</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer (Shared Component Logic) -->
+<footer class="bg-white border-t border-gray-200 h-[64px] flex justify-between items-center px-8 w-full mt-auto">
+<p class="text-label-caps text-gray-500 uppercase tracking-widest">© 2024 FlowChat CRM</p>
+<div class="flex items-center gap-4">
+<button class="text-gray-500 hover:text-gray-900 px-4 py-2 font-label-caps uppercase text-xs transition-all">Back</button>
+<button class="text-gray-500 hover:text-gray-900 px-4 py-2 font-label-caps uppercase text-xs transition-all">Save</button>
+<button class="bg-primary text-on-primary rounded-lg px-6 py-2 font-label-caps uppercase text-xs hover:bg-primary-hover active:scale-98 transition-transform shadow-sm">Next Step</button>
+</div>
+</footer>
+</div>
+</div>
+<!-- Micro-interaction script -->
+<script>
+        document.querySelectorAll('button, a').forEach(elem => {
+            elem.addEventListener('mousedown', () => {
+                elem.classList.add('scale-95');
+            });
+            elem.addEventListener('mouseup', () => {
+                elem.classList.remove('scale-95');
+            });
+            elem.addEventListener('mouseleave', () => {
+                elem.classList.remove('scale-95');
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Campaigns - FlowChat Marketing</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#4648d4",
+                        "primary-container": "#6063ee",
+                        "primary-surface": "#EEF2FF",
+                        "primary-border": "#C7D2FE",
+                        "on-primary": "#ffffff",
+                        "surface": "#f9f9ff",
+                        "surface-container": "#e6eeff",
+                        "on-surface": "#121c2a",
+                        "on-surface-variant": "#464554",
+                        "outline": "#767586",
+                        "outline-variant": "#c7c4d7",
+                        "status-success-bg": "#DCFCE7",
+                        "status-success-text": "#16A34A",
+                        "status-danger-bg": "#FEE2E2",
+                        "status-danger-text": "#DC2626",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "status-scheduled-text": "#2563EB",
+                        "status-draft-bg": "#F3F4F6",
+                        "status-draft-text": "#4B5563",
+                        "gray-50": "#F9FAFB",
+                        "gray-200": "#E5E7EB",
+                        "gray-400": "#9CA3AF",
+                        "gray-500": "#6B7280",
+                        "gray-900": "#111827",
+                        "brand-indigo": "#6366F1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "data-mono": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f9f9ff; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-gray-200 bg-surface flex flex-col p-4 z-50">
+<div class="mb-8 px-4">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">SalesHub</h1>
+<p class="text-[12px] text-gray-500 uppercase tracking-wider font-semibold">Campaign Manager</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Active Tab: Campaigns -->
+<a class="flex items-center gap-3 px-4 py-2 text-primary bg-primary-surface rounded-lg font-bold transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+<span class="font-body-md text-body-md">Campaigns</span>
+</a>
+<!-- Inactive Tab: Templates -->
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-gray-50 rounded-lg transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Templates</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-gray-200 pt-4 px-2">
+<div class="flex items-center gap-3 px-2">
+<img class="w-10 h-10 rounded-full bg-gray-200 object-cover" data-alt="Professional portrait of a sales account manager in a minimalist corporate setting, soft studio lighting, high-end professional atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA74XrJc1iExOUb5GIWepFS0hF5JCXkkSxyP7iCOJs86DRP6Le2PI54kz2GB4Zq0HdPIBaxyZ0B8l7z_5vz_SpFgiisZcE3EW5HKOJP6QGyQHwfs4IkzmLLuQpu0Aob0laeGUI5LzzlgX-7agf8WpjfwepFCQwTNg_JMrwP5qaJnpxePsiWvqd7gl2Uhq-z2YeRi-Mf8XVBB69cubaBVx7In3uWKtGmmSEaG2xlu1tlJ9eyHEG2wSKLDSXLOzfWfQ9JZEndjdDcixbb">
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold truncate">Sales Agent</p>
+<p class="text-xs text-gray-500 truncate">agent@flowchat.io</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen">
+<!-- TopNavBar Cluster (Integrated with Header) -->
+<header class="sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-gray-200 h-16 flex items-center justify-between px-8">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-md text-headline-md text-gray-900">Campaigns</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+<span class="material-symbols-outlined text-[20px]" data-icon="search">search</span>
+</span>
+<input class="block w-64 pl-10 pr-3 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-primary-border focus:border-primary text-sm" placeholder="Search campaigns..." type="text">
+</div>
+<button class="bg-brand-indigo hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all shadow-sm">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span class="">New Campaign</span>
+</button>
+</div>
+</header>
+<div class="p-8 max-w-[1280px] mx-auto space-y-8">
+<!-- Metric Cards -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<!-- Total Campaigns -->
+<div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+<p class="font-label-caps text-label-caps text-gray-500 uppercase">Total Campaigns</p>
+<h3 class="text-3xl font-bold text-gray-900 mt-1">24</h3>
+<p class="text-xs text-accent-500 font-medium mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="trending_up">trending_up</span>
+<span class="">12% from last month</span>
+</p>
+</div>
+<!-- Active -->
+<div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm bg-primary-surface">
+<p class="font-label-caps text-label-caps text-gray-500 uppercase">Active</p>
+<h3 class="text-3xl font-bold text-gray-900 mt-1">8</h3>
+<div class="w-full bg-gray-200 h-1.5 rounded-full mt-4">
+<div class="bg-primary h-1.5 rounded-full w-[33%]"></div>
+</div>
+</div>
+<!-- Scheduled -->
+<div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+<p class="font-label-caps text-label-caps text-gray-500 uppercase">Scheduled</p>
+<h3 class="text-3xl font-bold text-gray-900 mt-1">12</h3>
+<p class="text-xs text-gray-400 font-medium mt-2">Next send in 2h</p>
+</div>
+<!-- Total Recipients -->
+<div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm border-primary-border">
+<p class="font-label-caps text-label-caps text-gray-500 uppercase">Total Recipients</p>
+<h3 class="text-3xl font-bold text-gray-900 mt-1">1,482</h3>
+<p class="text-xs text-gray-400 font-medium mt-2">Across all campaigns</p>
+</div>
+</section>
+<!-- Campaign Table Section -->
+<section class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+<div class="flex items-center gap-4"><button class="text-sm font-medium text-primary border-b-2 border-primary pb-0.5">All Campaigns</button><button class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Drafts</button><button class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Running</button><button class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Completed</button><button class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Paused</button></div>
+<div class="relative mr-4"><span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><span class="material-symbols-outlined text-[18px]">search</span></span><input type="text" placeholder="Filter table..." class="block w-48 pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary-border focus:border-primary text-xs"></div><button class="text-gray-400 hover:text-gray-600">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-gray-50 border-b border-gray-200">
+<th class="px-6 py-3 w-12">
+<input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox">
+</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-gray-500 uppercase tracking-wider">Campaign Name</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-gray-500 uppercase tracking-wider text-center">Status</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-gray-500 uppercase tracking-wider">Recipients</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-gray-500 uppercase tracking-wider">Next Send</th>
+<th class="px-6 py-3 w-16"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<!-- Row 1: Running -->
+<tr class="hover:bg-gray-50 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox">
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-gray-900">Q3 Enterprise Outreach</span>
+<span class="font-data-mono text-xs text-gray-400">ID: CAM-74291</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-surface text-primary border border-primary-border">
+                                        Running
+                                    </span>
+</td>
+<td class="px-6 py-4 text-sm text-gray-700">452</td>
+<td class="px-6 py-4">
+<div class="flex flex-col text-sm text-gray-700 font-data-mono">
+<span class="">Jun 15, 2024</span>
+<span class="text-xs text-gray-400">09:00 AM</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Draft -->
+<tr class="hover:bg-gray-50 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox">
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-gray-900">Partner Re-engagement</span>
+<span class="font-data-mono text-xs text-gray-400">ID: CAM-88120</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-draft-bg text-status-draft-text">
+                                        Draft
+                                    </span>
+</td>
+<td class="px-6 py-4 text-sm text-gray-700">128</td>
+<td class="px-6 py-4">
+<span class="text-sm text-gray-400 italic">Not scheduled</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Completed -->
+<tr class="hover:bg-gray-50 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox">
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-gray-900">Inbound Lead Nurture</span>
+<span class="font-data-mono text-xs text-gray-400">ID: CAM-33921</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-success-bg text-status-success-text">
+                                        Completed
+                                    </span>
+</td>
+<td class="px-6 py-4 text-sm text-gray-700">890</td>
+<td class="px-6 py-4">
+<span class="text-sm text-gray-400 italic">Finished May 30</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: Running -->
+<tr class="hover:bg-gray-50 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox">
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-gray-900">Webinar Follow-up Sequence</span>
+<span class="font-data-mono text-xs text-gray-400">ID: CAM-55201</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-surface text-primary border border-primary-border">
+                                        Running
+                                    </span>
+</td>
+<td class="px-6 py-4 text-sm text-gray-700">312</td>
+<td class="px-6 py-4">
+<div class="flex flex-col text-sm text-gray-700 font-data-mono">
+<span class="">Jun 16, 2024</span>
+<span class="text-xs text-gray-400">10:30 AM</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 5: Scheduled -->
+<tr class="hover:bg-gray-50 transition-colors group">
+<td class="px-6 py-4">
+<input class="rounded border-gray-300 text-primary focus:ring-primary" type="checkbox">
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-gray-900">Event Teaser: San Francisco 2024</span>
+<span class="font-data-mono text-xs text-gray-400">ID: CAM-99423</span>
+</div>
+</td>
+<td class="px-6 py-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-scheduled-bg text-status-scheduled-text">
+                                        Scheduled
+                                    </span>
+</td>
+<td class="px-6 py-4 text-sm text-gray-700">2,104</td>
+<td class="px-6 py-4">
+<div class="flex flex-col text-sm text-gray-700 font-semibold text-primary font-data-mono">
+<span class="">Jun 18, 2024</span>
+<span class="text-xs">08:00 AM</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1 text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+<p class="text-sm text-gray-500">Showing 1 to 5 of 24 campaigns</p>
+<div class="flex items-center gap-2">
+<button class="p-2 border border-gray-200 rounded bg-white text-gray-400 disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[18px]" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="px-3 py-1 bg-primary text-white rounded text-sm font-medium shadow-sm">1</button>
+<button class="px-3 py-1 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded text-sm font-medium transition-colors">2</button>
+<button class="px-3 py-1 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded text-sm font-medium transition-colors">3</button>
+<button class="p-2 border border-gray-200 rounded bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer -->
+<footer class="h-16 border-t border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md">
+<p class="font-label-caps text-label-caps text-gray-500">© 2024 SalesHub Automation</p>
+<div class="flex items-center gap-6">
+<a class="font-label-caps text-label-caps text-gray-500 hover:text-primary transition-colors" href="#">Help Center</a>
+<a class="font-label-caps text-label-caps text-gray-500 hover:text-primary transition-colors" href="#">Privacy Policy</a>
+</div>
+</footer>
+</main>
+<script>
+        // Simple row selection highlight
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const row = this.closest('tr');
+                if (row && this.checked) {
+                    row.classList.add('bg-primary-surface');
+                } else if (row) {
+                    row.classList.remove('bg-primary-surface');
+                }
+            });
+        });
+    </script>
+
+
+</body></html>

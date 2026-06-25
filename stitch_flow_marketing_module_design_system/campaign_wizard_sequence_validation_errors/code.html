@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FlowChat Campaign Wizard | Validation Errors</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .step-card-transition {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-border": "#C7D2FE",
+                        "primary-fixed": "#e1e0ff",
+                        "status-draft-bg": "#F3F4F6",
+                        "primary-container": "#6063ee",
+                        "surface-container-high": "#dee9fd",
+                        "surface-container-highest": "#d9e3f7",
+                        "primary": "#4648d4",
+                        "status-danger-text": "#DC2626",
+                        "primary-hover": "#4F46E5",
+                        "gray-400": "#9CA3AF",
+                        "gray-500": "#6B7280",
+                        "error-container": "#ffdad6",
+                        "status-danger-bg": "#FEE2E2",
+                        "status-draft-text": "#4B5563",
+                        "inverse-surface": "#273140",
+                        "secondary-fixed-dim": "#4fdbc8",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-primary-container": "#fffbff",
+                        "on-surface-variant": "#464554",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#d9e3f7",
+                        "gray-200": "#E5E7EB",
+                        "background": "#f9f9ff",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "surface-dim": "#d0daef",
+                        "on-primary-fixed": "#07006c",
+                        "status-success-bg": "#DCFCE7",
+                        "on-tertiary-fixed": "#301400",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#fffbff",
+                        "on-secondary-container": "#006f64",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "on-error": "#ffffff",
+                        "outline": "#767586",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "inverse-primary": "#c0c1ff",
+                        "gray-900": "#111827",
+                        "status-reply-text": "#A855F7",
+                        "surface-bright": "#f9f9ff",
+                        "status-paused-text": "#CA8A04",
+                        "tertiary-container": "#b55d00",
+                        "status-bounced-bg": "#FEF3C7",
+                        "outline-variant": "#c7c4d7",
+                        "on-background": "#121c2a",
+                        "surface": "#f9f9ff",
+                        "status-bounced-text": "#D97706",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#121c2a",
+                        "secondary-container": "#6df5e1",
+                        "gray-50": "#F9FAFB",
+                        "secondary": "#006b5f",
+                        "on-secondary-fixed-variant": "#005048",
+                        "inverse-on-surface": "#ebf1ff",
+                        "surface-container": "#e6eeff",
+                        "surface-tint": "#494bd6",
+                        "status-scheduled-text": "#2563EB",
+                        "primary-surface": "#EEF2FF",
+                        "status-paused-bg": "#FEF9C3",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "status-success-text": "#16A34A",
+                        "tertiary": "#904900",
+                        "on-secondary-fixed": "#00201c",
+                        "secondary-fixed": "#71f8e4",
+                        "surface-container-low": "#eff3ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.4px",
+                        "lg": "8px",
+                        "xl": "12px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-wizard": "1024px",
+                        "gap-section": "24px",
+                        "container-max-list": "1280px",
+                        "padding-card": "24px",
+                        "gap-form": "16px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background font-body-md text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed overflow-x-hidden">
+<header class="sticky top-0 w-full z-40 bg-white border-b border-gray-200">
+<div class="flex justify-between items-center px-6 h-[64px] w-full max-w-full">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">FlowChat Marketing</span>
+<div class="h-6 w-[1px] bg-gray-200 hidden md:block"></div>
+<div class="relative hidden md:flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-gray-400">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 outline-none w-64 text-body-md transition-all" placeholder="Search campaigns..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:flex items-center px-4 py-2 text-primary font-bold hover:bg-primary-surface transition-colors rounded-lg">
+                    Save Draft
+                </button>
+<button class="bg-primary text-on-primary px-5 py-2 rounded-lg font-bold shadow-sm hover:bg-primary-hover active:scale-95 transition-all">
+                    Launch Campaign
+                </button>
+<div class="flex gap-2 ml-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-gray-200 bg-gray-100 ml-2">
+<img class="w-full h-full object-cover" data-alt="A professional male user profile avatar for a marketing platform, centered on a neutral background, high-resolution photography style, clean and modern aesthetic with professional lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvnMwHE4V2GNqgkG7h9pNZZUqZwihXB1CEbuZUxds_EnreHM5yhUaKu6plZ8pmqw_IxIzdBQ8PzaXYKOJ2KirZoYmobzxzLDO6B5v7l1-fjX7mycecdujyueCP2n1ieTcaHEs72ltEl1gW_IWIOs6XDZo3ozLYUqSkmSSWoUh2ifoX1QqEuNGieD4hrqko2xaJLqzpSyhdjZcJ-olOL_yN2oPy5jfU6LPB0TYxZKE4DrK-r8H7nVk2WKmg35iWUc9Dcxltg_o4mJO9"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<div class="w-full bg-status-danger-bg border-b border-status-danger-text/10 py-3 px-6 animate-pulse">
+<div class="max-w-5xl mx-auto flex items-center justify-center gap-3">
+<span class="material-symbols-outlined text-status-danger-text" style="font-variation-settings: 'FILL' 1;">error</span>
+<span class="text-status-danger-text font-headline-sm text-headline-sm">Fix 3 issues before continuing</span>
+</div>
+</div>
+<div class="flex h-[calc(100vh-188px)] overflow-hidden">
+<aside class="w-[256px] h-full sticky left-0 top-0 bg-surface flex flex-col border-r border-outline-variant">
+<div class="p-6 border-b border-outline-variant flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm">
+<span class="material-symbols-outlined">campaign</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm leading-tight">Marketing</h3>
+<p class="text-xs text-on-surface-variant opacity-70">Campaign Management</p>
+</div>
+</div>
+<nav class="flex-1 py-4 px-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-primary font-bold border-r-4 border-primary bg-primary-surface transition-colors" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span>Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-gray-50 transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard_customize</span>
+<span>Templates</span>
+</a>
+</nav>
+<div class="p-3 border-t border-outline-variant">
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-on-surface-variant hover:text-primary hover:bg-gray-50 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</aside>
+<main class="flex-1 overflow-y-auto p-6 md:p-10">
+<div class="max-w-container-max-wizard mx-auto space-y-gap-section mb-20">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Campaign Wizard</h1>
+<nav class="flex items-center gap-2 text-on-surface-variant">
+<span class="font-bold text-primary">Sequence Settings</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="opacity-50">Audience Selection</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="opacity-50">Review & Launch</span>
+</nav>
+</div>
+<div class="flex items-center gap-3 bg-white p-2 rounded-xl border border-gray-200 shadow-sm">
+<button class="flex items-center gap-2 px-4 py-2 text-body-md font-bold text-primary hover:bg-primary-surface rounded-lg transition-all">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+                            + Add follow-up
+                        </button>
+<div class="w-[1px] h-6 bg-gray-200"></div>
+<button class="flex items-center gap-2 px-4 py-2 text-body-md font-bold text-on-surface-variant hover:bg-gray-50 rounded-lg transition-all">
+<span class="material-symbols-outlined text-[20px]">library_add</span>
+                            Bulk add from templates
+                        </button>
+</div>
+</div>
+<section class="space-y-6">
+<div class="relative step-card-transition bg-white border-2 border-status-danger-text/40 rounded-xl shadow-sm p-padding-card">
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full bg-status-danger-text text-white flex items-center justify-center font-bold">1</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Initial Send</h3>
+<p class="text-body-md text-on-surface-variant">The first message of your campaign sequence.</p>
+</div>
+</div>
+<span class="bg-status-danger-bg text-status-danger-text px-3 py-1 rounded-full text-xs font-bold uppercase">Critical Error</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gap-form p-6 bg-gray-50 rounded-lg border border-gray-200">
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">SEND DATE</label>
+<div class="relative">
+<input class="w-full px-4 py-2 border-2 border-status-danger-text rounded-lg focus:ring-0 outline-none bg-white" type="date" value="2023-10-01"/>
+<div class="mt-2 flex items-center gap-2 text-status-danger-text">
+<span class="material-symbols-outlined text-sm">warning</span>
+<span class="text-xs font-bold">Send date must be in the future</span>
+</div>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">SEND TIME</label>
+<input class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 outline-none bg-white" type="time" value="09:00"/>
+</div>
+</div>
+</div>
+<div class="relative step-card-transition bg-white border-2 border-status-danger-text/40 rounded-xl shadow-sm p-padding-card ring-2 ring-primary-200">
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold">2</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Follow-up Bump</h3>
+<p class="text-body-md text-on-surface-variant">Second touchpoint if no reply after 3 days.</p>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="bg-primary-surface text-primary px-3 py-1 rounded-full text-xs font-bold uppercase">Active Step</span>
+<span class="bg-status-danger-bg text-status-danger-text px-3 py-1 rounded-full text-xs font-bold uppercase">Invalid Logic</span>
+</div>
+</div>
+<div class="space-y-gap-form">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gap-form p-6 bg-gray-50 rounded-lg border border-gray-200">
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">SEND DATE</label>
+<input class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 outline-none bg-white" type="date" value="2024-12-25"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">SEND TIME</label>
+<div class="relative">
+<input class="w-full px-4 py-2 border-2 border-status-danger-text rounded-lg focus:ring-0 outline-none bg-white" type="time" value="08:30"/>
+<div class="mt-2 flex items-center gap-2 text-status-danger-text">
+<span class="material-symbols-outlined text-sm">alarm_off</span>
+<span class="text-xs font-bold">Send time must be after Step 1</span>
+</div>
+</div>
+</div>
+</div>
+<div class="p-6 bg-white border border-gray-200 rounded-lg space-y-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">chat</span>
+<span class="font-bold">Message Content</span>
+</div>
+<div class="min-h-[120px] p-4 border border-gray-200 rounded-lg bg-white relative">
+<p class="text-body-md">Hi <span class="bg-primary-surface border border-primary-border rounded px-2 py-0.5 font-data-mono text-primary text-xs">firstName</span>, just following up on my previous note. Did you have a chance to look at the <span class="bg-primary-surface border border-primary-border rounded px-2 py-0.5 font-data-mono text-primary text-xs">proposalLink</span>?</p>
+<div class="absolute bottom-2 right-2 flex gap-2">
+<button class="p-1 hover:bg-gray-100 rounded transition-colors text-gray-400">
+<span class="material-symbols-outlined text-sm">emoji_emotions</span>
+</button>
+<button class="p-1 hover:bg-gray-100 rounded transition-colors text-gray-400">
+<span class="material-symbols-outlined text-sm">alternate_email</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="relative step-card-transition bg-white border-2 border-status-bounced-text/40 rounded-xl shadow-sm p-padding-card">
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold">3</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Final Breakup</h3>
+<p class="text-body-md text-on-surface-variant">Last attempt to engage the prospect.</p>
+</div>
+</div>
+<span class="bg-status-bounced-bg text-status-bounced-text px-3 py-1 rounded-full text-xs font-bold uppercase">Missing Info</span>
+</div>
+<div class="space-y-4">
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">EMAIL SUBJECT</label>
+<input class="w-full px-4 py-2 border-2 border-status-bounced-text rounded-lg focus:ring-0 outline-none bg-white" placeholder="Required" type="text"/>
+<div class="mt-2 flex items-center gap-2 text-status-bounced-text">
+<span class="material-symbols-outlined text-sm">error</span>
+<span class="text-xs font-bold">Subject is required</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+<footer class="fixed bottom-0 w-full h-[64px] z-50 bg-white border-t border-gray-200 flex items-center">
+<div class="flex justify-between items-center px-8 w-full max-w-5xl mx-auto">
+<button class="flex items-center gap-2 px-6 py-2.5 rounded-lg text-on-surface-variant hover:bg-gray-100 font-bold active:scale-95 transition-all">
+<span class="material-symbols-outlined">arrow_back</span>
+                Back
+            </button>
+<div class="flex items-center gap-4">
+<p class="text-status-danger-text font-label-caps text-label-caps hidden md:block">3 Errors Remaining</p>
+<button class="bg-primary text-on-primary opacity-50 cursor-not-allowed px-8 py-2.5 rounded-lg font-bold shadow-sm transition-all flex items-center gap-2" disabled="">
+                    Next
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions for error resolution simulation
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                // Visual feedback only for demo
+                if(e.target.value.length > 0) {
+                    e.target.classList.remove('border-status-danger-text', 'border-status-bounced-text');
+                    e.target.classList.add('border-primary-border');
+                    const errorMsg = e.target.nextElementSibling;
+                    if(errorMsg && (errorMsg.classList.contains('text-status-danger-text') || errorMsg.classList.contains('text-status-bounced-text'))) {
+                        errorMsg.style.opacity = '0';
+                        errorMsg.style.height = '0';
+                    }
+                }
+            });
+        });
+    </script>
+</body></html>

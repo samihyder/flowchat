@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FlowChat Campaign Wizard - Merge Tag Validation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-border": "#C7D2FE",
+                        "primary-fixed": "#e1e0ff",
+                        "status-draft-bg": "#F3F4F6",
+                        "primary-container": "#6063ee",
+                        "surface-container-high": "#dee9fd",
+                        "surface-container-highest": "#d9e3f7",
+                        "primary": "#4648d4",
+                        "status-danger-text": "#DC2626",
+                        "primary-hover": "#4F46E5",
+                        "gray-400": "#9CA3AF",
+                        "gray-500": "#6B7280",
+                        "error-container": "#ffdad6",
+                        "status-danger-bg": "#FEE2E2",
+                        "status-draft-text": "#4B5563",
+                        "inverse-surface": "#273140",
+                        "secondary-fixed-dim": "#4fdbc8",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-primary-container": "#fffbff",
+                        "on-surface-variant": "#464554",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#d9e3f7",
+                        "gray-200": "#E5E7EB",
+                        "background": "#f9f9ff",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "surface-dim": "#d0daef",
+                        "on-primary-fixed": "#07006c",
+                        "status-success-bg": "#DCFCE7",
+                        "on-tertiary-fixed": "#301400",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#fffbff",
+                        "on-secondary-container": "#006f64",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "on-error": "#ffffff",
+                        "outline": "#767586",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "inverse-primary": "#c0c1ff",
+                        "gray-900": "#111827",
+                        "status-reply-text": "#A855F7",
+                        "surface-bright": "#f9f9ff",
+                        "status-bounced-bg": "#FEF3C7",
+                        "outline-variant": "#c7c4d7",
+                        "on-background": "#121c2a",
+                        "surface": "#f9f9ff",
+                        "status-bounced-text": "#D97706",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#121c2a",
+                        "secondary-container": "#6df5e1",
+                        "gray-50": "#F9FAFB",
+                        "secondary": "#006b5f",
+                        "on-secondary-fixed-variant": "#005048",
+                        "inverse-on-surface": "#ebf1ff",
+                        "surface-container": "#e6eeff",
+                        "surface-tint": "#494bd6",
+                        "status-scheduled-text": "#2563EB",
+                        "primary-surface": "#EEF2FF",
+                        "status-paused-bg": "#FEF9C3",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "status-success-text": "#16A34A",
+                        "tertiary": "#904900",
+                        "on-secondary-fixed": "#00201c",
+                        "secondary-fixed": "#71f8e4",
+                        "surface-container-low": "#eff3ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-wizard": "1024px",
+                        "gap-section": "24px",
+                        "container-max-list": "1280px",
+                        "padding-card": "24px",
+                        "gap-form": "16px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .step-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-40 bg-white dark:bg-surface-container-highest border-b border-gray-200 dark:border-outline-variant flex justify-between items-center px-6 h-[64px] w-full max-full">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-inverse-on-surface">FlowChat Marketing</span>
+<div class="h-6 w-px bg-gray-200 mx-2"></div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-caps uppercase tracking-wider">
+<span class="material-symbols-outlined text-primary" style="font-size: 20px;">magic_button</span>
+                Campaign Wizard
+            </div>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-4 py-2 text-primary font-label-caps hover:text-primary-hover transition-colors focus:ring-2 focus:ring-primary-200 rounded-lg">Save Draft</button>
+<button class="px-6 py-2 bg-primary text-on-primary font-label-caps rounded-lg hover:bg-primary-hover transition-all active:scale-95 shadow-sm">Launch Campaign</button>
+<div class="flex items-center gap-2 ml-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer">help_outline</span>
+<img class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="A professional headshot of a marketing executive, wearing a subtle smile and business casual attire. The background is a clean, out-of-focus office space with soft daylighting. The image follows a high-quality corporate aesthetic with natural skin tones and a shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOn09e49kPoPKLF12iAkJA0slzMWoifD72MgGR0FXi0q1VINcQ39UJe2Tve3tLYsUCOty2FBZf6OTb-EeutAhvtAXayEV_YT-DSVtj0A-fLeZc4Mafc_11ictgHggAj-sIR80ST56MDjgDS-0_gaGq_0V34Bhc8T12j8yUBOBmsuWx0ljQbBTwDMKCw44SOl0Bo9qmXd0t4L1jFXdnozOeB6oU_xnG0ND-XTdaA26ECiRCv-wo6ipHap6dPkCd3LBCKBlOrLwco-L1"/>
+</div>
+</div>
+</header>
+<!-- CRITICAL Validation Banner -->
+<div class="bg-status-danger-bg border-b border-status-danger-text/20 py-3 px-6 flex items-center justify-center gap-3 animate-pulse">
+<span class="material-symbols-outlined text-status-danger-text" style="font-variation-settings: 'FILL' 1;">error</span>
+<span class="text-status-danger-text font-body-lg text-body-lg">Each email body must include <code class="bg-white/50 px-1.5 rounded font-data-mono text-data-mono">{{first_name}}</code> for personalization</span>
+</div>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNav -->
+<aside class="w-[256px] h-full sticky left-0 top-0 bg-surface dark:bg-surface-container-low border-r border-gray-200 dark:border-outline-variant flex flex-col">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm">
+<span class="material-symbols-outlined">campaign</span>
+</div>
+<div>
+<p class="font-headline-sm text-headline-sm text-on-surface leading-tight">Marketing</p>
+<p class="text-xs text-on-surface-variant">Campaign Mgmt</p>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-primary font-bold border-r-4 border-primary bg-primary-surface dark:bg-primary-container/20 step-transition" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span class="font-body-md text-body-md">Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-gray-400 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard_customize</span>
+<span class="font-body-md text-body-md">Templates</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-6 border-t border-gray-100">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-gray-400 hover:text-primary hover:bg-gray-50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto p-8 bg-gray-50">
+<div class="max-w-container-max-wizard mx-auto space-y-gap-section">
+<!-- Wizard Progress Header -->
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 opacity-50">
+<span class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-xs font-bold">1</span>
+<span class="font-body-lg text-body-lg">Audience</span>
+</div>
+<div class="w-12 h-px bg-gray-300"></div>
+<div class="flex items-center gap-2">
+<span class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold">2</span>
+<span class="font-body-lg text-body-lg">Messaging</span>
+</div>
+<div class="w-12 h-px bg-gray-300"></div>
+<div class="flex items-center gap-2 opacity-30">
+<span class="w-8 h-8 rounded-full bg-gray-300 text-on-surface-variant flex items-center justify-center text-xs font-bold">3</span>
+<span class="font-body-lg text-body-lg">Review</span>
+</div>
+</div>
+</div>
+<!-- Step 2: Messaging Card (ERROR STATE) -->
+<div class="bg-white rounded-xl shadow-sm border-2 border-status-danger-text overflow-hidden step-transition ring-4 ring-status-danger-bg/50">
+<div class="p-padding-card border-b border-gray-100 flex items-center justify-between">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Step 2: Define Message Template</h2>
+<p class="text-on-surface-variant mt-1">Configure the automated response for your campaign sequence.</p>
+</div>
+<span class="bg-status-danger-bg text-status-danger-text px-3 py-1 rounded-full font-label-caps text-xs flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>
+                            Action Required
+                        </span>
+</div>
+<div class="p-padding-card grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Message Editor Area -->
+<div class="lg:col-span-2 space-y-gap-form">
+<div>
+<label class="block font-label-caps text-on-surface-variant mb-2">Email Body</label>
+<div class="relative">
+<div class="w-full min-h-[200px] p-4 bg-gray-50 border border-gray-200 rounded-lg font-body-md focus-within:ring-2 focus-within:ring-primary-200 transition-all">
+<p class="text-on-surface italic opacity-60 mb-2">Subject: Re: Your Inquiry</p>
+<div class="text-on-surface">
+                                            Hi there,<br/><br/>
+                                            Thank you for reaching out to us. We would love to help you with your marketing automation needs.<br/><br/>
+                                            Best regards,<br/>
+                                            The FlowChat Team
+                                        </div>
+</div>
+<div class="absolute bottom-4 right-4">
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-caps hover:bg-primary-hover shadow-md flex items-center gap-2 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-sm">open_in_full</span>
+                                            Open full-screen editor
+                                        </button>
+</div>
+</div>
+<div class="mt-3 flex items-center gap-2 text-status-danger-text">
+<span class="material-symbols-outlined text-sm">info</span>
+<p class="font-body-md">Add <code class="font-data-mono font-bold">{{first_name}}</code> in the editor to resolve this error.</p>
+</div>
+</div>
+</div>
+<!-- Merge Tags Side Panel -->
+<div class="space-y-6 bg-primary-surface/30 p-6 rounded-lg border border-primary-border">
+<div>
+<h3 class="font-body-lg text-body-lg text-on-surface mb-1">Available Tags</h3>
+<p class="text-xs text-on-surface-variant mb-4">Click a chip to copy or drag it into the editor.</p>
+<div class="flex flex-wrap gap-2">
+<!-- Merge Chips -->
+<button class="flex items-center gap-1.5 px-3 py-1.5 bg-primary-surface border border-primary-border text-primary rounded-full font-data-mono text-data-mono hover:bg-primary-fixed transition-all group">
+<span class="material-symbols-outlined text-sm group-hover:scale-110">add_circle</span>
+                                        {{first_name}}
+                                    </button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 bg-primary-surface border border-primary-border text-primary rounded-full font-data-mono text-data-mono hover:bg-primary-fixed transition-all group">
+<span class="material-symbols-outlined text-sm group-hover:scale-110">add_circle</span>
+                                        {{last_name}}
+                                    </button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 bg-primary-surface border border-primary-border text-primary rounded-full font-data-mono text-data-mono hover:bg-primary-fixed transition-all group">
+<span class="material-symbols-outlined text-sm group-hover:scale-110">add_circle</span>
+                                        {{contact_message}}
+                                    </button>
+</div>
+</div>
+<div class="pt-4 border-t border-primary-border/40">
+<h4 class="font-label-caps text-on-surface-variant mb-3">Personalization Health</h4>
+<div class="flex items-center gap-2 text-status-danger-text mb-2">
+<div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+<div class="w-1/3 h-full bg-status-danger-text"></div>
+</div>
+<span class="text-xs font-bold">33%</span>
+</div>
+<p class="text-[11px] text-on-surface-variant italic">Tags ensure 85% higher engagement rates on cold outreach sequences.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Preview Area -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-padding-card opacity-60 select-none grayscale">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-headline-sm text-headline-sm">Step 3: Campaign Review</h3>
+<span class="material-symbols-outlined">lock</span>
+</div>
+<div class="h-24 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-400">
+                        Complete messaging to unlock preview
+                    </div>
+</div>
+</div>
+</main>
+</div>
+<!-- Wizard Footer Navigation -->
+<footer class="fixed bottom-0 w-full h-[64px] z-50 bg-white dark:bg-surface-container border-t border-gray-200 dark:border-outline-variant flex justify-between items-center px-8">
+<div class="max-w-5xl mx-auto flex justify-between items-center w-full">
+<button class="flex items-center gap-2 text-gray-500 hover:text-gray-900 px-4 py-2 transition-all font-label-caps uppercase">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+                Back
+            </button>
+<div class="flex gap-4">
+<button class="text-gray-500 hover:text-gray-900 px-4 py-2 font-label-caps uppercase transition-all">
+                    Save
+                </button>
+<button class="bg-primary/50 cursor-not-allowed text-on-primary rounded-lg px-8 py-2 font-label-caps uppercase flex items-center gap-2">
+                    Next
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</footer>
+<!-- Atmosphere Micro-interactions -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chips = document.querySelectorAll('.font-data-mono');
+            chips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    chip.classList.add('scale-95');
+                    setTimeout(() => chip.classList.remove('scale-95'), 150);
+                    // Flash effect
+                    const originalBg = chip.style.backgroundColor;
+                    chip.style.backgroundColor = '#C7D2FE';
+                    setTimeout(() => chip.style.backgroundColor = originalBg, 200);
+                });
+            });
+
+            // Simulated typing error focus
+            const editor = document.querySelector('.bg-gray-50.border');
+            editor.addEventListener('mouseenter', () => {
+                editor.classList.add('border-primary');
+            });
+            editor.addEventListener('mouseleave', () => {
+                editor.classList.remove('border-primary');
+            });
+        });
+    </script>
+</body></html>

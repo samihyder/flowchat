@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Campaign Builder - Email Composer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .composer-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .composer-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .composer-scrollbar::-webkit-scrollbar-thumb {
+            background: #E5E7EB;
+            border-radius: 10px;
+        }
+        .composer-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #D1D5DB;
+        }
+        .editor-content:focus {
+            outline: none;
+        }
+        
+        @keyframes slide-up {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slide-up 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        .transition-all-300 {
+            transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "status-success-text": "#16A34A",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "status-paused-bg": "#FEF9C3",
+                        "surface-variant": "#d9e3f7",
+                        "secondary-fixed-dim": "#4fdbc8",
+                        "primary-border": "#C7D2FE",
+                        "secondary": "#006b5f",
+                        "error-container": "#ffdad6",
+                        "status-scheduled-text": "#2563EB",
+                        "gray-900": "#111827",
+                        "surface": "#f9f9ff",
+                        "outline": "#767586",
+                        "on-secondary-fixed": "#00201c",
+                        "status-draft-text": "#4B5563",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#fffbff",
+                        "secondary-container": "#6df5e1",
+                        "primary-fixed": "#e1e0ff",
+                        "primary-container": "#6063ee",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "gray-500": "#6B7280",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#e6eeff",
+                        "status-paused-text": "#CA8A04",
+                        "status-danger-text": "#DC2626",
+                        "status-danger-bg": "#FEE2E2",
+                        "background": "#f9f9ff",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#273140",
+                        "surface-container-low": "#eff3ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-primary-fixed": "#07006c",
+                        "outline-variant": "#c7c4d7",
+                        "surface-container-highest": "#d9e3f7",
+                        "surface-container-high": "#dee9fd",
+                        "status-success-bg": "#DCFCE7",
+                        "primary": "#4648d4",
+                        "tertiary-container": "#b55d00",
+                        "status-bounced-text": "#D97706",
+                        "status-bounced-bg": "#FEF3C7",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#121c2a",
+                        "gray-400": "#9CA3AF",
+                        "status-draft-bg": "#F3F4F6",
+                        "on-secondary-container": "#006f64",
+                        "on-surface-variant": "#464554",
+                        "tertiary": "#904900",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-fixed": "#301400",
+                        "gray-200": "#E5E7EB",
+                        "secondary-fixed": "#71f8e4",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "gray-50": "#F9FAFB",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-tertiary-container": "#fffbff",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#ebf1ff",
+                        "primary-hover": "#4F46E5",
+                        "primary-surface": "#EEF2FF",
+                        "on-background": "#121c2a",
+                        "status-reply-text": "#A855F7",
+                        "inverse-primary": "#c0c1ff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#005048",
+                        "surface-tint": "#494bd6",
+                        "surface-dim": "#d0daef",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-wizard": "1024px",
+                        "container-max-list": "1280px",
+                        "gap-section": "24px",
+                        "padding-card": "24px",
+                        "gap-form": "16px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-on-surface font-body-md overflow-hidden">
+<!-- Sidebar (Shared Component Anchor) -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-gray-200 bg-surface dark:bg-inverse-surface flex flex-col p-4 z-10">
+<div class="mb-8">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">SalesHub</h1>
+<p class="text-xs text-on-surface-variant opacity-70">Campaign Manager</p>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-primary dark:text-inverse-primary bg-primary-surface dark:bg-primary-container rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span class="">Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-gray-50 dark:hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="">Templates</span>
+</a>
+</nav>
+<div class="mt-auto pt-4">
+<button class="w-full bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-hover transition-all">
+                New Campaign
+            </button>
+</div>
+</aside>
+<!-- Top Navigation (Shared Component Anchor) -->
+<header class="flex justify-between items-center h-16 px-8 ml-64 bg-surface dark:bg-inverse-surface border-b border-gray-200 dark:border-outline-variant sticky top-0 z-40">
+<div class="flex items-center gap-8">
+<span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">Campaign Builder</span>
+<nav class="flex gap-6">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors" href="#">Drafts</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors" href="#">Scheduled</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors" href="#">Sent</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</div>
+<button class="bg-primary text-white px-6 py-1.5 rounded-lg font-bold hover:bg-primary-hover transition-opacity">Launch</button>
+<div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWqliKCxKVjc2tzqVfYw5NT1kBsE9XohfkzeJhnuo4yz0DFXWNsrO2cvPSngFXQr6NOrRbtuV6e8KbU4jC1K1nA6UofzPF9aFWVE2K1HvfpqdPJxxSUvO014Wh8WP7q7WIfXWTQzUupGlvZsINccrHQWZhOg-oK7P-hn4Zh1sjkPIIhMAFGfOLP1QNxFS_kk7nekOQGODaaR2Fd17gcdhxu-07XEdOzfY6oRzeUzYAnmkzRlOn0SQ86x28D4TYahWKIb-WXj6o030M"/>
+</div>
+</div>
+</header>
+<!-- Full Screen Composer Overlay (§4.9) -->
+<main class="fixed inset-0 z-50 bg-white flex flex-col shadow-xl animate-slide-up">
+<!-- Composer Top Bar -->
+<header class="h-16 border-b border-gray-200 flex items-center justify-between px-6 bg-white shrink-0">
+<div class="flex items-center gap-4 flex-1 max-w-3xl">
+<span class="text-gray-400 font-medium whitespace-nowrap">Subject:</span>
+<input class="w-full border-none focus:ring-0 text-headline-sm font-headline-sm placeholder-gray-300" placeholder="Enter campaign subject line..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-on-surface-variant hover:bg-gray-100 px-4 py-2 rounded-lg font-body-md transition-all-300">
+                    Cancel
+                </button>
+<button class="bg-gray-900 text-white px-5 py-2 rounded-lg font-body-lg flex items-center gap-2 hover:bg-black transition-all-300">
+<span class="">Save &amp; Close</span>
+</button>
+</div>
+</header>
+<!-- Main Composer Work Area -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Main Editor Area -->
+<div class="flex-1 flex flex-col bg-white overflow-y-auto composer-scrollbar">
+<!-- Editor Toolbar -->
+<div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-3 flex items-center gap-4 z-10">
+<div class="flex items-center border-r border-gray-200 pr-4 gap-1">
+<button class="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-all-300"><span class="material-symbols-outlined text-[20px]">format_bold</span></button>
+<button class="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-all-300"><span class="material-symbols-outlined text-[20px]">format_italic</span></button>
+<button class="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-all-300"><span class="material-symbols-outlined text-[20px]">format_underlined</span></button>
+</div>
+<div class="flex items-center border-r border-gray-200 pr-4 gap-1">
+<button class="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-all-300"><span class="material-symbols-outlined text-[20px]">format_list_bulleted</span></button>
+<button class="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-all-300"><span class="material-symbols-outlined text-[20px]">format_list_numbered</span></button>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-all-300"><span class="material-symbols-outlined text-[20px]">link</span></button>
+<button class="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-all-300"><span class="material-symbols-outlined text-[20px]">image</span></button>
+<button class="p-1.5 hover:bg-gray-100 rounded text-gray-600 transition-all-300"><span class="material-symbols-outlined text-[20px]">code</span></button>
+</div>
+<div class="ml-auto">
+<button class="text-xs text-primary font-bold px-2 py-1 rounded bg-primary-surface hover:bg-primary-fixed transition-all-300">HTML MODE</button>
+</div>
+</div>
+<!-- Content Area -->
+<div class="p-12 max-w-4xl mx-auto w-full min-h-full transition-all duration-300 ease-in-out" id="editor-container">
+<div class="editor-content font-body-md text-lg leading-relaxed text-gray-800 min-h-[400px] transition-all duration-300 ease-in-out" id="email-editor">
+<p class="mb-4">Hi <span class="bg-primary-surface border border-primary-border rounded px-1.5 font-data-mono text-primary text-[13px] mx-0.5">first_name</span>,</p>
+<p class="mb-4">I hope you're having a productive week. I'm reaching out because I noticed your recent activity on our platform and wanted to share some resources that might help you scale your current operations.</p>
+<p class="mb-4">Based on your portfolio at <span class="bg-primary-surface border border-primary-border rounded px-1.5 font-data-mono text-primary text-[13px] mx-0.5">portfolio_link</span>, I think our new automation tools could save you significantly more time on weekly reporting.</p>
+<p class="mb-4">Would you be open to a 15-minute chat? You can book a time directly on my calendar here: <span class="bg-primary-surface border border-primary-border rounded px-1.5 font-data-mono text-primary text-[13px] mx-0.5">meeting_link</span></p>
+<p class="mb-8">Best regards,</p>
+<p class="font-bold"><span class="bg-primary-surface border border-primary-border rounded px-1.5 font-data-mono text-primary text-[13px] mx-0.5">agent_name</span></p>
+<p class="text-gray-500 text-sm"><span class="bg-primary-surface border border-primary-border rounded px-1.5 font-data-mono text-primary text-[13px] mx-0.5">agent_email</span></p>
+</div>
+</div>
+</div>
+<!-- Right Rail (S6M-15) - Merge Tags -->
+<aside class="w-80 border-l border-gray-200 bg-gray-50 flex flex-col shrink-0">
+<div class="p-6 border-b border-gray-200 bg-white">
+<h3 class="font-headline-sm text-headline-sm text-gray-900 mb-1">Personalization</h3>
+<p class="text-xs text-gray-500">Drag and drop tags into the editor to insert dynamic customer data.</p>
+</div>
+<div class="p-6 space-y-6 overflow-y-auto composer-scrollbar">
+<div>
+<span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-3">Contact Fields</span>
+<div class="flex flex-wrap gap-2">
+<button class="bg-primary-surface text-primary border border-primary-border rounded-full px-2.5 py-1 text-xs font-medium hover:bg-primary-container cursor-pointer font-data-mono flex items-center gap-2 group transition-all-300">
+<span class="material-symbols-outlined text-xs text-gray-400 group-hover:text-primary transition-colors duration-300">drag_indicator</span>
+                                first_name
+                            </button>
+<button class="bg-primary-surface text-primary border border-primary-border rounded-full px-2.5 py-1 text-xs font-medium hover:bg-primary-container cursor-pointer font-data-mono flex items-center gap-2 group transition-all-300">
+<span class="material-symbols-outlined text-xs text-gray-400 group-hover:text-primary transition-colors duration-300">drag_indicator</span>
+                                last_name
+                            </button>
+<button class="bg-primary-surface text-primary border border-primary-border rounded-full px-2.5 py-1 text-xs font-medium hover:bg-primary-container cursor-pointer font-data-mono flex items-center gap-2 group transition-all-300">
+<span class="material-symbols-outlined text-xs text-gray-400 group-hover:text-primary transition-colors duration-300">drag_indicator</span>
+                                email
+                            </button>
+<button class="bg-primary-surface text-primary border border-primary-border rounded-full px-2.5 py-1 text-xs font-medium hover:bg-primary-container cursor-pointer font-data-mono flex items-center gap-2 group transition-all-300">
+<span class="material-symbols-outlined text-xs text-gray-400 group-hover:text-primary transition-colors duration-300">drag_indicator</span>
+                                phone
+                            </button>
+</div>
+</div>
+<div>
+<span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-3">Links &amp; Assets</span>
+<div class="flex flex-wrap gap-2">
+<button class="bg-primary-surface text-primary border border-primary-border rounded-full px-2.5 py-1 text-xs font-medium hover:bg-primary-container cursor-pointer font-data-mono flex items-center gap-2 group transition-all-300">
+<span class="material-symbols-outlined text-xs text-gray-400 group-hover:text-primary transition-colors duration-300">drag_indicator</span>
+                                meeting_link
+                            </button>
+<button class="bg-primary-surface text-primary border border-primary-border rounded-full px-2.5 py-1 text-xs font-medium hover:bg-primary-container cursor-pointer font-data-mono flex items-center gap-2 group transition-all-300">
+<span class="material-symbols-outlined text-xs text-gray-400 group-hover:text-primary transition-colors duration-300">drag_indicator</span>
+                                portfolio_link
+                            </button>
+</div>
+</div>
+<div>
+<span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-3">Sender Details</span>
+<div class="flex flex-wrap gap-2">
+<button class="bg-primary-surface text-primary border border-primary-border rounded-full px-2.5 py-1 text-xs font-medium hover:bg-primary-container cursor-pointer font-data-mono flex items-center gap-2 group transition-all-300">
+<span class="material-symbols-outlined text-xs text-gray-400 group-hover:text-primary transition-colors duration-300">drag_indicator</span>
+                                agent_name
+                            </button>
+<button class="bg-primary-surface text-primary border border-primary-border rounded-full px-2.5 py-1 text-xs font-medium hover:bg-primary-container cursor-pointer font-data-mono flex items-center gap-2 group transition-all-300">
+<span class="material-symbols-outlined text-xs text-gray-400 group-hover:text-primary transition-colors duration-300">drag_indicator</span>
+                                agent_email
+                            </button>
+</div>
+</div>
+<!-- AI Assistant Promo (Subtle) -->
+<div class="mt-8 p-4 bg-primary-surface rounded-xl border border-primary-border shadow-sm transition-all-300 hover:shadow-md">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary text-sm">auto_awesome</span>
+<span class="text-xs font-bold text-primary uppercase">Smart Suggest</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                            Need help writing? Use our AI assistant to generate copy based on your campaign goals.
+                        </p>
+<button class="mt-3 text-xs font-bold text-primary hover:underline transition-all-300">Launch Assistant</button>
+</div>
+</div>
+</aside>
+</div>
+<!-- Composer Bottom Bar -->
+<footer class="h-16 border-t border-gray-200 flex items-center justify-between px-8 bg-white shrink-0">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<span class="text-sm font-medium text-gray-700">Mobile Preview</span>
+<button class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" id="preview-toggle">
+<span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 translate-x-1" id="toggle-thumb"></span>
+</button>
+</div>
+<div class="h-4 w-[1px] bg-gray-200"></div>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary transition-all duration-300" type="checkbox"/>
+<span class="text-sm font-medium text-gray-700 group-hover:text-primary transition-colors duration-300">Save as Template</span>
+</label>
+<div class="flex items-center gap-2 ml-4">
+<span class="text-xs text-gray-400">Template Name:</span>
+<input class="text-xs border-gray-200 rounded px-2 py-1 focus:ring-primary focus:border-primary w-40 transition-all duration-300" placeholder="e.g. Welcome Email" type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4 text-xs text-gray-400">
+<div class="flex items-center gap-1.5 animate-pulse-subtle">
+<span class="material-symbols-outlined text-[14px]">cloud_done</span>
+<span class="">Auto-saved 2 mins ago</span>
+</div>
+<div class="h-4 w-[1px] bg-gray-200 mx-2"></div>
+<span class="">Characters: 432</span>
+</div>
+</footer>
+</main>
+<!-- Success Toast (Interaction Layer) -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 opacity-0 pointer-events-none transform translate-y-4 transition-all duration-300 z-[100]" id="toast">
+<span class="material-symbols-outlined text-status-success-text">check_circle</span>
+<span class="text-sm font-medium">Campaign saved successfully</span>
+</div>
+<script>
+        // Micro-interactions
+        const previewToggle = document.getElementById('preview-toggle');
+        const toggleThumb = document.getElementById('toggle-thumb');
+        const editor = document.getElementById('email-editor');
+        const editorContainer = document.getElementById('editor-container');
+        let isPreviewOn = false;
+
+        previewToggle.addEventListener('click', () => {
+            isPreviewOn = !isPreviewOn;
+            
+            // Toggle classes for visual transition
+            if (isPreviewOn) {
+                previewToggle.classList.replace('bg-gray-200', 'bg-primary');
+                toggleThumb.classList.replace('translate-x-1', 'translate-x-6');
+                
+                // Content area fade and resize
+                editorContainer.classList.replace('p-12', 'p-4');
+                editor.classList.add('max-w-[375px]', 'mx-auto', 'shadow-2xl', 'p-6', 'border', 'border-gray-100', 'rounded-xl');
+                editor.style.opacity = '0';
+                setTimeout(() => {
+                    editor.style.opacity = '1';
+                }, 50);
+            } else {
+                previewToggle.classList.replace('bg-primary', 'bg-gray-200');
+                toggleThumb.classList.replace('translate-x-6', 'translate-x-1');
+                
+                editorContainer.classList.replace('p-4', 'p-12');
+                editor.classList.remove('max-w-[375px]', 'mx-auto', 'shadow-2xl', 'p-6', 'border', 'border-gray-100', 'rounded-xl');
+                editor.style.opacity = '0';
+                setTimeout(() => {
+                    editor.style.opacity = '1';
+                }, 50);
+            }
+        });
+
+        // Save simulation
+        document.querySelector('button.bg-gray-900').addEventListener('click', () => {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 3000);
+        });
+
+        // Merge Chip Interaction (Visual only)
+        document.querySelectorAll('aside button.bg-primary-surface').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tag = btn.innerText.trim().replace('drag_indicator', '');
+                const span = document.createElement('span');
+                span.className = "bg-primary-surface border border-primary-border rounded px-1.5 font-data-mono text-primary text-[13px] mx-0.5 inline-block transition-all duration-300 hover:scale-105 cursor-default";
+                span.innerText = tag;
+                editor.appendChild(span);
+            });
+        });
+    </script>
+</body></html>

@@ -17,6 +17,8 @@ type Props = {
   onChange: (html: string) => void;
   placeholder?: string;
   minHeight?: string;
+  hideMergeTags?: boolean;
+  onInsertTag?: (insert: (tag: string) => void) => void;
 };
 
 function ToolbarButton({
@@ -46,7 +48,14 @@ function ToolbarButton({
   );
 }
 
-export function EmailRichEditor({ value, onChange, placeholder, minHeight = '180px' }: Props) {
+export function EmailRichEditor({
+  value,
+  onChange,
+  placeholder,
+  minHeight = '180px',
+  hideMergeTags = false,
+  onInsertTag,
+}: Props) {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -87,6 +96,12 @@ export function EmailRichEditor({ value, onChange, placeholder, minHeight = '180
     editor.chain().focus().insertContent(tag).run();
   };
 
+  useEffect(() => {
+    if (editor && onInsertTag) {
+      onInsertTag(insertTag);
+    }
+  }, [editor, onInsertTag]);
+
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
       <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 border-b border-gray-100 bg-gray-50">
@@ -122,16 +137,17 @@ export function EmailRichEditor({ value, onChange, placeholder, minHeight = '180
           Link
         </ToolbarButton>
         <span className="w-px h-5 bg-gray-200 mx-1" />
-        {MERGE_TAGS.map((m) => (
-          <button
-            key={m.tag}
-            type="button"
-            onClick={() => insertTag(m.tag)}
-            className="px-2 py-0.5 text-[11px] font-mono rounded bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100"
-          >
-            {m.tag}
-          </button>
-        ))}
+        {!hideMergeTags &&
+          MERGE_TAGS.map((m) => (
+            <button
+              key={m.tag}
+              type="button"
+              onClick={() => insertTag(m.tag)}
+              className="px-2 py-0.5 text-[11px] font-mono rounded bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100"
+            >
+              {m.tag}
+            </button>
+          ))}
       </div>
       <div style={{ minHeight }}>
         <EditorContent editor={editor} />

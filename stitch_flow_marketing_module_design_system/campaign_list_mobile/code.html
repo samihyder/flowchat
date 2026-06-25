@@ -1,0 +1,426 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Campaign Manager - SalesHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "status-success-text": "#16A34A",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "status-paused-bg": "#FEF9C3",
+                        "surface-variant": "#d9e3f7",
+                        "secondary-fixed-dim": "#4fdbc8",
+                        "primary-border": "#C7D2FE",
+                        "secondary": "#006b5f",
+                        "error-container": "#ffdad6",
+                        "status-scheduled-text": "#2563EB",
+                        "gray-900": "#111827",
+                        "surface": "#f9f9ff",
+                        "outline": "#767586",
+                        "on-secondary-fixed": "#00201c",
+                        "status-draft-text": "#4B5563",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#fffbff",
+                        "secondary-container": "#6df5e1",
+                        "primary-fixed": "#e1e0ff",
+                        "primary-container": "#6063ee",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "gray-500": "#6B7280",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#e6eeff",
+                        "status-paused-text": "#CA8A04",
+                        "status-danger-text": "#DC2626",
+                        "status-danger-bg": "#FEE2E2",
+                        "background": "#f9f9ff",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#273140",
+                        "surface-container-low": "#eff3ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-primary-fixed": "#07006c",
+                        "outline-variant": "#c7c4d7",
+                        "surface-container-highest": "#d9e3f7",
+                        "surface-container-high": "#dee9fd",
+                        "status-success-bg": "#DCFCE7",
+                        "primary": "#4648d4",
+                        "tertiary-container": "#b55d00",
+                        "status-bounced-text": "#D97706",
+                        "status-bounced-bg": "#FEF3C7",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#121c2a",
+                        "gray-400": "#9CA3AF",
+                        "status-draft-bg": "#F3F4F6",
+                        "on-secondary-container": "#006f64",
+                        "on-surface-variant": "#464554",
+                        "tertiary": "#904900",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-fixed": "#301400",
+                        "gray-200": "#E5E7EB",
+                        "secondary-fixed": "#71f8e4",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "gray-50": "#F9FAFB",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-tertiary-container": "#fffbff",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#ebf1ff",
+                        "primary-hover": "#4F46E5",
+                        "primary-surface": "#EEF2FF",
+                        "on-background": "#121c2a",
+                        "status-reply-text": "#A855F7",
+                        "inverse-primary": "#c0c1ff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#005048",
+                        "surface-tint": "#494bd6",
+                        "surface-dim": "#d0daef",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-wizard": "1024px",
+                        "container-max-list": "1280px",
+                        "gap-section": "24px",
+                        "padding-card": "24px",
+                        "gap-form": "16px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Desktop Side Navigation -->
+<aside class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 border-r border-gray-200 dark:border-outline-variant bg-surface p-4 z-50">
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">SalesHub</h1>
+<p class="text-[10px] font-label-caps text-on-surface-variant">Campaign Manager</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-4 py-2 text-primary bg-primary-surface rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+<span class="font-body-md text-body-md">Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-gray-50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Templates</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-gray-200">
+<div class="flex items-center gap-3 px-2 py-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Professional portrait of a middle-aged sales agent with a warm smile, wearing a modern navy blazer in a high-key lit office environment. The image uses a soft, corporate photography style with shallow depth of field, highlighting the professional yet approachable brand identity of SalesHub." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEnzAscXHFwkg7yxVHRCep1wS5LbQFSG3HyHjIBDQ4Aq336a1bhBJha_WOWrF7I2lZxkn-WOigmQ7_pih7isx-pnVxsO8N2rIK3Hp-ImF6kaqmjkGVnNUb0e0LvO6qCNZHvB3_674VwDTed5ybbc9IMXUCzCBsnfXhbOmVdvcOeCt5vpSYHMTXkuNxa-BnF93uBWBq9EJE0z136hgUb9sObuhB-E-ogVImbftCSLcouffjpg3E0ZFwimGxtqGEaz99HS3Ujl4nLyx2">
+<div class="flex-1 overflow-hidden">
+<p class="font-body-lg text-body-lg truncate">Sales Agent Profile</p>
+<p class="text-[12px] text-gray-500 truncate">Account Settings</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">more_vert</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 min-h-screen pb-20 md:pb-8">
+<!-- Mobile & Desktop Header Navigation -->
+<header class="flex justify-between items-center h-16 px-4 md:px-8 bg-surface border-b border-gray-200 dark:border-outline-variant sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<span class="md:hidden material-symbols-outlined text-on-surface-variant">menu</span>
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary">Campaign Builder</h2>
+</div>
+<!-- Tablet/Desktop Horizontal Nav Cluster -->
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-primary border-b-2 border-primary pb-1 font-bold font-body-md text-body-md" href="#">Drafts</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">Scheduled</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md" href="#">Sent</a>
+</nav>
+<div class="flex items-center gap-2 md:gap-4">
+<div class="hidden sm:flex items-center bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5">
+<span class="material-symbols-outlined text-gray-400 text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-32 xl:w-48" placeholder="Search..." type="text">
+</div>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-gray-50 rounded-full transition-opacity duration-150">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-gray-50 rounded-full transition-opacity duration-150">settings</button>
+<button class="hidden md:flex items-center gap-2 bg-primary text-on-primary px-4 py-2 rounded-lg font-bold font-body-md text-body-md hover:bg-primary-hover transition-all">
+                    Launch
+                </button>
+</div>
+</header>
+<!-- Dynamic Content Area -->
+<div class="max-w-container-max-list mx-auto px-4 py-6 md:px-8 md:py-8">
+<!-- Page Title & Stats Overlay -->
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-gray-900 mb-2">Campaigns</h1>
+<p class="text-on-surface-variant font-body-md">Manage your outreach sequences and track performance.</p>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-lg font-body-md text-body-md hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+                        Filter
+                    </button>
+<button class="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-lg font-body-md text-body-md hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]">sort</span>
+                        Sort
+                    </button>
+</div>
+</div>
+<!-- Campaign List (Asymmetric Grid Design) -->
+<div class="space-y-4"><div class="flex items-center justify-center py-2 md:hidden">
+    <p class="text-label-caps font-label-caps text-gray-400 uppercase flex items-center gap-1">
+        <span class="material-symbols-outlined text-[14px]">sync</span>
+        Last updated: Just now
+    </p>
+</div>
+<!-- Campaign Card: Success State -->
+<div class="group bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm hover:border-primary-border transition-all duration-200 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+<div class="flex-1">
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-center gap-3">
+<h3 class="font-headline-sm text-headline-sm text-gray-900">Q4 Enterprise Expansion</h3>
+<span class="bg-status-success-bg text-status-success-text px-3 py-1 rounded-full font-label-caps text-label-caps uppercase tracking-wider">Active</span>
+</div>
+<button class="md:hidden material-symbols-outlined text-gray-400">more_horiz</button>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-1 mb-4">Targeting Fortune 500 decision makers in the FinTech sector.</p>
+<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gray-400 text-[18px]">group</span>
+<span class="font-data-mono text-data-mono text-gray-900">1,240 Recipients</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gray-400 text-[18px]">near_me</span>
+<span class="font-data-mono text-data-mono text-gray-900">85% Open Rate</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gray-400 text-[18px]">chat_bubble</span>
+<span class="font-data-mono text-data-mono text-gray-900">12 Replies</span>
+</div>
+<div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-gray-400 text-[18px]">schedule</span>
+    <span class="font-data-mono text-data-mono text-primary">Next: Today, 2:00 PM</span>
+</div></div>
+</div>
+<div class="hidden md:flex items-center gap-3 pl-6 border-l border-gray-100">
+<div class="text-right mr-4">
+<p class="text-label-caps font-label-caps text-gray-400 uppercase">Last Updated</p>
+<p class="text-body-md font-body-md font-bold">2h ago</p>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-gray-50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-gray-50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+</div>
+</div>
+<!-- Campaign Card: Scheduled State -->
+<div class="group bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm hover:border-primary-border transition-all duration-200 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+<div class="flex-1">
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-center gap-3">
+<h3 class="font-headline-sm text-headline-sm text-gray-900">TechConference 2024 Follow-up</h3>
+<span class="bg-status-scheduled-bg text-status-scheduled-text px-3 py-1 rounded-full font-label-caps text-label-caps uppercase tracking-wider">Scheduled</span>
+</div>
+<button class="md:hidden material-symbols-outlined text-gray-400">more_horiz</button>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-1 mb-4">Post-event engagement sequence for regional attendees.</p>
+<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gray-400 text-[18px]">group</span>
+<span class="font-data-mono text-data-mono text-gray-900">458 Recipients</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gray-400 text-[18px]">event</span>
+<span class="font-data-mono text-data-mono text-gray-900 text-status-scheduled-text">Starts Oct 24, 09:00 AM</span>
+</div>
+</div>
+</div>
+<div class="hidden md:flex items-center gap-3 pl-6 border-l border-gray-100">
+<div class="text-right mr-4">
+<p class="text-label-caps font-label-caps text-gray-400 uppercase">Wait Time</p>
+<p class="text-body-md font-body-md font-bold">3 Days</p>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-gray-50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-gray-50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">schedule</span>
+</button>
+</div>
+</div>
+<!-- Campaign Card: Draft State (Asymmetric Variant) -->
+<div class="group bg-surface-container-low border border-dashed border-gray-300 rounded-xl p-4 md:p-6 transition-all duration-200 flex flex-col md:flex-row md:items-center gap-4 md:gap-6 opacity-80 hover:opacity-100">
+<div class="flex-1">
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-center gap-3">
+<h3 class="font-headline-sm text-headline-sm text-gray-900">Holiday Partner Rewards</h3>
+<span class="bg-status-draft-bg text-status-draft-text px-3 py-1 rounded-full font-label-caps text-label-caps uppercase tracking-wider">Draft</span>
+</div>
+<button class="md:hidden material-symbols-outlined text-gray-400">more_horiz</button>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-1 mb-4">Incomplete setup. Missing email body for Step 3.</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-danger-text text-[18px]">warning</span>
+<span class="font-data-mono text-data-mono text-status-danger-text">Step 3 requires attention</span>
+</div>
+</div>
+<div class="hidden md:flex items-center gap-3 pl-6 border-l border-gray-200">
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg font-body-md text-body-md hover:bg-primary-hover transition-all">
+                            Resume
+                        </button>
+<button class="p-2 text-on-surface-variant hover:bg-gray-50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+<!-- Campaign Card: Paused State -->
+<div class="group bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm hover:border-primary-border transition-all duration-200 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+<div class="flex-1">
+<div class="flex items-start justify-between mb-2">
+<div class="flex items-center gap-3">
+<h3 class="font-headline-sm text-headline-sm text-gray-900">SaaS Renewal Drip</h3>
+<span class="bg-status-paused-bg text-status-paused-text px-3 py-1 rounded-full font-label-caps text-label-caps uppercase tracking-wider">Paused</span>
+</div>
+<button class="md:hidden material-symbols-outlined text-gray-400">more_horiz</button>
+</div>
+<p class="text-on-surface-variant font-body-md line-clamp-1 mb-4">Automated renewals for Tier 2 customers.</p>
+<div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gray-400 text-[18px]">group</span>
+<span class="font-data-mono text-data-mono text-gray-900">2.1k Recipients</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-paused-text text-[18px]">pause_circle</span>
+<span class="font-data-mono text-data-mono text-status-paused-text">Paused by admin</span>
+</div>
+<div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-gray-400 text-[18px]">schedule</span>
+    <span class="font-data-mono text-data-mono text-gray-500">Next: On Resume</span>
+</div></div>
+</div>
+<div class="hidden md:flex items-center gap-3 pl-6 border-l border-gray-100">
+<button class="p-2 text-status-success-text hover:bg-status-success-bg rounded-lg transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-gray-50 rounded-lg transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Mobile Actions / Mobile FAB Logic -->
+<div class="md:hidden fixed bottom-16 left-0 right-0 p-4 pointer-events-none z-50">
+<div class="flex justify-end pointer-events-auto">
+<button class="w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-xl">
+<span class="material-symbols-outlined text-[28px]" data-icon="add">add</span>
+</button>
+</div>
+</div>
+<!-- Desktop Footer Section (Shared Component) -->
+<footer class="hidden md:flex items-center justify-between px-8 bg-surface h-16 border-t border-gray-200 dark:border-outline-variant sticky bottom-0 z-40">
+<p class="font-label-caps text-label-caps text-gray-500">© 2024 SalesHub Automation</p>
+<div class="flex gap-6">
+<a class="text-gray-500 hover:text-primary transition-colors font-label-caps text-label-caps" href="#">Help Center</a>
+<a class="text-gray-500 hover:text-primary transition-colors font-label-caps text-label-caps" href="#">Privacy Policy</a>
+</div>
+</footer>
+</main>
+<!-- Mobile Bottom Navigation Bar -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-200 h-16 flex items-center justify-around z-50">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">mail</span>
+<span class="text-[10px] font-bold">Campaigns</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="text-[10px]">Templates</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px]">Analytics</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="text-[10px]">Profile</span>
+</a>
+</nav>
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none opacity-40">
+<div class="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-primary-container rounded-full blur-[100px] opacity-20"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[300px] h-[300px] bg-secondary-container rounded-full blur-[100px] opacity-20"></div>
+</div>
+<script>
+        // Simple Interaction logic for Mobile UI focus
+        document.querySelectorAll('.group').forEach(card => {
+            card.addEventListener('click', () => {
+                // In a real app, this would navigate to details
+                console.log('Campaign card selected');
+            });
+        });
+
+        // Search Bar Micro-interaction
+        const searchInput = document.querySelector('input[type="text"]');
+        if (searchInput) {
+            searchInput.addEventListener('focus', () => {
+                searchInput.parentElement.classList.add('ring-2', 'ring-primary-border');
+            });
+            searchInput.addEventListener('blur', () => {
+                searchInput.parentElement.classList.remove('ring-2', 'ring-primary-border');
+            });
+        }
+    </script>
+
+
+</body></html>

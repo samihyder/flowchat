@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Campaign Builder - Review &amp; Launch</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .step-active-ring {
+            box-shadow: 0 0 0 2px #C7D2FE;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f9f9ff;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c7c4d7;
+            border-radius: 4px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-surface": "#EEF2FF",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "inverse-surface": "#273140",
+                        "surface-dim": "#d0daef",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "primary-fixed": "#e1e0ff",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#fffbff",
+                        "gray-500": "#6B7280",
+                        "surface": "#f9f9ff",
+                        "status-danger-bg": "#FEE2E2",
+                        "inverse-on-surface": "#ebf1ff",
+                        "status-bounced-text": "#D97706",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-secondary": "#ffffff",
+                        "gray-900": "#111827",
+                        "status-paused-bg": "#FEF9C3",
+                        "surface-container-low": "#eff3ff",
+                        "outline-variant": "#c7c4d7",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "error-container": "#ffdad6",
+                        "gray-50": "#F9FAFB",
+                        "surface-tint": "#494bd6",
+                        "primary-container": "#6063ee",
+                        "tertiary-fixed": "#ffdcc5",
+                        "surface-variant": "#d9e3f7",
+                        "secondary-fixed-dim": "#4fdbc8",
+                        "status-scheduled-text": "#2563EB",
+                        "inverse-primary": "#c0c1ff",
+                        "outline": "#767586",
+                        "primary": "#4648d4",
+                        "tertiary-container": "#b55d00",
+                        "primary-hover": "#4F46E5",
+                        "on-surface": "#121c2a",
+                        "secondary-container": "#6df5e1",
+                        "on-secondary-fixed-variant": "#005048",
+                        "surface-bright": "#f9f9ff",
+                        "gray-400": "#9CA3AF",
+                        "status-reply-text": "#A855F7",
+                        "status-bounced-bg": "#FEF3C7",
+                        "surface-container-high": "#dee9fd",
+                        "status-danger-text": "#DC2626",
+                        "on-primary-fixed": "#07006c",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#00201c",
+                        "primary-border": "#C7D2FE",
+                        "tertiary": "#904900",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f9f9ff",
+                        "surface-container-highest": "#d9e3f7",
+                        "secondary": "#006b5f",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "on-surface-variant": "#464554",
+                        "status-success-bg": "#DCFCE7",
+                        "status-paused-text": "#CA8A04",
+                        "status-draft-bg": "#F3F4F6",
+                        "secondary-fixed": "#71f8e4",
+                        "status-draft-text": "#4B5563",
+                        "on-tertiary-fixed": "#301400",
+                        "status-success-text": "#16A34A",
+                        "on-tertiary-container": "#fffbff",
+                        "on-background": "#121c2a",
+                        "surface-container": "#e6eeff",
+                        "on-secondary-container": "#006f64",
+                        "gray-200": "#E5E7EB"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gap-section": "24px",
+                        "gap-form": "16px",
+                        "padding-card": "24px",
+                        "container-max-list": "1280px",
+                        "container-max-wizard": "1024px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen">
+<!-- Side Navigation Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface dark:bg-inverse-surface border-r border-gray-200 dark:border-outline-variant flex flex-col p-4 z-50">
+<div class="mb-8 px-2">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">SalesHub</h1>
+<p class="text-xs text-on-surface-variant opacity-70">Campaign Manager</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-2 text-primary dark:text-inverse-primary bg-primary-surface dark:bg-primary-container rounded-lg font-bold transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span>Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-gray-50 dark:hover:bg-surface-container-low transition-colors transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Templates</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-gray-100">
+<div class="flex items-center gap-3 px-2">
+<img class="w-10 h-10 rounded-full bg-gray-200 object-cover" data-alt="Professional studio portrait of a senior sales executive with a friendly, confident expression. The person is wearing a sharp charcoal blazer over a crisp white shirt. The background is a soft, blurred corporate office setting with warm, ambient lighting that suggests a modern, high-end workspace. Professional photography style with shallow depth of field and high clarity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYthPzM4eycDEUoiv7Xd0zjwVyK6CrlffiFbatR81BVvQ1NcmOz7uo4iPaQkQuNUwpu3oD_y9Tca7uv9Q5jPPxjXlEuhsn22Gj4wDV909RYTs1HuyDKmkFNbe6MDhvUZ-yX9o9fDlPThKb3-nTqWp_8FIt4EBTJqoIWEdZCrw1UvRIBBX9fxZNTKh13DDeC1WwDUl_MrSyV0Z4TWzhyLVKS20YIgffjLf56nUTnaX5N13ziH7htZJypYV_qOPAd9nBqvobpAxnWYFz"/>
+<div class="overflow-hidden">
+<p class="text-sm font-bold truncate">Admin User</p>
+<p class="text-xs text-on-surface-variant truncate">admin@saleshub.com</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 flex flex-col min-h-screen pb-16">
+<!-- Top Navigation Bar -->
+<header class="flex justify-between items-center h-16 px-8 sticky top-0 z-40 bg-surface dark:bg-inverse-surface border-b border-gray-200 dark:border-outline-variant">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">Campaign Builder</h2>
+<div class="px-2 py-0.5 bg-primary-surface border border-primary-border rounded font-data-mono text-data-mono text-primary uppercase">
+                    ID: S6M-LAUNCH-04
+                </div>
+</div>
+<div class="flex items-center gap-6">
+<nav class="flex gap-6 items-center">
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors transition-opacity duration-150" href="#">Drafts</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors transition-opacity duration-150" href="#">Scheduled</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors transition-opacity duration-150" href="#">Sent</a>
+</nav>
+<div class="h-6 w-px bg-gray-200"></div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">settings</button>
+<button class="bg-primary hover:bg-primary-hover text-on-primary px-4 py-1.5 rounded-lg text-sm font-bold transition-all">Launch</button>
+</div>
+</div>
+</header>
+<!-- Wizard Stepper (Horizontal) -->
+<div class="bg-white px-8 py-6 border-b border-gray-100 shadow-sm">
+<div class="max-w-container-max-wizard mx-auto">
+<div class="flex items-center justify-between relative">
+<!-- Progress Line Background -->
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-gray-100 -translate-y-1/2 -z-10"></div>
+<!-- Progress Line Active -->
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-primary -translate-y-1/2 -z-10 origin-left scale-x-100 transition-transform duration-500"></div>
+<!-- Step 1 -->
+<div class="flex flex-col items-center gap-2 bg-white px-4">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-xs font-bold text-primary">Recipients</span>
+</div>
+<!-- Step 2 -->
+<div class="flex flex-col items-center gap-2 bg-white px-4">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-xs font-bold text-primary">Sequence</span>
+</div>
+<!-- Step 3 -->
+<div class="flex flex-col items-center gap-2 bg-white px-4">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold">
+<span class="material-symbols-outlined text-sm">check</span>
+</div>
+<span class="text-xs font-bold text-primary">Settings</span>
+</div>
+<!-- Step 4 Active -->
+<div class="flex flex-col items-center gap-2 bg-white px-4">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold step-active-ring">
+                            4
+                        </div>
+<span class="text-xs font-bold text-primary">Review &amp; Launch</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Scrollable Content Canvas -->
+<div class="flex-1 p-8 overflow-y-auto">
+<div class="max-w-container-max-wizard mx-auto space-y-gap-section">
+<header class="mb-6">
+<h3 class="font-headline-lg text-headline-lg text-on-surface">Final Campaign Review</h3>
+<p class="text-on-surface-variant">Verify your campaign configuration and health checks before deployment.</p>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gap-section">
+<!-- Pre-flight Check Table (Bento Left) -->
+<div class="md:col-span-2 space-y-gap-section">
+<section class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+<div class="px-padding-card py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+<h4 class="font-body-lg text-body-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">fact_check</span>
+                                    Pre-flight Check
+                                </h4>
+<span class="bg-status-success-bg text-status-success-text px-3 py-1 rounded-full text-xs font-bold">READY</span>
+</div>
+<div class="p-0">
+<table class="w-full text-left">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant">Verification Item</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant">Details</th>
+<th class="px-6 py-3 font-label-caps text-label-caps text-on-surface-variant text-right">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 font-bold text-sm">Provider Health</td>
+<td class="px-6 py-4 text-sm text-on-surface-variant">SendGrid &amp; Postmark active</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-status-success-text" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 font-bold text-sm">Recipients Validated</td>
+<td class="px-6 py-4 text-sm text-on-surface-variant">1,240 records checked</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-status-success-text" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 font-bold text-sm">Test Send Succeeded</td>
+<td class="px-6 py-4 text-sm text-on-surface-variant">Admin confirmed delivery</td>
+<td class="px-6 py-4 text-right">
+<span class="material-symbols-outlined text-status-success-text" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Campaign Summary Table -->
+<section class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+<div class="px-padding-card py-4 bg-gray-50 border-b border-gray-200">
+<h4 class="font-body-lg text-body-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">assessment</span>
+                                    Campaign Summary
+                                </h4>
+</div>
+<div class="p-padding-card grid grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-on-surface-variant">RECIPIENT COUNT</p>
+<p class="text-2xl font-bold">1,240</p>
+<p class="text-xs text-status-success-text flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">verified</span> 100% Reachable
+                                    </p>
+</div>
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-on-surface-variant">SEQUENCE STEPS</p>
+<p class="text-2xl font-bold">5 Steps</p>
+<p class="text-xs text-on-surface-variant">Over 14 days duration</p>
+</div>
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-on-surface-variant">FIRST SEND DATE</p>
+<p class="text-2xl font-bold">Oct 24, 2024</p>
+<p class="text-xs text-on-surface-variant">09:00 AM EST</p>
+</div>
+</div>
+</section>
+</div>
+<!-- Test Send Card (Bento Right) -->
+<div class="space-y-gap-section">
+<section class="bg-white rounded-xl border border-gray-200 shadow-sm p-padding-card relative overflow-hidden h-full flex flex-col">
+<div class="mb-4">
+<h4 class="font-body-lg text-body-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">send</span>
+                                    Test Send
+                                </h4>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center text-center p-4">
+<div class="w-16 h-16 rounded-full bg-primary-surface flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-primary text-3xl">mark_email_read</span>
+</div>
+<p class="font-bold text-on-surface">Last test succeeded</p>
+<p class="text-sm text-on-surface-variant mb-6">Sent 5 minutes ago to admin@saleshub.com</p>
+<button class="w-full py-2 border border-primary-border text-primary font-bold rounded-lg hover:bg-primary-surface transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                                    Send Another Test
+                                </button>
+</div>
+<div class="mt-6 pt-6 border-t border-gray-100">
+<div class="bg-primary-surface rounded-lg p-3 flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-sm mt-0.5">info</span>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                                        Test sends include dynamic field replacements to ensure your merge chips function as expected.
+                                    </p>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Alert Banner -->
+<div class="bg-status-success-bg border-l-4 border-status-success-text p-4 rounded-r-lg flex items-center gap-4">
+<span class="material-symbols-outlined text-status-success-text">lock_open</span>
+<div>
+<p class="font-bold text-on-surface">Admin Launch Enabled</p>
+<p class="text-sm text-on-surface-variant">Full system permissions verified. Your campaign is optimized for high-volume delivery.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Shell (Sticky Wizard Navigation) -->
+<footer class="h-16 fixed bottom-0 left-64 right-0 bg-surface border-t border-gray-200 flex items-center justify-between px-8 z-40">
+<div class="flex items-center gap-4">
+<button class="px-4 py-2 text-on-surface-variant hover:text-primary transition-colors flex items-center gap-2 font-bold">
+<span class="material-symbols-outlined">arrow_back</span>
+                    Back to Settings
+                </button>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-xs font-label-caps text-on-surface-variant uppercase mr-2">© 2024 SalesHub Automation</span>
+<button class="px-6 py-2 bg-primary hover:bg-primary-hover text-on-primary rounded-lg font-bold shadow-sm transition-all transform hover:scale-[1.02] flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+                    Launch Campaign
+                </button>
+</div>
+</footer>
+</main>
+<!-- Success Modal Interaction Overlay (Hidden by Default) -->
+<div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-[100] hidden items-center justify-center p-4" id="successModal">
+<div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center animate-in fade-in zoom-in duration-300">
+<div class="w-20 h-20 bg-status-success-bg text-status-success-text rounded-full flex items-center justify-center mx-auto mb-6">
+<span class="material-symbols-outlined text-5xl">auto_awesome</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">Campaign Launched!</h3>
+<p class="text-on-surface-variant mb-8">The initial blast for S6M-LAUNCH-04 is currently being processed and will begin in 4 minutes.</p>
+<button class="w-full bg-primary text-on-primary py-3 rounded-xl font-bold hover:bg-primary-hover transition-colors" onclick="document.getElementById('successModal').classList.add('hidden')">
+                Go to Dashboard
+            </button>
+</div>
+</div>
+<script>
+        // Simple Micro-interaction for Launch Button
+        const launchBtn = document.querySelector('footer button.bg-primary');
+        launchBtn.addEventListener('click', () => {
+            launchBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Launching...';
+            launchBtn.disabled = true;
+            launchBtn.classList.add('opacity-80');
+            
+            setTimeout(() => {
+                document.getElementById('successModal').classList.remove('hidden');
+                document.getElementById('successModal').classList.add('flex');
+                launchBtn.innerHTML = '<span class="material-symbols-outlined" style="font-variation-settings: \'FILL\' 1;">rocket_launch</span> Launch Campaign';
+                launchBtn.disabled = false;
+                launchBtn.classList.remove('opacity-80');
+            }, 1500);
+        });
+    </script>
+</body></html>

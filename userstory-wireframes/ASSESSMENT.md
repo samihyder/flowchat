@@ -14,11 +14,11 @@
 |--------|-------|
 | Wireframe screens | **30** |
 | Sprints covered | **6** (S1–S6) + **S7B** stories in workbook |
-| User stories (workbook) | **104** (S1–S6 + S7B BYOK) |
-| Story points (workbook) | **491** |
+| User stories (workbook) | **148** (S1–S6 + S6M + S7B) |
+| Story points (workbook) | **676** |
 | **Wireframe coverage of UI-facing stories** | **✅ Complete** — every developed product module has a wireframe |
-| **Blocking wireframe gaps** | **None** |
-| **Recommended new wireframes** | **2** (email marketing settings, pending approval) |
+| **Blocking wireframe gaps** | **None for shipped S1–S6** · S6M spec has no HTML mocks (by design) |
+| **Recommended new wireframes** | **S6M campaign wizard** — see [marketing-module-screens.md](../docs/marketing-module-screens.md) (spec only; HTML mocks not started) |
 | **Built routes without wireframes** | **5** (acceptable: OAuth callback, public compliance pages) |
 
 ### Verdict
@@ -166,7 +166,7 @@ No dedicated screens. Stories S1-1–S1-3, S1-7–S1-9 are backend/CI/deploy. UI
 | 25 | `25-marketing-templates.html` | Email templates | S6-12, S6-13 | `/dashboard/marketing/templates` |
 | 26 | `26-marketing-campaigns.html` | Campaigns | S6-14, S6-22, S6-23 | `/dashboard/marketing/campaigns` + `/new` |
 | 27 | `27-marketing-campaign-analytics.html` | Campaign analytics | S6-18, S6-19 | `/dashboard/marketing/campaigns/[id]` |
-| 28 | `28-marketing-workflows.html` | Workflows | S6-15, S6-16, S6-17, S6-21 | `/dashboard/marketing/workflows` |
+| 28 | `28-marketing-workflows.html` | ~~Workflows~~ **Deprecated** | S6-15, S6-16 *(superseded by S6M)* | `/dashboard/marketing/workflows` — retire at S6M-35 |
 
 **S6 gaps:**
 
@@ -177,6 +177,15 @@ No dedicated screens. Stories S1-1–S1-3, S1-7–S1-9 are backend/CI/deploy. UI
 | S6-17 Unsubscribe | ✅ `/unsubscribe/[token]` | ❌ | Public page — optional wireframe |
 | S6-18 Resend webhooks | ✅ API `/api/webhooks/resend` | ❌ | Backend — no screen needed |
 | S6-21 Double opt-in | ✅ `/confirm-subscribe/[token]` | ❌ | Public page — optional wireframe |
+
+**S6M (planned) — wireframes not started:**
+
+| Spec | Doc | Wireframe status |
+|------|-----|------------------|
+| 4-step campaign wizard, composer, stats | `docs/marketing-module-design.md` + `docs/marketing-module-screens.md` | ❌ Spec complete; HTML mocks deferred |
+| Screens 26–27 | Pre-S6M broadcast model | ⚠️ Stale vs S6M; replace when mocking S6M |
+
+Legacy screens `26-marketing-campaigns.html`, `27-marketing-campaign-analytics.html`, and `28-marketing-workflows.html` reflect **shipped S6** UI, not the locked S6M redesign. `29-settings-email-marketing.html` aligns with S6M pre-flight (S6M-24).
 
 ---
 
@@ -409,10 +418,14 @@ Legend: **●** dedicated wireframe · **◐** composite / embedded · **○** b
 
 ## Conclusion
 
-**The wireframe set is complete for all developed S1–S6 product modules.** Thirty screens map to UI-facing user stories via dedicated or composite layouts. Minor gaps: email marketing settings wireframe, enrichment review UI on contact profile (S6-28), and public unsubscribe/confirm pages.
+**The wireframe set covers all developed S1–S6 product modules** as originally shipped. Thirty screens map to UI-facing user stories via dedicated or composite layouts.
 
-**No sprint module is missing a wireframe.** Proceeding with UI implementation against existing wireframes is approved; add wireframe `29` for email marketing settings if design review requires full parity.
+**S6M Marketing Campaign Redesign** is fully specified in `docs/marketing-module-screens.md` but **has no HTML wireframes yet** (intentionally deferred). Screens 26–28 are **stale** relative to S6M; screen 28 (workflows) is **deprecated**.
+
+Minor gaps: enrichment review UI on contact profile (S6-28), public unsubscribe/confirm pages.
+
+**For S6M implementation:** use [marketing-module-design.md](../docs/marketing-module-design.md) (visual) and [marketing-module-screens.md](../docs/marketing-module-screens.md) (behaviour) — not the legacy marketing wireframes.
 
 ---
 
-*Generated for Mutex Systems / FlowChat · See also `docs/sprints.md`, `docs/MUTEX_SYSTEMS_SETUP.md`*
+*Generated for Mutex Systems / FlowChat · See also `docs/sprints.md`, `docs/MUTEX_SYSTEMS_SETUP.md`, `docs/marketing-module-screens.md`*

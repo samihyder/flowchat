@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Campaign Management - SalesHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#d0daef",
+                    "error": "#ba1a1a",
+                    "surface-tint": "#494bd6",
+                    "on-secondary-fixed-variant": "#005048",
+                    "on-primary": "#ffffff",
+                    "inverse-primary": "#c0c1ff",
+                    "status-reply-text": "#A855F7",
+                    "on-background": "#121c2a",
+                    "primary-surface": "#EEF2FF",
+                    "primary-hover": "#4F46E5",
+                    "inverse-on-surface": "#ebf1ff",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed": "#ffdcc5",
+                    "on-tertiary-container": "#fffbff",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "gray-50": "#F9FAFB",
+                    "status-scheduled-bg": "#DBEAFE",
+                    "secondary-fixed": "#71f8e4",
+                    "gray-200": "#E5E7EB",
+                    "on-tertiary-fixed": "#301400",
+                    "surface-bright": "#f9f9ff",
+                    "tertiary": "#904900",
+                    "on-surface-variant": "#464554",
+                    "status-draft-bg": "#F3F4F6",
+                    "on-secondary-container": "#006f64",
+                    "on-surface": "#121c2a",
+                    "gray-400": "#9CA3AF",
+                    "status-bounced-bg": "#FEF3C7",
+                    "on-error-container": "#93000a",
+                    "tertiary-container": "#b55d00",
+                    "status-bounced-text": "#D97706",
+                    "status-success-bg": "#DCFCE7",
+                    "primary": "#4648d4",
+                    "surface-container-highest": "#d9e3f7",
+                    "surface-container-high": "#dee9fd",
+                    "outline-variant": "#c7c4d7",
+                    "on-primary-fixed": "#07006c",
+                    "surface-container-low": "#eff3ff",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "inverse-surface": "#273140",
+                    "on-tertiary": "#ffffff",
+                    "background": "#f9f9ff",
+                    "status-danger-text": "#DC2626",
+                    "status-danger-bg": "#FEE2E2",
+                    "status-paused-text": "#CA8A04",
+                    "surface-container": "#e6eeff",
+                    "surface-container-lowest": "#ffffff",
+                    "gray-500": "#6B7280",
+                    "on-tertiary-fixed-variant": "#703700",
+                    "primary-container": "#6063ee",
+                    "primary-fixed": "#e1e0ff",
+                    "secondary-container": "#6df5e1",
+                    "on-primary-container": "#fffbff",
+                    "status-draft-text": "#4B5563",
+                    "on-error": "#ffffff",
+                    "on-secondary-fixed": "#00201c",
+                    "outline": "#767586",
+                    "surface": "#f9f9ff",
+                    "status-scheduled-text": "#2563EB",
+                    "gray-900": "#111827",
+                    "error-container": "#ffdad6",
+                    "secondary": "#006b5f",
+                    "primary-border": "#C7D2FE",
+                    "secondary-fixed-dim": "#4fdbc8",
+                    "surface-variant": "#d9e3f7",
+                    "status-paused-bg": "#FEF9C3",
+                    "status-success-text": "#16A34A",
+                    "primary-fixed-dim": "#c0c1ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max-list": "1280px",
+                    "container-max-wizard": "1024px",
+                    "padding-card": "24px",
+                    "gap-form": "16px",
+                    "gap-section": "24px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "label-caps": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: all 200ms ease-out; }
+        .backdrop-enter { opacity: 0; }
+        .backdrop-enter-active { opacity: 1; transition: opacity 200ms ease-out; }
+    </style>
+</head>
+<body class="bg-gray-50 font-body-md text-on-surface antialiased">
+<!-- Global Side Navigation Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-gray-200 bg-surface dark:bg-inverse-surface flex flex-col p-4 z-30">
+<div class="mb-8 px-2">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">SalesHub</h1>
+<p class="text-xs text-on-surface-variant opacity-70">Campaign Manager</p>
+</div>
+<nav class="flex flex-col gap-1 grow">
+<a class="flex items-center gap-3 px-4 py-2 text-primary dark:text-inverse-primary bg-primary-surface dark:bg-primary-container rounded-lg font-bold transition-all duration-200" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span>Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-gray-50 dark:hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Templates</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 border-t border-outline-variant flex items-center gap-3 px-2">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary text-xs font-bold">JD</div>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">John Doe</p>
+<p class="text-[10px] text-on-surface-variant">Admin Access</p>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Bar -->
+<header class="flex justify-between items-center h-16 px-8 ml-64 sticky top-0 z-40 bg-surface border-b border-gray-200 transition-opacity duration-150">
+<div class="flex items-center gap-8">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">Campaign Builder</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps" href="#">Drafts</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps" href="#">Scheduled</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps" href="#">Sent</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">settings</span>
+<button class="bg-primary hover:bg-primary-hover text-on-primary px-4 py-2 rounded-lg font-body-md transition-all">Launch</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-8 min-h-screen">
+<div class="max-w-container-max-list mx-auto">
+<!-- Campaign Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+<p class="text-label-caps font-label-caps text-gray-500 mb-1">CAMPAIGN ID</p>
+<p class="font-data-mono text-data-mono text-primary">CAM-74291</p>
+</div>
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+<p class="text-label-caps font-label-caps text-gray-500 mb-1">TOTAL REACH</p>
+<p class="font-headline-md text-headline-md">4,850</p>
+</div>
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+<p class="text-label-caps font-label-caps text-gray-500 mb-1">COMPLETED</p>
+<p class="font-headline-md text-headline-md text-status-success-text">3,602</p>
+</div>
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm border-l-4 border-l-primary">
+<p class="text-label-caps font-label-caps text-gray-500 mb-1">REMAINING</p>
+<p class="font-headline-md text-headline-md">1,248</p>
+</div>
+</div>
+<!-- Campaign Preview Area (Mock) -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-8">
+<div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+<div>
+<h2 class="font-headline-sm text-headline-sm">Q4 Enterprise Outreach Sequence</h2>
+<p class="text-sm text-gray-500">Active since Oct 12, 2023 • High Priority</p>
+</div>
+<div class="flex gap-3">
+<button class="bg-status-danger-bg text-status-danger-text hover:bg-error hover:text-white px-4 py-2 rounded-lg font-body-md font-bold border border-transparent transition-all flex items-center gap-2" onclick="openModal()">
+<span class="material-symbols-outlined text-[18px]">block</span>
+                            Management Options
+                        </button>
+</div>
+</div>
+<div class="p-8 flex items-center justify-center h-64">
+<div class="text-center">
+<span class="material-symbols-outlined text-6xl text-gray-200 mb-4">analytics</span>
+<p class="text-gray-400">Main dashboard content would be rendered here.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Admin Modal Overlay (Hidden by default) -->
+<div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-[1px] hidden opacity-0 transition-opacity duration-300" id="modal-backdrop">
+<!-- Modal Panel -->
+<div class="bg-white w-full max-w-[560px] rounded-xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="modal-panel">
+<!-- Header -->
+<div class="px-8 py-6 border-b border-gray-100">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline-md text-headline-md text-on-surface">Pause or Cancel Campaign?</h3>
+<button class="text-gray-400 hover:text-on-surface transition-colors" onclick="closeModal()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<p class="font-data-mono text-data-mono text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">tag</span>
+                    CAM-74291
+                </p>
+</div>
+<!-- Content Area -->
+<div class="p-8 space-y-6">
+<!-- Recipient Impact Summary -->
+<div class="bg-primary-surface rounded-lg p-5 flex items-center gap-5 border border-primary-border">
+<div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+<div>
+<p class="text-headline-sm font-headline-sm text-primary">1,248 recipients</p>
+<p class="text-sm text-on-surface-variant">Remaining in current active sequence.</p>
+</div>
+</div>
+<!-- Action Toggle Blocks -->
+<div class="space-y-4">
+<!-- Pause Option -->
+<label class="block group cursor-pointer">
+<input checked="" class="hidden peer" name="modal-action" type="radio"/>
+<div class="p-4 rounded-xl border border-gray-200 peer-checked:border-primary peer-checked:bg-primary-surface/30 group-hover:border-primary-border transition-all flex gap-4">
+<div class="mt-1">
+<div class="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-primary flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-primary opacity-0 peer-checked:opacity-100"></div>
+</div>
+</div>
+<div>
+<p class="font-bold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">pause_circle</span>
+                                    Pause Campaign
+                                </p>
+<p class="text-sm text-gray-500 leading-relaxed mt-1">Stops all new sends immediately. Any emails currently in the "sending" state will complete their delivery.</p>
+</div>
+</div>
+</label>
+<!-- Cancel Option -->
+<label class="block group cursor-pointer">
+<input class="hidden peer" name="modal-action" type="radio"/>
+<div class="p-4 rounded-xl border border-gray-200 peer-checked:border-error peer-checked:bg-status-danger-bg group-hover:border-error transition-all flex gap-4">
+<div class="mt-1">
+<div class="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-error flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-error opacity-0 peer-checked:opacity-100"></div>
+</div>
+</div>
+<div>
+<p class="font-bold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-error">cancel</span>
+                                    Cancel Campaign
+                                </p>
+<p class="text-sm text-gray-500 leading-relaxed mt-1">Destructive action. Marks the campaign as cancelled and stops all logic. This cannot be easily resumed.</p>
+</div>
+</div>
+</label>
+</div>
+<!-- Activity Log Preview -->
+<div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+<p class="text-label-caps font-label-caps text-gray-400 mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                        ACTIVITY LOG PREVIEW
+                    </p>
+<div class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
+<div>
+<p class="text-xs font-bold text-on-surface">Event will be recorded:</p>
+<p class="text-xs text-gray-500">"Admin (John Doe) requested [Action] for CAM-74291"</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="px-8 py-6 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
+<button class="px-5 py-2 text-on-surface-variant font-bold hover:bg-gray-200 rounded-lg transition-colors" onclick="closeModal()">Go Back</button>
+<button class="px-6 py-2 bg-primary text-on-primary font-bold rounded-lg shadow-sm hover:bg-primary-hover transition-all" id="confirm-btn">Confirm Change</button>
+</div>
+</div>
+</div>
+<!-- Global Footer -->
+<footer class="flex items-center justify-between px-8 ml-64 sticky bottom-0 h-16 z-40 bg-surface border-t border-gray-200 font-label-caps text-label-caps">
+<p class="text-gray-500">© 2024 SalesHub Automation</p>
+<div class="flex gap-6">
+<a class="text-gray-500 hover:text-primary transition-colors" href="#">Help Center</a>
+<a class="text-gray-500 hover:text-primary transition-colors" href="#">Privacy Policy</a>
+</div>
+</footer>
+<script>
+        const backdrop = document.getElementById('modal-backdrop');
+        const panel = document.getElementById('modal-panel');
+        const radios = document.querySelectorAll('input[name="modal-action"]');
+        const confirmBtn = document.getElementById('confirm-btn');
+
+        function openModal() {
+            backdrop.classList.remove('hidden');
+            // Trigger reflow for transition
+            setTimeout(() => {
+                backdrop.classList.add('opacity-100');
+                panel.classList.remove('scale-95');
+                panel.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            backdrop.classList.remove('opacity-100');
+            panel.classList.remove('scale-100');
+            panel.classList.add('scale-95');
+            setTimeout(() => {
+                backdrop.classList.add('hidden');
+            }, 300);
+        }
+
+        // Handle button styling change based on selection
+        radios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                const isCancel = radio.parentElement.innerText.includes('Cancel');
+                if (isCancel) {
+                    confirmBtn.className = 'px-6 py-2 bg-error text-on-primary font-bold rounded-lg shadow-sm hover:opacity-90 transition-all';
+                } else {
+                    confirmBtn.className = 'px-6 py-2 bg-primary text-on-primary font-bold rounded-lg shadow-sm hover:bg-primary-hover transition-all';
+                }
+            });
+        });
+
+        // Close on backdrop click
+        backdrop.addEventListener('click', (e) => {
+            if (e.target === backdrop) closeModal();
+        });
+
+        // Auto-open for demo purposes
+        window.onload = () => {
+            setTimeout(openModal, 800);
+        }
+    </script>
+</body></html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Campaign Builder - Launch Confirmation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "status-success-text": "#16A34A",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "status-paused-bg": "#FEF9C3",
+                        "surface-variant": "#d9e3f7",
+                        "secondary-fixed-dim": "#4fdbc8",
+                        "primary-border": "#C7D2FE",
+                        "secondary": "#006b5f",
+                        "error-container": "#ffdad6",
+                        "status-scheduled-text": "#2563EB",
+                        "gray-900": "#111827",
+                        "surface": "#f9f9ff",
+                        "outline": "#767586",
+                        "on-secondary-fixed": "#00201c",
+                        "status-draft-text": "#4B5563",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#fffbff",
+                        "secondary-container": "#6df5e1",
+                        "primary-fixed": "#e1e0ff",
+                        "primary-container": "#6063ee",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "gray-500": "#6B7280",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#e6eeff",
+                        "status-paused-text": "#CA8A04",
+                        "status-danger-text": "#DC2626",
+                        "status-danger-bg": "#FEE2E2",
+                        "background": "#f9f9ff",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#273140",
+                        "surface-container-low": "#eff3ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-primary-fixed": "#07006c",
+                        "outline-variant": "#c7c4d7",
+                        "surface-container-highest": "#d9e3f7",
+                        "surface-container-high": "#dee9fd",
+                        "status-success-bg": "#DCFCE7",
+                        "primary": "#4648d4",
+                        "tertiary-container": "#b55d00",
+                        "status-bounced-text": "#D97706",
+                        "status-bounced-bg": "#FEF3C7",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#121c2a",
+                        "gray-400": "#9CA3AF",
+                        "status-draft-bg": "#F3F4F6",
+                        "on-secondary-container": "#006f64",
+                        "on-surface-variant": "#464554",
+                        "tertiary": "#904900",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary-fixed": "#301400",
+                        "gray-200": "#E5E7EB",
+                        "secondary-fixed": "#71f8e4",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "gray-50": "#F9FAFB",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-tertiary-container": "#fffbff",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#ebf1ff",
+                        "primary-hover": "#4F46E5",
+                        "primary-surface": "#EEF2FF",
+                        "on-background": "#121c2a",
+                        "status-reply-text": "#A855F7",
+                        "inverse-primary": "#c0c1ff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#005048",
+                        "surface-tint": "#494bd6",
+                        "surface-dim": "#d0daef",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-wizard": "1024px",
+                        "container-max-list": "1280px",
+                        "gap-section": "24px",
+                        "padding-card": "24px",
+                        "gap-form": "16px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            background-color: #F9FAFB;
+        }
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+            background-color: rgba(18, 28, 42, 0.4);
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- Sidebar (As per JSON) -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-gray-200 bg-surface flex flex-col p-4 z-30">
+<div class="mb-8 px-4">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">SalesHub</h1>
+<p class="text-xs text-gray-500 uppercase tracking-widest font-label-caps mt-1">Campaign Manager</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-gray-50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span>Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-primary bg-primary-surface rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined">description</span>
+<span>Templates</span>
+</a>
+</nav>
+<div class="mt-auto p-4 bg-gray-50 rounded-xl flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional sales executive's profile portrait, lit with soft natural office light. The aesthetic is clean and corporate, featuring high-contrast tones and a neutral background that aligns with the professional SalesHub interface colors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxO8n0rapN9P1DULqwWdf0uwJiUhIa_705J5fir6jAyr2Srfsy-SxF76FoaqvP-Q0XqAhrjK3KNuEAOzqoakyZFuQDjBSCC65Nc23Nn3EY1suICHcm-JombSMDxBipnyPTCXVcx1-Up5IbxAux9qdLd5mL3XubeZSfNfmQYztJSTL8V_zPwye-3Y9gr-8BxO7jFEQBMVK9oQPirtrZCHIdDjSSlJZkcScpj18P6duHYpFB9q0sDY1kdujx2m2CFIF5XLaS79kbWm3p"/>
+</div>
+<div>
+<p class="font-body-lg text-sm font-bold">Alex Rivera</p>
+<p class="text-xs text-gray-500">Sales Agent</p>
+</div>
+</div>
+</aside>
+<!-- Top Navigation (As per JSON) -->
+<header class="flex justify-between items-center h-16 px-8 ml-64 bg-surface sticky top-0 z-20 border-b border-gray-200">
+<div class="flex items-center gap-8">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">Campaign Builder</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Drafts</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Scheduled</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Sent</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+<input class="pl-10 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary-border outline-none w-64" placeholder="Search campaigns..." type="text"/>
+</div>
+<button class="p-2 text-gray-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-gray-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="ml-2 px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors shadow-sm">
+                Launch
+            </button>
+</div>
+</header>
+<!-- Main Content Canvas (Review & Launch Screen_11) -->
+<main class="ml-64 p-10 min-h-[calc(100vh-64px)] pb-32">
+<div class="max-w-container-max-wizard mx-auto">
+<!-- Stepper -->
+<div class="flex items-center justify-between mb-12 relative">
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 -z-10 -translate-y-1/2"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">1</div>
+<span class="text-xs font-label-caps text-gray-500">Audience</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">2</div>
+<span class="text-xs font-label-caps text-gray-500">Compose</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold ring-4 ring-primary-border">3</div>
+<span class="text-xs font-label-caps text-primary font-bold">Review</span>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-gap-section">
+<!-- Summary Card -->
+<section class="bg-white p-padding-card rounded-xl border border-gray-200 shadow-sm">
+<h2 class="font-headline-md text-headline-md mb-6">Final Campaign Review</h2>
+<div class="space-y-6">
+<div class="p-6 bg-gray-50 rounded-lg border border-gray-200">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-body-lg text-primary">Pre-flight Checklist</h3>
+<span class="bg-status-success-bg text-status-success-text px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">check_circle</span> Ready to Send
+                                </span>
+</div>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 text-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-status-success-text" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Recipient list validated (1,248 active contacts)</span>
+</li>
+<li class="flex items-center gap-3 text-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-status-success-text" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Spam score: 0.1/10 (Excellent)</span>
+</li>
+<li class="flex items-center gap-3 text-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-status-success-text" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>All 4 merge tags mapped correctly</span>
+</li>
+</ul>
+</div>
+<!-- Preview Snippet -->
+<div class="border border-gray-200 rounded-lg overflow-hidden">
+<div class="bg-gray-100 px-4 py-2 border-b border-gray-200 flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-red-400"></span>
+<span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+<span class="w-3 h-3 rounded-full bg-green-400"></span>
+<span class="text-xs text-gray-500 font-data-mono ml-4">Subject: Q4 Enterprise Growth Strategy</span>
+</div>
+<div class="p-8 text-sm leading-relaxed text-on-surface-variant">
+<p>Hi <span class="bg-primary-surface text-primary px-2 py-0.5 rounded font-data-mono text-xs">{{first_name}}</span>,</p>
+<br/>
+<p>I was looking at <span class="bg-primary-surface text-primary px-2 py-0.5 rounded font-data-mono text-xs">{{company_name}}</span>'s recent performance and noticed some interesting opportunities for optimization in your outreach sequence...</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Modal Overlay -->
+<div class="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4" id="launchModal">
+<div class="bg-white w-full max-w-lg rounded-xl shadow-lg border border-gray-200 overflow-hidden transform transition-all animate-in fade-in zoom-in duration-300">
+<!-- Header -->
+<div class="p-6 border-b border-gray-100 flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md">Ready to Launch?</h3>
+<button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('launchModal').style.display='none'">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Body -->
+<div class="p-6">
+<div class="mb-8">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-12 h-12 bg-primary-surface rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">send</span>
+</div>
+<div>
+<p class="text-sm font-label-caps text-gray-500 uppercase tracking-widest">Recipient Impact Summary</p>
+<p class="text-2xl font-bold text-gray-900">1,248 Recipients</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-start gap-3 p-4 bg-status-success-bg/30 rounded-lg border border-status-success-bg">
+<span class="material-symbols-outlined text-status-success-text mt-0.5">verified</span>
+<p class="text-sm text-on-surface-variant">
+<strong class="text-gray-900">Pre-flight checks passed.</strong> All emails have been verified for deliverability and merge tags are 100% matched to your audience dataset.
+                            </p>
+</div>
+<div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+<h4 class="text-xs font-bold text-gray-900 mb-2 uppercase">Scheduled Delivery</h4>
+<div class="flex items-center gap-2 text-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-xs">schedule</span>
+<span>Immediate Send (approximately 8 minutes processing)</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-status-danger-bg/20 border-l-4 border-status-danger-text p-4 mb-4">
+<div class="flex items-center gap-2 text-status-danger-text mb-1">
+<span class="material-symbols-outlined text-sm">warning</span>
+<span class="text-xs font-bold uppercase">Irreversible Action</span>
+</div>
+<p class="text-xs text-on-surface-variant">Once you click launch, emails will begin queuing immediately. This action cannot be undone.</p>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="bg-gray-50 px-6 py-4 flex flex-col sm:flex-row gap-3 justify-end">
+<button class="px-6 py-2.5 border border-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-100 transition-colors text-sm" onclick="document.getElementById('launchModal').style.display='none'">
+                    Cancel
+                </button>
+<button class="px-8 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors shadow-md text-sm">
+                    Launch Campaign
+                </button>
+</div>
+</div>
+</div>
+<!-- Wizard Footer Anchor -->
+<footer class="fixed bottom-0 left-64 right-0 h-16 bg-white border-t border-gray-200 px-8 flex items-center justify-between z-10">
+<button class="flex items-center gap-2 text-gray-500 hover:text-gray-700 font-bold transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+<span>Back to Compose</span>
+</button>
+<div class="flex items-center gap-4">
+<p class="text-xs text-gray-400 hidden lg:block">Draft saved at 10:24 AM</p>
+<button class="px-8 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors shadow-md" onclick="document.getElementById('launchModal').style.display='flex'">
+                Launch Campaign
+            </button>
+</div>
+</footer>
+<script>
+        // Simple micro-interaction for modal appearance
+        window.addEventListener('load', () => {
+            const modal = document.getElementById('launchModal');
+            // Modal is visible by default in this demo as requested
+            // To test toggle: 
+            // modal.style.display = 'none';
+        });
+    </script>
+</body></html>

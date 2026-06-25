@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FlowChat Marketing - Campaign Stats</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .progress-bar-shine {
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shine 2s infinite;
+        }
+        @keyframes shine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-border": "#C7D2FE",
+                        "primary-fixed": "#e1e0ff",
+                        "status-draft-bg": "#F3F4F6",
+                        "primary-container": "#6063ee",
+                        "surface-container-high": "#dee9fd",
+                        "surface-container-highest": "#d9e3f7",
+                        "primary": "#4648d4",
+                        "status-danger-text": "#DC2626",
+                        "primary-hover": "#4F46E5",
+                        "gray-400": "#9CA3AF",
+                        "gray-500": "#6B7280",
+                        "error-container": "#ffdad6",
+                        "status-danger-bg": "#FEE2E2",
+                        "status-draft-text": "#4B5563",
+                        "inverse-surface": "#273140",
+                        "secondary-fixed-dim": "#4fdbc8",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-primary-container": "#fffbff",
+                        "on-surface-variant": "#464554",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#d9e3f7",
+                        "gray-200": "#E5E7EB",
+                        "background": "#f9f9ff",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "surface-dim": "#d0daef",
+                        "on-primary-fixed": "#07006c",
+                        "status-success-bg": "#DCFCE7",
+                        "on-tertiary-fixed": "#301400",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "on-tertiary-container": "#fffbff",
+                        "on-secondary-container": "#006f64",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "on-error": "#ffffff",
+                        "outline": "#767586",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "inverse-primary": "#c0c1ff",
+                        "gray-900": "#111827",
+                        "status-reply-text": "#A855F7",
+                        "surface-bright": "#f9f9ff",
+                        "status-paused-text": "#CA8A04",
+                        "tertiary-container": "#b55d00",
+                        "status-bounced-bg": "#FEF3C7",
+                        "outline-variant": "#c7c4d7",
+                        "on-background": "#121c2a",
+                        "surface": "#f9f9ff",
+                        "status-bounced-text": "#D97706",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#121c2a",
+                        "secondary-container": "#6df5e1",
+                        "gray-50": "#F9FAFB",
+                        "secondary": "#006b5f",
+                        "on-secondary-fixed-variant": "#005048",
+                        "inverse-on-surface": "#ebf1ff",
+                        "surface-container": "#e6eeff",
+                        "surface-tint": "#494bd6",
+                        "status-scheduled-text": "#2563EB",
+                        "primary-surface": "#EEF2FF",
+                        "status-paused-bg": "#FEF9C3",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "status-success-text": "#16A34A",
+                        "tertiary": "#904900",
+                        "on-secondary-fixed": "#00201c",
+                        "secondary-fixed": "#71f8e4",
+                        "surface-container-low": "#eff3ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max-wizard": "1024px",
+                        "gap-section": "24px",
+                        "container-max-list": "1280px",
+                        "padding-card": "24px",
+                        "gap-form": "16px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-on-surface font-body-md overflow-x-hidden">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-[256px] h-screen sticky left-0 top-0 flex flex-col h-full border-r border-gray-200 bg-surface dark:bg-surface-container-low shadow-sm">
+<div class="p-6 flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface dark:text-on-surface-variant leading-none">Marketing</h2>
+<p class="text-[11px] text-gray-500 uppercase tracking-wider mt-1">Campaign Management</p>
+</div>
+</div>
+<nav class="flex-1 px-4 mt-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary font-bold border-r-4 border-primary bg-primary-surface transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="campaign">campaign</span>
+<span>Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-gray-100 hover:text-primary transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard_customize">dashboard_customize</span>
+<span>Templates</span>
+</a>
+</nav>
+<div class="p-4 mt-auto border-t border-gray-100">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-gray-100 hover:text-primary transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full overflow-y-auto">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 w-full z-40 bg-white dark:bg-surface-container-highest border-b border-gray-200 flex justify-between items-center px-6 h-[64px] shrink-0">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">FlowChat Marketing</span>
+<div class="h-6 w-px bg-gray-200 mx-2"></div>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-[20px]">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-body-md focus:ring-2 focus:ring-primary-200 focus:border-primary-container outline-none w-64 transition-all" placeholder="Search campaigns..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="px-4 py-1.5 text-on-surface hover:bg-gray-100 rounded-lg transition-all font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                            Save Draft
+                        </button>
+<button class="px-4 py-1.5 bg-primary text-white hover:bg-primary-hover rounded-lg shadow-sm transition-all font-medium flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+                            Launch Campaign
+                        </button>
+</div>
+<div class="h-6 w-px bg-gray-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<button class="p-2 text-on-surface-variant hover:bg-gray-100 rounded-full transition-all relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-gray-100 rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+<img class="w-full h-full object-cover" data-alt="Professional headshot of a marketing executive in a clean, modern studio setting with soft directional lighting. High-end corporate photography style with neutral background and sharp focus on the user's friendly expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYQlp4jDCQS9rWd-Y4QARMTNLjLXHOBpW4ZoCUDmYE3JLGa49TTNlEXAsctCUiiOCrQUFfbQQYQM9PsVyZyP_IXdPd6xW4A0_ALkCkbgkYn9DvTDpH-5IPEEkV0rGzVzowPBxqss9d7SuVrAvL8WMKrC9X9XMoXlJJrCFUPDx1v_Zj3kcfruLjXqhEeCiW5AtUbtMM65jfiVklP3AtE_r733fpOhwct2YViQowVLTFCntU2NiFBAAK-87YJSLqm3c3k-9sxft6yfdA"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="flex-1 p-8 space-y-6 max-w-container-max-list mx-auto w-full">
+<!-- Campaign Header -->
+<div class="flex justify-between items-start">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h1 class="font-headline-lg text-headline-lg text-gray-900">Q4 Retention Blast - Batch A</h1>
+<span class="px-2.5 py-0.5 bg-status-success-bg text-status-success-text text-[12px] font-bold rounded-full uppercase tracking-wider">Active</span>
+</div>
+<p class="text-gray-500 font-body-md">Started Dec 12, 2024 • Sent to 120 customers</p>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all font-medium text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">pause</span>
+                            Pause
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 border border-status-danger-text/20 text-status-danger-text rounded-lg hover:bg-status-danger-bg transition-all font-medium">
+<span class="material-symbols-outlined text-[20px]">cancel</span>
+                            Cancel
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-all font-medium">
+<span class="material-symbols-outlined text-[20px]">file_download</span>
+                            Export
+                        </button>
+</div>
+</div>
+<!-- Tabs -->
+<div class="border-b border-gray-200">
+<nav class="flex gap-8">
+<a class="pb-4 text-primary border-b-2 border-primary font-bold flex items-center gap-2" href="#">
+                            OVERVIEW
+                        </a>
+<a class="pb-4 text-gray-500 hover:text-gray-700 transition-all" href="#">AUDIENCE</a>
+<a class="pb-4 text-gray-500 hover:text-gray-700 transition-all" href="#">MESSAGES</a>
+<a class="pb-4 text-gray-500 hover:text-gray-700 transition-all" href="#">A/B TESTING</a>
+</nav>
+</div>
+<!-- Active Progress -->
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+<div class="flex justify-between items-center mb-4">
+<div class="flex items-center gap-2 text-primary font-semibold">
+<span class="material-symbols-outlined animate-spin duration-[3000ms]">sync</span>
+                            Processing step 2 of 3 — 45/120 recipients
+                        </div>
+<span class="text-gray-500 font-data-mono">37.5% Completed</span>
+</div>
+<div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[37.5%] relative overflow-hidden">
+<div class="absolute inset-0 progress-bar-shine"></div>
+</div>
+</div>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Funnel Section (Visual) -->
+<div class="lg:col-span-8 bg-white p-8 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+<h3 class="text-label-caps font-label-caps text-gray-400 mb-8 uppercase">Engagement Funnel</h3>
+<div class="space-y-6">
+<!-- Enrolled -->
+<div class="relative">
+<div class="flex justify-between items-end mb-2">
+<span class="text-gray-500 text-[13px] font-medium">Enrolled</span>
+<span class="font-headline-sm">120</span>
+</div>
+<div class="h-12 bg-gray-50 rounded-lg flex items-center px-4 overflow-hidden group">
+<div class="h-full bg-gray-200 absolute left-0 top-0 w-full opacity-30"></div>
+<div class="h-2 w-full bg-gray-200 rounded-full"></div>
+</div>
+</div>
+<!-- Sent -->
+<div class="relative pl-4 border-l-2 border-gray-100">
+<div class="flex justify-between items-end mb-2">
+<span class="text-gray-500 text-[13px] font-medium">Sent</span>
+<span class="font-headline-sm">114 <span class="text-[12px] text-gray-400 font-normal">(95%)</span></span>
+</div>
+<div class="h-10 bg-primary-surface rounded-lg flex items-center px-4 overflow-hidden relative">
+<div class="h-full bg-primary absolute left-0 top-0 w-[95%] opacity-10"></div>
+<div class="h-2 w-[95%] bg-primary/40 rounded-full"></div>
+</div>
+</div>
+<!-- Delivered -->
+<div class="relative pl-8 border-l-2 border-gray-100">
+<div class="flex justify-between items-end mb-2">
+<span class="text-gray-500 text-[13px] font-medium">Delivered</span>
+<span class="font-headline-sm">108 <span class="text-[12px] text-gray-400 font-normal">(94.7%)</span></span>
+</div>
+<div class="h-10 bg-blue-50 rounded-lg flex items-center px-4 overflow-hidden relative">
+<div class="h-full bg-blue-500 absolute left-0 top-0 w-[90%] opacity-10"></div>
+<div class="h-2 w-[90%] bg-blue-400 rounded-full"></div>
+</div>
+</div>
+<!-- Opened -->
+<div class="relative pl-12 border-l-2 border-gray-100">
+<div class="flex justify-between items-end mb-2">
+<span class="text-gray-500 text-[13px] font-medium">Opened</span>
+<span class="font-headline-sm">75 <span class="text-[12px] text-gray-400 font-normal">(69.4%)</span></span>
+</div>
+<div class="h-10 bg-indigo-50 rounded-lg flex items-center px-4 overflow-hidden relative">
+<div class="h-full bg-indigo-500 absolute left-0 top-0 w-[69%] opacity-10"></div>
+<div class="h-2 w-[69%] bg-indigo-400 rounded-full"></div>
+</div>
+</div>
+<!-- Clicked -->
+<div class="relative pl-16 border-l-2 border-gray-100">
+<div class="flex justify-between items-end mb-2">
+<span class="text-gray-500 text-[13px] font-medium">Clicked</span>
+<span class="font-headline-sm">21 <span class="text-[12px] text-gray-400 font-normal">(28%)</span></span>
+</div>
+<div class="h-10 bg-emerald-50 rounded-lg flex items-center px-4 overflow-hidden relative">
+<div class="h-full bg-emerald-500 absolute left-0 top-0 w-[28%] opacity-10"></div>
+<div class="h-2 w-[28%] bg-emerald-400 rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Summary Rates -->
+<div class="mt-8 pt-6 border-t border-gray-100 flex items-center justify-center gap-6 text-gray-600 font-medium">
+<span class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                                Open 62.4%
+                            </span>
+<span class="text-gray-300">·</span>
+<span class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                Click 17.9%
+                            </span>
+<span class="text-gray-300">·</span>
+<span class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-bounced-text"></span>
+                                Bounce 1.5%
+                            </span>
+</div>
+</div>
+<!-- Side Stats / Info -->
+<div class="lg:col-span-4 space-y-6">
+<!-- Best Time -->
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+<h3 class="text-label-caps font-label-caps text-gray-400 mb-4 uppercase">Peak Performance</h3>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-status-scheduled-bg text-status-scheduled-text rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">schedule</span>
+</div>
+<div>
+<p class="text-headline-sm font-bold">10:45 AM</p>
+<p class="text-gray-500 text-[13px]">Highest open rate detected</p>
+</div>
+</div>
+</div>
+<!-- Device Split -->
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+<h3 class="text-label-caps font-label-caps text-gray-400 mb-4 uppercase">Device Distribution</h3>
+<div class="space-y-3">
+<div>
+<div class="flex justify-between text-[13px] mb-1">
+<span>Mobile</span>
+<span class="font-bold">72%</span>
+</div>
+<div class="w-full h-1.5 bg-gray-100 rounded-full">
+<div class="h-full bg-primary w-[72%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[13px] mb-1">
+<span>Desktop</span>
+<span class="font-bold">28%</span>
+</div>
+<div class="w-full h-1.5 bg-gray-100 rounded-full">
+<div class="h-full bg-gray-300 w-[28%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- STOP METRICS Section -->
+<div class="lg:col-span-12">
+<div class="flex items-center gap-4 mb-6">
+<div class="h-px flex-1 bg-gray-200"></div>
+<h3 class="text-label-caps font-label-caps text-gray-400 uppercase tracking-widest px-4">Stop Metrics &amp; Deliverability</h3>
+<div class="h-px flex-1 bg-gray-200"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Bounced -->
+<div class="bg-white p-6 rounded-xl border-l-4 border-status-bounced-text shadow-sm hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-2">
+<span class="text-gray-500 text-[13px] font-medium">Bounced</span>
+<span class="material-symbols-outlined text-status-bounced-text">error_outline</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-gray-900">18</span>
+<span class="text-status-bounced-text text-[12px] bg-status-bounced-bg px-1.5 rounded font-bold">1.5%</span>
+</div>
+<p class="text-[12px] text-gray-400 mt-2">Emails failed delivery</p>
+</div>
+<!-- Unsubscribed -->
+<div class="bg-white p-6 rounded-xl border-l-4 border-gray-400 shadow-sm hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-2">
+<span class="text-gray-500 text-[13px] font-medium">Unsubscribed</span>
+<span class="material-symbols-outlined text-gray-400">person_remove</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-gray-900">6</span>
+<span class="text-gray-500 text-[12px] bg-gray-100 px-1.5 rounded font-bold">0.5%</span>
+</div>
+<p class="text-[12px] text-gray-400 mt-2">Opt-out requests</p>
+</div>
+<!-- Replied -->
+<div class="bg-white p-6 rounded-xl border-l-4 border-status-reply-text shadow-sm hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-2">
+<span class="text-gray-500 text-[13px] font-medium">Replied</span>
+<span class="material-symbols-outlined text-status-reply-text">reply_all</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-gray-900">42</span>
+<span class="text-status-reply-text text-[12px] bg-purple-50 px-1.5 rounded font-bold">3.5%</span>
+</div>
+<p class="text-[12px] text-gray-400 mt-2">Direct user responses</p>
+</div>
+<!-- Complained -->
+<div class="bg-white p-6 rounded-xl border-l-4 border-status-danger-text shadow-sm hover:shadow-md transition-all">
+<div class="flex justify-between items-start mb-2">
+<span class="text-gray-500 text-[13px] font-medium">Complained</span>
+<span class="material-symbols-outlined text-status-danger-text">report</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-gray-900">3</span>
+<span class="text-status-danger-text text-[12px] bg-status-danger-bg px-1.5 rounded font-bold">0.02%</span>
+</div>
+<p class="text-[12px] text-gray-400 mt-2">Marked as spam</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Spacer for Footer -->
+<div class="h-20"></div>
+</div>
+</main>
+</div>
+<!-- Sticky Footer -->
+<footer class="fixed bottom-0 w-full h-[64px] bg-white dark:bg-surface-container border-t border-gray-200 z-50">
+<div class="flex justify-between items-center px-8 w-full max-w-5xl mx-auto h-full">
+<div class="flex items-center gap-4">
+<button class="text-gray-500 hover:text-gray-900 px-4 py-2 font-label-caps uppercase transition-all">
+                    Back
+                </button>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-gray-500 hover:text-gray-900 px-4 py-2 font-label-caps uppercase transition-all">
+                    Save
+                </button>
+<button class="bg-primary text-white rounded-lg px-6 py-2 font-label-caps uppercase shadow-sm hover:bg-primary-hover active:scale-95 transition-all">
+                    Next Step
+                </button>
+</div>
+</div>
+</footer>
+<script>
+        // Simple interactivity for demonstration
+        document.querySelectorAll('button, a').forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.classList.add('scale-95');
+            });
+            el.addEventListener('mouseup', () => {
+                el.classList.remove('scale-95');
+            });
+            el.addEventListener('mouseleave', () => {
+                el.classList.remove('scale-95');
+            });
+        });
+    </script>
+</body></html>

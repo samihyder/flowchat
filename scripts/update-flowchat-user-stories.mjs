@@ -6,6 +6,7 @@
 import XLSX from 'xlsx';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { S6M_STORIES } from './s6m-user-stories.data.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -245,6 +246,20 @@ const NEW_STORIES = [
 const S2_7_CRITERIA =
   '• Settings → Account page renders with editable name, timezone, and locale fields\n• Changes are saved via API and reflected immediately\n• Logo upload via R2 presigned URL; recommended 512×512px, max 10 MB\n• Logo preview and email signature templates use 512×512 source dimensions\n• Timezone affects timestamp displays throughout the dashboard';
 
+/** Stories shipped but superseded by S6M — workbook Status + criteria footnote */
+const SUPERSEDED_BY_S6M = {
+  'S6-15': {
+    Status: 'Superseded',
+    'Acceptance Criteria':
+      '• [Superseded by S6M — see marketing-module-screens.md] Was: visual workflow builder with CRM triggers (contact created, label added, conversation resolved)\n• Replacement: campaign-only wizard with explicit recipients (S6M-6, S6M-9)\n• Remove triggerMarketingWorkflows at S6M-9 implementation',
+  },
+  'S6-16': {
+    Status: 'Superseded',
+    'Acceptance Criteria':
+      '• [Superseded by S6M] Was: multi-step drip inside CRM-triggered workflows\n• Replacement: multi-step dated campaign sequence in wizard (S6M-16–S6M-18)',
+  },
+};
+
 function rebuildSummary(stories) {
   const sprintMeta = {
     S1: { Name: 'Foundation', Dates: '2026-06-15 → 2026-06-28' },
@@ -253,14 +268,26 @@ function rebuildSummary(stories) {
     S4: { Name: 'Lifecycle & Trust', Dates: '2026-07-27 → 2026-08-16' },
     S5: { Name: 'Rich Messaging', Dates: '2026-08-17 → 2026-09-06' },
     S6: { Name: 'CRM + Email Marketing', Dates: '2026-09-07 → 2026-10-04' },
+    S6M: { Name: 'Marketing Campaign Redesign', Dates: 'Planned 2026-Q3' },
     S7B: { Name: 'Connected Services (BYOK)', Dates: 'Implemented 2026-06' },
+  };
+
+  const sprintStatus = {
+    S1: '✅ Completed',
+    S2: '✅ Completed',
+    S3: '✅ Completed',
+    S4: '✅ Completed',
+    S5: '✅ Completed',
+    S6: '✅ Completed',
+    S6M: '📋 Planned',
+    S7B: '✅ Completed',
   };
 
   const rows = [];
   let totalStories = 0;
   let totalPoints = 0;
 
-  for (const sprint of ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7B']) {
+  for (const sprint of ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S6M', 'S7B']) {
     const subset = stories.filter((s) => s.Sprint === sprint);
     const pts = subset.reduce((a, s) => a + Number(s['Story Points'] || 0), 0);
     const must = subset.filter((s) => s.Priority === 'Must').length;
@@ -275,7 +302,7 @@ function rebuildSummary(stories) {
       'Total Points': pts,
       'Must Stories': must,
       'Should Stories': should,
-      Status: '✅ Completed',
+      Status: sprintStatus[sprint] ?? '',
     });
   }
 
@@ -302,9 +329,14 @@ function main() {
     s['Story ID'] === 'S2-7' ? { ...s, 'Acceptance Criteria': S2_7_CRITERIA } : s
   );
 
+  // Mark S6-15 / S6-16 superseded by S6M
+  for (const [id, patch] of Object.entries(SUPERSEDED_BY_S6M)) {
+    stories = stories.map((s) => (s['Story ID'] === id ? { ...s, ...patch } : s));
+  }
+
   // Append new stories (idempotent)
   const existingIds = new Set(stories.map((s) => s['Story ID']));
-  for (const story of NEW_STORIES) {
+  for (const story of [...NEW_STORIES, ...S6M_STORIES]) {
     if (!existingIds.has(story['Story ID'])) {
       stories.push(story);
       existingIds.add(story['Story ID']);
@@ -314,7 +346,7 @@ function main() {
   }
 
   // Sort: S1, S2, ... then by story id
-  const sprintOrder = { S1: 1, S2: 2, S3: 3, S4: 4, S5: 5, S6: 6, S7B: 7 };
+  const sprintOrder = { S1: 1, S2: 2, S3: 3, S4: 4, S5: 5, S6: 6, S6M: 7, S7B: 8 };
   stories.sort((a, b) => {
     const sa = sprintOrder[a.Sprint] ?? 99;
     const sb = sprintOrder[b.Sprint] ?? 99;

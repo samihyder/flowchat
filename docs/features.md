@@ -106,16 +106,18 @@ See [sprints.md](sprints.md) for full story breakdown.
 - Label management
 - Company association
 
-### Email marketing automation (Sprint 6)
+### Email marketing (Sprint 6 foundation + S6M redesign)
 
-> Full checklist: [email-marketing-standard.md](email-marketing-standard.md). Outbound marketing on CRM contacts — separate from the email **support inbox** (Sprint 7).
+> **Authoritative model:** [email-marketing-standard.md](email-marketing-standard.md) and [marketing-module-screens.md](marketing-module-screens.md) (S6M). Outbound marketing on CRM contacts — separate from the email **support inbox** (Sprint 7).
 
-- **Audience:** Static lists, dynamic segments, subscription status, suppression list
-- **Templates:** HTML + plain-text, merge tags, test send, verified sending domain (Resend)
-- **Broadcasts:** One-time campaigns to a segment; schedule or send now; BullMQ queue
-- **Automation:** Workflow builder — triggers (contact created, label added, conversation resolved) → send email, wait, branch on open/click, drip sequences
+- **Audience:** Static segments (optional import into campaigns), subscription status, suppression list
+- **Templates:** HTML + plain-text, merge tags, test send, verified sending domain (Resend / BYOK)
+- **Campaigns (S6M):** Multi-step wizard — explicit recipients, dated sequence, mandatory test send, admin launch only
+- **No CRM triggers:** Contact create, import, chat, or label changes do **not** send marketing email
 - **Compliance:** One-click unsubscribe, `List-Unsubscribe` header, bounce/complaint auto-suppress, optional double opt-in
-- **Analytics:** Campaign open/click/bounce rates; per-contact email timeline on profile
+- **Analytics:** Per-campaign funnel, per-step stats, per-recipient drill-down; contact email timeline on profile
+
+> **Retired:** CRM-triggered workflow builder (contact created → drip). Replaced by S6M campaign wizard. See email-marketing-standard.md §7.
 
 ### Companies (CRM)
 

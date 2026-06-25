@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Review &amp; Launch | FlowChat Campaign Wizard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .step-active { position: relative; }
+        .step-active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #4648d4;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#d9e3f7",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "outline-variant": "#c7c4d7",
+                        "gray-200": "#E5E7EB",
+                        "gray-400": "#9CA3AF",
+                        "primary-surface": "#EEF2FF",
+                        "on-error": "#ffffff",
+                        "status-success-text": "#16A34A",
+                        "primary-fixed": "#e1e0ff",
+                        "on-background": "#121c2a",
+                        "primary-container": "#6063ee",
+                        "outline": "#767586",
+                        "surface": "#f9f9ff",
+                        "inverse-surface": "#273140",
+                        "surface-container-low": "#eff3ff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#904900",
+                        "surface-container": "#e6eeff",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#121c2a",
+                        "gray-900": "#111827",
+                        "status-success-bg": "#DCFCE7",
+                        "primary-hover": "#4F46E5",
+                        "background": "#f9f9ff",
+                        "on-primary-container": "#fffbff",
+                        "primary": "#4648d4",
+                        "on-surface-variant": "#464554",
+                        "gray-500": "#6B7280",
+                        "gray-50": "#F9FAFB"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-body-md text-on-surface">
+<!-- SideNavBar (from JSON) -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-gray-200 bg-surface flex flex-col p-4 z-50">
+<div class="mb-8 px-2">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">SalesHub</h1>
+<p class="text-xs text-on-surface-variant font-medium">Campaign Manager</p>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="flex items-center gap-3 px-4 py-2 text-primary bg-primary-surface rounded-lg font-bold">
+<span class="material-symbols-outlined" data-icon="mail">mail</span>
+<span class="text-body-md font-body-md">Campaigns</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="text-body-md font-body-md">Templates</span>
+</div>
+</nav>
+<div class="mt-auto pt-4 border-t border-gray-200">
+<div class="flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of Jamie Chen, a sales agent with a friendly and confident expression. He is wearing a modern business-casual outfit, set against a softly blurred office environment with warm, natural lighting. The image maintains a high-end corporate aesthetic with clean lines and a professional color balance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmC22iN7cyJULAmp-ZZB04jDW8n3aT5rsDg0O5SUHd7pW5EUyBmulIAQLxGGzulfwNbRr_qViPRScStLxHAMhBY2T3PL9jfjrjyfJpsY01tmiYOTAENAbNJBaQsLDpx6WBAXfWkuMZHcZ53RRSxbaaf8hyjpetkjo7t3-qTCtc3NFeHhSJ9_T_nK-J90-FTYzoKy6qSdME2buyI4OI5a2gEs-B7RGrAZ2YqU9x-gHDAguwTjWUc7Bus7d0eCxrQgTJqEPunJOFHiba"/>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">Jamie Chen</span>
+<span class="text-xs text-on-surface-variant">Sales Agent</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar (from JSON) -->
+<header class="flex justify-between items-center h-16 px-8 ml-64 sticky top-0 bg-surface border-b border-gray-200 z-40">
+<div class="flex items-center gap-8">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">Campaign Builder</span>
+<nav class="flex gap-6">
+<span class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Drafts</span>
+<span class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Scheduled</span>
+<span class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Sent</span>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary" data-icon="settings">settings</span>
+<button class="bg-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-primary-hover transition-colors">Send Test</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pb-20 min-h-screen">
+<!-- Step Wizard Header -->
+<div class="bg-white border-b border-gray-200 px-8 py-4">
+<div class="max-w-[1024px] mx-auto flex items-center justify-between">
+<div class="flex items-center gap-8 w-full">
+<div class="flex items-center gap-2 text-status-success-text font-bold">
+<span class="w-6 h-6 rounded-full border-2 border-status-success-text flex items-center justify-center text-xs">✓</span>
+<span class="text-sm">Recipients</span>
+</div>
+<div class="h-[1px] flex-1 bg-gray-200"></div>
+<div class="flex items-center gap-2 text-status-success-text font-bold">
+<span class="w-6 h-6 rounded-full border-2 border-status-success-text flex items-center justify-center text-xs">✓</span>
+<span class="text-sm">Sequence</span>
+</div>
+<div class="h-[1px] flex-1 bg-gray-200"></div>
+<div class="flex items-center gap-2 text-status-success-text font-bold">
+<span class="w-6 h-6 rounded-full border-2 border-status-success-text flex items-center justify-center text-xs">✓</span>
+<span class="text-sm">Sender</span>
+</div>
+<div class="h-[1px] flex-1 bg-gray-200"></div>
+<div class="flex items-center gap-2 text-primary font-bold step-active pb-1">
+<span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs">4</span>
+<span class="text-sm">Review</span>
+</div>
+</div>
+</div>
+</div>
+<div class="max-w-[1024px] mx-auto px-8 py-8 space-y-6">
+<!-- Admin Restriction Banner -->
+<div class="bg-[#EFF6FF] border-l-4 border-[#3B82F6] p-4 rounded-r-lg flex items-start gap-3">
+<span class="material-symbols-outlined text-[#1E40AF]" data-icon="info">info</span>
+<p class="text-[#1E40AF] font-medium text-sm">
+                    An administrator must launch this campaign. You can save the draft and send a test email.
+                </p>
+</div>
+<!-- A) Pre-flight Checklist -->
+<section class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Pre-flight Checklist</h3>
+<span class="text-xs font-bold text-status-success-text bg-status-success-bg px-2 py-1 rounded-full">READY TO REVIEW</span>
+</div>
+<div class="p-0">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-white border-b border-gray-100">
+<th class="px-6 py-3 text-xs font-label-caps text-gray-500 uppercase tracking-wider">Validation Check</th>
+<th class="px-6 py-3 text-xs font-label-caps text-gray-500 uppercase tracking-wider">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<tr>
+<td class="px-6 py-4 text-sm text-on-surface">Recipient list validated (452 leads)</td>
+<td class="px-6 py-4 flex items-center gap-2 text-status-success-text">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-bold text-sm">Passed</span>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-4 text-sm text-on-surface">Unsubscribe link presence</td>
+<td class="px-6 py-4 flex items-center gap-2 text-status-success-text">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-bold text-sm">Passed</span>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-4 text-sm text-on-surface">Merge tags compatibility</td>
+<td class="px-6 py-4 flex items-center gap-2 text-status-success-text">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-bold text-sm">Passed</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- B) Sequence Summary -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Sequence Summary</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span> Edit Sequence
+                    </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<!-- Email Card 1 -->
+<div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-3">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-bold bg-primary-surface text-primary px-2 py-0.5 rounded uppercase">Step 1</span>
+<span class="text-xs text-gray-400">Day 1</span>
+</div>
+<h4 class="font-bold text-on-surface line-clamp-1">Introduction &amp; Value Prop</h4>
+<p class="text-xs text-gray-500 line-clamp-2 italic">"Hi {{first_name}}, I noticed your recent work in..."</p>
+<div class="pt-2 flex items-center gap-2 text-[10px] text-gray-400">
+<span class="material-symbols-outlined text-xs" data-icon="attach_file">attach_file</span> 0 Attachments
+                        </div>
+</div>
+<!-- Email Card 2 -->
+<div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-3">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-bold bg-primary-surface text-primary px-2 py-0.5 rounded uppercase">Step 2</span>
+<span class="text-xs text-gray-400">Day 3</span>
+</div>
+<h4 class="font-bold text-on-surface line-clamp-1">Follow up: Case Study</h4>
+<p class="text-xs text-gray-500 line-clamp-2 italic">"Checking back in. Thought you might find this study..."</p>
+<div class="pt-2 flex items-center gap-2 text-[10px] text-gray-400">
+<span class="material-symbols-outlined text-xs" data-icon="link">link</span> 1 Link
+                        </div>
+</div>
+<!-- Email Card 3 -->
+<div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-3">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-bold bg-primary-surface text-primary px-2 py-0.5 rounded uppercase">Step 3</span>
+<span class="text-xs text-gray-400">Day 7</span>
+</div>
+<h4 class="font-bold text-on-surface line-clamp-1">Last Touch: Meeting Invite</h4>
+<p class="text-xs text-gray-500 line-clamp-2 italic">"Final check-in before I close this thread..."</p>
+<div class="pt-2 flex items-center gap-2 text-[10px] text-gray-400">
+<span class="material-symbols-outlined text-xs" data-icon="event">event</span> 1 Invite
+                        </div>
+</div>
+</div>
+</section>
+<!-- C) Sender Block Preview -->
+<section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Sender Configuration</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">Change</button>
+</div>
+<div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+<div class="bg-white p-2 rounded-lg border border-gray-200">
+<span class="material-symbols-outlined text-3xl text-primary" data-icon="contact_mail">contact_mail</span>
+</div>
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="font-bold text-on-surface">Jamie Chen</span>
+<span class="text-gray-400">&lt;jamie.chen@flowchat.io&gt;</span>
+</div>
+<p class="text-xs text-gray-500 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="bolt">bolt</span>
+                            Connected via Google Workspace (Primary OAuth)
+                        </p>
+</div>
+</div>
+</section>
+<!-- D) Recipient Preview Table -->
+<section class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Recipient Preview</h3>
+<span class="text-xs text-on-surface-variant">Showing first 5 of 452</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-white border-b border-gray-100">
+<tr>
+<th class="px-6 py-3 text-xs font-label-caps text-gray-500 uppercase tracking-wider">Name</th>
+<th class="px-6 py-3 text-xs font-label-caps text-gray-500 uppercase tracking-wider">Email</th>
+<th class="px-6 py-3 text-xs font-label-caps text-gray-500 uppercase tracking-wider">Company</th>
+<th class="px-6 py-3 text-xs font-label-caps text-gray-500 uppercase tracking-wider">Personalization</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 text-sm font-medium text-on-surface">Sarah Johnson</td>
+<td class="px-6 py-4 text-sm text-gray-500">sarah@techflow.com</td>
+<td class="px-6 py-4 text-sm text-gray-500">TechFlow Inc.</td>
+<td class="px-6 py-4"><span class="bg-primary-surface text-primary text-[10px] px-2 py-0.5 rounded font-bold">Custom Bio</span></td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 text-sm font-medium text-on-surface">Michael Smith</td>
+<td class="px-6 py-4 text-sm text-gray-500">m.smith@velocity.io</td>
+<td class="px-6 py-4 text-sm text-gray-500">Velocity Digital</td>
+<td class="px-6 py-4"><span class="bg-gray-100 text-gray-400 text-[10px] px-2 py-0.5 rounded font-bold">Standard</span></td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 text-sm font-medium text-on-surface">Elena Rodriguez</td>
+<td class="px-6 py-4 text-sm text-gray-500">elena@creativehub.es</td>
+<td class="px-6 py-4 text-sm text-gray-500">Creative Hub</td>
+<td class="px-6 py-4"><span class="bg-primary-surface text-primary text-[10px] px-2 py-0.5 rounded font-bold">Custom Bio</span></td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 text-sm font-medium text-on-surface">David Kim</td>
+<td class="px-6 py-4 text-sm text-gray-500">dkim@nexus.co</td>
+<td class="px-6 py-4 text-sm text-gray-500">Nexus Logistics</td>
+<td class="px-6 py-4"><span class="bg-gray-100 text-gray-400 text-[10px] px-2 py-0.5 rounded font-bold">Standard</span></td>
+</tr>
+<tr class="hover:bg-gray-50 transition-colors">
+<td class="px-6 py-4 text-sm font-medium text-on-surface">Linda Wu</td>
+<td class="px-6 py-4 text-sm text-gray-500">linda.wu@brightstar.com</td>
+<td class="px-6 py-4 text-sm text-gray-500">Brightstar</td>
+<td class="px-6 py-4"><span class="bg-primary-surface text-primary text-[10px] px-2 py-0.5 rounded font-bold">Custom Bio</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-3 border-t border-gray-100 flex justify-center">
+<button class="text-primary text-xs font-bold hover:underline">View All 452 Recipients</button>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer Navigation (Specific for Wizard) -->
+<footer class="ml-64 fixed bottom-0 right-0 left-0 h-16 bg-white border-t border-gray-200 flex items-center justify-between px-8 z-40">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-6 py-2 rounded-lg border border-gray-200 text-on-surface-variant font-bold text-sm hover:bg-gray-50 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back">arrow_back</span>
+                Back
+            </button>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-6 py-2 rounded-lg bg-white border border-primary text-primary font-bold text-sm hover:bg-primary-surface transition-colors">
+                Save as Draft
+            </button>
+<!-- Launch Campaign button is HIDDEN as per request -->
+<div class="flex items-center gap-1 text-gray-400 text-xs italic px-4">
+<span class="material-symbols-outlined text-xs" data-icon="lock">lock</span>
+                Pending Admin Launch
+            </div>
+</div>
+</footer>
+<!-- Universal Footer (from JSON) -->
+<!-- Note: Usually hidden on Wizard screens, but provided for shell integrity if required. Using standard style from JSON but restricted to ml-64 -->
+<div class="hidden">
+<footer class="flex items-center justify-between px-8 ml-64 border-t border-gray-200 h-16 bg-surface">
+<span class="text-gray-500 font-label-caps">© 2024 SalesHub Automation</span>
+<div class="flex gap-4">
+<span class="text-gray-500 hover:text-primary transition-colors cursor-pointer font-label-caps">Help Center</span>
+<span class="text-gray-500 hover:text-primary transition-colors cursor-pointer font-label-caps">Privacy Policy</span>
+</div>
+</footer>
+</div>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.98)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>

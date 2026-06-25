@@ -388,4 +388,63 @@ Logos **≤ 4 MB** upload through the Next.js API (`POST /api/accounts/:id/logo`
 
 ---
 
-*Last updated: 2026-06-05*
+## Marketing campaign scheduler (S6M-33)
+
+Background processing for multi-step campaign sends. See also [marketing-module-screens.md](marketing-module-screens.md) §4.9 and [marketing-module-migration.md](marketing-module-migration.md).
+
+### Architecture
+
+| Role | Component | Interval |
+|------|-----------|----------|
+| **Primary** | Railway `services/worker` | Polls `GET /api/cron/marketing` every ~60s |
+| **Backup** | Vercel Cron | Same endpoint every 5 min if worker unavailable |
+
+The cron route runs on **apps/web** (Vercel). Worker must call the **production web URL** (e.g. `https://www.digitalbrandcast.com/FlowChat`), not a preview deployment URL.
+
+### Required environment variables
+
+| Variable | Where | Purpose |
+|----------|-------|---------|
+| `CRON_SECRET` | Vercel (web) + Railway (worker) | Bearer token for `/api/cron/marketing` |
+| `WEB_APP_URL` | Railway worker | Base URL including subpath if used |
+| `DATABASE_URL` | Vercel + worker | Campaign due-step query |
+| `RESEND_API_KEY` or BYOK | Vercel | Send path (see S7B) |
+
+### Health check
+
+- **Settings → Email marketing** and campaign wizard step 4 show last successful cron timestamp.
+- Pre-flight fails if last success **> 2 minutes** ago (S6M-24).
+- `GET /api/accounts/.../marketing/campaigns/[id]/preflight` includes `cron_ok` and `cron_last_at`.
+
+### Vercel Cron backup (optional)
+
+Add to `vercel.json` in `apps/web`:
+
+```json
+{
+  "crons": [
+    {
+      "path": "/FlowChat/api/cron/marketing",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
+```
+
+Adjust path for subpath deployment per [SUBPATH_DEPLOYMENT.md](SUBPATH_DEPLOYMENT.md). Request must include `Authorization: Bearer ${CRON_SECRET}`.
+
+### Runbook — cron unhealthy
+
+1. Confirm Railway worker service is running and `WEB_APP_URL` points to production.
+2. Confirm `CRON_SECRET` matches on Vercel and worker.
+3. Manually invoke: `curl -H "Authorization: Bearer $CRON_SECRET" "$WEB_APP_URL/api/cron/marketing"`
+4. Check Vercel function logs for marketing cron errors.
+5. Enable Vercel Cron backup if worker is down for extended maintenance.
+
+### Reply-stop (S6M-38)
+
+Inbound reply matching requires Sprint 7 email inbox (`In-Reply-To` / `Message-ID`). Documented in [sprints.md](sprints.md) Sprint 7 note. Store `provider_message_id` on `marketing_campaign_recipient_steps` at send time (see migration doc).
+
+---
+
+*Last updated: 2026-06-13*

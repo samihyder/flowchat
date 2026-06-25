@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FlowChat Campaign Stats - Recipients</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#d9e3f7",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#4fdbc8",
+                        "on-tertiary": "#ffffff",
+                        "status-scheduled-bg": "#DBEAFE",
+                        "outline-variant": "#c7c4d7",
+                        "gray-200": "#E5E7EB",
+                        "gray-400": "#9CA3AF",
+                        "primary-surface": "#EEF2FF",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "status-success-text": "#16A34A",
+                        "status-bounced-bg": "#FEF3C7",
+                        "primary-fixed": "#e1e0ff",
+                        "on-primary-fixed-variant": "#2f2ebe",
+                        "on-tertiary-container": "#fffbff",
+                        "on-background": "#121c2a",
+                        "primary-container": "#6063ee",
+                        "outline": "#767586",
+                        "status-bounced-text": "#D97706",
+                        "surface": "#f9f9ff",
+                        "inverse-surface": "#273140",
+                        "secondary-container": "#6df5e1",
+                        "error-container": "#ffdad6",
+                        "status-danger-bg": "#FEE2E2",
+                        "surface-container-low": "#eff3ff",
+                        "status-reply-text": "#A855F7",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#00201c",
+                        "on-tertiary-fixed-variant": "#703700",
+                        "tertiary": "#904900",
+                        "surface-container": "#e6eeff",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#ebf1ff",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#121c2a",
+                        "gray-900": "#111827",
+                        "tertiary-container": "#b55d00",
+                        "status-paused-bg": "#FEF9C3",
+                        "primary-border": "#C7D2FE",
+                        "status-success-bg": "#DCFCE7",
+                        "status-danger-text": "#DC2626",
+                        "primary-hover": "#4F46E5",
+                        "primary-fixed-dim": "#c0c1ff",
+                        "surface-container-high": "#dee9fd",
+                        "surface-bright": "#f9f9ff",
+                        "secondary-fixed": "#71f8e4",
+                        "background": "#f9f9ff",
+                        "surface-container-highest": "#d9e3f7",
+                        "status-paused-text": "#CA8A04",
+                        "on-tertiary-fixed": "#301400",
+                        "on-primary-container": "#fffbff",
+                        "inverse-primary": "#c0c1ff",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "surface-tint": "#494bd6",
+                        "status-scheduled-text": "#2563EB",
+                        "secondary": "#006b5f",
+                        "on-secondary-container": "#006f64",
+                        "on-surface-variant": "#464554",
+                        "primary": "#4648d4",
+                        "on-primary-fixed": "#07006c",
+                        "status-draft-text": "#4B5563",
+                        "status-draft-bg": "#F3F4F6",
+                        "gray-500": "#6B7280",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-secondary-fixed-variant": "#005048",
+                        "gray-50": "#F9FAFB",
+                        "surface-dim": "#d0daef"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-on-surface min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-40 bg-white dark:bg-surface-container-highest border-b border-gray-200 dark:border-outline-variant flex justify-between items-center px-6 h-[64px] w-full max-full">
+<div class="flex items-center gap-6">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-inverse-on-surface">FlowChat Marketing</span>
+<div class="hidden md:flex items-center gap-4 ml-4">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+<input class="pl-10 pr-4 py-1.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-200 outline-none w-64 font-body-md text-body-md" placeholder="Search recipients..." type="text"/>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary-hover dark:hover:text-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary-hover dark:hover:text-primary-fixed-dim transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border-2 border-white"></span>
+</button>
+<div class="flex items-center gap-2 ml-2">
+<img class="w-8 h-8 rounded-full bg-gray-200 object-cover" data-alt="Professional headshot of a marketing manager in a clean, bright studio setting. The subject is smiling warmly, wearing a professional navy blazer. The lighting is soft and even, characteristic of a high-end corporate profile photo. Neutral grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnP8_uWG010HJwopBpVCamp9f3gs7dJeWlxZ-QflIFVcdChypyh8Nk0EFyCMcg4cyKoyHsMNwEerBsyS1p9Ybj3QO02Qpq53DW4OwHTsAEfQiGpgVOboZJlnuE_JjRbbEvnta8kCWueirWMWkCHLGDSBb6VwmlxywP_Xc5Vt2fDZMA2hoYeadHJZ9TMa1TiMgrKcD0m2xSIop-zoNTjedGkRhGLUlzt445r-SWtoy3hqYQ04Obb68Tm77yBJysfONiLdwKXleKGBeg"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="w-[256px] h-screen sticky left-0 top-0 bg-surface dark:bg-surface-container-low flex flex-col h-full border-r border-gray-200 dark:border-outline-variant shadow-sm shrink-0">
+<div class="p-6 flex flex-col gap-1">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">rocket_launch</span>
+</div>
+<div>
+<p class="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-on-surface-variant">Marketing</p>
+<p class="text-xs text-gray-500 uppercase tracking-wider font-medium">Management</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold border-r-4 border-primary bg-primary-surface dark:bg-primary-container/20 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span class="font-body-md text-body-md">Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard_customize</span>
+<span class="font-body-md text-body-md">Templates</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-6 border-t border-gray-100">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto p-8 pb-24">
+<div class="max-w-container-max-list mx-auto">
+<!-- Breadcrumbs & Actions -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Summer Flash Sale #4</h1>
+<p class="text-gray-500 font-body-md mt-1">Launched 12 May 2024 • Active</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 rounded-lg border border-gray-200 text-on-surface font-body-md hover:bg-gray-50 transition-all active:scale-95">Save Draft</button>
+<button class="px-4 py-2 rounded-lg bg-primary text-on-primary font-body-md hover:bg-primary-hover transition-all active:scale-95">Launch Campaign</button>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex border-b border-gray-200 mb-6">
+<button class="px-6 py-3 font-body-md text-gray-500 hover:text-primary transition-colors">Overview</button>
+<button class="px-6 py-3 font-body-md text-primary font-bold border-b-2 border-primary">Recipients</button>
+<button class="px-6 py-3 font-body-md text-gray-500 hover:text-primary transition-colors">Performance</button>
+<button class="px-6 py-3 font-body-md text-gray-500 hover:text-primary transition-colors">Settings</button>
+</div>
+<!-- Filters -->
+<div class="flex flex-wrap items-center gap-2 mb-6">
+<button class="px-4 py-1.5 rounded-full bg-primary text-on-primary font-label-caps text-label-caps shadow-sm">All</button>
+<button class="px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 font-label-caps text-label-caps hover:border-primary hover:text-primary transition-colors">Opened</button>
+<button class="px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 font-label-caps text-label-caps hover:border-primary hover:text-primary transition-colors">Not opened</button>
+<button class="px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 font-label-caps text-label-caps hover:border-primary hover:text-primary transition-colors">Clicked</button>
+<button class="px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 font-label-caps text-label-caps hover:border-primary hover:text-primary transition-colors">Stopped</button>
+<button class="px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 font-label-caps text-label-caps hover:border-primary hover:text-primary transition-colors">Failed</button>
+<div class="ml-auto flex gap-2">
+<button class="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-white"><span class="material-symbols-outlined">filter_list</span></button>
+<button class="p-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-white"><span class="material-symbols-outlined">download</span></button>
+</div>
+</div>
+<!-- Table Content -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-gray-50 border-b border-gray-200">
+<th class="px-6 py-4 font-label-caps text-label-caps text-gray-500">Recipient</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-gray-500">Status</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-gray-500">Last Action</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-gray-500">Progress</th>
+<th class="px-6 py-4 text-right"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<!-- Row 1: Jane Doe (Collapsed) -->
+<tr class="hover:bg-gray-50 transition-colors cursor-pointer group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-surface-variant flex items-center justify-center text-primary font-bold text-xs">JD</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface">Jane Doe</p>
+<p class="text-xs text-gray-400 font-data-mono">jane.doe@example.com</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2.5 py-1 rounded-full bg-status-success-bg text-status-success-text font-label-caps text-[11px]">Delivered</span>
+</td>
+<td class="px-6 py-5 font-body-md text-gray-600">Opened 2h ago</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-2/3"></div>
+</div>
+<span class="text-xs font-data-mono text-gray-400">2/3</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">chevron_right</span>
+</td>
+</tr>
+<!-- Row 2: Robert King (EXPANDED) -->
+<tr class="bg-primary-surface/30">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs">RK</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface">Robert King</p>
+<p class="text-xs text-gray-400 font-data-mono">robert.king@cloud-sys.io</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2.5 py-1 rounded-full bg-purple-100 text-status-reply-text font-label-caps text-[11px] border border-purple-200">Stopped — reply</span>
+</td>
+<td class="px-6 py-5 font-body-md text-gray-600">Replied 15m ago</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-status-reply-text w-2/3"></div>
+</div>
+<span class="text-xs font-data-mono text-gray-400">2/3</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="material-symbols-outlined text-primary rotate-90">expand_more</span>
+</td>
+</tr>
+<!-- Expanded Detail -->
+<tr class="bg-white">
+<td class="px-6 py-0" colspan="5">
+<div class="py-6 pl-12 border-l-2 border-gray-200 ml-10 my-2">
+<div class="flex flex-col gap-6">
+<!-- Step 1 -->
+<div class="relative">
+<div class="absolute -left-[45px] top-1.5 w-4 h-4 rounded-full bg-white border-2 border-status-success-text z-10"></div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<p class="font-body-lg text-body-lg text-on-surface">Step 1: Introduction Email</p>
+<span class="px-2 py-0.5 rounded bg-status-success-bg text-status-success-text text-[10px] font-bold uppercase tracking-wider">Delivered</span>
+</div>
+<div class="flex gap-4 items-center">
+<div class="flex items-center gap-1.5 text-xs text-gray-500">
+<span class="material-symbols-outlined text-sm">schedule</span>
+                                                            12 May, 10:04 AM
+                                                        </div>
+<div class="flex items-center gap-1.5 text-xs text-status-success-text font-medium">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">visibility</span>
+                                                            Opened at 10:45 AM
+                                                        </div>
+</div>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="relative">
+<div class="absolute -left-[45px] top-1.5 w-4 h-4 rounded-full bg-white border-2 border-status-reply-text z-10"></div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<p class="font-body-lg text-body-lg text-on-surface">Step 2: Follow-up Offer</p>
+<span class="px-2 py-0.5 rounded bg-purple-50 text-status-reply-text text-[10px] font-bold uppercase tracking-wider border border-purple-100">Stopped — reply</span>
+</div>
+<div class="bg-purple-50 p-4 rounded-lg border border-purple-100 max-w-2xl mt-1">
+<div class="flex justify-between mb-2">
+<span class="text-xs font-bold text-status-reply-text uppercase">Incoming Reply</span>
+<span class="text-xs text-gray-400">14 May, 09:20 AM</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface leading-relaxed italic">"Hi team, thanks for reaching out. I'm interested in the flash sale but I have a quick question about the bulk pricing..."</p>
+</div>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="relative opacity-50">
+<div class="absolute -left-[45px] top-1.5 w-4 h-4 rounded-full bg-white border-2 border-gray-300 z-10"></div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<p class="font-body-lg text-body-lg text-on-surface">Step 3: Final Reminder</p>
+<span class="px-2 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-wider">Skipped</span>
+</div>
+<p class="text-xs text-gray-400">Sequence terminated due to recipient reply.</p>
+</div>
+</div>
+</div>
+</div>
+</td>
+</tr>
+<!-- Row 3: Standard Row -->
+<tr class="hover:bg-gray-50 transition-colors cursor-pointer group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">AS</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface">Alice Smith</p>
+<p class="text-xs text-gray-400 font-data-mono">alice.s@design.co</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="px-2.5 py-1 rounded-full bg-status-scheduled-bg text-status-scheduled-text font-label-caps text-[11px]">Processing</span>
+</td>
+<td class="px-6 py-5 font-body-md text-gray-600">Step 1 Pending</td>
+<td class="px-6 py-5">
+<div class="flex items-center gap-2">
+<div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-0"></div>
+</div>
+<span class="text-xs font-data-mono text-gray-400">0/3</span>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors">chevron_right</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between mt-8 px-2">
+<p class="text-body-md font-body-md text-gray-500">Showing <span class="font-bold text-on-surface">1-10</span> of 1,240 recipients</p>
+<div class="flex gap-2">
+<button class="p-2 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 rounded-lg bg-primary text-on-primary font-bold">1</button>
+<button class="w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors font-body-md">2</button>
+<button class="w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors font-body-md">3</button>
+<span class="px-2 flex items-center text-gray-400">...</span>
+<button class="w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors font-body-md">124</button>
+<button class="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-white hover:border-primary hover:text-primary transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer -->
+<footer class="fixed bottom-0 w-full h-[64px] z-50 bg-white border-t border-gray-200 dark:bg-surface-container dark:border-outline-variant">
+<div class="flex justify-between items-center px-8 w-full max-w-5xl mx-auto h-full">
+<button class="text-gray-500 hover:text-gray-900 px-4 py-2 font-label-caps text-label-caps transition-all">Back</button>
+<div class="flex gap-4">
+<button class="text-gray-500 hover:text-gray-900 px-4 py-2 font-label-caps text-label-caps transition-all">Save</button>
+<button class="bg-primary text-on-primary rounded-lg px-6 py-2 font-label-caps text-label-caps hover:bg-primary-hover active:scale-98 transition-transform">Next Step</button>
+</div>
+</div>
+</footer>
+<!-- Atmosphere/Micro-interactions -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('FlowChat Dashboard Ready');
+            
+            // Subtle hover effect on rows
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.addEventListener('mousedown', () => {
+                    row.classList.add('scale-[0.995]', 'transition-transform');
+                });
+                row.addEventListener('mouseup', () => {
+                    row.classList.remove('scale-[0.995]');
+                });
+            });
+        });
+    </script>
+</body></html>

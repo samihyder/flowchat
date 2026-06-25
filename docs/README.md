@@ -10,7 +10,10 @@
 |---|---|
 | [sprints.md](sprints.md) | Sprint plan — Phases 1–8, story points, definitions of done |
 | [chat-module-standard.md](chat-module-standard.md) | Industry-standard web chat checklist — **gate before CRM (Sprint 6)** |
-| [email-marketing-standard.md](email-marketing-standard.md) | Email marketing automation checklist — **Sprint 6 module** |
+| [email-marketing-standard.md](email-marketing-standard.md) | Email marketing checklist — **S6M campaign model** |
+| [marketing-module-design.md](marketing-module-design.md) | **S6M visual design** — branding, components, all 44 stories |
+| [marketing-module-screens.md](marketing-module-screens.md) | S6M screen behaviour, API, enums |
+| [marketing-module-migration.md](marketing-module-migration.md) | Planned DB schema for S6M campaigns |
 | [features.md](features.md) | Complete feature specification — channels, conversations, AI, reports, auth, API |
 | [branding.md](branding.md) | Color palette, typography, spacing, motion — full design system |
 | [tech-stack.md](tech-stack.md) | Recommended modern tech stack with rationale |
@@ -43,4 +46,4 @@
 
 ---
 
-*Generated: 2026-06-01*
+*Generated: 2026-06-13*

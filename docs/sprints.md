@@ -213,10 +213,10 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ### Sprint 6 · 2026-09-07 → 2026-10-04 *(extended — 4 weeks)*
 **Prerequisite:** [Chat Module Definition of Done](chat-module-standard.md) ✅  
-**Goal:** CRM contact management **plus** industry-standard email marketing automation (segments, broadcasts, drip workflows).
+**Goal:** CRM contact management **plus** industry-standard outbound email marketing foundation (segments, templates, consent, webhooks).
 
-> Email **inbox** (inbound reply-by-email) remains Sprint 7. Sprint 6 delivers **outbound marketing automation** on CRM contacts (HubSpot / Mailchimp / Brevo parity for SMB).  
-> See [email-marketing-standard.md](email-marketing-standard.md) for the full checklist.
+> **S6M supersedes CRM-triggered workflows:** Stories S6-15 and S6-16 shipped as foundation but are **retired** by [Sprint 6M](#sprint-6m--marketing-campaign-redesign--planned). Authoritative marketing model: campaign-only wizard — see [marketing-module-screens.md](marketing-module-screens.md) and [email-marketing-standard.md](email-marketing-standard.md).  
+> Email **inbox** (inbound reply-by-email) remains Sprint 7. Sprint 6 delivers CRM + outbound marketing **infrastructure** on CRM contacts.
 
 #### CRM — contacts & profile
 
@@ -248,8 +248,8 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 | # | Story | Points | Priority |
 |---|---|---|---|
 | S6-14 | Broadcast campaigns — select segment + template, schedule or send now, BullMQ dispatch with rate limits | 8 | Must |
-| S6-15 | Automation workflows — visual step builder: triggers (contact created, label added, conversation resolved, manual enroll) → actions (send email, wait, branch on opened/clicked, add label, exit) | 13 | Must |
-| S6-16 | Drip sequences — multi-step time-delayed series inside a workflow; enrollment caps and re-entry rules | 5 | Must |
+| S6-15 | ~~Automation workflows~~ — CRM triggers *(superseded by S6M)* | 13 | Superseded |
+| S6-16 | ~~Drip sequences in workflows~~ *(superseded by S6M)* | 5 | Superseded |
 | S6-17 | Unsubscribe — one-click public page, `List-Unsubscribe` header, instant suppression; preference center (opt-down vs opt-out) | 5 | Must |
 
 #### Email marketing — delivery, tracking & analytics
@@ -287,11 +287,11 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 - [x] Admin can import contacts and build static + dynamic segments
 - [x] Admin can create HTML templates with merge tags and send a test email
 - [x] Admin can run a broadcast campaign to a segment; recipients receive mail from verified domain
-- [x] Admin can publish an automation workflow (welcome drip, post-chat follow-up) that runs on triggers
+- [x] ~~Admin can publish an automation workflow (welcome drip, post-chat follow-up) that runs on triggers~~ *(shipped S6-15/16; **superseded by S6M** — remove triggers at S6M-9)*
 - [x] Unsubscribe link works; suppressed contacts never receive marketing mail
 - [x] Campaign dashboard shows delivery and engagement metrics; contact profile shows email history
 - [x] Global company registry links contacts by corporate email domain; enrichment via Connected services with staged apply
-- [ ] All **Must** items in [email-marketing-standard.md](email-marketing-standard.md) verified in staging
+- [ ] All **Must** S6M stories in [email-marketing-standard.md](email-marketing-standard.md) verified in staging
 
 ---
 
@@ -303,6 +303,8 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ### Sprint 7 · 2026-09-21 → 2026-10-04
 **Goal:** Email channel — inbound email → conversation, outbound reply via SMTP.
+
+> **S6M dependency:** [S6M-38](marketing-module-screens.md) reply-stop uses `In-Reply-To` / `References` matching to campaign outbound `Message-ID`. Full fidelity requires S7-2/S7-3 thread continuity. Until then, ESP reply webhooks are the fallback (documented in S6M-38).
 
 #### Stories
 
@@ -337,6 +339,29 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 | S7B-10 | Data enrichment providers in Connected services (extends S6-26) | Done |
 
 **Env:** `CREDENTIALS_ENCRYPTION_KEY` (32-byte hex or strong secret; falls back to `SESSION_SECRET` in dev).
+
+---
+
+### Sprint 6M · Marketing Campaign Redesign · planned
+**Goal:** Replace CRM-triggered workflows with a campaign-only wizard: explicit recipients, multi-step dated emails, enterprise composer, per-recipient stop rules (bounce / unsubscribe / reply / complaint), and full stats.
+
+**Spec:** [marketing-module-screens.md](marketing-module-screens.md) · [marketing-module-design.md](marketing-module-design.md) · [marketing-module-migration.md](marketing-module-migration.md) · **[Implementation + QA checklist](marketing-module-sprint-checklist.md)** (local dev, UI/API/DB gate per sub-sprint)  
+**Stories:** S6M-1 … S6M-44 in user stories workbook (185 pts, Must-heavy)
+
+| Theme | Stories |
+|-------|---------|
+| Campaign lifecycle | S6M-1 – S6M-5, S6M-39 |
+| Recipients + CRM isolation | S6M-6 – S6M-10, S6M-9, S6M-35 |
+| Templates + composer | S6M-11 – S6M-15 |
+| Email sequence | S6M-16 – S6M-20, S6M-41 |
+| Signature + pre-flight | S6M-21 – S6M-25 |
+| Analytics | S6M-26 – S6M-30, S6M-43 |
+| Infrastructure | S6M-31 – S6M-34 |
+| Stop rules | S6M-36 – S6M-38, S6M-42, S6M-44 |
+| UX + wizard | S6M-39, S6M-40 |
+| Merge validation + drill-down | S6M-41, S6M-43 |
+
+**Traceability:** All 44 stories mapped in [marketing-module-screens.md](marketing-module-screens.md) §0.1.
 
 ---
 
@@ -651,4 +676,4 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ---
 
-*Last updated: 2026-06-23 · S6 CRM extensions + S7B BYOK shipped · User stories workbook: 104 stories*
+*Last updated: 2026-06-13 · S6M Marketing Campaign Redesign planned (44 stories, 185 pts) · Screen spec: [marketing-module-screens.md](marketing-module-screens.md) · Workbook: 148 stories, 676 pts*

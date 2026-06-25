@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Marketing Health Settings - SalesHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-container": "#6df5e1",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "surface-container": "#e6eeff",
+                    "inverse-surface": "#273140",
+                    "on-secondary-fixed-variant": "#005048",
+                    "primary-fixed": "#e1e0ff",
+                    "on-tertiary-fixed-variant": "#703700",
+                    "status-bounced-bg": "#FEF3C7",
+                    "on-secondary-fixed": "#00201c",
+                    "gray-400": "#9CA3AF",
+                    "status-scheduled-bg": "#DBEAFE",
+                    "gray-50": "#F9FAFB",
+                    "gray-200": "#E5E7EB",
+                    "status-reply-text": "#A855F7",
+                    "on-tertiary-container": "#fffbff",
+                    "tertiary-container": "#b55d00",
+                    "on-surface": "#121c2a",
+                    "gray-900": "#111827",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#fffbff",
+                    "status-bounced-text": "#D97706",
+                    "status-danger-text": "#DC2626",
+                    "status-success-bg": "#DCFCE7",
+                    "status-draft-bg": "#F3F4F6",
+                    "surface-tint": "#494bd6",
+                    "surface-variant": "#d9e3f7",
+                    "surface-bright": "#f9f9ff",
+                    "status-danger-bg": "#FEE2E2",
+                    "on-error": "#ffffff",
+                    "inverse-primary": "#c0c1ff",
+                    "tertiary": "#904900",
+                    "error": "#ba1a1a",
+                    "status-success-text": "#16A34A",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "status-paused-bg": "#FEF9C3",
+                    "status-scheduled-text": "#2563EB",
+                    "outline-variant": "#c7c4d7",
+                    "primary": "#4648d4",
+                    "on-surface-variant": "#464554",
+                    "on-primary-fixed": "#07006c",
+                    "primary-hover": "#4F46E5",
+                    "gray-500": "#6B7280",
+                    "background": "#f9f9ff",
+                    "status-draft-text": "#4B5563",
+                    "primary-fixed-dim": "#c0c1ff",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed": "#71f8e4",
+                    "surface-container-high": "#dee9fd",
+                    "outline": "#767586",
+                    "surface-container-low": "#eff3ff",
+                    "surface": "#f9f9ff",
+                    "primary-border": "#C7D2FE",
+                    "inverse-on-surface": "#ebf1ff",
+                    "status-paused-text": "#CA8A04",
+                    "tertiary-fixed": "#ffdcc5",
+                    "surface-container-highest": "#d9e3f7",
+                    "secondary-fixed-dim": "#4fdbc8",
+                    "on-secondary": "#ffffff",
+                    "primary-container": "#6063ee",
+                    "on-secondary-container": "#006f64",
+                    "secondary": "#006b5f",
+                    "surface-dim": "#d0daef",
+                    "on-primary-fixed-variant": "#2f2ebe",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#121c2a",
+                    "primary-surface": "#EEF2FF",
+                    "on-tertiary-fixed": "#301400"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max-list": "1280px",
+                    "padding-card": "24px",
+                    "gap-section": "24px",
+                    "container-max-wizard": "1024px",
+                    "gap-form": "16px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "data-mono": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-lg": ["30px", {"lineHeight": "36px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-on-surface">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface border-r border-gray-200 z-50 flex flex-col p-4">
+<div class="mb-8 px-2">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">SalesHub</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Campaign Manager</p>
+</div>
+<nav class="space-y-1 flex-grow">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-gray-50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">mail</span>
+<span class="font-body-md text-body-md">Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-gray-50 transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-body-md text-body-md">Templates</span>
+</a>
+<div class="pt-4 mt-4 border-t border-gray-100">
+<a class="flex items-center gap-3 px-4 py-2 text-primary bg-primary-surface rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</div>
+</nav>
+<div class="mt-auto pt-4 border-t border-gray-100 flex items-center gap-3 px-2">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">JD</div>
+<div>
+<p class="font-body-md text-body-md font-bold">Sales Agent</p>
+<p class="font-label-caps text-[10px] text-on-surface-variant">Admin Access</p>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="ml-64 min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-16 px-8 bg-surface border-b border-gray-200 sticky top-0 z-40">
+<div class="flex items-center gap-6">
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary">Campaign Builder</h2>
+<nav class="hidden md:flex gap-4">
+<a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Drafts</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Scheduled</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">Sent</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="bg-primary hover:bg-primary-hover text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition-all">
+                    Launch
+                </button>
+</div>
+</header>
+<main class="flex-grow p-8 max-w-container-max-list mx-auto w-full">
+<header class="mb-10">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Marketing Health Settings</h1>
+<p class="text-on-surface-variant font-body-md max-w-2xl">Monitor your email infrastructure and system performance. Ensure all domain records are verified to maintain high deliverability rates.</p>
+</header>
+<!-- Settings Content: Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Card: Email Provider Health -->
+<section class="md:col-span-7 glass-card border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+<div class="p-6 border-b border-gray-100 flex justify-between items-center bg-white/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">hub</span>
+<h3 class="font-headline-sm text-headline-sm">Email Provider Health</h3>
+</div>
+<a class="text-primary font-body-md hover:underline" href="#">Connected services</a>
+</div>
+<!-- Prominent Error Banner -->
+<div class="bg-red-50 border-l-4 border-error p-5 flex items-start gap-4">
+<div class="shrink-0">
+<img alt="Service disruption warning" class="w-16 h-16 object-contain rounded-lg shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzBoTmoueLOIUeGkkR5oyGgTP6kcd5lEcwOjZwJzrpxQ2cKohGKQjM0kRDZIpZnDfZQaOG3kXHKyHfALRxYFf-8uia4IUjBAXhR5T1qV7zbvJiwk5l1IC6SWRU3Iscwykx8Fizj1O7x0sGL4NT0mHlhR3L7QaaF-s-4-XrLU7SMGIFvp4I5BARG3yEMW6bWOasUoJWVtrxRqGANVPekrHXj1TPYTaAsnRwV59InWLSqPgsR-GKcnu8kR4ZOMx-D5opo-2dhQAIkqKV"/>
+</div>
+<div class="flex-grow">
+<h4 class="font-body-lg text-body-lg text-error font-bold mb-1">Critical Connection Error</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mb-3">One or more of your primary providers is failing to authenticate. This will prevent campaign launching.</p>
+<button class="bg-error text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-error/90 transition-all shadow-sm">Re-verify Connections</button>
+</div>
+</div>
+<div class="p-6 space-y-6 flex-grow bg-white">
+<div class="flex items-center justify-between p-4 rounded-lg bg-status-success-bg border border-status-success-text/10">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-status-success-text">check_circle</span>
+</div>
+<div>
+<h4 class="font-body-lg text-body-lg text-on-surface">Resend API</h4>
+<p class="font-body-md text-body-md text-status-success-text">Operational • 12ms latency</p>
+</div>
+</div>
+<span class="px-3 py-1 rounded-full bg-white text-status-success-text text-xs font-bold uppercase tracking-wider">Active</span>
+</div>
+<div class="flex items-center justify-between p-4 rounded-lg bg-status-paused-bg border border-status-paused-text/10">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-status-paused-text">warning</span>
+</div>
+<div>
+<h4 class="font-body-lg text-body-lg text-on-surface">SendGrid Backup</h4>
+<p class="font-body-md text-body-md text-status-paused-text">Rate limit approaching (84%)</p>
+</div>
+</div>
+<button class="bg-status-paused-text text-white px-3 py-1 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">Adjust</button>
+</div>
+</div>
+</section>
+<!-- Card: System Health -->
+<section class="md:col-span-5 glass-card border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+<div class="p-6 border-b border-gray-100 flex items-center gap-3 bg-white/50">
+<span class="material-symbols-outlined text-primary">settings_heart</span>
+<h3 class="font-headline-sm text-headline-sm">System Health</h3>
+</div>
+<div class="p-6 space-y-4 bg-white flex-grow">
+<div class="space-y-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant">CRON SCHEDULER</p>
+<p class="font-body-md text-body-md">Last Run: <span class="font-data-mono text-data-mono font-semibold">2024-05-24 14:00:01</span></p>
+</div>
+<span class="material-symbols-outlined text-status-success-text" style="font-variation-settings: 'FILL' 1;">fiber_manual_record</span>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant">WORKER NODES (4/4)</p>
+<p class="font-body-md text-body-md">Throughput: <span class="font-data-mono text-data-mono">1.2k events/sec</span></p>
+</div>
+<span class="material-symbols-outlined text-status-success-text" style="font-variation-settings: 'FILL' 1;">fiber_manual_record</span>
+</div>
+<div class="pt-4 border-t border-gray-100">
+<div class="flex justify-between items-center mb-2">
+<span class="font-body-md text-body-md">Database Load</span>
+<span class="font-data-mono text-data-mono">22%</span>
+</div>
+<div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 22%"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Card: Domain Verification -->
+<section class="md:col-span-12 glass-card border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+<div class="p-6 border-b border-gray-100 flex justify-between items-center bg-white/50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+<h3 class="font-headline-sm text-headline-sm">Domain Verification</h3>
+</div>
+<span class="text-xs font-bold text-on-surface-variant bg-gray-100 px-2 py-1 rounded">2 Domains Connected</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-gray-50 border-b border-gray-100">
+<tr>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase">Domain</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase">SPF Status</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase">DKIM Status</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase">DMARC</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100 bg-white">
+<tr>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-body-lg text-body-lg">outreach.saleshub.io</span>
+<span class="text-[10px] text-on-surface-variant">Added May 12, 2024</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-status-success-text">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span class="font-body-md text-body-md">Verified</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-status-success-text">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span class="font-body-md text-body-md">Verified</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">info</span>
+<span class="font-body-md text-body-md italic text-gray-400">Not found</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:text-primary-hover font-semibold text-sm">View DNS</button>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-body-lg text-body-lg">marketing.client-app.com</span>
+<span class="text-[10px] text-on-surface-variant">Added May 20, 2024</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-error text-white">Failed</span>
+</div>
+<span class="text-xs text-error font-medium">Record mismatch detected</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-status-success-text">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span class="font-body-md text-body-md">Verified</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 text-status-success-text">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span class="font-body-md text-body-md">p=quarantine</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="bg-status-danger-bg text-status-danger-text px-4 py-1 rounded-lg font-bold text-xs hover:bg-status-danger-text hover:text-white transition-all">Fix Records</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Alert Banner for failing checks -->
+<div class="mt-8 p-4 bg-status-danger-bg border-l-4 border-status-danger-text rounded-r-xl flex items-start gap-4 shadow-sm">
+<span class="material-symbols-outlined text-status-danger-text">error</span>
+<div>
+<h5 class="font-body-lg text-body-lg text-status-danger-text">Critical: Domain Verification Failed</h5>
+<p class="font-body-md text-body-md text-on-surface-variant">The domain <span class="font-bold">marketing.client-app.com</span> has invalid SPF records. Emails sent from this domain are likely to be marked as spam or rejected by major providers.</p>
+</div>
+<button class="ml-auto bg-white border border-status-danger-text/20 text-status-danger-text px-4 py-1 rounded-lg text-sm font-bold hover:bg-status-danger-bg transition-colors">Re-verify</button>
+</div>
+</main>
+<footer class="mt-auto flex items-center justify-between h-16 px-8 bg-surface border-t border-gray-200">
+<p class="font-label-caps text-label-caps text-gray-500 uppercase">© 2024 SalesHub Automation</p>
+<div class="flex gap-6">
+<a class="font-label-caps text-label-caps text-gray-500 hover:text-primary transition-colors" href="#">Help Center</a>
+<a class="font-label-caps text-label-caps text-gray-500 hover:text-primary transition-colors" href="#">Privacy Policy</a>
+</div>
+</footer>
+</div>
+<!-- Micro-interaction script for the status indicator pulse -->
+<script>
+        const dots = document.querySelectorAll("[style*='fiber_manual_record']");
+        dots.forEach(dot => {
+            if(dot.classList.contains('text-status-success-text')) {
+                dot.classList.add('animate-pulse');
+            }
+        });
+    </script>
+</body></html>

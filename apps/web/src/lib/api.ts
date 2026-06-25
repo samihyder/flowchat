@@ -408,6 +408,51 @@ export type EmailCampaign = {
   rates?: CampaignRates;
 };
 
+/** S6M wizard campaign (marketing_campaigns table) */
+export type MarketingCampaign = {
+  id: string;
+  name: string;
+  status: 'draft' | 'scheduled' | 'running' | 'paused' | 'completed' | 'cancelled';
+  currentStep: number;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  launchedBy: string | null;
+  launchedAt: string | null;
+  recipientCount: number;
+};
+
+export type CampaignRecipientDetail = {
+  contactId: string;
+  name: string;
+  email: string;
+  company: string | null;
+  marketingStatus: string;
+  recipientStatus: 'subscribed' | 'suppressed' | 'no_email';
+  exclusionReason: string | null;
+};
+
+export type CampaignRecipientsSummary = {
+  selected: number;
+  suppressed: number;
+  reasons?: Record<string, number>;
+};
+
+export type CampaignStep = {
+  id: string;
+  stepOrder: number;
+  sendAt: string | null;
+  subject: string;
+  htmlBody: string;
+  plainBody: string | null;
+  mergeConfig: {
+    contactMessageMode: 'latest_note' | 'latest_inbound_chat' | 'latest_note_or_chat' | null;
+  };
+  saveAsTemplate: boolean;
+  templateName: string | null;
+  sourceTemplateId: string | null;
+};
+
 export type EmailAutomation = {
   id: string;
   name: string;
@@ -1348,33 +1393,111 @@ export const api = {
 
     campaigns: {
       list: (accountId: string, token: string) =>
-        request<{ campaigns: EmailCampaign[] }>(`/accounts/${accountId}/marketing/campaigns`, { token }),
+        request<{ campaigns: MarketingCampaign[] }>(`/accounts/${accountId}/marketing/campaigns`, { token }),
       get: (accountId: string, campaignId: string, token: string) =>
+        request<{ campaign: MarketingCampaign }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}`,
+          { token }
+        ),
+      create: (accountId: string, body: { name?: string } | undefined, token: string) =>
         request<{
-          campaign: EmailCampaign;
-          statusBreakdown: { status: string; count: number }[];
-          abStats?: { variant: string; sent: number; opened: number }[];
-        }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}`, { token }),
-      create: (
-        accountId: string,
-        body: {
-          name: string;
-          subject: string;
-          templateId?: string;
-          segmentId?: string;
-          senderId?: string;
-          scheduledAt?: string;
-          abTestEnabled?: boolean;
-          subjectVariantB?: string;
-          useSendTimeOptimization?: boolean;
-        },
-        token: string
-      ) =>
-        request<{ campaign: EmailCampaign }>(`/accounts/${accountId}/marketing/campaigns`, {
+          id: string;
+          status: string;
+          created_at: string;
+          created_by: string | null;
+          campaign: MarketingCampaign;
+        }>(`/accounts/${accountId}/marketing/campaigns`, {
           method: 'POST',
-          body,
+          body: body ?? {},
           token,
         }),
+      patch: (
+        accountId: string,
+        campaignId: string,
+        body: { name?: string; currentStep?: number },
+        token: string
+      ) =>
+        request<{ campaign: MarketingCampaign }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}`,
+          { method: 'PATCH', body, token }
+        ),
+      getRecipients: (accountId: string, campaignId: string, token: string) =>
+        request<{
+          contactIds: string[];
+          recipients: CampaignRecipientDetail[];
+          summary: CampaignRecipientsSummary;
+        }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}/recipients`, { token }),
+      putRecipients: (accountId: string, campaignId: string, contactIds: string[], token: string) =>
+        request<{
+          selected: number;
+          excluded: { suppressed: number; reasons: Record<string, number> };
+          recipients: CampaignRecipientDetail[];
+        }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}/recipients`, {
+          method: 'PUT',
+          body: { contact_ids: contactIds },
+          token,
+        }),
+      importSegment: (
+        accountId: string,
+        campaignId: string,
+        segmentId: string,
+        token: string,
+        contactIds?: string[]
+      ) =>
+        request<{
+          imported: number;
+          mergedContactIds: string[];
+          selected: number;
+          excluded: { suppressed: number; reasons: Record<string, number> };
+          recipients: CampaignRecipientDetail[];
+        }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}/recipients/import-segment`, {
+          method: 'POST',
+          body: { segment_id: segmentId, contact_ids: contactIds },
+          token,
+        }),
+      getSteps: (accountId: string, campaignId: string, token: string) =>
+        request<{ steps: CampaignStep[] }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/steps`,
+          { token }
+        ),
+      putSteps: (
+        accountId: string,
+        campaignId: string,
+        steps: {
+          stepOrder: number;
+          sendAt: string;
+          subject: string;
+          htmlBody: string;
+          plainBody?: string;
+          mergeConfig?: { contactMessageMode?: string };
+          saveAsTemplate?: boolean;
+          templateName?: string;
+          sourceTemplateId?: string | null;
+        }[],
+        token: string
+      ) =>
+        request<{ steps: CampaignStep[] }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/steps`,
+          {
+            method: 'PUT',
+            body: {
+              steps: steps.map((s) => ({
+                step_order: s.stepOrder,
+                send_at: s.sendAt,
+                subject: s.subject,
+                html_body: s.htmlBody,
+                plain_body: s.plainBody,
+                merge_config: s.mergeConfig?.contactMessageMode
+                  ? { contact_message_mode: s.mergeConfig.contactMessageMode }
+                  : undefined,
+                save_as_template: s.saveAsTemplate,
+                template_name: s.templateName,
+                source_template_id: s.sourceTemplateId,
+              })),
+            },
+            token,
+          }
+        ),
       send: (accountId: string, campaignId: string, token: string) =>
         request<{ totalRecipients: number; done: boolean; processed: number }>(
           `/accounts/${accountId}/marketing/campaigns/${campaignId}/send`,
