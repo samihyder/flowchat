@@ -16,14 +16,17 @@ const navItems = [
 ] as const;
 
 type MarketingSidebarProps = {
+  variant?: 'list' | 'wizard';
   onNavigate?: () => void;
 };
 
-export function MarketingSidebar({ onNavigate }: MarketingSidebarProps) {
+export function MarketingSidebar({ variant = 'list', onNavigate }: MarketingSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, token, accountId, clearAuth } = useAuthStore();
+  const { user, token, accountId } = useAuthStore();
   const [creating, setCreating] = useState(false);
+
+  const isWizard = variant === 'wizard' || pathname.includes('/edit');
 
   const isActive = (href: string) => {
     if (href === marketingRoutes.campaigns) {
@@ -45,10 +48,10 @@ export function MarketingSidebar({ onNavigate }: MarketingSidebarProps) {
   };
 
   return (
-    <div className="flex flex-col h-full p-4">
-      <div className="mb-8 px-2">
-        <h1 className="text-lg font-bold text-mkt-primary">FlowChat</h1>
-        <p className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold mt-0.5">
+    <aside className="h-full w-64 border-r border-gray-200 bg-surface flex flex-col p-4">
+      <div className="mb-8 px-4">
+        <h1 className="text-headline-sm font-bold text-primary">FlowChat</h1>
+        <p className="text-[12px] text-gray-500 uppercase tracking-wider font-semibold">
           Campaign Manager
         </p>
       </div>
@@ -61,62 +64,41 @@ export function MarketingSidebar({ onNavigate }: MarketingSidebarProps) {
               key={item.href}
               href={item.href as Route}
               onClick={onNavigate}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 ${
                 active
-                  ? 'text-mkt-primary bg-mkt-primary-surface font-bold'
-                  : 'text-mkt-on-surface-variant hover:bg-gray-50'
+                  ? 'text-primary bg-primary-surface font-bold'
+                  : 'text-on-surface-variant hover:bg-gray-50'
               }`}
             >
-              <MarketingIcon name={item.icon} className="text-[22px]" />
-              {item.label}
+              <MarketingIcon name={item.icon} />
+              <span className="text-body-md">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="space-y-3 pt-4 border-t border-gray-200">
-        <button
-          type="button"
-          onClick={() => void handleNewCampaign()}
-          disabled={creating}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-mkt-primary text-white font-bold hover:bg-mkt-primary-hover transition-colors text-sm disabled:opacity-60 shadow-sm"
-        >
-          <MarketingIcon name="add" className="text-[20px]" />
-          {creating ? 'Creating…' : 'New Campaign'}
-        </button>
-
-        <Link
-          href={'/dashboard' as Route}
-          onClick={onNavigate}
-          className="flex items-center gap-2 px-4 py-2 text-xs text-gray-500 hover:text-mkt-primary transition-colors"
-        >
-          <MarketingIcon name="arrow_back" className="text-[16px]" />
-          Back to Inbox
-        </Link>
-
-        <div className="flex items-center gap-3 px-2 pt-2">
-          <div className="w-10 h-10 rounded-full bg-mkt-primary-surface text-mkt-primary flex items-center justify-center text-sm font-bold shrink-0">
+      <div className={`mt-auto ${isWizard ? 'pt-4 border-t border-gray-100' : 'border-t border-gray-200 pt-4 px-2'}`}>
+        {isWizard && (
+          <button
+            type="button"
+            onClick={() => void handleNewCampaign()}
+            disabled={creating}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-on-primary font-bold hover:bg-primary-hover transition-colors mb-0 disabled:opacity-60"
+          >
+            <MarketingIcon name="add" />
+            <span>{creating ? 'Creating…' : 'New Campaign'}</span>
+          </button>
+        )}
+        <div className={`flex items-center gap-3 ${isWizard ? 'mt-6 px-4' : 'px-2'}`}>
+          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-primary shrink-0">
             {initials(user?.name || user?.email || 'A')}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate text-gray-900">
-              {user?.name || 'Agent'}
-            </p>
-            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+            <p className="text-sm font-semibold truncate">{user?.name || 'Sales Agent'}</p>
+            <p className="text-xs text-gray-500 truncate">{user?.email || 'agent@flowchat.io'}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              clearAuth();
-              router.push('/sign-in');
-            }}
-            className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg"
-            title="Sign out"
-          >
-            <MarketingIcon name="logout" className="text-[18px]" />
-          </button>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

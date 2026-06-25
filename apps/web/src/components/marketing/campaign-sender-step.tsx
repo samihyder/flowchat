@@ -138,7 +138,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <MarketingIcon name="send" className="text-mkt-primary" />
+              <MarketingIcon name="send" className="text-primary" />
               Sender identity
             </h3>
 
@@ -149,7 +149,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
               <select
                 value={selectedSenderId}
                 onChange={(e) => applySenderSelection(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:ring-2 focus:ring-mkt-primary-border focus:border-mkt-primary"
+                className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2.5 focus:ring-2 focus:ring-primary-border focus:border-primary"
               >
                 <option value="">Custom / manual</option>
                 {senders.map((s) => (
@@ -205,7 +205,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
 
             <Link
               href={'/settings/email-marketing' as Route}
-              className="text-xs text-mkt-primary hover:underline inline-flex items-center gap-1"
+              className="text-xs text-primary hover:underline inline-flex items-center gap-1"
             >
               Manage senders in settings
               <MarketingIcon name="open_in_new" className="text-[14px]" />
@@ -214,7 +214,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
 
           <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <MarketingIcon name="draw" className="text-mkt-primary" />
+              <MarketingIcon name="draw" className="text-primary" />
               Signature
             </h3>
 
@@ -223,7 +223,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
                 type="checkbox"
                 checked={useWorkspaceSignature}
                 onChange={(e) => setUseWorkspaceSignature(e.target.checked)}
-                className="rounded border-gray-300 text-mkt-primary focus:ring-mkt-primary"
+                className="rounded border-gray-300 text-primary focus:ring-primary"
               />
               Use workspace default signature
             </label>
@@ -273,12 +273,12 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
               dangerouslySetInnerHTML={{ __html: previewSignature }}
             />
             {meetingLink && (
-              <p className="text-mkt-primary text-xs">
+              <p className="text-primary text-xs">
                 <a href={meetingLink}>Book a meeting</a>
               </p>
             )}
             {portfolioLink && (
-              <p className="text-mkt-primary text-xs">
+              <p className="text-primary text-xs">
                 <a href={portfolioLink}>View portfolio</a>
               </p>
             )}

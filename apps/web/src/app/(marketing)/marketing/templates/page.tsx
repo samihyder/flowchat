@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import { api, type EmailTemplate } from '@/lib/api';
 import { htmlToPlainPreview } from '@/components/marketing/email-rich-editor';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
+import { MarketingListFooter } from '@/components/marketing/ui/marketing-list-footer';
 import { MarketingPageHeader } from '@/components/marketing/ui/marketing-page-header';
 
 function formatUpdated(iso: string) {
@@ -82,14 +83,14 @@ export default function TemplatesPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search templates…"
-              className="block w-48 lg:w-64 pl-10 pr-3 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-mkt-primary-border text-sm"
+              className="block w-48 lg:w-64 pl-10 pr-3 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-primary-border text-sm"
             />
           </div>
         }
         action={
           <Link
             href={'/marketing/templates/new' as Route}
-            className="bg-mkt-primary hover:bg-mkt-primary-hover text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 text-sm shadow-sm"
+            className="bg-brand-indigo hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 text-sm shadow-sm"
           >
             <MarketingIcon name="add" className="text-[20px]" />
             New Template
@@ -97,10 +98,10 @@ export default function TemplatesPage() {
         }
       />
 
-      <div className="flex-1 overflow-auto p-6 lg:p-8 max-w-[1280px] w-full mx-auto">
+      <div className="flex-1 overflow-auto p-8 max-w-container-max-list mx-auto w-full">
         {!loading && templates.length === 0 ? (
           <section className="bg-white border border-gray-200 rounded-xl shadow-sm p-12 text-center max-w-lg mx-auto mt-12">
-            <div className="w-14 h-14 rounded-full bg-mkt-primary-surface text-mkt-primary flex items-center justify-center mx-auto mb-4">
+            <div className="w-14 h-14 rounded-full bg-primary-surface text-primary flex items-center justify-center mx-auto mb-4">
               <MarketingIcon name="description" className="text-[28px]" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">No templates yet</h2>
@@ -110,7 +111,7 @@ export default function TemplatesPage() {
             </p>
             <Link
               href={'/marketing/templates/new' as Route}
-              className="inline-flex bg-mkt-primary hover:bg-mkt-primary-hover text-white px-5 py-2.5 rounded-lg font-semibold text-sm"
+              className="inline-flex bg-primary hover:bg-primary-hover text-white px-5 py-2.5 rounded-lg font-semibold text-sm"
             >
               Create template
             </Link>
@@ -126,13 +127,13 @@ export default function TemplatesPage() {
               {filtered.map((t) => (
                 <article
                   key={t.id}
-                  className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col hover:border-mkt-primary-border hover:shadow-sm transition-all group"
+                  className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col hover:border-primary-border hover:shadow-sm transition-all group"
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="font-semibold text-gray-900 truncate group-hover:text-mkt-primary">
+                    <p className="font-semibold text-gray-900 truncate group-hover:text-primary">
                       {t.name}
                     </p>
-                    <MarketingIcon name="mail" className="text-gray-300 group-hover:text-mkt-primary shrink-0" />
+                    <MarketingIcon name="mail" className="text-gray-300 group-hover:text-primary shrink-0" />
                   </div>
                   <p className="text-sm text-gray-600 truncate">{t.subject}</p>
                   <p className="text-xs text-gray-400 mt-2 flex-1 line-clamp-2">
@@ -146,7 +147,7 @@ export default function TemplatesPage() {
                   <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
                     <Link
                       href={`/marketing/templates/${t.id}/edit` as Route}
-                      className="text-xs font-semibold text-mkt-primary hover:underline"
+                      className="text-xs font-semibold text-primary hover:underline"
                     >
                       Edit
                     </Link>
@@ -173,6 +174,8 @@ export default function TemplatesPage() {
           </>
         )}
       </div>
+
+      <MarketingListFooter />
     </div>
   );
 }

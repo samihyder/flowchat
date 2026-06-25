@@ -15,24 +15,20 @@ export function MarketingMetricCard({
 }: MarketingMetricCardProps) {
   const variantClass =
     variant === 'active'
-      ? 'bg-mkt-primary-surface'
+      ? 'bg-primary-surface'
       : variant === 'accent'
-        ? 'border-mkt-primary-border'
+        ? 'border-primary-border'
         : '';
 
   return (
-    <div
-      className={`bg-white border border-gray-200 rounded-xl p-6 shadow-sm ${variantClass}`}
-    >
-      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{label}</p>
-      <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+    <div className={`bg-white border border-gray-200 rounded-xl p-6 shadow-sm ${variantClass}`}>
+      <p className="text-label-caps text-gray-500 uppercase">{label}</p>
+      <h3 className="text-3xl font-bold text-gray-900 mt-1">{value}</h3>
       {hint ? <div className="text-xs text-gray-400 font-medium mt-2">{hint}</div> : null}
     </div>
   );
 }
 
 export function MarketingMetricGrid({ children }: { children: ReactNode }) {
-  return (
-    <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">{children}</section>
-  );
+  return <section className="grid grid-cols-1 md:grid-cols-4 gap-6">{children}</section>;
 }

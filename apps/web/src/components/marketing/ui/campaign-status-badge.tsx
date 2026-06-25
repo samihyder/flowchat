@@ -5,34 +5,34 @@ const STATUS_STYLES: Record<
   { bg: string; text: string; border?: string; label: string }
 > = {
   draft: {
-    bg: 'bg-mkt-status-draft-bg',
-    text: 'text-mkt-status-draft-text',
+    bg: 'bg-status-draft-bg',
+    text: 'text-status-draft-text',
     label: 'Draft',
   },
   scheduled: {
-    bg: 'bg-mkt-status-scheduled-bg',
-    text: 'text-mkt-status-scheduled-text',
+    bg: 'bg-status-scheduled-bg',
+    text: 'text-status-scheduled-text',
     label: 'Scheduled',
   },
   running: {
-    bg: 'bg-mkt-primary-surface',
-    text: 'text-mkt-primary',
-    border: 'border border-mkt-primary-border',
+    bg: 'bg-primary-surface',
+    text: 'text-primary',
+    border: 'border border-primary-border',
     label: 'Running',
   },
   paused: {
-    bg: 'bg-mkt-status-paused-bg',
-    text: 'text-mkt-status-paused-text',
+    bg: 'bg-status-paused-bg',
+    text: 'text-status-paused-text',
     label: 'Paused',
   },
   completed: {
-    bg: 'bg-mkt-status-success-bg',
-    text: 'text-mkt-status-success-text',
+    bg: 'bg-status-success-bg',
+    text: 'text-status-success-text',
     label: 'Completed',
   },
   cancelled: {
-    bg: 'bg-mkt-status-danger-bg',
-    text: 'text-mkt-status-danger-text',
+    bg: 'bg-status-danger-bg',
+    text: 'text-status-danger-text',
     label: 'Cancelled',
   },
 };

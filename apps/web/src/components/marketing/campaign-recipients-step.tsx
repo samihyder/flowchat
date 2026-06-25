@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, type CampaignRecipientDetail, type Contact, type MarketingSegment } from '@/lib/api';
-import { Badge } from '@/components/ui/badge';
+import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
+import { initials } from '@/components/conversations/conversation-badges';
 
 type Props = {
   accountId: string;
@@ -13,13 +14,16 @@ type Props = {
   onSummaryChange?: (summary: { selected: number; suppressed: number }) => void;
   onImportComplete?: (recipients: CampaignRecipientDetail[]) => void;
   lastPutResult?: CampaignRecipientDetail[] | null;
+  totalContactsAvailable?: number;
 };
 
-const STATUS_BADGE: Record<string, { label: string; color: 'success' | 'warning' | 'gray' }> = {
-  subscribed: { label: 'Subscribed', color: 'success' },
-  suppressed: { label: 'Suppressed', color: 'warning' },
-  no_email: { label: 'No email', color: 'gray' },
-};
+const AVATAR_COLORS = [
+  'bg-blue-100 text-blue-600',
+  'bg-purple-100 text-purple-600',
+  'bg-orange-100 text-orange-600',
+  'bg-gray-100 text-gray-600',
+  'bg-green-100 text-green-600',
+];
 
 function recipientStatusForContact(
   contact: Contact,
@@ -32,6 +36,34 @@ function recipientStatusForContact(
   return 'subscribed';
 }
 
+function statusBadge(status: CampaignRecipientDetail['recipientStatus']) {
+  if (status === 'suppressed') {
+    return (
+      <span className="px-2.5 py-1 bg-status-danger-bg text-status-danger-text text-xs font-bold rounded-full">
+        Suppressed
+      </span>
+    );
+  }
+  if (status === 'no_email') {
+    return (
+      <span className="px-2.5 py-1 bg-status-draft-bg text-status-draft-text text-xs font-bold rounded-full">
+        No email
+      </span>
+    );
+  }
+  return (
+    <span className="px-2.5 py-1 bg-status-success-bg text-status-success-text text-xs font-bold rounded-full">
+      Subscribed
+    </span>
+  );
+}
+
+function avatarColor(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash + id.charCodeAt(i)) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[hash]!;
+}
+
 export function CampaignRecipientsStep({
   accountId,
   campaignId,
@@ -41,15 +73,17 @@ export function CampaignRecipientsStep({
   onSummaryChange,
   onImportComplete,
   lastPutResult,
+  totalContactsAvailable,
 }: Props) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [segments, setSegments] = useState<MarketingSegment[]>([]);
+  const [segmentModalOpen, setSegmentModalOpen] = useState(false);
   const [segmentId, setSegmentId] = useState('');
   const [search, setSearch] = useState('');
-  const [subscribedOnly, setSubscribedOnly] = useState(true);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState('');
+  const [page, setPage] = useState(0);
 
   const putById = useMemo(() => {
     const map = new Map<string, CampaignRecipientDetail>();
@@ -64,14 +98,13 @@ export function CampaignRecipientsStep({
     try {
       const res = await api.contacts.list(accountId, token, {
         q: search || undefined,
-        marketingStatus: subscribedOnly ? 'subscribed' : undefined,
         limit: 50,
       });
-      setContacts(res.contacts.filter((c) => c.email || !subscribedOnly));
+      setContacts(res.contacts);
     } finally {
       setLoadingContacts(false);
     }
-  }, [accountId, token, search, subscribedOnly]);
+  }, [accountId, token, search]);
 
   useEffect(() => {
     void loadContacts();
@@ -88,11 +121,16 @@ export function CampaignRecipientsStep({
     onSelectedIdsChange(next);
   };
 
-  const selectAllShown = () => {
-    onSelectedIdsChange(new Set([...selectedIds, ...contacts.map((c) => c.id)]));
+  const toggleAllShown = () => {
+    const allSelected = contacts.every((c) => selectedIds.has(c.id));
+    if (allSelected) {
+      const next = new Set(selectedIds);
+      contacts.forEach((c) => next.delete(c.id));
+      onSelectedIdsChange(next);
+    } else {
+      onSelectedIdsChange(new Set([...selectedIds, ...contacts.map((c) => c.id)]));
+    }
   };
-
-  const clearSelection = () => onSelectedIdsChange(new Set());
 
   const summary = useMemo(() => {
     let selected = 0;
@@ -116,15 +154,16 @@ export function CampaignRecipientsStep({
     onSummaryChange?.(summary);
   }, [summary, onSummaryChange]);
 
-  const importSegment = async () => {
-    if (!segmentId) return;
+  const importSegment = async (id: string) => {
+    if (!id) return;
     setImporting(true);
     setImportMessage('');
+    setSegmentModalOpen(false);
     try {
       const res = await api.marketing.campaigns.importSegment(
         accountId,
         campaignId,
-        segmentId,
+        id,
         token,
         [...selectedIds]
       );
@@ -143,124 +182,223 @@ export function CampaignRecipientsStep({
     }
   };
 
-  return (
-    <div className="max-w-[1024px] mx-auto space-y-8">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900">Recipients</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Search contacts or import a segment. Suppressed contacts are excluded when you save.
-        </p>
-      </div>
+  const contactsTotal = totalContactsAvailable ?? contacts.length;
 
+  return (
+    <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-mkt-primary-border transition-colors">
-          <div className="flex gap-4 items-start">
-            <div className="w-12 h-12 rounded-lg bg-mkt-primary-surface flex items-center justify-center text-mkt-primary shrink-0">
-              <span className="text-xl">📋</span>
+        <div className="md:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-padding-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary-border transition-colors">
+          <div className="flex gap-4">
+            <div className="w-12 h-12 rounded-lg bg-primary-surface flex items-center justify-center text-primary shrink-0">
+              <MarketingIcon name="group_add" />
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Import from segment</p>
-              <p className="text-sm text-gray-500">Merge a saved segment into this campaign.</p>
+              <h3 className="text-body-lg text-on-surface">Import from segment</h3>
+              <p className="text-sm text-on-surface-variant mt-1">
+                Select an existing audience group from your CRM or mailing list.
+              </p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <select
-              className="flex-1 min-w-[180px] border border-gray-200 rounded-lg text-sm px-3 py-2"
-              value={segmentId}
-              onChange={(e) => setSegmentId(e.target.value)}
-            >
-              <option value="">Choose segment…</option>
-              {segments.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                  {s.contactCount != null ? ` (${s.contactCount})` : ''}
-                </option>
-              ))}
-            </select>
+          <button
+            type="button"
+            onClick={() => setSegmentModalOpen(true)}
+            disabled={importing}
+            className="px-6 py-2 border border-gray-300 rounded-lg font-bold hover:bg-gray-50 transition-colors shrink-0"
+          >
+            Browse Segments
+          </button>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl border border-dashed border-gray-300 p-padding-card flex flex-col justify-center items-center text-center">
+          <p className="text-sm text-on-surface-variant mb-2">Total Contacts Available</p>
+          <p className="text-headline-md text-primary">{contactsTotal.toLocaleString()}</p>
+          <button type="button" className="mt-2 text-xs text-primary font-bold hover:underline">
+            View CRM Analytics
+          </button>
+        </div>
+      </div>
+
+      {importMessage ? (
+        <p className="text-sm text-on-surface-variant bg-white border border-gray-200 rounded-lg px-4 py-3">
+          {importMessage}
+        </p>
+      ) : null}
+
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-gray-200 flex flex-col md:flex-row justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <MarketingIcon
+              name="search"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search recipients by name or email..."
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-border focus:outline-none text-sm"
+            />
+          </div>
+          <div className="flex gap-2">
             <button
               type="button"
-              disabled={!segmentId || importing}
-              onClick={() => void importSegment()}
-              className="bg-mkt-primary hover:bg-mkt-primary-hover text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+              className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              aria-label="Filter"
             >
-              {importing ? 'Importing…' : 'Import'}
+              <MarketingIcon name="filter_list" />
+            </button>
+            <button
+              type="button"
+              className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              aria-label="Download"
+            >
+              <MarketingIcon name="download" />
             </button>
           </div>
         </div>
 
-        <div className="bg-mkt-primary-surface border border-mkt-primary-border rounded-xl p-6">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Selected</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{selectedIds.size}</p>
-          <p className="text-xs text-gray-500 mt-2">
-            {summary.selected} eligible
-            {summary.suppressed > 0 && (
-              <span className="text-amber-600"> · {summary.suppressed} excluded</span>
+        <table className="w-full text-left">
+          <thead className="bg-gray-50 text-label-caps text-on-surface-variant border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-3 w-12">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                  checked={contacts.length > 0 && contacts.every((c) => selectedIds.has(c.id))}
+                  onChange={() => toggleAllShown()}
+                />
+              </th>
+              <th className="px-6 py-3">Name</th>
+              <th className="px-6 py-3">Email Address</th>
+              <th className="px-6 py-3">Status</th>
+              <th className="px-6 py-3 text-right">Last Activity</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {loadingContacts && contacts.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
+                  Loading contacts…
+                </td>
+              </tr>
+            ) : contacts.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-400">
+                  No contacts match your search.
+                </td>
+              </tr>
+            ) : (
+              contacts.map((c) => {
+                const status = recipientStatusForContact(c, putById);
+                return (
+                  <tr key={c.id} className="hover:bg-gray-50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300 text-primary focus:ring-primary"
+                        checked={selectedIds.has(c.id)}
+                        onChange={() => toggleContact(c.id)}
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${avatarColor(c.id)}`}
+                        >
+                          {initials(c.name || c.email || '?')}
+                        </div>
+                        <span className="font-medium">{c.name || 'Unnamed'}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-on-surface-variant">{c.email ?? '—'}</td>
+                    <td className="px-6 py-4">{statusBadge(status)}</td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-400">—</td>
+                  </tr>
+                );
+              })
             )}
+          </tbody>
+        </table>
+
+        <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+          <p className="text-xs text-on-surface-variant">
+            Showing {contacts.length === 0 ? 0 : 1}-{contacts.length} of {contacts.length} results
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="p-1 px-3 border border-gray-300 rounded text-xs hover:bg-white transition-colors disabled:opacity-50"
+              disabled={page <= 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="p-1 px-3 border border-gray-300 rounded text-xs hover:bg-white transition-colors"
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-padding-card bg-primary-surface border border-primary-border rounded-xl flex items-start gap-4">
+        <MarketingIcon name="lightbulb" className="text-primary mt-1" />
+        <div>
+          <h4 className="font-bold text-primary">Pro Tip: Personalization</h4>
+          <p className="text-sm text-on-surface-variant mt-1">
+            Make sure your recipients have a &apos;First Name&apos; property set to use dynamic merge tags in
+            your sequence.{' '}
+            <a href="#" className="text-primary font-bold hover:underline">
+              Manage Fields →
+            </a>
           </p>
         </div>
       </div>
 
-      {importMessage && (
-        <p className="text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-4 py-3">
-          {importMessage}
-        </p>
-      )}
-
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap gap-3 items-center">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or email…"
-            className="flex-1 min-w-[200px] border border-gray-200 rounded-lg text-sm px-3 py-2 focus:ring-2 focus:ring-mkt-primary-border"
-          />
-          <label className="flex items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={subscribedOnly}
-              onChange={(e) => setSubscribedOnly(e.target.checked)}
-              className="rounded border-gray-300 text-mkt-primary"
-            />
-            Subscribed only
-          </label>
-          <button type="button" onClick={selectAllShown} className="text-sm text-mkt-primary font-medium">
-            Select all shown
-          </button>
-          <button type="button" onClick={clearSelection} className="text-sm text-gray-500">
-            Clear
-          </button>
+      {segmentModalOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 className="text-headline-sm font-bold text-on-surface">Browse Segments</h3>
+            <p className="text-sm text-on-surface-variant">Select a segment to import into this campaign.</p>
+            <ul className="max-h-64 overflow-y-auto divide-y divide-gray-100 border border-gray-200 rounded-lg">
+              {segments.length === 0 ? (
+                <li className="px-4 py-6 text-sm text-gray-400 text-center">No segments available.</li>
+              ) : (
+                segments.map((s) => (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSegmentId(s.id);
+                        void importSegment(s.id);
+                      }}
+                      className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
+                        segmentId === s.id ? 'bg-primary-surface' : ''
+                      }`}
+                    >
+                      <p className="font-medium text-on-surface">{s.name}</p>
+                      {s.contactCount != null ? (
+                        <p className="text-xs text-gray-500">{s.contactCount} contacts</p>
+                      ) : null}
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSegmentModalOpen(false)}
+                className="px-4 py-2 text-on-surface-variant font-bold hover:text-on-surface"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
-
-        <ul className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-          {loadingContacts && contacts.length === 0 ? (
-            <li className="px-4 py-8 text-center text-sm text-gray-400">Loading contacts…</li>
-          ) : contacts.length === 0 ? (
-            <li className="px-4 py-8 text-center text-sm text-gray-400">No contacts match your search.</li>
-          ) : (
-            contacts.map((c) => {
-              const status = recipientStatusForContact(c, putById);
-              const badge = STATUS_BADGE[status] ?? STATUS_BADGE.subscribed!;
-              return (
-                <li key={c.id}>
-                  <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(c.id)}
-                      onChange={() => toggleContact(c.id)}
-                      className="rounded border-gray-300"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 truncate">{c.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{c.email ?? 'No email'}</p>
-                    </div>
-                    <Badge color={badge.color}>{badge.label}</Badge>
-                  </label>
-                </li>
-              );
-            })
-          )}
-        </ul>
-      </div>
-    </div>
+      ) : null}
+    </>
   );
 }

@@ -52,7 +52,7 @@ export function CampaignLaunchModal({
         aria-modal="true"
         aria-labelledby="launch-modal-title"
       >
-        <div className="w-12 h-12 rounded-full bg-mkt-primary-surface text-mkt-primary flex items-center justify-center mx-auto">
+        <div className="w-12 h-12 rounded-full bg-primary-surface text-primary flex items-center justify-center mx-auto">
           <MarketingIcon name="rocket_launch" className="text-[28px]" />
         </div>
         <h2 id="launch-modal-title" className="text-lg font-semibold text-gray-900 text-center">
@@ -82,7 +82,7 @@ export function CampaignLaunchModal({
             type="button"
             onClick={() => void confirm()}
             disabled={busy}
-            className="flex-1 bg-mkt-primary hover:bg-mkt-primary-hover text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-60"
+            className="flex-1 bg-primary hover:bg-primary-hover text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-60"
           >
             {busy ? 'Launching…' : 'Confirm launch'}
           </button>

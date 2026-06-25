@@ -259,24 +259,26 @@ export default function CampaignWizardPage() {
   }
 
   const footerSummary =
-    activeStep === 1 && selectedIds.size > 0 ? (
-      <span>
-        {recipientSummary.selected} recipient{recipientSummary.selected === 1 ? '' : 's'} ready
-      </span>
+    activeStep === 1 ? (
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-on-surface">{selectedIds.size}</span>
+        <span className="text-on-surface-variant">recipients selected</span>
+      </div>
     ) : activeStep === 2 && sequenceSteps.length > 0 ? (
-      <span>
-        {sequenceSteps.length} email{sequenceSteps.length === 1 ? '' : 's'} in sequence
-      </span>
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-on-surface">{sequenceSteps.length}</span>
+        <span className="text-on-surface-variant">
+          email{sequenceSteps.length === 1 ? '' : 's'} in sequence
+        </span>
+      </div>
     ) : activeStep === 3 && senderConfig?.fromEmail ? (
-      <span>
+      <span className="text-on-surface-variant text-sm">
         Sending as {senderConfig.fromName} &lt;{senderConfig.fromEmail}&gt;
       </span>
     ) : null;
 
-  const btnSecondary =
-    'border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50';
-  const btnPrimary =
-    'bg-mkt-primary hover:bg-mkt-primary-hover text-white rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50';
+  const canProceedStep1 = selectedIds.size > 0;
+  const nextDisabled = saving || (activeStep === 1 && !canProceedStep1);
 
   return (
     <CampaignWizardChrome
@@ -288,20 +290,24 @@ export default function CampaignWizardPage() {
       activeStep={activeStep}
       onStepClick={(step) => void goToStep(step)}
       error={error}
+      suppressedWarning={activeStep === 1 && recipientSummary.suppressed > 0}
+      onLaunch={activeStep === 4 ? () => void goToStep(4) : undefined}
       footerLeft={footerSummary}
       footerRight={
         <>
+          {activeStep > 1 ? (
+            <button
+              type="button"
+              className="px-6 py-2 text-on-surface-variant hover:text-on-surface font-bold transition-colors disabled:opacity-50"
+              disabled={saving}
+              onClick={() => void goToStep(activeStep - 1)}
+            >
+              Back
+            </button>
+          ) : null}
           <button
             type="button"
-            className={btnSecondary}
-            disabled={activeStep <= 1 || saving}
-            onClick={() => void goToStep(activeStep - 1)}
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            className={btnSecondary}
+            className="px-6 py-2 text-on-surface-variant hover:text-on-surface font-bold transition-colors disabled:opacity-50"
             disabled={saving}
             onClick={() => void saveDraft()}
           >
@@ -310,8 +316,12 @@ export default function CampaignWizardPage() {
           {activeStep < 4 ? (
             <button
               type="button"
-              className={btnPrimary}
-              disabled={saving}
+              className={`px-8 py-2 rounded-lg font-bold transition-all ${
+                nextDisabled
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-primary text-on-primary hover:bg-primary-hover'
+              }`}
+              disabled={nextDisabled}
               onClick={() => void goToStep(activeStep + 1)}
             >
               Next

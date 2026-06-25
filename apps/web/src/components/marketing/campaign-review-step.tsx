@@ -88,7 +88,7 @@ export function CampaignReviewStep({
       </div>
 
       {!isAdmin && (
-        <div className="rounded-xl border border-mkt-status-scheduled-bg bg-mkt-status-scheduled-bg/50 px-4 py-3 text-sm text-mkt-status-scheduled-text flex items-start gap-2">
+        <div className="rounded-xl border border-status-scheduled-bg bg-status-scheduled-bg/50 px-4 py-3 text-sm text-status-scheduled-text flex items-start gap-2">
           <MarketingIcon name="info" className="shrink-0 mt-0.5" />
           <p>
             An administrator must launch this campaign. You can save the draft and send a test
@@ -110,12 +110,12 @@ export function CampaignReviewStep({
                   <span className="text-gray-400 text-xs hidden sm:inline">{check.detail}</span>
                 )}
                 {check.ok ? (
-                  <span className="inline-flex items-center gap-1 text-mkt-status-success-text font-medium">
+                  <span className="inline-flex items-center gap-1 text-status-success-text font-medium">
                     <MarketingIcon name="check_circle" className="text-[18px]" />
                     Pass
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-mkt-status-danger-text font-medium">
+                  <span className="inline-flex items-center gap-1 text-status-danger-text font-medium">
                     <MarketingIcon name="cancel" className="text-[18px]" />
                     Fail
                   </span>
@@ -134,7 +134,7 @@ export function CampaignReviewStep({
               Required before launch. Uses email 1 content and your sender settings.
             </p>
             {sender?.testSentAt && (
-              <p className="text-xs text-mkt-status-success-text mt-2">
+              <p className="text-xs text-status-success-text mt-2">
                 Last test sent {new Date(sender.testSentAt).toLocaleString()} to {sender.testSentTo}
               </p>
             )}
@@ -149,7 +149,7 @@ export function CampaignReviewStep({
             type="button"
             onClick={() => void sendTest()}
             disabled={testBusy}
-            className="border border-mkt-primary-border text-mkt-primary hover:bg-mkt-primary-surface px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-60"
+            className="border border-primary-border text-primary hover:bg-primary-surface px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-60"
           >
             {testBusy ? 'Sending…' : 'Send test to me'}
           </button>
@@ -166,7 +166,7 @@ export function CampaignReviewStep({
           </div>
           <div>
             <dt className="text-gray-500 text-xs uppercase tracking-wider">Campaign ID</dt>
-            <dd className="font-medium text-gray-900 mt-0.5" style={{ fontFamily: 'var(--font-mkt-mono)' }}>
+            <dd className="font-medium text-gray-900 mt-0.5 font-data-mono">
               {formatCampaignId(campaign.id)}
             </dd>
           </div>
@@ -204,7 +204,7 @@ export function CampaignReviewStep({
                 <tr key={step.id ?? step.stepOrder}>
                   <td className="px-4 py-2 text-gray-500">{step.stepOrder}</td>
                   <td className="px-4 py-2 font-medium text-gray-900">{step.subject}</td>
-                  <td className="px-4 py-2 text-gray-600" style={{ fontFamily: 'var(--font-mkt-mono)' }}>
+                  <td className="px-4 py-2 text-gray-600 font-data-mono">
                     {step.sendAt
                       ? formatSendAtLabel(step.sendAt, timezone, 'en')
                       : '—'}
@@ -217,7 +217,7 @@ export function CampaignReviewStep({
 
         <Link
           href={`/marketing/campaigns/${campaignId}/edit?step=1` as Route}
-          className="text-xs text-mkt-primary hover:underline inline-flex items-center gap-1"
+          className="text-xs text-primary hover:underline inline-flex items-center gap-1"
         >
           Edit recipients
           <MarketingIcon name="edit" className="text-[14px]" />
@@ -247,7 +247,7 @@ export function CampaignReviewStep({
             type="button"
             onClick={() => setLaunchOpen(true)}
             disabled={!preflight?.ready}
-            className="bg-mkt-primary hover:bg-mkt-primary-hover text-white px-6 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-50 shadow-sm"
+            className="bg-primary hover:bg-primary-hover text-white px-6 py-2.5 rounded-lg font-semibold text-sm disabled:opacity-50 shadow-sm"
           >
             Launch campaign
           </button>

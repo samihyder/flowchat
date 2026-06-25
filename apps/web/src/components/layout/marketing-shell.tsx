@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import type { Route } from 'next';
 import { useAuthStore } from '@/store/auth';
 import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
@@ -10,17 +10,20 @@ import '@/components/marketing/ui/marketing-tokens.css';
 
 function MarketingShellFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-mkt-surface">
-      <div className="w-10 h-10 rounded-xl bg-mkt-primary animate-pulse" />
+    <div className="min-h-screen flex items-center justify-center bg-surface">
+      <div className="w-10 h-10 rounded-xl bg-primary animate-pulse" />
     </div>
   );
 }
 
 function MarketingShellInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, token, accountId } = useAuthStore();
   const { ready: authReady } = useAuthBootstrap();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const isWizard = pathname.includes('/edit');
 
   useEffect(() => {
     if (!authReady) return;
@@ -38,7 +41,7 @@ function MarketingShellInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="marketing-module min-h-screen bg-mkt-surface text-mkt-on-surface flex">
+    <div className="marketing-module min-h-screen flex bg-surface text-on-surface">
       {sidebarOpen && (
         <button
           type="button"
@@ -48,16 +51,19 @@ function MarketingShellInner({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 border-r border-gray-200 bg-mkt-surface flex flex-col shrink-0 transform transition-transform duration-200 ${
+      <div
+        className={`fixed lg:static inset-y-0 left-0 z-50 shrink-0 transform transition-transform duration-200 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <MarketingSidebar onNavigate={() => setSidebarOpen(false)} />
-      </aside>
+        <MarketingSidebar
+          variant={isWizard ? 'wizard' : 'list'}
+          onNavigate={() => setSidebarOpen(false)}
+        />
+      </div>
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen lg:ml-0">
-        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-mkt-surface border-b border-gray-200 shrink-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-surface border-b border-gray-200 shrink-0">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -68,9 +74,9 @@ function MarketingShellInner({ children }: { children: React.ReactNode }) {
               <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
             </svg>
           </button>
-          <p className="text-sm font-bold text-mkt-primary">FlowChat Marketing</p>
+          <p className="text-headline-sm font-bold text-primary">FlowChat</p>
         </div>
-        <main className="flex-1 flex flex-col min-h-0 overflow-hidden">{children}</main>
+        {children}
       </div>
     </div>
   );

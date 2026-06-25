@@ -39,7 +39,7 @@ export default function CampaignDetailPage() {
       <div>
         <Link
           href={marketingRoutes.campaigns as Route}
-          className="text-sm text-mkt-primary hover:underline inline-flex items-center gap-1"
+          className="text-sm text-primary hover:underline inline-flex items-center gap-1"
         >
           <MarketingIcon name="arrow_back" className="text-[18px]" />
           Campaigns

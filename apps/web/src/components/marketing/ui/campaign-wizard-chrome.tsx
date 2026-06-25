@@ -1,9 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import Link from 'next/link';
-import type { Route } from 'next';
 import { CampaignStatusBadge } from '@/components/marketing/ui/campaign-status-badge';
+import { CampaignBuilderTopBar } from '@/components/marketing/ui/campaign-builder-topbar';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import type { MarketingCampaignStatus } from '@/lib/marketing/s6m-campaigns';
 
@@ -26,6 +25,9 @@ type CampaignWizardChromeProps = {
   footerRight: ReactNode;
   children: ReactNode;
   error?: string;
+  suppressedWarning?: boolean;
+  onLaunch?: () => void;
+  launchDisabled?: boolean;
 };
 
 function formatCampaignId(id: string) {
@@ -44,46 +46,37 @@ export function CampaignWizardChrome({
   footerRight,
   children,
   error,
+  suppressedWarning,
+  onLaunch,
+  launchDisabled,
 }: CampaignWizardChromeProps) {
-  const copyCampaignId = async () => {
-    try {
-      await navigator.clipboard.writeText(campaignId);
-    } catch {
-      /* ignore */
-    }
-  };
-
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="bg-white border-b border-gray-200 px-6 lg:px-8 py-6 shrink-0 sticky top-0 z-30">
-        <div className="max-w-[1280px] mx-auto flex flex-col gap-6">
-          <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col flex-1 min-h-0">
+      <CampaignBuilderTopBar onLaunch={onLaunch} launchDisabled={launchDisabled} />
+
+      <div className="bg-white border-b border-gray-200 px-8 py-6 sticky top-16 z-30 shrink-0">
+        <div className="max-w-container-max-list mx-auto flex flex-col gap-6">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0 flex-wrap">
               <input
                 value={name}
                 onChange={(e) => onNameChange(e.target.value)}
                 onBlur={onNameBlur}
-                placeholder="Enter campaign name…"
-                className="text-2xl font-semibold text-gray-900 border-none p-0 focus:ring-0 focus:outline-none bg-transparent min-w-[200px] max-w-full"
+                placeholder="Enter campaign name..."
+                className="text-headline-md text-on-surface border-none p-0 focus:ring-0 focus:border-b-2 focus:border-primary-border w-auto min-w-[200px] bg-transparent"
               />
               <CampaignStatusBadge status={status} />
-              <button
-                type="button"
-                onClick={() => void copyCampaignId()}
-                className="text-xs text-gray-400 hover:text-mkt-primary"
-                style={{ fontFamily: 'var(--font-mkt-mono)' }}
-                title="Copy campaign ID"
-              >
+              <span className="font-data-mono text-data-mono text-gray-400 ml-4">
                 {formatCampaignId(campaignId)}
-              </button>
+              </span>
             </div>
-            <Link
-              href={'/marketing/campaigns' as Route}
-              className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 shrink-0"
+            <button
+              type="button"
+              className="p-2 text-gray-400 hover:text-primary transition-colors"
+              aria-label="More options"
             >
-              <MarketingIcon name="arrow_back" className="text-[18px]" />
-              Back to list
-            </Link>
+              <MarketingIcon name="more_horiz" />
+            </button>
           </div>
 
           <nav className="flex items-center">
@@ -95,20 +88,20 @@ export function CampaignWizardChrome({
                   key={s.n}
                   type="button"
                   onClick={() => onStepClick(s.n)}
-                  className={`flex-1 flex items-center relative pb-2 border-b-2 transition-colors ${
+                  className={`flex-1 flex items-center relative pb-1 border-b-2 transition-colors ${
                     isActive
-                      ? 'border-mkt-primary'
+                      ? 'border-primary'
                       : isComplete
-                        ? 'border-mkt-status-success-text/40'
-                        : 'border-gray-100 opacity-60'
+                        ? 'border-primary/40'
+                        : 'border-gray-100 opacity-50'
                   }`}
                 >
                   <span
                     className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold mr-3 ${
                       isActive
-                        ? 'bg-mkt-primary text-white'
+                        ? 'bg-primary text-on-primary'
                         : isComplete
-                          ? 'bg-mkt-status-success-bg text-mkt-status-success-text'
+                          ? 'bg-status-success-bg text-status-success-text'
                           : 'bg-gray-200 text-gray-500'
                     }`}
                   >
@@ -120,7 +113,11 @@ export function CampaignWizardChrome({
                   </span>
                   <span
                     className={`text-sm ${
-                      isActive ? 'font-bold text-mkt-primary' : 'font-medium text-gray-500'
+                      isActive
+                        ? 'font-bold text-primary'
+                        : isComplete
+                          ? 'font-medium text-on-surface-variant'
+                          : 'font-medium text-on-surface-variant'
                     }`}
                   >
                     {s.label}
@@ -132,10 +129,10 @@ export function CampaignWizardChrome({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-6 lg:px-8 py-8">
-        <div className="max-w-[1280px] mx-auto">
+      <div className="flex-1 overflow-auto px-8 py-8 pb-24">
+        <div className="max-w-container-max-list mx-auto space-y-6">
           {error ? (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start gap-2">
+            <div className="rounded-lg border border-status-danger-bg bg-status-danger-bg px-4 py-3 text-sm text-status-danger-text flex items-start gap-2">
               <MarketingIcon name="error" className="text-[20px] shrink-0 mt-0.5" />
               {error}
             </div>
@@ -144,9 +141,17 @@ export function CampaignWizardChrome({
         </div>
       </div>
 
-      <footer className="border-t border-gray-200 bg-white px-6 lg:px-8 py-4 flex items-center justify-between shrink-0">
-        <div className="text-sm text-gray-500">{footerLeft}</div>
-        <div className="flex gap-2 flex-wrap justify-end">{footerRight}</div>
+      <footer className="fixed bottom-0 left-0 lg:left-64 right-0 h-16 bg-white border-t border-gray-200 px-8 flex items-center justify-between shadow-2xl z-50">
+        <div className="flex items-center gap-6 min-w-0">
+          {footerLeft}
+          {suppressedWarning ? (
+            <div className="flex items-center gap-2 px-3 py-1 bg-status-danger-bg text-status-danger-text rounded-lg text-xs font-bold">
+              <MarketingIcon name="warning" className="text-sm" />
+              <span>Suppressed contacts will be automatically excluded.</span>
+            </div>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-4 shrink-0">{footerRight}</div>
       </footer>
     </div>
   );
