@@ -480,6 +480,62 @@ export type PreflightResult = {
   ready: boolean;
 };
 
+export type CampaignControlPreview = {
+  pendingSends: number;
+  queuedRecipients: number;
+  nextScheduledAt: string | null;
+};
+
+export type CampaignStatsOverview = {
+  totalRecipients: number;
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  failed: number;
+  pending: number;
+  stoppedBounce: number;
+  stoppedUnsubscribe: number;
+  stoppedReply: number;
+  stoppedComplaint: number;
+  progressPercent: number;
+};
+
+export type CampaignStepStats = {
+  stepOrder: number;
+  subject: string;
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  failed: number;
+  stopped: number;
+  pending: number;
+};
+
+export type CampaignRecipientStats = {
+  recipientId: string;
+  contactId: string;
+  name: string;
+  email: string;
+  stoppedReason: string | null;
+  steps: { stepOrder: number; status: string; sentAt: string | null }[];
+};
+
+export type CampaignActivityEvent = {
+  id: string;
+  eventType: string;
+  createdAt: string;
+  payload: Record<string, unknown>;
+};
+
+export type CampaignStatsResult = {
+  overview: CampaignStatsOverview;
+  steps: CampaignStepStats[];
+  recipients: CampaignRecipientStats[];
+  activity: CampaignActivityEvent[];
+};
+
 export type EmailAutomation = {
   id: string;
   name: string;
@@ -1593,12 +1649,43 @@ export const api = {
           body: { scheduledAt },
           token,
         }),
-      control: (accountId: string, campaignId: string, action: 'pause' | 'cancel', token: string) =>
-        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}/control`, {
-          method: 'POST',
-          body: { action },
-          token,
-        }),
+      control: (
+        accountId: string,
+        campaignId: string,
+        action: 'pause' | 'cancel' | 'resume',
+        token: string
+      ) =>
+        request<{ ok: boolean; status: string }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/control`,
+          { method: 'POST', body: { action }, token }
+        ),
+      getControlPreview: (accountId: string, campaignId: string, token: string) =>
+        request<{ preview: CampaignControlPreview }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/control`,
+          { token }
+        ),
+      duplicate: (accountId: string, campaignId: string, token: string) =>
+        request<{ campaign: MarketingCampaign }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/duplicate`,
+          { method: 'POST', token }
+        ),
+      getStats: (accountId: string, campaignId: string, token: string) =>
+        request<CampaignStatsResult>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/stats`,
+          { token }
+        ),
+      exportCsv: async (accountId: string, campaignId: string, token: string) => {
+        const apiUrl = getApiUrl();
+        const res = await fetch(
+          `${apiUrl}/accounts/${accountId}/marketing/campaigns/${campaignId}/export`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.ok) {
+          const data = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+          throw new Error(data.message ?? data.error ?? `Export failed (${res.status})`);
+        }
+        return res.text();
+      },
     },
 
     automations: {

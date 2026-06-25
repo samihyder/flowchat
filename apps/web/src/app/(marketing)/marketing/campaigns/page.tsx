@@ -5,7 +5,9 @@ import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { api, type MarketingCampaign } from '@/lib/api';
+import { api, type CampaignControlPreview, type MarketingCampaign } from '@/lib/api';
+import { CampaignControlModal } from '@/components/marketing/campaign-control-modal';
+import { CampaignRowActionsMenu } from '@/components/marketing/campaign-row-actions-menu';
 import { CampaignStatusBadge } from '@/components/marketing/ui/campaign-status-badge';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import { MarketingListFooter } from '@/components/marketing/ui/marketing-list-footer';
@@ -66,12 +68,24 @@ export default function CampaignsPage() {
   const [tableFilter, setTableFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [controlCampaign, setControlCampaign] = useState<MarketingCampaign | null>(null);
+  const [controlPreview, setControlPreview] = useState<CampaignControlPreview | null>(null);
+  const [controlAction, setControlAction] = useState<'pause' | 'cancel'>('pause');
+  const [controlOpen, setControlOpen] = useState(false);
 
   const load = () => {
     if (!token || !accountId) return;
-    api.marketing.campaigns
-      .list(accountId, token)
-      .then((r) => setCampaigns(r.campaigns))
+    Promise.all([
+      api.marketing.campaigns.list(accountId, token),
+      api.contacts.access(accountId, token),
+    ])
+      .then(([listRes, accessRes]) => {
+        setCampaigns(listRes.campaigns);
+        setIsAdmin(accessRes.isAdmin);
+      })
       .catch(() => setCampaigns([]))
       .finally(() => setLoading(false));
   };
@@ -137,6 +151,63 @@ export default function CampaignsPage() {
     (c.status === 'draft'
       ? marketingRoutes.campaignEdit(c.id, c.currentStep)
       : marketingRoutes.campaign(c.id)) as Route;
+
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 4000);
+  };
+
+  const openControl = async (c: MarketingCampaign, action: 'pause' | 'cancel') => {
+    if (!token || !accountId) return;
+    setControlCampaign(c);
+    setControlAction(action);
+    try {
+      const res = await api.marketing.campaigns.getControlPreview(accountId, c.id, token);
+      setControlPreview(res.preview);
+    } catch {
+      setControlPreview(null);
+    }
+    setControlOpen(true);
+  };
+
+  const handleControlConfirm = async (action: 'pause' | 'cancel') => {
+    if (!token || !accountId || !controlCampaign) return;
+    setActionBusy(true);
+    try {
+      await api.marketing.campaigns.control(accountId, controlCampaign.id, action, token);
+      setControlOpen(false);
+      showToast(action === 'pause' ? 'Campaign paused.' : 'Campaign cancelled.');
+      load();
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleDuplicate = async (c: MarketingCampaign) => {
+    if (!token || !accountId) return;
+    setActionBusy(true);
+    try {
+      const res = await api.marketing.campaigns.duplicate(accountId, c.id, token);
+      showToast(`Duplicated as "${res.campaign.name}"`);
+      router.push(marketingRoutes.campaignEdit(res.campaign.id, 2) as Route);
+    } catch {
+      showToast('Could not duplicate campaign.');
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleResume = async (c: MarketingCampaign) => {
+    if (!token || !accountId) return;
+    setActionBusy(true);
+    try {
+      await api.marketing.campaigns.control(accountId, c.id, 'resume', token);
+      showToast('Campaign resumed.');
+      load();
+    } finally {
+      setActionBusy(false);
+    }
+  };
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -336,13 +407,15 @@ export default function CampaignsPage() {
                           <td className="px-6 py-4 text-sm text-gray-700">{c.recipientCount ?? 0}</td>
                           <td className="px-6 py-4">{formatNextSend(c)}</td>
                           <td className="px-6 py-4 text-right">
-                            <Link
-                              href={campaignHref(c)}
-                              className="p-1 text-gray-400 hover:text-primary transition-colors inline-flex"
-                              aria-label={c.status === 'draft' ? 'Continue campaign' : 'View campaign'}
-                            >
-                              <MarketingIcon name="more_vert" />
-                            </Link>
+                            <CampaignRowActionsMenu
+                              campaign={c}
+                              isAdmin={isAdmin}
+                              busy={actionBusy}
+                              onDuplicate={(campaign) => void handleDuplicate(campaign)}
+                              onPause={(campaign) => void openControl(campaign, 'pause')}
+                              onCancel={(campaign) => void openControl(campaign, 'cancel')}
+                              onResume={(campaign) => void handleResume(campaign)}
+                            />
                           </td>
                         </tr>
                       );
@@ -398,6 +471,23 @@ export default function CampaignsPage() {
       </div>
 
       <MarketingListFooter />
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg text-sm flex items-center gap-2 max-w-sm">
+          <MarketingIcon name="check_circle" className="text-status-success-text" />
+          {toast}
+        </div>
+      )}
+
+      <CampaignControlModal
+        open={controlOpen}
+        campaign={controlCampaign}
+        preview={controlPreview}
+        loading={actionBusy}
+        initialAction={controlAction}
+        onClose={() => setControlOpen(false)}
+        onConfirm={(action) => void handleControlConfirm(action)}
+      />
     </div>
   );
 }
