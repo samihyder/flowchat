@@ -453,6 +453,33 @@ export type CampaignStep = {
   sourceTemplateId: string | null;
 };
 
+export type CampaignSenderConfig = {
+  fromName: string | null;
+  fromEmail: string | null;
+  replyTo: string | null;
+  signatureHtml: string | null;
+  useWorkspaceSignature: boolean;
+  meetingLink: string | null;
+  portfolioLink: string | null;
+  credentialId: string | null;
+  testSentAt: string | null;
+  testSentBy: string | null;
+  testSentTo: string | null;
+};
+
+export type PreflightCheck = {
+  id: string;
+  label: string;
+  ok: boolean;
+  detail?: string;
+};
+
+export type PreflightResult = {
+  checks: PreflightCheck[];
+  testValid: boolean;
+  ready: boolean;
+};
+
 export type EmailAutomation = {
   id: string;
   name: string;
@@ -1497,6 +1524,58 @@ export const api = {
             },
             token,
           }
+        ),
+      getSender: (accountId: string, campaignId: string, token: string) =>
+        request<{ sender: CampaignSenderConfig }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/sender`,
+          { token }
+        ),
+      putSender: (
+        accountId: string,
+        campaignId: string,
+        body: {
+          senderId?: string | null;
+          fromName?: string;
+          fromEmail?: string;
+          replyTo?: string | null;
+          signatureHtml?: string | null;
+          useWorkspaceSignature?: boolean;
+          meetingLink?: string | null;
+          portfolioLink?: string | null;
+        },
+        token: string
+      ) =>
+        request<{ sender: CampaignSenderConfig }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/sender`,
+          {
+            method: 'PUT',
+            body: {
+              sender_id: body.senderId,
+              from_name: body.fromName,
+              from_email: body.fromEmail,
+              reply_to: body.replyTo,
+              signature_html: body.signatureHtml,
+              use_workspace_signature: body.useWorkspaceSignature,
+              meeting_link: body.meetingLink,
+              portfolio_link: body.portfolioLink,
+            },
+            token,
+          }
+        ),
+      getPreflight: (accountId: string, campaignId: string, token: string) =>
+        request<PreflightResult>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/preflight`,
+          { token }
+        ),
+      testSend: (accountId: string, campaignId: string, token: string, toEmail?: string) =>
+        request<{ ok: boolean; sentTo: string; testValid: boolean }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/test-send`,
+          { method: 'POST', body: toEmail ? { to_email: toEmail } : {}, token }
+        ),
+      launch: (accountId: string, campaignId: string, token: string) =>
+        request<{ status: string; launchedAt: string; launchedBy: string }>(
+          `/accounts/${accountId}/marketing/campaigns/${campaignId}/launch`,
+          { method: 'POST', token }
         ),
       send: (accountId: string, campaignId: string, token: string) =>
         request<{ totalRecipients: number; done: boolean; processed: number }>(

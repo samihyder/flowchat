@@ -1,10 +1,7 @@
-import { MarketingNav } from '@/components/layout/marketing-nav';
+import type { Route } from 'next';
+import { redirect } from 'next/navigation';
+import { marketingRoutes } from '@/lib/marketing/routes';
 
-export default function MarketingLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col h-full min-h-0 animate-fade-in">
-      <MarketingNav />
-      {children}
-    </div>
-  );
+export default function LegacyMarketingRedirectPage() {
+  redirect(marketingRoutes.campaigns as Route);
 }

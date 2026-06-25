@@ -96,7 +96,7 @@ export default function CampaignWizardPage() {
           setSenderConfig(senderRes.sender);
         }
       })
-      .catch(() => router.push('/dashboard/marketing/campaigns' as Route))
+      .catch(() => router.push('/marketing/campaigns' as Route))
       .finally(() => setLoading(false));
   }, [accountId, campaignId, router, token]);
 
@@ -206,7 +206,7 @@ export default function CampaignWizardPage() {
       );
       setCampaign(res.campaign);
       router.push(
-        `/dashboard/marketing/campaigns/${campaignId}/edit?step=${step}` as Route
+        `/marketing/campaigns/${campaignId}/edit?step=${step}` as Route
       );
     } finally {
       setSaving(false);
@@ -254,7 +254,7 @@ export default function CampaignWizardPage() {
   }
 
   if (campaign.status !== 'draft') {
-    router.replace(`/dashboard/marketing/campaigns/${campaignId}` as Route);
+    router.replace(`/marketing/campaigns/${campaignId}` as Route);
     return null;
   }
 
@@ -357,7 +357,7 @@ export default function CampaignWizardPage() {
           sender={senderConfig}
           isAdmin={isAdmin}
           onLaunched={() => {
-            router.push(`/dashboard/marketing/campaigns/${campaignId}` as Route);
+            router.push(`/marketing/campaigns/${campaignId}` as Route);
           }}
         />
       )}

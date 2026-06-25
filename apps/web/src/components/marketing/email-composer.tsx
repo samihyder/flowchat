@@ -103,7 +103,7 @@ export function EmailComposer({
   const previewHtml = previewWithSampleMergeTags(htmlBody);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-100">
+    <div className="fixed inset-0 z-50 flex flex-col bg-mkt-surface">
       <header className="shrink-0 border-b border-gray-200 bg-white px-4 py-3 flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</p>
@@ -125,7 +125,7 @@ export function EmailComposer({
           >
             {showPreview ? 'Edit' : 'Preview'}
           </Button>
-          <Button type="button" size="sm" disabled={saving} onClick={() => void handleSave()}>
+          <Button type="button" size="sm" disabled={saving} onClick={() => void handleSave()} className="bg-mkt-primary hover:bg-mkt-primary-hover text-white">
             {saving ? 'Saving…' : 'Save'}
           </Button>
           <Button type="button" variant="secondary" size="sm" onClick={handleClose}>
@@ -185,7 +185,7 @@ export function EmailComposer({
                 type="button"
                 title={chip.label}
                 onClick={() => insertTag(chip.tag)}
-                className="px-2 py-1 text-[11px] font-mono rounded-lg bg-primary-50 text-primary-700 border border-primary-100 hover:bg-primary-100"
+                className="px-2 py-1 text-[11px] font-mono rounded-lg bg-mkt-primary-surface text-mkt-primary border border-mkt-primary-border hover:bg-mkt-primary-border/40"
               >
                 {chip.tag}
               </button>
@@ -232,7 +232,7 @@ export function EmailComposer({
           <button
             type="button"
             onClick={() => setShowPlainText((v) => !v)}
-            className="text-sm text-primary-600 hover:underline"
+            className="text-sm text-mkt-primary hover:underline"
           >
             {showPlainText ? 'Hide' : 'Show'} plain-text version (advanced)
           </button>

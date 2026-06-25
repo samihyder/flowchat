@@ -487,27 +487,29 @@ See **Part 3** for LeadSnapper extension setup and full API payload.
 | Enrichment BYOK | **Settings → Connected services** | Add Companies House, PDL, Lusha, Cognism, OpenMart, or Explorium API key |
 | Enrich contact | **Contacts → [contact] → Enrich** | Fetch suggestions; review table; **Apply selected** or **Dismiss** |
 
-#### S6 — Email marketing (S6-10 – S6-23)
+#### S6 — Email marketing (S6-10 – S6-23) · foundation shipped
+
+> **S6M is the target model** ([marketing-module-screens.md](marketing-module-screens.md)). CRM-triggered workflows (S6-15/16) are **retired** — use the campaign wizard with explicit recipients. Remove workflow triggers when S6M-9 ships.
 
 | Pillar | Path | Mutex setup |
 |---|---|---|
-| 1. Audience | **Dashboard → Marketing → Segments** | Static + dynamic segments; preview counts |
+| 1. Audience | **Dashboard → Marketing → Segments** | Static + dynamic segments; optional import into campaign wizard (not auto-send) |
 | 2. Sender | **Settings → Email marketing** | From: `Mutex Systems <hello@mutexsystemsltd.com>`; UK physical address |
-| 2. Templates | **Dashboard → Marketing → Templates** | HTML templates with `{{first_name}}` merge tags |
-| 3. Campaigns | **Dashboard → Marketing → Campaigns** | Broadcast to segment; monitor live progress |
-| 4. Workflows | **Dashboard → Marketing → Workflows** | Welcome drip, post-chat follow-up, hot-lead nurture |
+| 2. Templates | **Dashboard → Marketing → Templates** | HTML templates with merge tags; plain-text fallback |
+| 3. Campaigns (S6M) | **Dashboard → Marketing → Campaigns** | 4-step wizard: recipients → sequence → sender → review; admin launch |
+| 4. ~~Workflows~~ | ~~Dashboard → Marketing → Workflows~~ | **Deprecated** — do not configure welcome drip or CRM triggers |
 | 5. Compliance | **Settings → Email marketing** | Suppression list; optional double opt-in |
-| 6. Analytics | Campaign detail + contact profile | Open/click rates; email timeline on contact |
+| 6. Analytics | Campaign detail + contact profile | Funnel, per-step stats, activity log; email timeline on contact |
 
-Example Mutex workflows:
+**S6M campaign example (replaces old workflows):**
 
-| Workflow | Trigger | Steps |
+| Campaign | Recipients | Steps |
 |---|---|---|
-| Welcome drip | Contact created | Day 0 email → wait 3 days → services overview |
-| Post-chat | Conversation resolved | Wait 1 day → thank-you email |
-| Hot lead | Label `Hot Lead` added | Immediate BD notification email |
+| Welcome outreach | Manually selected new contacts | Email 1 day 0 → follow-up day 3 |
+| Post-chat follow-up | Contacts from resolved conversations (picked in wizard) | Thank-you → case study day 7 |
+| Hot lead nurture | Segment import, then deselect as needed | Immediate intro → reminder day 5 |
 
-#### Verify S6
+#### Verify S6 (foundation)
 
 - [ ] All Sprint 6 migrations applied (`0010`–`0017`, `0019`–`0021`)
 - [ ] CSV import/export with governance works
@@ -516,9 +518,15 @@ Example Mutex workflows:
 - [ ] Contact with corporate email shows linked company; enrich + staged apply works
 - [ ] Resend sender verified; test email delivers
 - [ ] Segment + template + broadcast campaign completes
-- [ ] Workflow runs on contact-created trigger
 - [ ] Unsubscribe suppresses contact immediately
 - [ ] Campaign analytics + contact email history visible
+
+#### Verify S6M (when implemented)
+
+- [ ] No email on contact create / import / chat (S6M-9)
+- [ ] Campaign wizard with mandatory test send; admin-only launch
+- [ ] Multi-step dated sequence; stop rules (bounce / unsub / reply / complaint)
+- [ ] Pre-flight panel green (provider, domain, cron)
 
 ---
 
@@ -704,7 +712,8 @@ Deploy the chat widget on [mutexsystemsltd.com](https://mutexsystemsltd.com):
 - [ ] Contact merge, notes, custom attributes on profile
 - [ ] LeadSnapper sync enabled; fields provisioned; API key works
 - [ ] Resend sender verified; segment + template + campaign sent
-- [ ] Workflow triggers on contact created; unsubscribe suppresses
+- [ ] No marketing email on contact create (S6M-9); campaign wizard used for outreach
+- [ ] Unsubscribe suppresses contact immediately
 - [ ] Extension scan → sync qualified → contact in Flow CRM
 
 ### LeadSnapper (S6 extension)
@@ -736,6 +745,9 @@ Deploy the chat widget on [mutexsystemsltd.com](https://mutexsystemsltd.com):
 |---|---|
 | Sprint plan (S1–S6 stories) | `docs/sprints.md` |
 | Email marketing standard | `docs/email-marketing-standard.md` |
+| Marketing campaign spec (S6M) | `docs/marketing-module-screens.md` |
+| Marketing visual design (S6M) | `docs/marketing-module-design.md` |
+| Marketing DB migration (S6M) | `docs/marketing-module-migration.md` |
 | Chat module gate (S4–S5) | `docs/chat-module-standard.md` |
 | Ecosystem plan | `docs/ecosystem-plan.md` |
 | LeadSnapper usage | `leadsnapper/USAGE.md` |

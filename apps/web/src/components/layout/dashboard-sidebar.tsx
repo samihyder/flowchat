@@ -101,8 +101,7 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const isDashboard = pathname === '/dashboard';
   const isMarketing =
-    pathname.startsWith('/dashboard/marketing') ||
-    pathname.startsWith('/settings/email-marketing');
+    pathname.startsWith('/marketing') || pathname.startsWith('/settings/email-marketing');
 
   return (
     <>
@@ -182,7 +181,7 @@ export function DashboardSidebar({
             label="Contacts"
           />
           <NavItem
-            href="/dashboard/marketing"
+            href="/marketing/campaigns"
             active={isMarketing}
             icon="📧"
             label="Marketing"

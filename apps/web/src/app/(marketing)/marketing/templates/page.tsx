@@ -88,7 +88,7 @@ export default function TemplatesPage() {
         }
         action={
           <Link
-            href={'/dashboard/marketing/templates/new' as Route}
+            href={'/marketing/templates/new' as Route}
             className="bg-mkt-primary hover:bg-mkt-primary-hover text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 text-sm shadow-sm"
           >
             <MarketingIcon name="add" className="text-[20px]" />
@@ -109,7 +109,7 @@ export default function TemplatesPage() {
               first template.
             </p>
             <Link
-              href={'/dashboard/marketing/templates/new' as Route}
+              href={'/marketing/templates/new' as Route}
               className="inline-flex bg-mkt-primary hover:bg-mkt-primary-hover text-white px-5 py-2.5 rounded-lg font-semibold text-sm"
             >
               Create template
@@ -145,7 +145,7 @@ export default function TemplatesPage() {
                   )}
                   <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-2">
                     <Link
-                      href={`/dashboard/marketing/templates/${t.id}/edit` as Route}
+                      href={`/marketing/templates/${t.id}/edit` as Route}
                       className="text-xs font-semibold text-mkt-primary hover:underline"
                     >
                       Edit

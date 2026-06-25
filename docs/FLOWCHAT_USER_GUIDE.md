@@ -2,7 +2,7 @@
 
 **Who this is for:** Sales reps, support agents, and team leads using live chat and CRM day to day.
 
-**What FlowChat does:** One place to **chat with website visitors**, **manage contacts (CRM)**, and **run simple email follow-ups** — with leads from **LeadSnapper** flowing in automatically.
+**What FlowChat does:** One place to **chat with website visitors**, **manage contacts (CRM)**, and **run multi-step email campaigns** — with leads from **LeadSnapper** flowing in automatically.
 
 **Sign in:**  
 [https://www.digitalbrandcast.com/FlowChat/sign-in](https://www.digitalbrandcast.com/FlowChat/sign-in)
@@ -16,7 +16,7 @@
 | Inbox | **Dashboard** (home) | Reply to live chats from your website |
 | Contacts | **Dashboard → Contacts** | See leads from LeadSnapper and chat visitors |
 | Settings | Gear icon → **Settings** | Widget, labels, canned replies (admins set up) |
-| Marketing | **Dashboard → Marketing** | Email campaigns (if your role includes this) |
+| Marketing | **Dashboard → Marketing** | Email campaigns — build sequences and pick recipients (admins launch) |
 
 ---
 
@@ -323,7 +323,7 @@ High-level stats: conversation volume, response times, and trends. Useful for we
 | Create API key & CRM sync | | ✓ |
 | Install widget on website | | ✓ |
 | Invite agents & teams | | ✓ |
-| Email campaigns & workflows | Optional | ✓ |
+| Email campaigns | Optional (draft) | ✓ (launch) |
 | Canned responses & labels | Use | Create |
 
 ---

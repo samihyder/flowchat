@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, type CampaignRecipientDetail, type Contact, type MarketingSegment } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
 type Props = {
@@ -96,23 +94,6 @@ export function CampaignRecipientsStep({
 
   const clearSelection = () => onSelectedIdsChange(new Set());
 
-  const selectedContacts = useMemo(() => {
-    const fromList = contacts.filter((c) => selectedIds.has(c.id));
-    const knownIds = new Set(fromList.map((c) => c.id));
-    const extras = (lastPutResult ?? []).filter(
-      (r) => selectedIds.has(r.contactId) && !knownIds.has(r.contactId)
-    );
-    return {
-      listed: fromList,
-      extras: extras.map((r) => ({
-        id: r.contactId,
-        name: r.name,
-        email: r.email,
-        recipientStatus: r.recipientStatus,
-      })),
-    };
-  }, [contacts, selectedIds, lastPutResult]);
-
   const summary = useMemo(() => {
     let selected = 0;
     let suppressed = 0;
@@ -163,81 +144,94 @@ export function CampaignRecipientsStep({
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="max-w-[1024px] mx-auto space-y-8">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Recipients</h2>
-        <p className="text-sm text-gray-500">
-          Search contacts or import a segment. Suppressed and unsubscribed contacts are excluded when
-          you save.
+        <h2 className="text-xl font-semibold text-gray-900">Recipients</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Search contacts or import a segment. Suppressed contacts are excluded when you save.
         </p>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-        <p className="text-sm font-medium text-gray-800">Import from segment</p>
-        <div className="flex flex-wrap gap-2 items-center">
-          <select
-            className="flex-1 min-w-[200px] border border-gray-200 rounded-lg text-sm px-3 py-2"
-            value={segmentId}
-            onChange={(e) => setSegmentId(e.target.value)}
-          >
-            <option value="">Choose a segment…</option>
-            {segments.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-                {s.contactCount != null ? ` (${s.contactCount})` : ''}
-                {s.segmentType === 'dynamic' ? ' — dynamic' : ''}
-              </option>
-            ))}
-          </select>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!segmentId || importing}
-            onClick={() => void importSegment()}
-          >
-            {importing ? 'Importing…' : 'Import segment'}
-          </Button>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-mkt-primary-border transition-colors">
+          <div className="flex gap-4 items-start">
+            <div className="w-12 h-12 rounded-lg bg-mkt-primary-surface flex items-center justify-center text-mkt-primary shrink-0">
+              <span className="text-xl">📋</span>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900">Import from segment</p>
+              <p className="text-sm text-gray-500">Merge a saved segment into this campaign.</p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <select
+              className="flex-1 min-w-[180px] border border-gray-200 rounded-lg text-sm px-3 py-2"
+              value={segmentId}
+              onChange={(e) => setSegmentId(e.target.value)}
+            >
+              <option value="">Choose segment…</option>
+              {segments.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                  {s.contactCount != null ? ` (${s.contactCount})` : ''}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={!segmentId || importing}
+              onClick={() => void importSegment()}
+              className="bg-mkt-primary hover:bg-mkt-primary-hover text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+            >
+              {importing ? 'Importing…' : 'Import'}
+            </button>
+          </div>
         </div>
-        {importMessage && <p className="text-xs text-gray-600">{importMessage}</p>}
+
+        <div className="bg-mkt-primary-surface border border-mkt-primary-border rounded-xl p-6">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Selected</p>
+          <p className="text-3xl font-bold text-gray-900 mt-1">{selectedIds.size}</p>
+          <p className="text-xs text-gray-500 mt-2">
+            {summary.selected} eligible
+            {summary.suppressed > 0 && (
+              <span className="text-amber-600"> · {summary.suppressed} excluded</span>
+            )}
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex flex-wrap gap-3 items-center">
-          <Input
+      {importMessage && (
+        <p className="text-sm text-gray-600 bg-white border border-gray-200 rounded-lg px-4 py-3">
+          {importMessage}
+        </p>
+      )}
+
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap gap-3 items-center">
+          <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or email…"
-            className="max-w-sm"
+            className="flex-1 min-w-[200px] border border-gray-200 rounded-lg text-sm px-3 py-2 focus:ring-2 focus:ring-mkt-primary-border"
           />
           <label className="flex items-center gap-2 text-sm text-gray-600">
             <input
               type="checkbox"
               checked={subscribedOnly}
               onChange={(e) => setSubscribedOnly(e.target.checked)}
-              className="rounded border-gray-300"
+              className="rounded border-gray-300 text-mkt-primary"
             />
             Subscribed only
           </label>
-        </div>
-
-        <div className="flex gap-2 items-center">
-          <Button type="button" variant="secondary" size="sm" onClick={selectAllShown}>
+          <button type="button" onClick={selectAllShown} className="text-sm text-mkt-primary font-medium">
             Select all shown
-          </Button>
-          <Button type="button" variant="secondary" size="sm" onClick={clearSelection}>
+          </button>
+          <button type="button" onClick={clearSelection} className="text-sm text-gray-500">
             Clear
-          </Button>
-          <span className="text-sm text-gray-500 ml-auto">
-            {selectedIds.size} selected
-            {summary.suppressed > 0 && (
-              <span className="text-amber-600 ml-2">
-                ({summary.suppressed} will be excluded)
-              </span>
-            )}
-          </span>
+          </button>
         </div>
 
-        <ul className="bg-white border border-gray-200 rounded-xl divide-y max-h-80 overflow-y-auto">
+        <ul className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
           {loadingContacts && contacts.length === 0 ? (
             <li className="px-4 py-8 text-center text-sm text-gray-400">Loading contacts…</li>
           ) : contacts.length === 0 ? (
@@ -267,35 +261,6 @@ export function CampaignRecipientsStep({
           )}
         </ul>
       </div>
-
-      {selectedIds.size > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <p className="text-sm font-medium text-gray-800 mb-2">Selection summary</p>
-          <p className="text-sm text-gray-600">
-            <strong className="text-gray-900">{summary.selected}</strong> eligible recipient
-            {summary.selected === 1 ? '' : 's'}
-            {summary.suppressed > 0 && (
-              <>
-                {' '}
-                · <span className="text-amber-700">{summary.suppressed} excluded</span> (suppressed,
-                bounced, or missing email)
-              </>
-            )}
-          </p>
-          {selectedContacts.extras.length > 0 && (
-            <ul className="mt-3 text-xs text-gray-500 space-y-1">
-              {selectedContacts.extras.map((c) => (
-                <li key={c.id}>
-                  {c.name} — {c.email}{' '}
-                  <Badge color={STATUS_BADGE[c.recipientStatus]?.color ?? 'gray'}>
-                    {STATUS_BADGE[c.recipientStatus]?.label ?? c.recipientStatus}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
     </div>
   );
 }

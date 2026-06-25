@@ -5,7 +5,7 @@ import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { api, type ContactDetail, type ContactNote, type CustomAttributeDefinition, type Label, type ContactEmailEvent, type MarketingWorkflow, type ServiceCredential, type EnrichmentSuggestion } from '@/lib/api';
+import { api, type ContactDetail, type ContactNote, type CustomAttributeDefinition, type Label, type ContactEmailEvent, type ServiceCredential, type EnrichmentSuggestion } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CustomAttributeFields } from '@/components/contacts/custom-attribute-fields';
@@ -34,9 +34,6 @@ export default function ContactProfilePage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editNoteContent, setEditNoteContent] = useState('');
   const [emailEvents, setEmailEvents] = useState<ContactEmailEvent[]>([]);
-  const [workflows, setWorkflows] = useState<MarketingWorkflow[]>([]);
-  const [enrollWorkflowId, setEnrollWorkflowId] = useState('');
-  const [enrollMsg, setEnrollMsg] = useState('');
   const [enrichmentCreds, setEnrichmentCreds] = useState<ServiceCredential[]>([]);
   const [enrichCredentialId, setEnrichCredentialId] = useState('');
   const [enrichScope, setEnrichScope] = useState<'auto' | 'company' | 'person'>('auto');
@@ -49,13 +46,12 @@ export default function ContactProfilePage() {
 
   const load = async () => {
     if (!token || !accountId) return;
-    const [res, labelRes, attrRes, access, eventsRes, workflowsRes, enrichCredsRes, suggestionsRes] = await Promise.all([
+    const [res, labelRes, attrRes, access, eventsRes, enrichCredsRes, suggestionsRes] = await Promise.all([
       api.contacts.get(accountId, contactId, token),
       api.labels.list(accountId, token),
       api.customAttributes.list(accountId, token),
       api.contacts.access(accountId, token),
       api.contacts.listEmailEvents(accountId, contactId, token),
-      api.marketing.workflows.list(accountId, token),
       api.serviceCredentials.list(accountId, token, 'data_enrichment'),
       api.contacts.listEnrichmentSuggestions(accountId, contactId, token),
     ]);
@@ -72,7 +68,6 @@ export default function ContactProfilePage() {
     setSelectedLabelIds(res.labels.map((l) => l.id));
     setCustomAttributes((res.contact.customAttributes as Record<string, unknown>) ?? {});
     setEmailEvents(eventsRes.events);
-    setWorkflows(workflowsRes.workflows);
     const activeEnrich = enrichCredsRes.credentials.filter((c) => c.status === 'active');
     setEnrichmentCreds(activeEnrich);
     const defaultEnrich = activeEnrich.find((c) => c.isDefault) ?? activeEnrich[0];
@@ -83,17 +78,6 @@ export default function ContactProfilePage() {
       initial[s.id] = new Set(s.fields.map((f) => f.key));
     }
     setSelectedFields(initial);
-  };
-
-  const enrollInWorkflow = async () => {
-    if (!token || !accountId || !enrollWorkflowId) return;
-    setEnrollMsg('');
-    try {
-      await api.marketing.workflows.enroll(accountId, enrollWorkflowId, contactId, token);
-      setEnrollMsg('Enrolled in workflow.');
-    } catch (err) {
-      setEnrollMsg(err instanceof Error ? err.message : 'Enrollment failed');
-    }
   };
 
   const runEnrichment = async () => {
@@ -481,28 +465,6 @@ export default function ContactProfilePage() {
               ))}
             </ul>
           )}
-        </section>
-
-        <section className="bg-white border border-gray-200 rounded-xl p-4 lg:col-span-2">
-          <h2 className="font-semibold text-gray-900 mb-3">Workflow enrollment</h2>
-          <div className="flex flex-wrap gap-2 items-center mb-4">
-            <select
-              value={enrollWorkflowId}
-              onChange={(e) => setEnrollWorkflowId(e.target.value)}
-              className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
-            >
-              <option value="">Select workflow</option>
-              {workflows.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
-            <Button type="button" disabled={!enrollWorkflowId} onClick={() => void enrollInWorkflow()}>
-              Enroll contact
-            </Button>
-            {enrollMsg && <span className="text-sm text-gray-600">{enrollMsg}</span>}
-          </div>
         </section>
 
         <section className="bg-white border border-gray-200 rounded-xl p-4 lg:col-span-2">

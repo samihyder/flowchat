@@ -1,5 +1,6 @@
+import type { Route } from 'next';
 import { redirect } from 'next/navigation';
 
 export default function LegacyMarketingAutomationDetailPage() {
-  redirect('/dashboard/marketing/campaigns');
+  redirect('/marketing/campaigns' as Route);
 }

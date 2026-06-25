@@ -74,7 +74,7 @@ export default function CampaignsPage() {
     try {
       const res = await api.marketing.campaigns.create(accountId, {}, token);
       router.push(
-        `/dashboard/marketing/campaigns/${res.campaign.id}/edit?step=1` as Route
+        `/marketing/campaigns/${res.campaign.id}/edit?step=1` as Route
       );
     } catch {
       setCreating(false);
@@ -85,8 +85,8 @@ export default function CampaignsPage() {
 
   const campaignHref = (c: MarketingCampaign): Route =>
     (c.status === 'draft'
-      ? `/dashboard/marketing/campaigns/${c.id}/edit?step=${c.currentStep}`
-      : `/dashboard/marketing/campaigns/${c.id}`) as Route;
+      ? `/marketing/campaigns/${c.id}/edit?step=${c.currentStep}`
+      : `/marketing/campaigns/${c.id}`) as Route;
 
   return (
     <div className="flex flex-col h-full min-h-0">
