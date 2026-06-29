@@ -204,7 +204,21 @@ export function CampaignSequenceStep({
               />
             </div>
             {i < sortedSteps.length - 1 ? (
-              <div className="h-0.5 w-10 sm:w-16 bg-primary" />
+              <svg
+                className="w-12 sm:w-20 h-8 text-primary shrink-0 marketing-sequence-connector"
+                viewBox="0 0 80 32"
+                fill="none"
+                aria-hidden
+              >
+                <path
+                  d="M0 16 C20 16, 24 4, 40 4 S60 28, 80 28"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeDasharray="6 4"
+                  className="marketing-sequence-connector-path"
+                />
+              </svg>
             ) : (
               <div className="h-0.5 w-10 sm:w-16 border-t-2 border-dashed border-gray-300" />
             )}

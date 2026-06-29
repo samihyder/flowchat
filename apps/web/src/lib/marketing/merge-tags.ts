@@ -89,3 +89,20 @@ export function previewWithSampleMergeTags(text: string): string {
     phone: '+1 555 0100',
   }, SAMPLE_MERGE_CONTEXT);
 }
+
+const ALLOWED_MERGE_KEYS = new Set(
+  MERGE_TAG_CHIPS.map((c) => c.tag.replace(/\{\{|\}\}/g, ''))
+);
+
+/** Unknown {{token}} names in subject/body (S6M preflight). */
+export function collectUnknownMergeTags(...texts: string[]): string[] {
+  const unknown = new Set<string>();
+  for (const text of texts) {
+    const re = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(text)) !== null) {
+      if (!ALLOWED_MERGE_KEYS.has(match[1]!)) unknown.add(match[1]!);
+    }
+  }
+  return [...unknown];
+}

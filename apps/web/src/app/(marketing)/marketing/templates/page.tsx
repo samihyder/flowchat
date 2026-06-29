@@ -124,20 +124,34 @@ export default function TemplatesPage() {
         </header>
 
         {!loading && templates.length === 0 ? (
-          <section className="bg-white border border-gray-200 rounded-xl shadow-sm p-12 text-center max-w-lg mx-auto mt-8">
-            <div className="w-16 h-16 rounded-2xl bg-primary-surface text-primary flex items-center justify-center mx-auto mb-5">
-              <MarketingIcon name="description" className="text-[32px]" />
+          <section className="relative min-h-[420px] rounded-3xl overflow-hidden flex items-center justify-center p-12 mt-4">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#EEF2FF] via-white to-[#F0FDFA] opacity-90" />
+            <div className="relative z-10 text-center max-w-lg">
+              <div className="mb-8 relative inline-block">
+                <div className="w-28 h-28 bg-white rounded-2xl shadow-xl flex items-center justify-center mx-auto ring-1 ring-gray-100 -rotate-2">
+                  <MarketingIcon name="description" className="text-5xl text-primary/50" />
+                </div>
+              </div>
+              <h2 className="text-headline-md text-on-surface mb-3">No templates yet</h2>
+              <p className="text-sm text-on-surface-variant mb-10 leading-relaxed">
+                Build reusable emails with merge tags, then drop them into campaign sequences or save
+                directly from the composer.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  href={'/marketing/templates/new' as Route}
+                  className="inline-flex bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg"
+                >
+                  Start from scratch
+                </Link>
+                <Link
+                  href={'/marketing/campaigns' as Route}
+                  className="inline-flex text-primary font-bold text-sm hover:underline px-4 py-3"
+                >
+                  Browse campaigns →
+                </Link>
+              </div>
             </div>
-            <h2 className="text-headline-sm text-on-surface mb-2">No templates yet</h2>
-            <p className="text-sm text-on-surface-variant mb-8 leading-relaxed">
-              Start from scratch with merge tags and save reusable emails for your team.
-            </p>
-            <Link
-              href={'/marketing/templates/new' as Route}
-              className="inline-flex bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-lg font-bold text-sm shadow-sm"
-            >
-              Start from scratch
-            </Link>
           </section>
         ) : (
           <>
@@ -151,6 +165,40 @@ export default function TemplatesPage() {
                   className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary-border transition-all duration-300 animate-marketing-stagger-in"
                   style={{ animationDelay: `${i * 50}ms` }}
                 >
+                  <div className="absolute top-3 right-3 z-10">
+                    <details className="relative">
+                      <summary
+                        className="list-none p-1.5 rounded-lg bg-white/90 border border-gray-200 text-gray-500 hover:text-gray-800 cursor-pointer shadow-sm"
+                        aria-label="Template actions"
+                      >
+                        <MarketingIcon name="more_vert" className="text-[20px]" />
+                      </summary>
+                      <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg py-1 text-sm z-20">
+                        <Link
+                          href={`/marketing/templates/${t.id}/edit` as Route}
+                          className="block px-3 py-2 hover:bg-gray-50 text-on-surface"
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          type="button"
+                          disabled={busyId === t.id}
+                          onClick={() => void duplicate(t.id)}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-50 text-on-surface-variant disabled:opacity-50"
+                        >
+                          Duplicate
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyId === t.id}
+                          onClick={() => void archive(t.id)}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-50 text-status-danger-text disabled:opacity-50"
+                        >
+                          Archive
+                        </button>
+                      </div>
+                    </details>
+                  </div>
                   <TemplatePreviewSkeleton subject={t.subject} />
                   <div className="p-5">
                     <p className="font-semibold text-on-surface truncate group-hover:text-primary transition-colors">

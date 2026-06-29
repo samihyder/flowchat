@@ -24,6 +24,28 @@ export type MarketingCampaignRow = {
   recipientCount: number;
 };
 
+export type ListCampaignsOptions = {
+  page?: number;
+  pageSize?: number;
+  status?: MarketingCampaignStatus | 'all';
+  q?: string;
+};
+
+export type CampaignListSummary = {
+  total: number;
+  active: number;
+  scheduled: number;
+  recipients: number;
+};
+
+export type ListCampaignsResult = {
+  campaigns: MarketingCampaignRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  summary: CampaignListSummary;
+};
+
 function serializeCampaign(
   row: Record<string, unknown>,
   recipientCount = 0
@@ -46,8 +68,51 @@ function serializeCampaign(
 
 export async function listMarketingCampaigns(
   sql: AppSql,
-  accountId: string
-): Promise<MarketingCampaignRow[]> {
+  accountId: string,
+  options: ListCampaignsOptions = {}
+): Promise<ListCampaignsResult> {
+  const page = Math.max(1, options.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 20));
+  const offset = (page - 1) * pageSize;
+  const statusFilter =
+    options.status && options.status !== 'all' ? options.status : null;
+  const q = options.q?.trim() || null;
+  const qPattern = q ? `%${q}%` : null;
+
+  const summaryRows = await sql`
+    SELECT
+      COUNT(*)::int as total,
+      COUNT(*) FILTER (WHERE c.status IN ('running', 'scheduled'))::int as active,
+      COUNT(*) FILTER (WHERE c.status = 'scheduled')::int as scheduled,
+      COALESCE(SUM(r.cnt), 0)::int as recipients
+    FROM marketing_campaigns c
+    LEFT JOIN (
+      SELECT campaign_id, COUNT(*)::int as cnt
+      FROM marketing_campaign_recipients
+      GROUP BY campaign_id
+    ) r ON r.campaign_id = c.id
+    WHERE c.account_id = ${accountId}::uuid
+  `;
+  const summaryRow = summaryRows[0] as {
+    total: number;
+    active: number;
+    scheduled: number;
+    recipients: number;
+  };
+
+  const countRows = await sql`
+    SELECT COUNT(*)::int as total
+    FROM marketing_campaigns c
+    WHERE c.account_id = ${accountId}::uuid
+      AND (${statusFilter}::text IS NULL OR c.status = ${statusFilter})
+      AND (
+        ${qPattern}::text IS NULL
+        OR c.name ILIKE ${qPattern}
+        OR REPLACE(c.id::text, '-', '') ILIKE REPLACE(${qPattern}, '-', '')
+      )
+  `;
+  const total = Number((countRows[0] as { total: number }).total);
+
   const rows = await sql`
     SELECT c.id, c.name, c.status, c.current_step as "currentStep",
            c.created_by as "createdBy", c.created_at as "createdAt", c.updated_at as "updatedAt",
@@ -69,12 +134,30 @@ export async function listMarketingCampaigns(
     LEFT JOIN account_users au
       ON au.user_id = c.created_by AND au.account_id = c.account_id
     WHERE c.account_id = ${accountId}::uuid
+      AND (${statusFilter}::text IS NULL OR c.status = ${statusFilter})
+      AND (
+        ${qPattern}::text IS NULL
+        OR c.name ILIKE ${qPattern}
+        OR REPLACE(c.id::text, '-', '') ILIKE REPLACE(${qPattern}, '-', '')
+      )
     ORDER BY c.updated_at DESC
-    LIMIT 100
+    LIMIT ${pageSize} OFFSET ${offset}
   `;
-  return (rows as Record<string, unknown>[]).map((row) =>
-    serializeCampaign(row, Number(row.recipientCount ?? 0))
-  );
+
+  return {
+    campaigns: (rows as Record<string, unknown>[]).map((row) =>
+      serializeCampaign(row, Number(row.recipientCount ?? 0))
+    ),
+    total,
+    page,
+    pageSize,
+    summary: {
+      total: Number(summaryRow.total ?? 0),
+      active: Number(summaryRow.active ?? 0),
+      scheduled: Number(summaryRow.scheduled ?? 0),
+      recipients: Number(summaryRow.recipients ?? 0),
+    },
+  };
 }
 
 export async function createMarketingCampaignDraft(

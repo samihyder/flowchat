@@ -142,6 +142,25 @@ export function CampaignRecipientsStep({
     }
   };
 
+  const selectAllMatching = async () => {
+    setLoadingContacts(true);
+    try {
+      const res = await api.contacts.list(accountId, token, {
+        q: search || undefined,
+        marketingStatus: subscribedOnly ? 'subscribed' : undefined,
+        limit: Math.min(totalContacts, 5000),
+        offset: 0,
+      });
+      onSelectedIdsChange(new Set([...selectedIds, ...res.contacts.map((c) => c.id)]));
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
+
+  const allOnPageSelected =
+    contacts.length > 0 && contacts.every((c) => selectedIds.has(c.id));
+  const canSelectAllMatching = allOnPageSelected && selectedIds.size < totalContacts;
+
   const summary = useMemo(() => {
     let selected = 0;
     let suppressed = 0;
@@ -260,6 +279,21 @@ export function CampaignRecipientsStep({
             </label>
           </div>
         </div>
+
+        {canSelectAllMatching ? (
+          <div className="px-6 py-2 bg-primary-surface border-b border-primary-border text-xs text-primary flex items-center justify-between gap-3">
+            <span>
+              All {contacts.length} on this page are selected.
+            </span>
+            <button
+              type="button"
+              onClick={() => void selectAllMatching()}
+              className="font-bold hover:underline shrink-0"
+            >
+              Select all {totalContacts.toLocaleString()} matching contacts
+            </button>
+          </div>
+        ) : null}
 
         <table className="w-full text-left">
           <thead className="bg-gray-50 text-label-caps text-on-surface-variant border-b border-gray-200">

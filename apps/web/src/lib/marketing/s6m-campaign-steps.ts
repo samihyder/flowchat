@@ -120,24 +120,77 @@ async function invalidateTestIfStep1Changed(
   `;
 }
 
-async function saveStepsAsTemplates(
+/** S6M-13: persist checked steps as library templates (on save or at launch). */
+export async function persistCampaignStepTemplates(
   sql: AppSql,
   accountId: string,
-  steps: PutCampaignStepInput[]
-) {
-  for (const step of steps) {
-    if (!step.saveAsTemplate || !step.templateName?.trim()) continue;
+  campaignId: string
+): Promise<number> {
+  const rows = await sql`
+    SELECT
+      id,
+      subject,
+      html_body as "htmlBody",
+      plain_body as "plainBody",
+      save_as_template as "saveAsTemplate",
+      template_name as "templateName",
+      source_template_id as "sourceTemplateId"
+    FROM marketing_campaign_steps
+    WHERE campaign_id = ${campaignId}::uuid
+    ORDER BY step_order ASC
+  `;
+
+  let created = 0;
+  for (const raw of rows as Record<string, unknown>[]) {
+    const saveAsTemplate = Boolean(raw.saveAsTemplate);
+    const templateName = (raw.templateName as string | null)?.trim();
+    if (!saveAsTemplate || !templateName) continue;
+
+    const stepId = raw.id as string;
+    const subject = (raw.subject as string).trim();
+    const htmlBody = raw.htmlBody as string;
+    const plainBody = (raw.plainBody as string | null) ?? htmlToPlainText(htmlBody);
+    const sourceTemplateId = raw.sourceTemplateId as string | null;
+
+    if (sourceTemplateId) {
+      await sql`
+        UPDATE email_templates
+        SET name = ${templateName},
+            subject = ${subject},
+            html_body = ${htmlBody},
+            text_body = ${plainBody},
+            updated_at = NOW()
+        WHERE id = ${sourceTemplateId}::uuid AND account_id = ${accountId}::uuid
+      `;
+    } else {
+      const inserted = await sql`
+        INSERT INTO email_templates (account_id, name, subject, html_body, text_body)
+        VALUES (
+          ${accountId}::uuid,
+          ${templateName},
+          ${subject},
+          ${htmlBody},
+          ${plainBody}
+        )
+        RETURNING id
+      `;
+      const templateId = (inserted[0] as { id: string }).id;
+      await sql`
+        UPDATE marketing_campaign_steps
+        SET source_template_id = ${templateId}::uuid, updated_at = NOW()
+        WHERE id = ${stepId}::uuid
+      `;
+      created += 1;
+    }
+
     await sql`
-      INSERT INTO email_templates (account_id, name, subject, html_body, text_body)
-      VALUES (
-        ${accountId}::uuid,
-        ${step.templateName.trim()},
-        ${step.subject.trim()},
-        ${step.htmlBody},
-        ${step.plainBody?.trim() || htmlToPlainText(step.htmlBody)}
-      )
+      UPDATE marketing_campaign_steps
+      SET save_as_template = false, updated_at = NOW()
+      WHERE id = ${stepId}::uuid
     `;
   }
+
+  return created;
 }
 
 export async function putCampaignSteps(
@@ -216,7 +269,7 @@ export async function putCampaignSteps(
     `;
   }
 
-  await saveStepsAsTemplates(sql, accountId, normalized);
+  await persistCampaignStepTemplates(sql, accountId, campaignId);
 
   await sql`
     UPDATE marketing_campaigns SET updated_at = NOW()

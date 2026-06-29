@@ -20,14 +20,22 @@ import {
 import { formatSendAtLabel } from '@/lib/marketing/automation-email-draft';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import { CampaignLaunchModal } from '@/components/marketing/campaign-launch-modal';
+import {
+  AdminLaunchWalkthrough,
+  shouldShowLaunchWalkthrough,
+} from '@/components/marketing/admin-launch-walkthrough';
 import { initials } from '@/components/conversations/conversation-badges';
 
 const CHECK_ICONS: Record<string, string> = {
   provider: 'lan',
   domain: 'verified_user',
   cron: 'update',
+  recipients: 'group',
+  merge: 'code',
   test: 'mark_email_read',
 };
+
+const RECIPIENT_PAGE_SIZE = 8;
 
 export type CampaignReviewStepHandle = {
   openLaunch: () => void;
@@ -69,6 +77,8 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
     const [testEmail, setTestEmail] = useState('');
     const [testMsg, setTestMsg] = useState('');
     const [launchOpen, setLaunchOpen] = useState(false);
+    const [walkthroughOpen, setWalkthroughOpen] = useState(false);
+    const [recipientPage, setRecipientPage] = useState(1);
     const [timezone, setTimezone] = useState('UTC');
 
     const load = () => {
@@ -91,6 +101,12 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
     useEffect(() => {
       load();
     }, [accountId, campaignId, token]);
+
+    useEffect(() => {
+      if (isAdmin && shouldShowLaunchWalkthrough()) {
+        setWalkthroughOpen(true);
+      }
+    }, [isAdmin]);
 
     useImperativeHandle(ref, () => ({
       openLaunch: () => setLaunchOpen(true),
@@ -119,6 +135,14 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
     const firstStep = sortedSteps[0];
     const eligibleRecipients = recipients.filter((r) => r.recipientStatus === 'subscribed');
     const displayRecipients = eligibleRecipients.length > 0 ? eligibleRecipients : recipients;
+    const recipientTotalPages = Math.max(
+      1,
+      Math.ceil(displayRecipients.length / RECIPIENT_PAGE_SIZE)
+    );
+    const pagedRecipients = displayRecipients.slice(
+      (recipientPage - 1) * RECIPIENT_PAGE_SIZE,
+      recipientPage * RECIPIENT_PAGE_SIZE
+    );
     const allChecksPass = preflight?.checks.every((c) => c.ok) ?? false;
     const testInvalidated = Boolean(sender?.testSentAt && preflight && !preflight.testValid);
 
@@ -347,6 +371,131 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
           {sortedSteps.length > 0 && (
             <div className="col-span-12 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
+                <h3 className="text-headline-sm text-on-surface">Sender details</h3>
+                <Link
+                  href={`/marketing/campaigns/${campaignId}/edit?step=3` as Route}
+                  className="text-xs text-primary font-bold hover:underline"
+                >
+                  Edit sender
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-label-caps text-on-surface-variant text-xs mb-1">From</p>
+                  <p className="font-medium text-on-surface">
+                    {sender?.fromName ?? '—'} &lt;{sender?.fromEmail ?? '—'}&gt;
+                  </p>
+                </div>
+                <div>
+                  <p className="text-label-caps text-on-surface-variant text-xs mb-1">Reply-to</p>
+                  <p className="text-on-surface-variant">{sender?.replyTo ?? 'Same as sender'}</p>
+                </div>
+                {(sender?.meetingLink || sender?.portfolioLink) && (
+                  <div className="sm:col-span-2 flex flex-wrap gap-4 text-xs text-primary">
+                    {sender.meetingLink ? <span>Meeting: {sender.meetingLink}</span> : null}
+                    {sender.portfolioLink ? <span>Portfolio: {sender.portfolioLink}</span> : null}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="col-span-12 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div>
+                <h3 className="text-headline-sm text-on-surface">Campaign recipients</h3>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  {recipientSummary.selected} eligible
+                  {recipientSummary.suppressed > 0
+                    ? ` · ${recipientSummary.suppressed} excluded`
+                    : ''}
+                </p>
+              </div>
+              <Link
+                href={`/marketing/campaigns/${campaignId}/edit?step=1` as Route}
+                className="text-xs text-primary font-bold hover:underline flex items-center gap-1"
+              >
+                <MarketingIcon name="edit" className="text-sm" />
+                Edit recipients
+              </Link>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-left text-label-caps text-on-surface-variant">
+                  <tr>
+                    <th className="px-4 py-2">Name</th>
+                    <th className="px-4 py-2">Email</th>
+                    <th className="px-4 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {pagedRecipients.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-8 text-center text-on-surface-variant">
+                        No recipients selected yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    pagedRecipients.map((r) => (
+                      <tr key={r.contactId}>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-primary-surface text-primary text-[10px] font-bold flex items-center justify-center">
+                              {initials(r.name || r.email)}
+                            </div>
+                            <span className="font-medium">{r.name || 'Unnamed'}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-on-surface-variant">{r.email}</td>
+                        <td className="px-4 py-2">
+                          <span
+                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                              r.recipientStatus === 'subscribed'
+                                ? 'bg-status-success-bg text-status-success-text'
+                                : 'bg-status-danger-bg text-status-danger-text'
+                            }`}
+                          >
+                            {r.recipientStatus === 'subscribed' ? 'Subscribed' : r.recipientStatus}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {displayRecipients.length > RECIPIENT_PAGE_SIZE && (
+              <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-xs text-on-surface-variant">
+                <span>
+                  Showing {(recipientPage - 1) * RECIPIENT_PAGE_SIZE + 1}–
+                  {Math.min(recipientPage * RECIPIENT_PAGE_SIZE, displayRecipients.length)} of{' '}
+                  {displayRecipients.length}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={recipientPage <= 1}
+                    onClick={() => setRecipientPage((p) => p - 1)}
+                    className="px-2 py-1 border border-gray-200 rounded bg-white disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    disabled={recipientPage >= recipientTotalPages}
+                    onClick={() => setRecipientPage((p) => p + 1)}
+                    className="px-2 py-1 border border-gray-200 rounded bg-white disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {sortedSteps.length > 0 && (
+            <div className="col-span-12 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-headline-sm text-on-surface">Email schedule</h3>
                 <Link
                   href={`/marketing/campaigns/${campaignId}/edit?step=2` as Route}
@@ -398,6 +547,11 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
             await api.marketing.campaigns.launch(accountId, campaignId, token);
             onLaunched();
           }}
+        />
+
+        <AdminLaunchWalkthrough
+          open={walkthroughOpen}
+          onClose={() => setWalkthroughOpen(false)}
         />
       </div>
     );

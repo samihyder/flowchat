@@ -1518,8 +1518,35 @@ export const api = {
     },
 
     campaigns: {
-      list: (accountId: string, token: string) =>
-        request<{ campaigns: MarketingCampaign[] }>(`/accounts/${accountId}/marketing/campaigns`, { token }),
+      list: (
+        accountId: string,
+        token: string,
+        params?: {
+          page?: number;
+          pageSize?: number;
+          status?: string;
+          q?: string;
+        }
+      ) => {
+        const qs = new URLSearchParams();
+        if (params?.page) qs.set('page', String(params.page));
+        if (params?.pageSize) qs.set('pageSize', String(params.pageSize));
+        if (params?.status) qs.set('status', params.status);
+        if (params?.q) qs.set('q', params.q);
+        const query = qs.toString();
+        return request<{
+          campaigns: MarketingCampaign[];
+          total: number;
+          page: number;
+          pageSize: number;
+          summary: {
+            total: number;
+            active: number;
+            scheduled: number;
+            recipients: number;
+          };
+        }>(`/accounts/${accountId}/marketing/campaigns${query ? `?${query}` : ''}`, { token });
+      },
       get: (accountId: string, campaignId: string, token: string) =>
         request<{ campaign: MarketingCampaign }>(
           `/accounts/${accountId}/marketing/campaigns/${campaignId}`,

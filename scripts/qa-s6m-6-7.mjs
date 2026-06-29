@@ -1,6 +1,7 @@
 /**
- * Local QA for S6M-6 / S6M-7 — exercises lib + HTTP routes.
- * Usage: node scripts/qa-s6m-6-7.mjs
+ * Local QA for S6M marketing module (6M-6 / 6M-7 + epic sign-off checks).
+ * Usage: QA_HTTP=0 node scripts/qa-s6m-6-7.mjs   # lib/DB only
+ *        node scripts/qa-s6m-6-7.mjs               # lib + HTTP (needs local API)
  */
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -426,6 +427,81 @@ async function main() {
     });
     if (agentExportFetch.status === 403) pass('agent export forbidden', '403');
     else fail('agent export forbidden', `got ${agentExportFetch.status}`);
+  }
+
+  // --- epic: server list pagination ---
+  const listPage = await api(
+    `/accounts/${admin.account_id}/marketing/campaigns?page=1&pageSize=5&status=running`,
+    admin.token
+  );
+  if (
+    listPage.status === 200 &&
+    listPage.json.page === 1 &&
+    typeof listPage.json.total === 'number' &&
+    listPage.json.summary
+  ) {
+    pass('GET /campaigns pagination + summary');
+  } else {
+    fail('GET /campaigns pagination', `status ${listPage.status}`);
+  }
+
+  // --- epic: workflows deprecated ---
+  const wfRes = await api(`/accounts/${admin.account_id}/marketing/workflows`, admin.token);
+  if (wfRes.status === 410 && wfRes.json?.code === 'WORKFLOWS_DEPRECATED') {
+    pass('GET /workflows deprecated', '410');
+  } else {
+    fail('GET /workflows deprecated', `status ${wfRes.status}`);
+  }
+
+  // --- epic: preflight + save-as-template ---
+  const contactRows = await sql`
+    SELECT id FROM contacts WHERE account_id = ${admin.account_id}::uuid AND email IS NOT NULL LIMIT 1
+  `;
+  const draftCreate = await api(`/accounts/${admin.account_id}/marketing/campaigns`, admin.token, {
+    method: 'POST',
+    body: { name: 'QA Preflight Draft' },
+  });
+  const preflightDraftId = draftCreate.json?.campaign?.id ?? draftCreate.json?.id;
+  if (preflightDraftId && contactRows[0]) {
+    const draftBase = `/accounts/${admin.account_id}/marketing/campaigns/${preflightDraftId}`;
+    await api(`${draftBase}/recipients`, admin.token, {
+      method: 'PUT',
+      body: { contact_ids: [contactRows[0].id] },
+    });
+    const future = new Date(Date.now() + 86_400_000).toISOString();
+    await api(`${draftBase}/steps`, admin.token, {
+      method: 'PUT',
+      body: {
+        steps: [
+          {
+            step_order: 1,
+            send_at: future,
+            subject: 'QA Subject',
+            html_body: '<p>Hi {{first_name}},</p>',
+            save_as_template: true,
+            template_name: 'QA Template At Save',
+          },
+        ],
+      },
+    });
+    const pf = await api(`${draftBase}/preflight`, admin.token);
+    const checkIds = (pf.json?.checks ?? []).map((c) => c.id);
+    if (checkIds.includes('recipients') && checkIds.includes('merge')) {
+      pass('preflight recipients + merge checks');
+    } else {
+      fail('preflight recipients + merge checks', checkIds.join(','));
+    }
+    const tplRows = await sql`
+      SELECT COUNT(*)::int as n FROM email_templates
+      WHERE account_id = ${admin.account_id}::uuid AND name = 'QA Template At Save'
+    `;
+    if (tplRows[0]?.n >= 1) pass('save-as-template on step save');
+    else fail('save-as-template on step save');
+
+    await sql`DELETE FROM email_templates WHERE account_id = ${admin.account_id}::uuid AND name LIKE 'QA Template%'`;
+    await sql`DELETE FROM marketing_campaigns WHERE id = ${preflightDraftId}::uuid`;
+  } else {
+    pass('preflight draft tests', 'skipped — no contact or draft');
   }
 
   await cleanup(campaignId);

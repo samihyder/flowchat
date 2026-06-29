@@ -187,6 +187,16 @@
   animation: marketing-pulse-subtle 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
+@keyframes marketing-connector-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.marketing-module .marketing-sequence-connector-path {
+  animation: marketing-connector-flow 1.4s linear infinite;
+}
+
 .marketing-module .marketing-bento-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

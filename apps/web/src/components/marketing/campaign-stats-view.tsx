@@ -107,6 +107,62 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'activity', label: 'Activity Log' },
 ];
 
+function CampaignStatsSkeleton({ activeTab }: { activeTab: Tab }) {
+  return (
+    <div className="space-y-6" aria-busy="true" aria-label="Loading campaign stats">
+      <div className="flex justify-between gap-4 flex-wrap">
+        <div className="space-y-2 animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-64" />
+          <div className="h-4 bg-gray-100 rounded w-48" />
+        </div>
+        <div className="flex gap-2">
+          <div className="h-10 w-24 bg-gray-100 rounded-lg animate-pulse" />
+          <div className="h-10 w-24 bg-gray-100 rounded-lg animate-pulse" />
+        </div>
+      </div>
+      <div className="flex gap-2 border-b border-gray-200 pb-2">
+        {TABS.map((t) => (
+          <div
+            key={t.id}
+            className={`h-8 rounded-lg animate-pulse ${
+              t.id === activeTab ? 'w-24 bg-primary-surface' : 'w-20 bg-gray-100'
+            }`}
+          />
+        ))}
+      </div>
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-28 bg-gray-50 rounded-xl border border-gray-200 animate-pulse" />
+          ))}
+        </div>
+      )}
+      {activeTab === 'steps' && (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-20 bg-gray-50 rounded-xl border border-gray-200 animate-pulse" />
+          ))}
+        </div>
+      )}
+      {activeTab === 'recipients' && (
+        <div className="rounded-xl border border-gray-200 overflow-hidden">
+          <div className="h-10 bg-gray-50 animate-pulse" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-12 border-t border-gray-100 bg-white animate-pulse" />
+          ))}
+        </div>
+      )}
+      {activeTab === 'activity' && (
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-14 bg-gray-50 rounded-lg border border-gray-100 animate-pulse" />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function CampaignStatsView({
   campaign,
   stats,
@@ -122,32 +178,9 @@ export function CampaignStatsView({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [recipientFilter, setRecipientFilter] = useState('all');
 
-  if (loading || !stats) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-gray-100 rounded w-2/3" />
-        <div className="h-8 bg-gray-100 rounded w-full" />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8 h-64 bg-gray-50 rounded-xl border border-gray-200" />
-          <div className="lg:col-span-4 h-64 bg-gray-50 rounded-xl border border-gray-200" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!stats) {
-    return (
-      <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center text-sm text-on-surface-variant">
-        <MarketingIcon name="analytics" className="text-[40px] text-gray-300 mx-auto mb-3" />
-        <p className="font-medium text-on-surface mb-1">Stats unavailable</p>
-        <p>Launch the campaign to view performance data.</p>
-      </div>
-    );
-  }
-
-  const { overview, steps, recipients, activity } = stats;
-
   const filteredRecipients = useMemo(() => {
+    if (!stats) return [];
+    const { recipients } = stats;
     if (recipientFilter === 'all') return recipients;
     if (recipientFilter === 'stopped') {
       return recipients.filter((r) => r.stoppedReason || r.steps.some((s) => s.status.startsWith('stopped_')));
@@ -160,15 +193,20 @@ export function CampaignStatsView({
       );
     }
     if (recipientFilter.startsWith('stopped_')) {
-      const reason = recipientFilter.replace('stopped_', '');
       return recipients.filter(
         (r) =>
-          r.stoppedReason === reason ||
+          r.stoppedReason === recipientFilter.replace('stopped_', '') ||
           r.steps.some((s) => s.status === recipientFilter)
       );
     }
     return recipients.filter((r) => r.steps.some((s) => s.status === recipientFilter));
-  }, [recipientFilter, recipients]);
+  }, [recipientFilter, stats]);
+
+  if (loading || !stats) {
+    return <CampaignStatsSkeleton activeTab={tab} />;
+  }
+
+  const { overview, steps, recipients, activity } = stats;
 
   const canControl =
     isAdmin &&

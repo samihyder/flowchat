@@ -1,7 +1,7 @@
-'use client';
+import type { Route } from 'next';
+import { redirect } from 'next/navigation';
+import { marketingRoutes } from '@/lib/marketing/routes';
 
-import { MarketingSegmentsView } from '@/components/marketing/marketing-segments-view';
-
-export default function SegmentsPage() {
-  return <MarketingSegmentsView />;
+export default function DashboardMarketingSegmentsRedirect() {
+  redirect(marketingRoutes.segments as Route);
 }

@@ -457,7 +457,11 @@ export default function CampaignWizardPage() {
               Launch Campaign
               <MarketingIcon name="rocket_launch" />
             </button>
-          ) : null}
+          ) : (
+            <p className="text-sm text-on-surface-variant italic px-2">
+              An administrator will launch this campaign when ready.
+            </p>
+          )}
         </>
       }
     >

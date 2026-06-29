@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type CampaignControlPreview, type MarketingCampaign } from '@/lib/api';
 import { CampaignControlModal } from '@/components/marketing/campaign-control-modal';
@@ -63,6 +63,13 @@ export default function CampaignsPage() {
   const router = useRouter();
   const { token, accountId } = useAuthStore();
   const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
+  const [listTotal, setListTotal] = useState(0);
+  const [summary, setSummary] = useState({
+    total: 0,
+    active: 0,
+    scheduled: 0,
+    recipients: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [statusTab, setStatusTab] = useState<string>('all');
@@ -79,45 +86,36 @@ export default function CampaignsPage() {
 
   const load = () => {
     if (!token || !accountId) return;
+    setLoading(true);
     Promise.all([
-      api.marketing.campaigns.list(accountId, token),
+      api.marketing.campaigns.list(accountId, token, {
+        page,
+        pageSize: PAGE_SIZE,
+        status: statusTab,
+        q: tableFilter.trim() || undefined,
+      }),
       api.contacts.access(accountId, token),
     ])
       .then(([listRes, accessRes]) => {
         setCampaigns(listRes.campaigns);
+        setListTotal(listRes.total);
+        setSummary(listRes.summary);
         setIsAdmin(accessRes.isAdmin);
       })
-      .catch(() => setCampaigns([]))
+      .catch(() => {
+        setCampaigns([]);
+        setListTotal(0);
+      })
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, [token, accountId]);
+  useEffect(load, [token, accountId, page, statusTab, tableFilter]);
 
-  const stats = useMemo(() => {
-    const active = campaigns.filter((c) => c.status === 'running' || c.status === 'scheduled').length;
-    const scheduled = campaigns.filter((c) => c.status === 'scheduled').length;
-    const recipients = campaigns.reduce((n, c) => n + (c.recipientCount ?? 0), 0);
-    return { total: campaigns.length, active, scheduled, recipients };
-  }, [campaigns]);
+  const stats = summary;
 
-  const filtered = useMemo(() => {
-    let rows = campaigns;
-    if (statusTab !== 'all') {
-      rows = rows.filter((c) => c.status === statusTab);
-    }
-    const q = tableFilter.trim().toLowerCase();
-    if (q) {
-      rows = rows.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          formatCampaignId(c.id).toLowerCase().includes(q)
-      );
-    }
-    return rows;
-  }, [campaigns, statusTab, tableFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const filtered = campaigns;
+  const totalPages = Math.max(1, Math.ceil(listTotal / PAGE_SIZE));
+  const paged = filtered;
 
   useEffect(() => {
     setPage(1);
@@ -146,7 +144,7 @@ export default function CampaignsPage() {
     }
   };
 
-  const isEmpty = !loading && campaigns.length === 0;
+  const isEmpty = !loading && summary.total === 0 && statusTab === 'all' && !tableFilter.trim();
 
   const campaignHref = (c: MarketingCampaign): Route =>
     (c.status === 'draft'
@@ -452,9 +450,9 @@ export default function CampaignsPage() {
 
             <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
               <p className="text-sm text-gray-500">
-                {filtered.length === 0
+                {listTotal === 0
                   ? 'No campaigns'
-                  : `Showing ${(page - 1) * PAGE_SIZE + 1} to ${Math.min(page * PAGE_SIZE, filtered.length)} of ${filtered.length} campaigns`}
+                  : `Showing ${(page - 1) * PAGE_SIZE + 1} to ${Math.min(page * PAGE_SIZE, listTotal)} of ${listTotal} campaigns`}
               </p>
               <div className="flex items-center gap-2">
                 <button

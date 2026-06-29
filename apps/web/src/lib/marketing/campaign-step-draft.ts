@@ -1,5 +1,7 @@
 /** Campaign wizard step 2 — sequence draft helpers. */
 
+import { collectUnknownMergeTags } from '@/lib/marketing/merge-tags';
+
 export type ContactMessageMode = 'latest_note' | 'latest_inbound_chat' | 'latest_note_or_chat';
 
 export type CampaignStepMergeConfig = {
@@ -161,4 +163,39 @@ export function validateCampaignStepDrafts(
   }
 
   return errors;
+}
+
+export type MergeValidationSummary = { ok: boolean; detail: string };
+
+/** Preflight merge validation across saved sequence steps. */
+export function summarizeMergeValidationForSteps(
+  steps: Pick<
+    CampaignStepDraft,
+    'stepOrder' | 'sendAt' | 'subject' | 'htmlBody' | 'mergeConfig'
+  >[]
+): MergeValidationSummary {
+  const fieldErrors = validateCampaignStepDrafts(steps);
+  const mergeErrors = fieldErrors.filter(
+    (e) => e.field === 'html_body' || e.field === 'merge_config' || e.field === 'subject'
+  );
+
+  for (const step of steps) {
+    const unknown = collectUnknownMergeTags(step.subject, step.htmlBody);
+    if (unknown.length > 0) {
+      mergeErrors.push({
+        stepOrder: step.stepOrder,
+        field: 'merge',
+        message: `Unknown merge tags: ${unknown.map((t) => `{{${t}}}`).join(', ')}`,
+      });
+    }
+  }
+
+  if (mergeErrors.length === 0) {
+    return { ok: true, detail: `${steps.length} email(s) validated` };
+  }
+
+  return {
+    ok: false,
+    detail: mergeErrors.map((e) => `Email ${e.stepOrder}: ${e.message}`).join('; '),
+  };
 }

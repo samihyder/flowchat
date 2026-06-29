@@ -5,7 +5,8 @@ import { MarketingError, MarketingErrorCode } from '@/lib/marketing/errors';
 import { applyMergeTags } from '@/lib/marketing/merge-tags';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
 import { checkSenderDomainStatus } from '@/lib/marketing/senders';
-import { getCampaignSteps } from '@/lib/marketing/s6m-campaign-steps';
+import { getCampaignSteps, persistCampaignStepTemplates } from '@/lib/marketing/s6m-campaign-steps';
+import { summarizeMergeValidationForSteps } from '@/lib/marketing/campaign-step-draft';
 import {
   getCampaignSender,
   isTestSendValid,
@@ -69,13 +70,47 @@ export async function getCampaignPreflight(
   const cronDetail = cronOk
     ? cronState.lastRunAt
       ? `Last run ${new Date(cronState.lastRunAt).toLocaleString()}`
-      : 'Scheduler configured'
+      : process.env.NODE_ENV === 'development' && !cronState.lastRunAt
+        ? 'Scheduler configured (dev — cron may not have run locally)'
+        : 'Scheduler configured'
     : 'Background scheduler not running recently';
+
+  const steps = await getCampaignSteps(sql, accountId, campaignId);
+  const mergeSummary = summarizeMergeValidationForSteps(
+    steps.map((s) => ({
+      stepOrder: s.stepOrder,
+      sendAt: s.sendAt ?? new Date(Date.now() + 3600_000).toISOString(),
+      subject: s.subject,
+      htmlBody: s.htmlBody,
+      mergeConfig: s.mergeConfig,
+    }))
+  );
+
+  const recipientRows = await sql`
+    SELECT COUNT(*)::int as count FROM marketing_campaign_recipients
+    WHERE campaign_id = ${campaignId}::uuid
+  `;
+  const recipientCount = Number((recipientRows[0] as { count: number }).count);
+  const recipientsOk = recipientCount > 0;
 
   const checks: PreflightCheck[] = [
     { id: 'provider', label: 'Provider Connection', ok: providerOk, detail: providerDetail },
     { id: 'domain', label: 'Domain Verification', ok: domainOk, detail: domainDetail },
     { id: 'cron', label: 'Scheduler Health', ok: cronOk, detail: cronDetail },
+    {
+      id: 'recipients',
+      label: 'Recipients selected',
+      ok: recipientsOk,
+      detail: recipientsOk
+        ? `${recipientCount} recipient${recipientCount === 1 ? '' : 's'} selected`
+        : 'Select at least one recipient before launching',
+    },
+    {
+      id: 'merge',
+      label: 'Merge tags valid',
+      ok: mergeSummary.ok,
+      detail: mergeSummary.detail,
+    },
     {
       id: 'test',
       label: 'Test email sent',
@@ -203,21 +238,14 @@ export async function launchMarketingCampaign(
     });
   }
 
-  const recipientCount = await sql`
-    SELECT COUNT(*)::int as count FROM marketing_campaign_recipients
-    WHERE campaign_id = ${campaignId}::uuid
-  `;
-  const count = Number((recipientCount[0] as { count: number }).count);
-  if (count === 0) {
-    throw new MarketingError(MarketingErrorCode.RECIPIENTS_REQUIRED);
-  }
-
   const steps = await getCampaignSteps(sql, accountId, campaignId);
   if (!steps.length) {
     throw new MarketingError(MarketingErrorCode.VALIDATION, {
       message: 'Add at least one email to the sequence.',
     });
   }
+
+  await persistCampaignStepTemplates(sql, accountId, campaignId);
 
   const firstSendAt = steps[0]?.sendAt ? new Date(steps[0].sendAt) : new Date();
   const status = firstSendAt.getTime() > Date.now() ? 'scheduled' : 'running';
