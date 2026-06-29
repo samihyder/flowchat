@@ -99,6 +99,9 @@ upsert_vercel_env WEB_APP_URL "$PROD_WEB_URL"
 upsert_vercel_env NEXT_PUBLIC_WEB_APP_URL "$PROD_WEB_URL"
 upsert_vercel_env NEXT_PUBLIC_BASE_PATH "$BASE_PATH"
 upsert_vercel_env CREDENTIALS_ENCRYPTION_KEY "$CREDENTIALS_ENCRYPTION_KEY"
+vercel env rm CREDENTIALS_ENCRYPTION_KEY preview -y >/dev/null 2>&1 || true
+printf '%s' "$CREDENTIALS_ENCRYPTION_KEY" | vercel env add CREDENTIALS_ENCRYPTION_KEY preview >/dev/null
+echo "  ✓ CREDENTIALS_ENCRYPTION_KEY (preview)"
 
 [ -n "${RESEND_API_KEY:-}" ] && upsert_vercel_env RESEND_API_KEY "$RESEND_API_KEY"
 [ -n "${RESEND_FROM_EMAIL:-}" ] && upsert_vercel_env RESEND_FROM_EMAIL "$RESEND_FROM_EMAIL"

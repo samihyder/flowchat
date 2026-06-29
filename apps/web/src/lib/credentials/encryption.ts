@@ -5,7 +5,9 @@ const ALGO = 'aes-256-gcm';
 function getMasterKey(): Buffer {
   const raw = process.env.CREDENTIALS_ENCRYPTION_KEY ?? process.env.SESSION_SECRET;
   if (!raw) {
-    throw new Error('CREDENTIALS_ENCRYPTION_KEY or SESSION_SECRET must be set to store service credentials');
+    throw new Error(
+      'CREDENTIALS_ENCRYPTION_KEY is not set on this deployment. In Vercel → Settings → Environment Variables, add CREDENTIALS_ENCRYPTION_KEY for Preview and Production (generate with: openssl rand -hex 32). Use the same value in both environments if they share a database.'
+    );
   }
   const buf = Buffer.from(raw, raw.length === 64 && /^[0-9a-f]+$/i.test(raw) ? 'hex' : 'utf8');
   if (buf.length < 32) {
