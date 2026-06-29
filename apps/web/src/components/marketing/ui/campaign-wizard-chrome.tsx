@@ -176,7 +176,7 @@ export function CampaignWizardChrome({
                 name={autosaveStatus === 'saving' ? 'sync' : 'cloud_done'}
                 className={`text-[16px] ${autosaveStatus === 'saving' ? 'animate-spin' : ''}`}
               />
-              {autosaveStatus === 'saving' ? 'Saving…' : 'All changes saved'}
+              {autosaveStatus === 'saving' ? 'Saving…' : 'Draft saved'}
             </span>
           )}
           {footerLeft}

@@ -437,6 +437,8 @@ export function CampaignSequenceStep({
 
       <CampaignMessageSourceModal
         open={messageSourceStep !== null}
+        accountId={accountId}
+        token={token}
         stepOrder={messageSourceStep ?? 1}
         currentMode={
           sortedSteps.find((s) => s.stepOrder === messageSourceStep)?.mergeConfig

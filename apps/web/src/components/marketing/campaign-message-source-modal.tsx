@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
 import type { ContactMessageMode } from '@/lib/marketing/campaign-step-draft';
 import { Button } from '@/components/ui/button';
+import { useModalFocus } from '@/components/marketing/ui/use-modal-focus';
 
 const MODES: { value: ContactMessageMode; label: string; description: string }[] = [
   {
@@ -26,6 +28,8 @@ type PreviewContact = { contactId: string; name: string };
 
 type Props = {
   open: boolean;
+  accountId: string;
+  token: string;
   stepOrder: number;
   currentMode?: ContactMessageMode;
   previewContacts: PreviewContact[];
@@ -35,6 +39,8 @@ type Props = {
 
 export function CampaignMessageSourceModal({
   open,
+  accountId,
+  token,
   stepOrder,
   currentMode = 'latest_note_or_chat',
   previewContacts,
@@ -45,16 +51,62 @@ export function CampaignMessageSourceModal({
   const [previewContactId, setPreviewContactId] = useState(
     previewContacts[0]?.contactId ?? ''
   );
+  const [previewText, setPreviewText] = useState('');
+  const [previewSource, setPreviewSource] = useState<'note' | 'chat' | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const panelRef = useModalFocus(open, onClose);
+
+  useEffect(() => {
+    if (open) setMode(currentMode);
+  }, [open, currentMode]);
+
+  useEffect(() => {
+    if (!open || !previewContactId || !token) {
+      setPreviewText('');
+      setPreviewSource(null);
+      return;
+    }
+
+    let cancelled = false;
+    setPreviewLoading(true);
+    api.marketing
+      .contactMessagePreview(accountId, previewContactId, mode, token)
+      .then((res) => {
+        if (cancelled) return;
+        setPreviewText(res.text);
+        setPreviewSource(res.source);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPreviewText('');
+        setPreviewSource(null);
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, accountId, token, previewContactId, mode]);
 
   if (!open) return null;
 
   const previewContact = previewContacts.find((c) => c.contactId === previewContactId);
+  const sourceLabel =
+    previewSource === 'note'
+      ? 'CRM note'
+      : previewSource === 'chat'
+        ? 'inbound chat'
+        : null;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40">
       <div
+        ref={panelRef}
         className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6"
         role="dialog"
+        aria-modal="true"
         aria-labelledby="message-source-title"
       >
         <h2 id="message-source-title" className="text-lg font-semibold text-gray-900">
@@ -112,12 +164,22 @@ export function CampaignMessageSourceModal({
         </fieldset>
 
         <div className="mt-4 rounded-lg bg-gray-50 border border-gray-100 p-3">
-          <p className="text-xs font-medium text-gray-500 mb-1">Preview (sample only)</p>
-          <p className="text-sm text-gray-700 italic">
-            {previewContact
-              ? '“Thanks for the demo yesterday — we loved the workflow.”'
-              : 'No content for preview — token will be omitted for contacts without data.'}
+          <p className="text-xs font-medium text-gray-500 mb-1">
+            Preview{sourceLabel ? ` · from ${sourceLabel}` : ''}
           </p>
+          {previewLoading ? (
+            <p className="text-sm text-gray-400 italic">Loading preview…</p>
+          ) : previewContact && previewText ? (
+            <p className="text-sm text-gray-700 italic">“{previewText}”</p>
+          ) : previewContact ? (
+            <p className="text-sm text-gray-500 italic">
+              No content for this contact — token will be omitted at send.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-500 italic">
+              No content for preview — token will be omitted for contacts without data.
+            </p>
+          )}
         </div>
 
         <div className="mt-6 flex justify-end gap-2">

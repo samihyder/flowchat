@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import type { Route } from 'next';
 import { Fragment, useMemo, useState } from 'react';
 import type {
   CampaignStatsResult,
@@ -59,10 +61,44 @@ function activityDescription(eventType: string, payload: Record<string, unknown>
       return `Campaign cancelled. ${String(payload.pendingSends ?? 0)} pending sends skipped.`;
     case 'campaign_duplicated':
       return `Duplicated from campaign ${String(payload.sourceCampaignId ?? '').slice(0, 8)}…`;
+    case 'campaign_completed':
+      return 'All scheduled emails finished — campaign marked completed.';
+    case 'step_sent':
+      return `Email ${String(payload.stepOrder ?? '')} sent to recipient.`;
+    case 'step_delivered':
+      return `Email ${String(payload.stepOrder ?? '')} delivered.`;
+    case 'step_opened':
+      return 'Recipient opened the email.';
+    case 'step_clicked':
+      return 'Recipient clicked a link in the email.';
+    case 'step_failed':
+      return `Send failed: ${String(payload.error ?? 'provider error')}`;
+    case 'soft_bounce':
+      return `Soft bounce — retry scheduled (attempt ${String(payload.retryCount ?? 1)}).`;
+    case 'complaint':
+      return 'Spam complaint received from recipient.';
+    case 'recipient_stop':
+      return `Recipient stopped — ${String(payload.reason ?? 'unknown').replace(/_/g, ' ')}.`;
     default:
-      return JSON.stringify(payload);
+      if (Object.keys(payload).length === 0) return formatActivityType(eventType);
+      return `${formatActivityType(eventType)} — ${JSON.stringify(payload)}`;
   }
 }
+
+const RECIPIENT_FILTERS: { id: string; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'stopped', label: 'Stopped' },
+  { id: 'stopped_bounce', label: 'Bounced' },
+  { id: 'stopped_unsubscribe', label: 'Unsubscribed' },
+  { id: 'stopped_reply', label: 'Replied' },
+  { id: 'stopped_complaint', label: 'Complained' },
+  { id: 'delivered', label: 'Delivered' },
+  { id: 'opened', label: 'Opened' },
+  { id: 'clicked', label: 'Clicked' },
+  { id: 'failed', label: 'Failed' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'not_opened', label: 'Not opened' },
+];
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -115,6 +151,21 @@ export function CampaignStatsView({
     if (recipientFilter === 'all') return recipients;
     if (recipientFilter === 'stopped') {
       return recipients.filter((r) => r.stoppedReason || r.steps.some((s) => s.status.startsWith('stopped_')));
+    }
+    if (recipientFilter === 'not_opened') {
+      return recipients.filter(
+        (r) =>
+          r.steps.some((s) => s.status === 'delivered' || s.status === 'sent') &&
+          !r.steps.some((s) => s.status === 'opened' || s.status === 'clicked')
+      );
+    }
+    if (recipientFilter.startsWith('stopped_')) {
+      const reason = recipientFilter.replace('stopped_', '');
+      return recipients.filter(
+        (r) =>
+          r.stoppedReason === reason ||
+          r.steps.some((s) => s.status === recipientFilter)
+      );
     }
     return recipients.filter((r) => r.steps.some((s) => s.status === recipientFilter));
   }, [recipientFilter, recipients]);
@@ -379,18 +430,18 @@ export function CampaignStatsView({
       {tab === 'recipients' && (
         <div className="space-y-4">
           <div className="flex gap-2 flex-wrap">
-            {['all', 'stopped', 'delivered', 'opened', 'clicked', 'pending'].map((f) => (
+            {RECIPIENT_FILTERS.map((f) => (
               <button
-                key={f}
+                key={f.id}
                 type="button"
-                onClick={() => setRecipientFilter(f)}
+                onClick={() => setRecipientFilter(f.id)}
                 className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                  recipientFilter === f
+                  recipientFilter === f.id
                     ? 'bg-primary-surface border-primary-border text-primary'
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                {f === 'all' ? 'All' : f.replace(/_/g, ' ')}
+                {f.label}
               </button>
             ))}
           </div>
@@ -437,7 +488,13 @@ export function CampaignStatsView({
                                 {initials}
                               </div>
                               <div>
-                                <p className="font-body-lg text-body-lg text-on-surface">{r.name}</p>
+                                <Link
+                                  href={`/dashboard/contacts/${r.contactId}` as Route}
+                                  className="font-body-lg text-body-lg text-on-surface hover:text-primary"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {r.name}
+                                </Link>
                                 <p className="text-xs text-gray-400 font-data-mono">{r.email}</p>
                               </div>
                             </div>

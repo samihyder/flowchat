@@ -14,6 +14,7 @@ import {
   datetimeLocalToIso,
   isoToDatetimeLocal,
 } from '@/lib/marketing/automation-email-draft';
+import { useModalFocus } from '@/components/marketing/ui/use-modal-focus';
 
 type Props = {
   open: boolean;
@@ -38,6 +39,7 @@ export function CampaignBulkTemplatesModal({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [spacingDays, setSpacingDays] = useState(3);
   const [spacingHour, setSpacingHour] = useState(9);
+  const panelRef = useModalFocus(open, onClose);
   const [firstSendAt, setFirstSendAt] = useState(() => {
     const last = existingSteps[existingSteps.length - 1];
     if (last?.sendAt) {
@@ -93,9 +95,15 @@ export function CampaignBulkTemplatesModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">
+      <div
+        ref={panelRef}
+        className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bulk-templates-title"
+      >
         <div className="p-6 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">Add multiple emails from templates</h2>
+          <h2 id="bulk-templates-title" className="text-lg font-semibold text-gray-900">Add multiple emails from templates</h2>
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}

@@ -1,6 +1,6 @@
 import type { AppSql } from '@/lib/db-sql';
 import { suppressEmail } from '@/lib/marketing/suppressions';
-import { skipPendingStepsForRecipient } from '@/lib/marketing/s6m-campaign-dispatch';
+import { skipPendingStepsForRecipient, stopRecipientForReply } from '@/lib/marketing/s6m-campaign-dispatch';
 
 type ResendEvent = {
   type: string;
@@ -117,7 +117,10 @@ export async function handleS6mResendWebhookEvent(sql: AppSql, event: ResendEven
     if (!isHard && retryCount < 1) {
       await sql`
         UPDATE marketing_campaign_recipient_steps
-        SET retry_count = retry_count + 1, updated_at = NOW()
+        SET
+          retry_count = retry_count + 1,
+          scheduled_at = NOW() + INTERVAL '4 hours',
+          updated_at = NOW()
         WHERE id = ${stepRowId}::uuid
       `;
       await logS6mActivity(sql, campaignId, 'soft_bounce', { messageId, retryCount: retryCount + 1 }, recipientId);
@@ -145,6 +148,24 @@ export async function handleS6mResendWebhookEvent(sql: AppSql, event: ResendEven
     await suppressEmail(sql, accountId, email, 'complained');
     await logS6mActivity(sql, campaignId, 'complaint', { messageId }, recipientId);
     await logS6mActivity(sql, campaignId, 'recipient_stop', { reason: 'complaint', messageId }, recipientId);
+    return true;
+  }
+
+  if (type === 'email.replied' || type === 'email.received') {
+    await stopRecipientForReply(sql, recipientId, campaignId, messageId);
+    return true;
+  }
+
+  if (type === 'email.unsubscribed') {
+    await skipPendingStepsForRecipient(sql, recipientId, 'unsubscribe');
+    await sql`
+      UPDATE marketing_campaign_recipient_steps
+      SET status = 'stopped_unsubscribe', updated_at = NOW()
+      WHERE recipient_id = ${recipientId}::uuid
+        AND status IN ('sent', 'delivered', 'opened', 'clicked')
+    `;
+    await suppressEmail(sql, accountId, email, 'unsubscribed');
+    await logS6mActivity(sql, campaignId, 'recipient_stop', { reason: 'unsubscribe', messageId }, recipientId);
     return true;
   }
 

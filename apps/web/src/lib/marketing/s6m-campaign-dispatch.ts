@@ -1,6 +1,9 @@
 import type { AccountSettings } from '@/lib/account-settings';
 import { getAccountSettings } from '@/lib/account-settings-db';
 import type { AppSql } from '@/lib/db-sql';
+import { buildCampaignEmailAppendix } from '@/lib/marketing/campaign-appendix';
+import type { ContactMessageMode } from '@/lib/marketing/campaign-step-draft';
+import { resolveContactMessage } from '@/lib/marketing/contact-message';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
 import { applyMergeTags } from '@/lib/marketing/merge-tags';
 
@@ -17,10 +20,15 @@ type DueStepRow = {
   subject: string;
   htmlBody: string;
   plainBody: string | null;
+  mergeConfig: { contactMessageMode?: ContactMessageMode } | null;
   fromName: string | null;
   fromEmail: string | null;
   replyTo: string | null;
   credentialId: string | null;
+  signatureHtml: string | null;
+  useWorkspaceSignature: boolean;
+  meetingLink: string | null;
+  portfolioLink: string | null;
 };
 
 async function logActivity(
@@ -72,10 +80,15 @@ export async function processS6mCampaignBatch(
       s.subject,
       s.html_body as "htmlBody",
       s.plain_body as "plainBody",
+      s.merge_config as "mergeConfig",
       c.from_name as "fromName",
       c.from_email as "fromEmail",
       c.reply_to as "replyTo",
-      c.credential_id as "credentialId"
+      c.credential_id as "credentialId",
+      c.signature_html as "signatureHtml",
+      c.use_workspace_signature as "useWorkspaceSignature",
+      c.meeting_link as "meetingLink",
+      c.portfolio_link as "portfolioLink"
     FROM marketing_campaign_recipient_steps rs
     INNER JOIN marketing_campaigns c ON c.id = rs.campaign_id
     INNER JOIN marketing_campaign_recipients r ON r.id = rs.recipient_id
@@ -93,6 +106,7 @@ export async function processS6mCampaignBatch(
   if (!rows.length) return { processed: 0, sent: 0, failed: 0 };
 
   const settingsCache = new Map<string, AccountSettings>();
+  const brandingCache = new Map<string, { name: string; logoUrl: string | null }>();
   let sent = 0;
   let failed = 0;
   const touchedCampaigns = new Set<string>();
@@ -116,6 +130,18 @@ export async function processS6mCampaignBatch(
       settingsCache.set(row.accountId, settings);
     }
 
+    let branding = brandingCache.get(row.accountId);
+    if (!branding) {
+      const brandRows = await sql`
+        SELECT name, logo_url as "logoUrl" FROM accounts WHERE id = ${row.accountId}::uuid LIMIT 1
+      `;
+      branding = (brandRows[0] as { name: string; logoUrl: string | null } | undefined) ?? {
+        name: '',
+        logoUrl: null,
+      };
+      brandingCache.set(row.accountId, branding);
+    }
+
     const contacts = await sql`
       SELECT name, email, phone, type, custom_attributes as "customAttributes"
       FROM contacts WHERE id = ${row.contactId}::uuid LIMIT 1
@@ -136,16 +162,55 @@ export async function processS6mCampaignBatch(
       customAttributes: contact?.customAttributes ?? {},
     };
 
+    const messageMode =
+      row.mergeConfig?.contactMessageMode ?? ('latest_note_or_chat' as ContactMessageMode);
+    const contactMessage = await resolveContactMessage(
+      sql,
+      row.accountId,
+      row.contactId,
+      messageMode
+    );
+
+    const mergeExtras: Record<string, string> = {
+      contact_message: contactMessage,
+      meeting_link: row.meetingLink ?? settings.marketingCalendlyUrl ?? '',
+      portfolio_link: row.portfolioLink ?? settings.marketingPortfolioUrl ?? '',
+    };
+
+    const fromName = row.fromName ?? settings.marketingFromName ?? 'FlowChat';
+    const fromEmail = row.fromEmail ?? settings.marketingFromEmail ?? row.email;
+
+    const appendix = buildCampaignEmailAppendix(
+      settings,
+      mergeCtx,
+      {
+        signatureHtml: row.signatureHtml,
+        useWorkspaceSignature: row.useWorkspaceSignature !== false,
+        meetingLink: row.meetingLink,
+        portfolioLink: row.portfolioLink,
+      },
+      {
+        senderName: fromName,
+        senderEmail: fromEmail,
+        companyName: branding.name,
+        logoUrl: branding.logoUrl ?? '',
+      }
+    );
+
+    let html = applyMergeTags(row.htmlBody, mergeCtx, mergeExtras);
+    if (appendix) html = `${html}${appendix}`;
+
     const result = await sendMarketingEmail(sql, row.accountId, row.contactId, settings, {
       to: row.email,
-      subject: applyMergeTags(row.subject, mergeCtx),
-      html: applyMergeTags(row.htmlBody, mergeCtx),
-      text: row.plainBody ? applyMergeTags(row.plainBody, mergeCtx) : undefined,
+      subject: applyMergeTags(row.subject, mergeCtx, mergeExtras),
+      html,
+      text: row.plainBody ? applyMergeTags(row.plainBody, mergeCtx, mergeExtras) : undefined,
       credentialId: row.credentialId,
+      skipAutoAppendix: true,
       mergeContact: mergeCtx,
       sender: {
-        fromName: row.fromName ?? settings.marketingFromName ?? 'FlowChat',
-        fromEmail: row.fromEmail ?? settings.marketingFromEmail ?? row.email,
+        fromName,
+        fromEmail,
         replyTo: row.replyTo ?? settings.marketingReplyTo ?? undefined,
         physicalAddress: settings.marketingPhysicalAddress ?? undefined,
       },
@@ -205,4 +270,30 @@ export async function skipPendingStepsForRecipient(
     SET stopped_reason = ${reason}, stopped_at = NOW()
     WHERE id = ${recipientId}::uuid AND stopped_reason IS NULL
   `;
+}
+
+export async function stopRecipientForReply(
+  sql: AppSql,
+  recipientId: string,
+  campaignId: string,
+  messageId?: string
+) {
+  await sql`
+    UPDATE marketing_campaign_recipient_steps
+    SET status = 'stopped_reply', updated_at = NOW()
+    WHERE recipient_id = ${recipientId}::uuid
+      AND status IN ('pending', 'queued', 'sent', 'delivered', 'opened', 'clicked')
+  `;
+  await sql`
+    UPDATE marketing_campaign_recipients
+    SET stopped_reason = 'reply', stopped_at = NOW()
+    WHERE id = ${recipientId}::uuid AND stopped_reason IS NULL
+  `;
+  await logActivity(
+    sql,
+    campaignId,
+    'recipient_stop',
+    { reason: 'reply', messageId },
+    recipientId
+  );
 }

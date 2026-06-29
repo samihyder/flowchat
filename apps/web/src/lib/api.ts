@@ -1,4 +1,5 @@
 import { getApiUrl } from '@/lib/config';
+import { marketingErrorFromResponse } from '@/lib/marketing/error-messages';
 
 export type WidgetTheme = {
   launcherBg: string;
@@ -415,6 +416,8 @@ export type MarketingCampaign = {
   status: 'draft' | 'scheduled' | 'running' | 'paused' | 'completed' | 'cancelled';
   currentStep: number;
   createdBy: string | null;
+  createdByName?: string | null;
+  stepCount?: number;
   createdAt: string;
   updatedAt: string;
   launchedBy: string | null;
@@ -634,7 +637,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   if (!res.ok) {
-    throw new Error(data.error ?? data.message ?? `Request failed (${res.status})`);
+    throw new Error(marketingErrorFromResponse(data as { code?: string; message?: string; error?: string }));
   }
   return data as T;
 }
@@ -1348,6 +1351,16 @@ export const api = {
   },
 
   marketing: {
+    contactMessagePreview: (
+      accountId: string,
+      contactId: string,
+      mode: string,
+      token: string
+    ) =>
+      request<{ text: string; source: 'note' | 'chat' | null; previewAt: string | null }>(
+        `/accounts/${accountId}/marketing/contact-message-preview?contactId=${encodeURIComponent(contactId)}&mode=${encodeURIComponent(mode)}`,
+        { token }
+      ),
     getHealth: (accountId: string, token: string) =>
       request<{
         providerOk: boolean;

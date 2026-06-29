@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { CampaignControlPreview, MarketingCampaign } from '@/lib/api';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
+import { useModalFocus } from '@/components/marketing/ui/use-modal-focus';
 
 function formatCampaignId(id: string) {
   return `CAM-${id.replace(/-/g, '').slice(0, 8).toUpperCase()}`;
@@ -30,6 +31,7 @@ export function CampaignControlModal({
   onConfirm,
 }: Props) {
   const [action, setAction] = useState<Action>(initialAction);
+  const panelRef = useModalFocus(open, onClose);
 
   useEffect(() => {
     if (open) setAction(initialAction);
@@ -41,10 +43,16 @@ export function CampaignControlModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[1px]">
-      <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl overflow-hidden">
+      <div
+        ref={panelRef}
+        className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="control-modal-title"
+      >
         <div className="px-8 py-6 border-b border-gray-100">
           <div className="flex justify-between items-start mb-1">
-            <h3 className="font-headline-md text-headline-md text-on-surface">
+            <h3 id="control-modal-title" className="font-headline-md text-headline-md text-on-surface">
               Pause or Cancel Campaign?
             </h3>
             <button

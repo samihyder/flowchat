@@ -24,6 +24,7 @@ import {
 } from '@/components/marketing/campaign-review-step';
 import { CampaignWizardChrome } from '@/components/marketing/ui/campaign-wizard-chrome';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
+import { marketingErrorMessage } from '@/lib/marketing/error-messages';
 import {
   type CampaignStepDraft,
   type StepFieldError,
@@ -131,7 +132,7 @@ export default function CampaignWizardPage() {
       setError('');
       return res.selected > 0;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save recipients');
+      setError(marketingErrorMessage(err, 'Failed to save recipients'));
       return false;
     }
   };
@@ -167,7 +168,7 @@ export default function CampaignWizardPage() {
       setError('');
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save sequence');
+      setError(marketingErrorMessage(err, 'Failed to save sequence'));
       return false;
     }
   };

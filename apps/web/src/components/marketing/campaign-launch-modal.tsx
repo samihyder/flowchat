@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
+import { useModalFocus } from '@/components/marketing/ui/use-modal-focus';
 
 type Props = {
   open: boolean;
@@ -24,6 +25,7 @@ export function CampaignLaunchModal({
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const panelRef = useModalFocus(open, onClose);
 
   if (!open) return null;
 
@@ -49,6 +51,7 @@ export function CampaignLaunchModal({
         onClick={onClose}
       />
       <div
+        ref={panelRef}
         className="relative bg-white w-full max-w-lg rounded-xl shadow-lg border border-gray-200 overflow-hidden"
         role="dialog"
         aria-modal="true"

@@ -43,16 +43,21 @@ export async function POST(req: Request, { params }: Params) {
   if (cred.row.provider === 'sendgrid') {
     const events = Array.isArray(body) ? body : [body];
     for (const event of events as { event?: string; sg_message_id?: string; email?: string }[]) {
+      const ev = event.event ?? '';
       const type =
-        event.event === 'delivered'
+        ev === 'delivered'
           ? 'email.delivered'
-          : event.event === 'open'
+          : ev === 'open'
             ? 'email.opened'
-            : event.event === 'click'
+            : ev === 'click'
               ? 'email.clicked'
-              : event.event === 'bounce'
+              : ev === 'bounce'
                 ? 'email.bounced'
-                : null;
+                : ev === 'spamreport'
+                  ? 'email.complained'
+                  : ev === 'unsubscribe' || ev === 'group_unsubscribe'
+                    ? 'email.unsubscribed'
+                    : null;
       if (type && event.sg_message_id) {
         await handleResendWebhookEvent(sql, {
           type,
@@ -71,6 +76,8 @@ export async function POST(req: Request, { params }: Params) {
         opened: 'email.opened',
         clicked: 'email.clicked',
         failed: 'email.bounced',
+        complained: 'email.complained',
+        unsubscribed: 'email.unsubscribed',
       };
       const type = map[eventData.event ?? ''] ?? 'email.delivered';
       await handleResendWebhookEvent(sql, {

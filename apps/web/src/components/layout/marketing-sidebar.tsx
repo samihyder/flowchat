@@ -13,6 +13,7 @@ import { initials } from '@/components/conversations/conversation-badges';
 const navItems = [
   { label: 'Campaigns', href: marketingRoutes.campaigns, icon: 'mail' },
   { label: 'Templates', href: marketingRoutes.templates, icon: 'description' },
+  { label: 'Segments', href: marketingRoutes.segments, icon: 'groups' },
 ] as const;
 
 type MarketingSidebarProps = {

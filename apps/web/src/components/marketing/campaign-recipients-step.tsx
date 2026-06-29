@@ -84,6 +84,9 @@ export function CampaignRecipientsStep({
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState('');
   const [page, setPage] = useState(0);
+  const [totalContacts, setTotalContacts] = useState(0);
+  const [subscribedOnly, setSubscribedOnly] = useState(true);
+  const PAGE_SIZE = 25;
 
   const putById = useMemo(() => {
     const map = new Map<string, CampaignRecipientDetail>();
@@ -98,17 +101,24 @@ export function CampaignRecipientsStep({
     try {
       const res = await api.contacts.list(accountId, token, {
         q: search || undefined,
-        limit: 50,
+        marketingStatus: subscribedOnly ? 'subscribed' : undefined,
+        limit: PAGE_SIZE,
+        offset: page * PAGE_SIZE,
       });
       setContacts(res.contacts);
+      setTotalContacts(res.total);
     } finally {
       setLoadingContacts(false);
     }
-  }, [accountId, token, search]);
+  }, [accountId, token, search, page, subscribedOnly]);
 
   useEffect(() => {
     void loadContacts();
   }, [loadContacts]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search, subscribedOnly]);
 
   useEffect(() => {
     api.marketing.segments.list(accountId, token).then((r) => setSegments(r.segments));
@@ -182,7 +192,7 @@ export function CampaignRecipientsStep({
     }
   };
 
-  const contactsTotal = totalContactsAvailable ?? contacts.length;
+  const contactsTotal = totalContactsAvailable ?? totalContacts;
 
   return (
     <>
@@ -238,21 +248,16 @@ export function CampaignRecipientsStep({
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-border focus:outline-none text-sm"
             />
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              aria-label="Filter"
-            >
-              <MarketingIcon name="filter_list" />
-            </button>
-            <button
-              type="button"
-              className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              aria-label="Download"
-            >
-              <MarketingIcon name="download" />
-            </button>
+          <div className="flex gap-2 items-center flex-wrap">
+            <label className="flex items-center gap-2 text-xs text-gray-600 border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
+              <input
+                type="checkbox"
+                checked={subscribedOnly}
+                onChange={(e) => setSubscribedOnly(e.target.checked)}
+                className="rounded border-gray-300 text-primary"
+              />
+              Subscribed only
+            </label>
           </div>
         </div>
 
@@ -321,7 +326,9 @@ export function CampaignRecipientsStep({
 
         <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
           <p className="text-xs text-on-surface-variant">
-            Showing {contacts.length === 0 ? 0 : 1}-{contacts.length} of {contacts.length} results
+            {totalContacts === 0
+              ? 'No contacts'
+              : `Showing ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalContacts)} of ${totalContacts}`}
           </p>
           <div className="flex gap-2">
             <button
@@ -334,7 +341,8 @@ export function CampaignRecipientsStep({
             </button>
             <button
               type="button"
-              className="p-1 px-3 border border-gray-300 rounded text-xs hover:bg-white transition-colors"
+              className="p-1 px-3 border border-gray-300 rounded text-xs hover:bg-white transition-colors disabled:opacity-50"
+              disabled={(page + 1) * PAGE_SIZE >= totalContacts}
               onClick={() => setPage((p) => p + 1)}
             >
               Next

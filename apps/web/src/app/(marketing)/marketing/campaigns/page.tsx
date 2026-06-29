@@ -369,6 +369,12 @@ export default function CampaignsPage() {
                     <th className="px-6 py-3 text-label-caps text-gray-500 uppercase tracking-wider">
                       Recipients
                     </th>
+                    <th className="px-6 py-3 text-label-caps text-gray-500 uppercase tracking-wider text-center">
+                      Steps
+                    </th>
+                    <th className="px-6 py-3 text-label-caps text-gray-500 uppercase tracking-wider">
+                      Created by
+                    </th>
                     <th className="px-6 py-3 text-label-caps text-gray-500 uppercase tracking-wider">
                       Next Send
                     </th>
@@ -378,13 +384,13 @@ export default function CampaignsPage() {
                 <tbody className="divide-y divide-gray-100">
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-gray-400 text-sm">
+                      <td colSpan={8} className="px-6 py-10 text-center text-gray-400 text-sm">
                         Loading campaigns…
                       </td>
                     </tr>
                   ) : paged.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-gray-400 text-sm">
+                      <td colSpan={8} className="px-6 py-10 text-center text-gray-400 text-sm">
                         No campaigns match this view.
                       </td>
                     </tr>
@@ -418,6 +424,12 @@ export default function CampaignsPage() {
                             <CampaignStatusBadge status={c.status} />
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-700">{c.recipientCount ?? 0}</td>
+                          <td className="px-6 py-4 text-center text-sm text-gray-700">
+                            {c.stepCount ?? '—'}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {c.createdByName ?? '—'}
+                          </td>
                           <td className="px-6 py-4">{formatNextSend(c)}</td>
                           <td className="px-6 py-4 text-right">
                             <CampaignRowActionsMenu

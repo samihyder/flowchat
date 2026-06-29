@@ -15,6 +15,8 @@ export type MarketingCampaignRow = {
   status: MarketingCampaignStatus;
   currentStep: number;
   createdBy: string | null;
+  createdByName: string | null;
+  stepCount: number;
   createdAt: string;
   updatedAt: string;
   launchedBy: string | null;
@@ -32,6 +34,8 @@ function serializeCampaign(
     status: row.status as MarketingCampaignStatus,
     currentStep: Number(row.currentStep ?? 1),
     createdBy: (row.createdBy as string | null) ?? null,
+    createdByName: (row.createdByName as string | null) ?? null,
+    stepCount: Number(row.stepCount ?? 0),
     createdAt: new Date(row.createdAt as Date).toISOString(),
     updatedAt: new Date(row.updatedAt as Date).toISOString(),
     launchedBy: (row.launchedBy as string | null) ?? null,
@@ -48,13 +52,22 @@ export async function listMarketingCampaigns(
     SELECT c.id, c.name, c.status, c.current_step as "currentStep",
            c.created_by as "createdBy", c.created_at as "createdAt", c.updated_at as "updatedAt",
            c.launched_by as "launchedBy", c.launched_at as "launchedAt",
-           COALESCE(r.cnt, 0)::int as "recipientCount"
+           COALESCE(r.cnt, 0)::int as "recipientCount",
+           COALESCE(s.cnt, 0)::int as "stepCount",
+           au.display_name as "createdByName"
     FROM marketing_campaigns c
     LEFT JOIN (
       SELECT campaign_id, COUNT(*)::int as cnt
       FROM marketing_campaign_recipients
       GROUP BY campaign_id
     ) r ON r.campaign_id = c.id
+    LEFT JOIN (
+      SELECT campaign_id, COUNT(*)::int as cnt
+      FROM marketing_campaign_steps
+      GROUP BY campaign_id
+    ) s ON s.campaign_id = c.id
+    LEFT JOIN account_users au
+      ON au.user_id = c.created_by AND au.account_id = c.account_id
     WHERE c.account_id = ${accountId}::uuid
     ORDER BY c.updated_at DESC
     LIMIT 100

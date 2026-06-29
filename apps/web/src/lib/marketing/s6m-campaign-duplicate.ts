@@ -84,6 +84,8 @@ export async function duplicateMarketingCampaign(
     status: 'draft',
     currentStep: 2,
     createdBy: userId,
+    createdByName: null,
+    stepCount: steps.length,
     createdAt: new Date(newRow.createdAt as Date).toISOString(),
     updatedAt: new Date(newRow.updatedAt as Date).toISOString(),
     launchedBy: null,
