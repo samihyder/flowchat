@@ -51,8 +51,7 @@ export async function GET(_req: Request, { params }: Params) {
 
   const usingPlatform = !cred && Boolean(process.env.RESEND_API_KEY);
 
-  const cronOk =
-    isCronHealthy(cronState) || process.env.NODE_ENV === 'development';
+  const cronOk = isCronHealthy(cronState);
 
   const origin =
     process.env.NEXT_PUBLIC_WEB_APP_URL ??

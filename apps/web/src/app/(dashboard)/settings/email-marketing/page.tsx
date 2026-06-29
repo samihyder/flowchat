@@ -52,7 +52,6 @@ export default function EmailMarketingSettingsPage() {
   const [templateMessage, setTemplateMessage] = useState('');
   const [health, setHealth] = useState<MarketingHealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [processingDue, setProcessingDue] = useState(false);
   const [processDueMessage, setProcessDueMessage] = useState<string | null>(null);
 
@@ -81,7 +80,6 @@ export default function EmailMarketingSettingsPage() {
       .then(setHealth)
       .catch(() => setHealth(null))
       .finally(() => setHealthLoading(false));
-    api.contacts.access(accountId, token).then((r) => setIsAdmin(r.isAdmin)).catch(() => setIsAdmin(false));
   };
 
   useEffect(load, [token, accountId]);
@@ -168,7 +166,7 @@ export default function EmailMarketingSettingsPage() {
   };
 
   const handleProcessDue = async () => {
-    if (!token || !accountId || !isAdmin) return;
+    if (!token || !accountId) return;
     setProcessingDue(true);
     setProcessDueMessage(null);
     try {
@@ -199,10 +197,35 @@ export default function EmailMarketingSettingsPage() {
         </p>
       </div>
 
+      <section className="rounded-xl border-2 border-primary-border bg-primary-surface p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="font-semibold text-gray-900">Process campaign sends</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Manually run the email scheduler for all due campaign steps. Use this when cron is
+            offline or on preview deployments.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void handleProcessDue()}
+          disabled={processingDue}
+          className="marketing-btn-primary shrink-0 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60 shadow-sm"
+        >
+          {processingDue ? 'Processing…' : 'Process due sends now'}
+        </button>
+      </section>
+      {processDueMessage ? (
+        <p
+          className={`text-sm -mt-4 ${processDueMessage.startsWith('Processed') ? 'text-green-600' : 'text-red-600'}`}
+        >
+          {processDueMessage}
+        </p>
+      ) : null}
+
       <MarketingHealthPanel
         health={health}
         loading={healthLoading}
-        onProcessDue={isAdmin ? () => void handleProcessDue() : undefined}
+        onProcessDue={() => void handleProcessDue()}
         processingDue={processingDue}
         processDueMessage={processDueMessage}
       />

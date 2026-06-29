@@ -90,7 +90,7 @@ export default function CampaignDetailPage() {
   };
 
   const handleProcessDue = async () => {
-    if (!token || !accountId || !isAdmin) return;
+    if (!token || !accountId) return;
     setProcessingDue(true);
     try {
       await api.marketing.processDue(accountId, token);
@@ -144,6 +144,26 @@ export default function CampaignDetailPage() {
         Campaigns
       </Link>
 
+      {(campaign.status === 'scheduled' || campaign.status === 'running') && (
+        <div className="rounded-xl border border-primary-border bg-primary-surface px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold text-on-surface">Campaign emails are queued</p>
+            <p className="text-sm text-on-surface-variant mt-1">
+              Sends run when the scheduler processes due steps. On preview or if cron is offline,
+              trigger them manually below.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleProcessDue()}
+            disabled={processingDue}
+            className="marketing-btn-primary shrink-0 px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60 shadow-sm"
+          >
+            {processingDue ? 'Processing…' : 'Process due sends now'}
+          </button>
+        </div>
+      )}
+
       <CampaignStatsView
         campaign={campaign}
         stats={stats}
@@ -153,7 +173,7 @@ export default function CampaignDetailPage() {
         onResume={isAdmin ? () => void handleResume() : undefined}
         onCancel={() => void openControl('cancel')}
         onExport={() => void handleExport()}
-        onProcessDue={isAdmin ? () => handleProcessDue() : undefined}
+        onProcessDue={() => handleProcessDue()}
         processingDue={processingDue}
         exporting={exporting}
       />

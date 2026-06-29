@@ -224,8 +224,7 @@ export function CampaignStatsView({
       campaign.status === 'paused');
 
   const showProcessDue =
-    isAdmin &&
-    onProcessDue &&
+    Boolean(onProcessDue) &&
     (campaign.status === 'scheduled' ||
       campaign.status === 'running' ||
       campaign.status === 'paused');
@@ -235,7 +234,7 @@ export function CampaignStatsView({
       {showProcessDue ? (
         <button
           type="button"
-          onClick={() => void onProcessDue()}
+          onClick={() => void onProcessDue?.()}
           disabled={processingDue}
           className="marketing-btn-primary flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-60 shadow-sm"
         >
