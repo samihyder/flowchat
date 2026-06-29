@@ -4,11 +4,18 @@ type MarketingIconProps = {
   filled?: boolean;
 };
 
+const ICON_FONT = "'Material Symbols Outlined'";
+
 export function MarketingIcon({ name, className = '', filled }: MarketingIconProps) {
   return (
     <span
       className={`material-symbols-outlined ${className}`}
-      style={filled ? { fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" } : undefined}
+      style={{
+        fontFamily: ICON_FONT,
+        fontVariationSettings: filled
+          ? "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24"
+          : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24",
+      }}
       aria-hidden
     >
       {name}

@@ -27,6 +27,23 @@
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+/* Material Symbols — must override .marketing-module { font-family: Inter } inheritance */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+  -webkit-font-smoothing: antialiased;
+}
+
 body {
   font-family: var(--font-sans);
   background: #F9FAFB;
