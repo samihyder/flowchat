@@ -167,6 +167,12 @@ export async function sendCampaignTestEmail(
     });
   }
 
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    throw new MarketingError(MarketingErrorCode.VALIDATION, {
+      message: 'Enter a valid email address for the test send.',
+    });
+  }
+
   const mergeCtx = {
     name: 'Alex',
     email: to,
@@ -192,8 +198,8 @@ export async function sendCampaignTestEmail(
   });
 
   if (!result.ok) {
-    throw new MarketingError(MarketingErrorCode.INTERNAL, {
-      message: result.error ?? 'Test send failed.',
+    throw new MarketingError(MarketingErrorCode.VALIDATION, {
+      message: result.error ?? 'Test send failed. Check your email provider and sender domain in Settings.',
     });
   }
 

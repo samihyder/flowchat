@@ -18,13 +18,18 @@ const CLIENT_MESSAGES: Record<string, string> = {
 };
 
 export function marketingErrorMessage(err: unknown, fallback = 'Something went wrong. Please try again.'): string {
-  if (err && typeof err === 'object' && 'code' in err) {
-    const code = String((err as { code: string }).code);
-    if (CLIENT_MESSAGES[code]) return CLIENT_MESSAGES[code]!;
-  }
   if (err instanceof Error && err.message.trim()) {
     const msg = err.message.trim();
-    if (msg.length < 200 && !msg.includes('fetch')) return msg;
+    const generic = new Set(Object.values(CLIENT_MESSAGES));
+    if (msg.length < 300 && !msg.includes('fetch') && !generic.has(msg)) {
+      return msg;
+    }
+  }
+  if (err && typeof err === 'object' && 'code' in err) {
+    const code = String((err as { code: string }).code);
+    const custom = (err as { message?: string }).message?.trim();
+    if (custom && custom.length < 300) return custom;
+    if (CLIENT_MESSAGES[code]) return CLIENT_MESSAGES[code]!;
   }
   return fallback;
 }
@@ -34,6 +39,8 @@ export function marketingErrorFromResponse(data: {
   message?: string;
   error?: string;
 }): string {
+  const apiMessage = data.message?.trim() || data.error?.trim();
+  if (apiMessage && apiMessage.length < 300) return apiMessage;
   if (data.code && CLIENT_MESSAGES[data.code]) return CLIENT_MESSAGES[data.code]!;
-  return data.message ?? data.error ?? CLIENT_MESSAGES[MarketingErrorCode.INTERNAL]!;
+  return CLIENT_MESSAGES[MarketingErrorCode.INTERNAL]!;
 }

@@ -18,6 +18,7 @@ import {
   type PreflightResult,
 } from '@/lib/api';
 import { formatSendAtLabel } from '@/lib/marketing/automation-email-draft';
+import { marketingErrorMessage } from '@/lib/marketing/error-messages';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import { CampaignLaunchModal } from '@/components/marketing/campaign-launch-modal';
 import {
@@ -113,6 +114,11 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
     }));
 
     const sendTest = async () => {
+      const to = testEmail.trim();
+      if (to && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+        setTestMsg('Enter a valid email address (e.g. you@company.com).');
+        return;
+      }
       setTestBusy(true);
       setTestMsg('');
       try {
@@ -120,12 +126,12 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
           accountId,
           campaignId,
           token,
-          testEmail.trim() || undefined
+          to || undefined
         );
         setTestMsg(`Test sent to ${res.sentTo}`);
         load();
       } catch (err) {
-        setTestMsg(err instanceof Error ? err.message : 'Test send failed');
+        setTestMsg(marketingErrorMessage(err, 'Test send failed'));
       } finally {
         setTestBusy(false);
       }
@@ -330,7 +336,17 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
                   </span>
                 </div>
               )}
-              {testMsg && <p className="text-xs text-on-surface-variant">{testMsg}</p>}
+              {testMsg && (
+                <p
+                  className={`text-xs ${
+                    testMsg.startsWith('Test sent')
+                      ? 'text-status-success-text'
+                      : 'text-status-danger-text'
+                  }`}
+                >
+                  {testMsg}
+                </p>
+              )}
             </div>
           </div>
 
