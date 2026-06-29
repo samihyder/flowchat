@@ -245,7 +245,7 @@ export default function CampaignsPage() {
             type="button"
             onClick={() => void handleNewCampaign()}
             disabled={creating}
-            className="bg-brand-indigo hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all shadow-sm disabled:opacity-60"
+            className="marketing-btn-primary px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all shadow-sm disabled:opacity-60"
           >
             <MarketingIcon name="add" />
             {creating ? 'Creating…' : 'New Campaign'}
@@ -304,7 +304,7 @@ export default function CampaignsPage() {
                 type="button"
                 onClick={() => void handleNewCampaign()}
                 disabled={creating}
-                className="bg-primary text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-primary-hover transition-all disabled:opacity-60"
+                className="marketing-btn-primary px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-all disabled:opacity-60"
               >
                 Create your first campaign
               </button>

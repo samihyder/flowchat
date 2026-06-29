@@ -61,7 +61,7 @@ export function CampaignBuilderTopBar({ onLaunch, launchDisabled }: CampaignBuil
               type="button"
               onClick={onLaunch}
               disabled={launchDisabled}
-              className="bg-primary text-on-primary px-6 py-1.5 rounded-lg font-bold hover:bg-primary-hover transition-colors disabled:opacity-50"
+              className="marketing-btn-primary px-6 py-1.5 rounded-lg font-bold transition-colors disabled:opacity-50"
             >
               Launch
             </button>

@@ -84,7 +84,7 @@ export function MarketingSidebar({ variant = 'list', onNavigate }: MarketingSide
             type="button"
             onClick={() => void handleNewCampaign()}
             disabled={creating}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-primary text-on-primary font-bold hover:bg-primary-hover transition-colors mb-0 disabled:opacity-60"
+            className="w-full marketing-btn-primary flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-colors mb-0 disabled:opacity-60"
           >
             <MarketingIcon name="add" />
             <span>{creating ? 'Creating…' : 'New Campaign'}</span>

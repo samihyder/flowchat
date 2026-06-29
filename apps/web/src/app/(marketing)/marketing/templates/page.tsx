@@ -106,7 +106,7 @@ export default function TemplatesPage() {
         action={
           <Link
             href={'/marketing/templates/new' as Route}
-            className="bg-brand-indigo hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 text-sm shadow-sm"
+            className="marketing-btn-primary px-4 py-2 rounded-lg font-semibold flex items-center gap-2 text-sm shadow-sm"
           >
             <MarketingIcon name="add" className="text-[20px]" />
             Create template
@@ -140,7 +140,7 @@ export default function TemplatesPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link
                   href={'/marketing/templates/new' as Route}
-                  className="inline-flex bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg"
+                  className="inline-flex marketing-btn-primary px-8 py-3 rounded-xl font-bold text-sm shadow-lg"
                 >
                   Start from scratch
                 </Link>

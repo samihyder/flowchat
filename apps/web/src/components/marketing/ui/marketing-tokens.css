@@ -13,10 +13,12 @@
   --color-background: #f9f9ff;
   --color-on-surface: #121c2a;
   --color-on-surface-variant: #464554;
+  --color-surface-variant: #e8eaf6;
   --color-brand-indigo: #6366f1;
+  --color-primary-fixed: #eef2ff;
+  --color-primary-fixed-dim: #a5b4fc;
   --color-surface-container-low: #eff3ff;
   --color-surface-container: #e6eeff;
-  --color-primary-container: #6063ee;
   --max-width-container-max-list: 1280px;
   --max-width-container-max-wizard: 1024px;
   --color-status-draft-bg: #f3f4f6;
@@ -31,7 +33,20 @@
   --color-status-danger-text: #dc2626;
   --color-status-bounced-bg: #fef3c7;
   --color-status-bounced-text: #d97706;
+  --color-status-reply-text: #4648d4;
   --font-data-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Primary actions — explicit colors so buttons stay readable if utilities fail */
+.marketing-module .marketing-btn-primary {
+  background-color: #4648d4;
+  color: #ffffff;
+}
+.marketing-module .marketing-btn-primary:hover:not(:disabled) {
+  background-color: #4f46e5;
+}
+.marketing-module .marketing-btn-primary:disabled {
+  opacity: 0.6;
 }
 
 .marketing-module {

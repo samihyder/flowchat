@@ -466,7 +466,7 @@ export default function CampaignWizardPage() {
               className={`px-8 py-2 rounded-lg font-bold transition-all flex items-center gap-2 ${
                 nextDisabled
                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-primary text-on-primary hover:bg-primary-hover'
+                  : 'marketing-btn-primary'
               }`}
               disabled={nextDisabled}
               onClick={() => void goToStep(activeStep + 1)}
@@ -483,7 +483,7 @@ export default function CampaignWizardPage() {
           ) : isAdmin ? (
             <button
               type="button"
-              className="flex items-center gap-3 bg-primary hover:bg-primary-hover text-white px-8 py-2 rounded-lg font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-3 marketing-btn-primary px-8 py-2 rounded-lg font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!launchReady}
               onClick={() => reviewStepRef.current?.openLaunch()}
             >

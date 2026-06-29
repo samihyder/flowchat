@@ -6,7 +6,6 @@ import type { Route } from 'next';
 import { useAuthStore } from '@/store/auth';
 import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
 import { MarketingSidebar } from '@/components/layout/marketing-sidebar';
-import '@/components/marketing/ui/marketing-tokens.css';
 
 function MarketingShellFallback() {
   return (

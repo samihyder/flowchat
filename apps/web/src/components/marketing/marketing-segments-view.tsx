@@ -97,7 +97,7 @@ export function MarketingSegmentsView() {
           <button
             type="button"
             onClick={() => setShowCreate(true)}
-            className="bg-brand-indigo hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 text-sm shadow-sm"
+            className="marketing-btn-primary px-4 py-2 rounded-lg font-semibold flex items-center gap-2 text-sm shadow-sm"
           >
             <MarketingIcon name="add" className="text-[20px]" />
             New segment
@@ -234,7 +234,7 @@ export function MarketingSegmentsView() {
               <button
                 type="submit"
                 disabled={busy}
-                className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-60"
+                className="marketing-btn-primary px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-60"
               >
                 Create segment
               </button>
