@@ -48,6 +48,27 @@ else
   echo "contact_enrichment_suggestions exists — skipping 0021"
 fi
 
+if ! psql "$DATABASE_URL" -tAc "SELECT 1 FROM marketing_campaigns LIMIT 1" >/dev/null 2>&1; then
+  echo "Applying 0022_s6m_campaigns.sql..."
+  psql "$DATABASE_URL" -f "$ROOT/packages/db/drizzle/0022_s6m_campaigns.sql"
+else
+  echo "marketing_campaigns exists — skipping 0022"
+fi
+
+if ! psql "$DATABASE_URL" -tAc "SELECT 1 FROM marketing_system_state LIMIT 1" >/dev/null 2>&1; then
+  echo "Applying 0023_marketing_system_state.sql..."
+  psql "$DATABASE_URL" -f "$ROOT/packages/db/drizzle/0023_marketing_system_state.sql"
+else
+  echo "marketing_system_state exists — skipping 0023"
+fi
+
+if ! psql "$DATABASE_URL" -tAc "SELECT 1 FROM information_schema.columns WHERE table_name='marketing_campaigns' AND column_name='schedule_timezone'" >/dev/null 2>&1; then
+  echo "Applying 0024_marketing_campaign_timezone.sql..."
+  psql "$DATABASE_URL" -f "$ROOT/packages/db/drizzle/0024_marketing_campaign_timezone.sql"
+else
+  echo "schedule_timezone column exists — skipping 0024"
+fi
+
 echo "Cleaning legacy workflow_sent rows without Resend message IDs..."
 psql "$DATABASE_URL" -c "
   DELETE FROM contact_email_events
