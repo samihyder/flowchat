@@ -223,6 +223,73 @@ export function CampaignStatsView({
       campaign.status === 'scheduled' ||
       campaign.status === 'paused');
 
+  const showProcessDue =
+    isAdmin &&
+    onProcessDue &&
+    (campaign.status === 'scheduled' ||
+      campaign.status === 'running' ||
+      campaign.status === 'paused');
+
+  const headerActions = (
+    <div className="flex gap-2 flex-wrap items-center">
+      {showProcessDue ? (
+        <button
+          type="button"
+          onClick={() => void onProcessDue()}
+          disabled={processingDue}
+          className="marketing-btn-primary flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-60 shadow-sm"
+        >
+          <MarketingIcon name="play_circle" className="text-[20px]" />
+          {processingDue ? 'Processing…' : 'Process due sends now'}
+        </button>
+      ) : null}
+      {canControl ? (
+        <>
+          {campaign.status === 'paused' && onResume ? (
+            <button
+              type="button"
+              onClick={onResume}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all font-medium text-on-surface-variant"
+            >
+              <MarketingIcon name="play_arrow" className="text-[20px]" />
+              Resume
+            </button>
+          ) : campaign.status !== 'paused' ? (
+            <button
+              type="button"
+              onClick={onPause}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all font-medium text-on-surface-variant"
+            >
+              <MarketingIcon name="pause" className="text-[20px]" />
+              Pause
+            </button>
+          ) : null}
+          {campaign.status !== 'cancelled' && campaign.status !== 'completed' && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex items-center gap-2 px-4 py-2 border border-status-danger-text/20 text-status-danger-text rounded-lg hover:bg-status-danger-bg transition-all font-medium"
+            >
+              <MarketingIcon name="cancel" className="text-[20px]" />
+              Cancel
+            </button>
+          )}
+        </>
+      ) : null}
+      {isAdmin ? (
+        <button
+          type="button"
+          onClick={onExport}
+          disabled={exporting}
+          className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-all font-medium disabled:opacity-60"
+        >
+          <MarketingIcon name="file_download" className="text-[20px]" />
+          {exporting ? 'Exporting…' : 'Export'}
+        </button>
+      ) : null}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start gap-4 flex-wrap">
@@ -241,61 +308,7 @@ export function CampaignStatsView({
             {scheduleModeLabel(scheduleMode)} ({timezoneShortLabel(scheduleTimezone)})
           </p>
         </div>
-        {canControl && (
-          <div className="flex gap-2 flex-wrap">
-            {campaign.status === 'paused' && onResume ? (
-              <button
-                type="button"
-                onClick={onResume}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all font-medium text-on-surface-variant"
-              >
-                <MarketingIcon name="play_arrow" className="text-[20px]" />
-                Resume
-              </button>
-            ) : campaign.status !== 'paused' ? (
-              <button
-                type="button"
-                onClick={onPause}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all font-medium text-on-surface-variant"
-              >
-                <MarketingIcon name="pause" className="text-[20px]" />
-                Pause
-              </button>
-            ) : null}
-            {campaign.status !== 'cancelled' && campaign.status !== 'completed' && (
-              <button
-                type="button"
-                onClick={onCancel}
-                className="flex items-center gap-2 px-4 py-2 border border-status-danger-text/20 text-status-danger-text rounded-lg hover:bg-status-danger-bg transition-all font-medium"
-              >
-                <MarketingIcon name="cancel" className="text-[20px]" />
-                Cancel
-              </button>
-            )}
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={onExport}
-                disabled={exporting}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-all font-medium disabled:opacity-60"
-              >
-                <MarketingIcon name="file_download" className="text-[20px]" />
-                {exporting ? 'Exporting…' : 'Export'}
-              </button>
-            )}
-          </div>
-        )}
-        {!canControl && isAdmin && (
-          <button
-            type="button"
-            onClick={onExport}
-            disabled={exporting}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-all font-medium disabled:opacity-60"
-          >
-            <MarketingIcon name="file_download" className="text-[20px]" />
-            {exporting ? 'Exporting…' : 'Export'}
-          </button>
-        )}
+        {headerActions}
       </div>
 
       <div className="border-b border-gray-200">
@@ -328,16 +341,6 @@ export function CampaignStatsView({
                   {overview.sent} of {overview.sent + overview.pending} sends
                 </div>
                 <div className="flex items-center gap-3">
-                  {isAdmin && onProcessDue ? (
-                    <button
-                      type="button"
-                      onClick={() => void onProcessDue()}
-                      disabled={processingDue}
-                      className="marketing-btn-primary px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-60"
-                    >
-                      {processingDue ? 'Processing…' : 'Process due sends now'}
-                    </button>
-                  ) : null}
                   <span className="text-on-surface-variant font-data-mono">
                     {overview.progressPercent}% completed
                   </span>

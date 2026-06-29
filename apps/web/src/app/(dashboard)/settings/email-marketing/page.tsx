@@ -52,6 +52,9 @@ export default function EmailMarketingSettingsPage() {
   const [templateMessage, setTemplateMessage] = useState('');
   const [health, setHealth] = useState<MarketingHealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [processingDue, setProcessingDue] = useState(false);
+  const [processDueMessage, setProcessDueMessage] = useState<string | null>(null);
 
   const load = () => {
     if (!token || !accountId) return;
@@ -78,6 +81,7 @@ export default function EmailMarketingSettingsPage() {
       .then(setHealth)
       .catch(() => setHealth(null))
       .finally(() => setHealthLoading(false));
+    api.contacts.access(accountId, token).then((r) => setIsAdmin(r.isAdmin)).catch(() => setIsAdmin(false));
   };
 
   useEffect(load, [token, accountId]);
@@ -163,6 +167,26 @@ export default function EmailMarketingSettingsPage() {
     }
   };
 
+  const handleProcessDue = async () => {
+    if (!token || !accountId || !isAdmin) return;
+    setProcessingDue(true);
+    setProcessDueMessage(null);
+    try {
+      const res = await api.marketing.processDue(accountId, token);
+      setProcessDueMessage(
+        res.ok
+          ? `Processed ${res.s6mProcessed} due send(s), ${res.s6mSent} sent.`
+          : (res.error ?? 'Scheduler failed')
+      );
+      const h = await api.marketing.getHealth(accountId, token);
+      setHealth(h);
+    } catch (err) {
+      setProcessDueMessage(err instanceof Error ? err.message : 'Scheduler failed');
+    } finally {
+      setProcessingDue(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-3xl space-y-6">
       <div>
@@ -175,7 +199,13 @@ export default function EmailMarketingSettingsPage() {
         </p>
       </div>
 
-      <MarketingHealthPanel health={health} loading={healthLoading} />
+      <MarketingHealthPanel
+        health={health}
+        loading={healthLoading}
+        onProcessDue={isAdmin ? () => void handleProcessDue() : undefined}
+        processingDue={processingDue}
+        processDueMessage={processDueMessage}
+      />
 
       <section className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
         <h3 className="font-medium text-gray-900">Senders</h3>

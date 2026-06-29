@@ -44,6 +44,18 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Primary actions — works in marketing module and dashboard settings */
+.marketing-btn-primary {
+  background-color: #4648d4;
+  color: #ffffff;
+}
+.marketing-btn-primary:hover:not(:disabled) {
+  background-color: #4f46e5;
+}
+.marketing-btn-primary:disabled {
+  opacity: 0.6;
+}
+
 body {
   font-family: var(--font-sans);
   background: #F9FAFB;

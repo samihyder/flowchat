@@ -18,9 +18,18 @@ export type MarketingHealthData = {
 type Props = {
   health: MarketingHealthData | null;
   loading?: boolean;
+  onProcessDue?: () => void;
+  processingDue?: boolean;
+  processDueMessage?: string | null;
 };
 
-export function MarketingHealthPanel({ health, loading }: Props) {
+export function MarketingHealthPanel({
+  health,
+  loading,
+  onProcessDue,
+  processingDue,
+  processDueMessage,
+}: Props) {
   if (loading || !health) {
     return (
       <section className="bg-white border border-gray-200 rounded-xl p-6 animate-pulse">
@@ -117,6 +126,29 @@ export function MarketingHealthPanel({ health, loading }: Props) {
             {health.cronError && (
               <p className="text-xs text-status-danger-text mt-1">{health.cronError}</p>
             )}
+            {onProcessDue ? (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-600 mb-3">
+                  Campaign emails only send when the scheduler runs. On preview deployments, trigger
+                  it manually if sends are past their scheduled time.
+                </p>
+                <button
+                  type="button"
+                  onClick={onProcessDue}
+                  disabled={processingDue}
+                  className="marketing-btn-primary w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-60"
+                >
+                  {processingDue ? 'Processing…' : 'Process due sends now'}
+                </button>
+                {processDueMessage ? (
+                  <p
+                    className={`text-xs mt-2 ${processDueMessage.startsWith('Processed') ? 'text-status-success-text' : 'text-status-danger-text'}`}
+                  >
+                    {processDueMessage}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 
