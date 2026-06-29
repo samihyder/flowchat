@@ -4,7 +4,7 @@ import { getAccountSettings } from '@/lib/account-settings-db';
 import type { AppSql } from '@/lib/db-sql';
 import { resolveEmailCredential } from '@/lib/credentials/store';
 import { getMarketingCronState, isCronHealthy } from '@/lib/marketing/marketing-cron-state';
-import { checkSenderDomainStatus } from '@/lib/marketing/senders';
+import { checkSenderDomainStatus, isMarketingDomainReady } from '@/lib/marketing/senders';
 
 type Params = { params: Promise<{ accountId: string }> };
 
@@ -31,11 +31,25 @@ export async function GET(_req: Request, { params }: Params) {
       ? 'Platform Resend'
       : 'Not connected';
 
-  const fromEmail = settings.marketingFromEmail ?? '';
+  const defaultSenderRows = await sql`
+    SELECT from_email as "fromEmail", credential_id as "credentialId"
+    FROM marketing_senders
+    WHERE account_id = ${accountId}::uuid AND is_default = true
+    LIMIT 1
+  `;
+  const defaultSender = defaultSenderRows[0] as
+    | { fromEmail: string; credentialId: string | null }
+    | undefined;
+
+  const fromEmail = defaultSender?.fromEmail ?? settings.marketingFromEmail ?? '';
+  const senderCredentialId = defaultSender?.credentialId ?? cred?.row.id ?? null;
+
   let domainStatus = 'unknown';
   if (fromEmail) {
-    domainStatus = await checkSenderDomainStatus(sql, accountId, fromEmail, cred?.row.id ?? null);
+    domainStatus = await checkSenderDomainStatus(sql, accountId, fromEmail, senderCredentialId);
   }
+
+  const usingPlatform = !cred && Boolean(process.env.RESEND_API_KEY);
 
   const cronOk =
     isCronHealthy(cronState) ||
@@ -54,7 +68,9 @@ export async function GET(_req: Request, { params }: Params) {
     providerOk,
     providerLabel,
     domainStatus,
-    domainOk: domainStatus === 'verified' || (!cred && Boolean(process.env.RESEND_API_KEY)),
+    domainOk: isMarketingDomainReady(domainStatus as 'verified' | 'pending' | 'unknown' | 'failed', {
+      usingPlatform,
+    }),
     cronOk,
     cronLastAt: cronState.lastRunAt,
     cronLastProcessed: cronState.lastProcessed,

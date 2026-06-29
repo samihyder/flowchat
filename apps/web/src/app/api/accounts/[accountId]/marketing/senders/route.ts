@@ -40,7 +40,26 @@ export async function GET(req: Request, { params }: Params) {
     ORDER BY is_default DESC, label ASC
   `;
 
-  return Response.json({ senders: (rows as Record<string, unknown>[]).map(serializeSender) });
+  const senders = await Promise.all(
+    (rows as Record<string, unknown>[]).map(async (row) => {
+      const liveStatus = await checkSenderDomainStatus(
+        sql,
+        accountId,
+        row.fromEmail as string,
+        (row.credentialId as string | null) ?? null
+      );
+      if (liveStatus !== row.domainStatus) {
+        await sql`
+          UPDATE marketing_senders
+          SET domain_status = ${liveStatus}, updated_at = NOW()
+          WHERE id = ${row.id as string}::uuid
+        `;
+      }
+      return serializeSender({ ...row, domainStatus: liveStatus });
+    })
+  );
+
+  return Response.json({ senders });
 }
 
 export async function POST(req: Request, { params }: Params) {

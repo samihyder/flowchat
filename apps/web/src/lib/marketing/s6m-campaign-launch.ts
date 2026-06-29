@@ -5,7 +5,7 @@ import { MarketingError, MarketingErrorCode } from '@/lib/marketing/errors';
 import { applyMergeTags } from '@/lib/marketing/merge-tags';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
 import { buildCampaignEmailAppendix } from '@/lib/marketing/campaign-appendix';
-import { checkSenderDomainStatus } from '@/lib/marketing/senders';
+import { checkSenderDomainStatus, isMarketingDomainReady, marketingDomainStatusDetail } from '@/lib/marketing/senders';
 import { getCampaignSteps, persistCampaignStepTemplates } from '@/lib/marketing/s6m-campaign-steps';
 import { summarizeMergeValidationForSteps } from '@/lib/marketing/campaign-step-draft';
 import {
@@ -54,14 +54,11 @@ export async function getCampaignPreflight(
       sender.credentialId
     );
     const usingPlatform = !cred && Boolean(process.env.RESEND_API_KEY);
-    domainOk =
-      status === 'verified' || (usingPlatform && status !== 'failed');
-    domainDetail =
-      status === 'verified'
-        ? `Verified domain for ${sender.fromEmail}`
-        : usingPlatform && status !== 'failed'
-          ? `Platform sender for ${sender.fromEmail}`
-          : `Domain status: ${status}`;
+    domainOk = isMarketingDomainReady(status, { usingPlatform, testSendValid: testValid });
+    domainDetail = marketingDomainStatusDetail(status, sender.fromEmail, {
+      usingPlatform,
+      testSendValid: testValid,
+    });
   }
 
   const cronState = await getMarketingCronState(sql);

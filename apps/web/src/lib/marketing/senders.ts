@@ -86,7 +86,7 @@ export async function checkSenderDomainStatus(
   accountId: string,
   fromEmail: string,
   credentialId?: string | null
-): Promise<'verified' | 'pending' | 'unknown' | 'failed'> {
+): Promise<DomainCheckStatus> {
   const cred = await resolveEmailCredential(sql, accountId, credentialId);
   if (cred) {
     return checkEmailDomain(
@@ -100,6 +100,40 @@ export async function checkSenderDomainStatus(
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return 'unknown';
   return checkEmailDomain('resend', apiKey, {}, fromEmail);
+}
+
+export type DomainCheckStatus = 'verified' | 'pending' | 'unknown' | 'failed';
+
+/** Whether a sender domain is ready for campaign launch. */
+export function isMarketingDomainReady(
+  status: DomainCheckStatus,
+  opts: { usingPlatform: boolean; testSendValid?: boolean }
+): boolean {
+  if (status === 'verified') return true;
+  if (status === 'failed') return false;
+  if (opts.usingPlatform) return true;
+  if (opts.testSendValid && status === 'unknown') return true;
+  return false;
+}
+
+export function marketingDomainStatusDetail(
+  status: DomainCheckStatus,
+  fromEmail: string,
+  opts: { usingPlatform: boolean; testSendValid?: boolean }
+): string {
+  if (status === 'verified') {
+    return `Verified domain for ${fromEmail}`;
+  }
+  if (opts.usingPlatform) {
+    return `Platform sender for ${fromEmail}`;
+  }
+  if (opts.testSendValid && status === 'unknown') {
+    return `Domain confirmed via successful test send (${fromEmail})`;
+  }
+  if (status === 'pending') {
+    return `DNS verification pending for ${fromEmail}`;
+  }
+  return `Domain status: ${status}`;
 }
 
 /** @deprecated Use checkSenderDomainStatus */

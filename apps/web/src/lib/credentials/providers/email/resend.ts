@@ -104,7 +104,14 @@ export const resendEmailProvider: EmailProviderAdapter = {
       const res = await fetch('https://api.resend.com/domains', {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
-      if (!res.ok) return 'unknown';
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { message?: string };
+        // Send-only keys cannot GET /domains; Resend enforces domain verification on send.
+        if (isResendSendOnlyRestriction(data.message, res.status)) {
+          return 'verified';
+        }
+        return 'unknown';
+      }
       const data = (await res.json()) as { data?: { name: string; status: string }[] };
       const match = data.data?.find((d) => d.name === domain || domain.endsWith(`.${d.name}`));
       if (!match) return 'unknown';
