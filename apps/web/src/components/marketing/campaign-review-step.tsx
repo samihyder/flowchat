@@ -131,7 +131,10 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
         setTestMsg(`Test sent to ${res.sentTo}`);
         load();
       } catch (err) {
-        setTestMsg(marketingErrorMessage(err, 'Test send failed'));
+        setTestMsg(marketingErrorMessage(
+          err,
+          'Test send failed. Check Settings → Email marketing for a verified sender domain and connected email provider.'
+        ));
       } finally {
         setTestBusy(false);
       }

@@ -4,6 +4,7 @@ import { resolveEmailCredential } from '@/lib/credentials/store';
 import { MarketingError, MarketingErrorCode } from '@/lib/marketing/errors';
 import { applyMergeTags } from '@/lib/marketing/merge-tags';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
+import { buildCampaignEmailAppendix } from '@/lib/marketing/campaign-appendix';
 import { checkSenderDomainStatus } from '@/lib/marketing/senders';
 import { getCampaignSteps, persistCampaignStepTemplates } from '@/lib/marketing/s6m-campaign-steps';
 import { summarizeMergeValidationForSteps } from '@/lib/marketing/campaign-step-draft';
@@ -181,14 +182,60 @@ export async function sendCampaignTestEmail(
     customAttributes: {},
   };
 
+  const cred = await resolveEmailCredential(sql, accountId, sender.credentialId);
+  if (!cred) {
+    if (settings.marketingByokOnly) {
+      throw new MarketingError(MarketingErrorCode.VALIDATION, {
+        message:
+          'No connected email provider. Add Resend, SendGrid, or Mailgun under Settings → Connected services.',
+      });
+    }
+    if (!process.env.RESEND_API_KEY) {
+      throw new MarketingError(MarketingErrorCode.VALIDATION, {
+        message:
+          'No email provider is configured. Connect an email provider under Settings → Connected services.',
+      });
+    }
+  }
+
+  const domainStatus = await checkSenderDomainStatus(
+    sql,
+    accountId,
+    sender.fromEmail,
+    sender.credentialId
+  );
+  if (domainStatus === 'failed') {
+    throw new MarketingError(MarketingErrorCode.VALIDATION, {
+      message: `The domain for ${sender.fromEmail} is not verified. Open Settings → Email marketing to verify your sender domain.`,
+    });
+  }
+
+  let html = applyMergeTags(step1.htmlBody, mergeCtx);
+  const appendix = buildCampaignEmailAppendix(
+    settings,
+    mergeCtx,
+    {
+      signatureHtml: sender.signatureHtml,
+      useWorkspaceSignature: sender.useWorkspaceSignature,
+      meetingLink: sender.meetingLink,
+      portfolioLink: sender.portfolioLink,
+    },
+    {
+      senderName: sender.fromName ?? undefined,
+      senderEmail: sender.fromEmail ?? undefined,
+    }
+  );
+  if (appendix) html = `${html}${appendix}`;
+
   const result = await sendMarketingEmail(sql, accountId, userId, settings, {
     to,
     subject: `[TEST] ${applyMergeTags(step1.subject, mergeCtx)}`,
-    html: applyMergeTags(step1.htmlBody, mergeCtx),
+    html,
     text: step1.plainBody ? applyMergeTags(step1.plainBody, mergeCtx) : undefined,
     credentialId: sender.credentialId,
     mergeContact: mergeCtx,
     isTest: true,
+    skipAutoAppendix: true,
     sender: {
       fromName: sender.fromName ?? settings.marketingFromName ?? 'FlowChat',
       fromEmail: sender.fromEmail,

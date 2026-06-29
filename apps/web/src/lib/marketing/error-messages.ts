@@ -19,16 +19,12 @@ const CLIENT_MESSAGES: Record<string, string> = {
 
 export function marketingErrorMessage(err: unknown, fallback = 'Something went wrong. Please try again.'): string {
   if (err instanceof Error && err.message.trim()) {
-    const msg = err.message.trim();
-    const generic = new Set(Object.values(CLIENT_MESSAGES));
-    if (msg.length < 300 && !msg.includes('fetch') && !generic.has(msg)) {
-      return msg;
-    }
+    return err.message.trim();
   }
   if (err && typeof err === 'object' && 'code' in err) {
     const code = String((err as { code: string }).code);
     const custom = (err as { message?: string }).message?.trim();
-    if (custom && custom.length < 300) return custom;
+    if (custom) return custom;
     if (CLIENT_MESSAGES[code]) return CLIENT_MESSAGES[code]!;
   }
   return fallback;

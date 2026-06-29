@@ -87,8 +87,12 @@ export function marketingErrorResponse(err: unknown): Response {
     );
   }
   console.error('[marketing]', err);
+  const message =
+    err instanceof Error && err.message.trim()
+      ? err.message.trim()
+      : DEFAULT_MESSAGES.INTERNAL;
   return Response.json(
-    { code: MarketingErrorCode.INTERNAL, message: DEFAULT_MESSAGES.INTERNAL },
+    { code: MarketingErrorCode.INTERNAL, message },
     { status: 500 }
   );
 }
