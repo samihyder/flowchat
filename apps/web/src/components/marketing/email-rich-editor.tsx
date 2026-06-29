@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
+import Underline from '@tiptap/extension-underline';
 import { useCallback, useEffect, useState } from 'react';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 
@@ -21,6 +22,7 @@ type Props = {
   hideMergeTags?: boolean;
   onInsertTag?: (insert: (tag: string) => void) => void;
   variant?: 'default' | 'composer';
+  mobilePreview?: boolean;
 };
 
 function ToolbarIconButton({
@@ -56,6 +58,7 @@ export function EmailRichEditor({
   hideMergeTags = false,
   onInsertTag,
   variant = 'default',
+  mobilePreview = false,
 }: Props) {
   const [htmlMode, setHtmlMode] = useState(false);
   const [htmlSource, setHtmlSource] = useState(value);
@@ -64,6 +67,7 @@ export function EmailRichEditor({
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
+      Underline,
       Link.configure({ openOnClick: false, HTMLAttributes: { class: 'text-primary underline' } }),
       Placeholder.configure({ placeholder: placeholder ?? 'Write your email…' }),
     ],
@@ -142,6 +146,12 @@ export function EmailRichEditor({
           active={editor.isActive('italic')}
           onClick={() => editor.chain().focus().toggleItalic().run()}
         />
+        <ToolbarIconButton
+          title="Underline"
+          icon="format_underlined"
+          active={editor.isActive('underline')}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+        />
       </div>
       <div className="flex items-center border-r border-gray-200 pr-3 gap-0.5 mr-1">
         <ToolbarIconButton
@@ -167,6 +177,33 @@ export function EmailRichEditor({
             if (url) editor.chain().focus().setLink({ href: url }).run();
           }}
         />
+        {variant === 'composer' && (
+          <>
+            <ToolbarIconButton
+              title="Image URL"
+              icon="image"
+              onClick={() => {
+                const url = window.prompt('Image URL');
+                if (url) editor.chain().focus().insertContent(`<img src="${url}" alt="" />`).run();
+              }}
+            />
+            <ToolbarIconButton
+              title="HTML source"
+              icon="code"
+              active={htmlMode}
+              onClick={() => {
+                if (!htmlMode) {
+                  setHtmlSource(editor.getHTML());
+                  setHtmlMode(true);
+                } else {
+                  editor.commands.setContent(htmlSource || '<p></p>');
+                  onChange(htmlSource || '<p></p>');
+                  setHtmlMode(false);
+                }
+              }}
+            />
+          </>
+        )}
       </div>
       {variant === 'composer' && (
         <button
@@ -181,7 +218,7 @@ export function EmailRichEditor({
               setHtmlMode(false);
             }
           }}
-          className="ml-auto text-xs text-primary font-bold px-2 py-1 rounded bg-primary-surface"
+          className="ml-auto text-xs text-primary font-bold px-2 py-1 rounded bg-primary-surface hover:bg-primary-fixed transition-colors"
         >
           {htmlMode ? 'VISUAL MODE' : 'HTML MODE'}
         </button>
@@ -208,7 +245,11 @@ export function EmailRichEditor({
     return (
       <div className="flex-1 flex flex-col bg-white overflow-hidden">
         {toolbar}
-        <div className="flex-1 overflow-y-auto composer-scrollbar">
+        <div
+          className={`flex-1 overflow-y-auto composer-scrollbar transition-all duration-300 ${
+            mobilePreview ? 'bg-gray-50' : ''
+          }`}
+        >
           {htmlMode ? (
             <textarea
               value={htmlSource}
@@ -216,11 +257,20 @@ export function EmailRichEditor({
                 setHtmlSource(e.target.value);
                 onChange(e.target.value);
               }}
-              className="w-full min-h-[400px] p-12 font-mono text-sm text-gray-800 focus:outline-none resize-none"
+              className={`w-full min-h-[400px] font-mono text-sm text-gray-800 focus:outline-none resize-none transition-all duration-300 ${
+                mobilePreview ? 'max-w-[375px] mx-auto p-6 shadow-2xl border border-gray-100 bg-white my-4' : 'p-12'
+              }`}
               spellCheck={false}
             />
           ) : (
-            <div className="p-12 max-w-4xl mx-auto w-full min-h-full" style={{ minHeight }}>
+            <div
+              className={`mx-auto w-full min-h-full transition-all duration-300 ${
+                mobilePreview
+                  ? 'max-w-[375px] p-6 my-4 shadow-2xl border border-gray-100 rounded-xl bg-white'
+                  : 'p-12 max-w-4xl'
+              }`}
+              style={{ minHeight }}
+            >
               <EditorContent editor={editor} />
             </div>
           )}

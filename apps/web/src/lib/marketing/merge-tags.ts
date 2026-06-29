@@ -53,6 +53,31 @@ export const MERGE_TAG_CHIPS = [
   { tag: '{{agent_email}}', label: 'Agent email', sample: 'jordan@company.com' },
 ] as const;
 
+/** Grouped merge chips for composer right rail (S6M-15 / Stitch §4.9). */
+export const MERGE_TAG_GROUPS = [
+  {
+    label: 'Contact Fields',
+    keys: ['first_name', 'last_name', 'email', 'phone', 'contact_message'] as const,
+  },
+  {
+    label: 'Links & Assets',
+    keys: ['meeting_link', 'portfolio_link'] as const,
+  },
+  {
+    label: 'Sender Details',
+    keys: ['agent_name', 'agent_email'] as const,
+  },
+] as const;
+
+export function mergeTagChipLabel(tag: string): string {
+  return tag.replace(/\{\{|\}\}/g, '');
+}
+
+export function mergeChipByKey(key: string) {
+  const tag = `{{${key}}}`;
+  return MERGE_TAG_CHIPS.find((c) => c.tag === tag);
+}
+
 export const SAMPLE_MERGE_CONTEXT: Record<string, string> = Object.fromEntries(
   MERGE_TAG_CHIPS.map((c) => [c.tag.replace(/\{\{|\}\}/g, ''), c.sample])
 );
