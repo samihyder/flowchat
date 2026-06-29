@@ -20,6 +20,7 @@ export type CampaignStatsOverview = {
 export type CampaignStepStats = {
   stepOrder: number;
   subject: string;
+  sendAt: string | null;
   sent: number;
   delivered: number;
   opened: number;
@@ -54,6 +55,8 @@ export type CampaignStatsResult = {
   steps: CampaignStepStats[];
   recipients: CampaignRecipientStats[];
   activity: CampaignActivityEvent[];
+  scheduleTimezone: string;
+  scheduleMode: 'campaign' | 'recipient_local';
 };
 
 function assertLaunched(status: string) {
@@ -101,6 +104,7 @@ export async function getMarketingCampaignStats(
     SELECT
       s.step_order as "stepOrder",
       s.subject,
+      s.send_at as "sendAt",
       COUNT(*) FILTER (WHERE rs.status IN ('sent','delivered','opened','clicked'))::int as sent,
       COUNT(*) FILTER (WHERE rs.status IN ('delivered','opened','clicked'))::int as delivered,
       COUNT(*) FILTER (WHERE rs.status IN ('opened','clicked'))::int as opened,
@@ -112,7 +116,7 @@ export async function getMarketingCampaignStats(
     LEFT JOIN marketing_campaign_recipient_steps rs
       ON rs.campaign_step_id = s.id
     WHERE s.campaign_id = ${campaignId}::uuid
-    GROUP BY s.step_order, s.subject
+    GROUP BY s.step_order, s.subject, s.send_at
     ORDER BY s.step_order
   `;
 
@@ -192,6 +196,7 @@ export async function getMarketingCampaignStats(
     steps: (stepRows as Record<string, unknown>[]).map((row) => ({
       stepOrder: Number(row.stepOrder),
       subject: row.subject as string,
+      sendAt: row.sendAt ? new Date(row.sendAt as Date).toISOString() : null,
       sent: Number(row.sent ?? 0),
       delivered: Number(row.delivered ?? 0),
       opened: Number(row.opened ?? 0),
@@ -207,6 +212,8 @@ export async function getMarketingCampaignStats(
       createdAt: new Date(row.createdAt as Date).toISOString(),
       payload: (row.payload as Record<string, unknown>) ?? {},
     })),
+    scheduleTimezone: campaign.scheduleTimezone,
+    scheduleMode: campaign.scheduleMode,
   };
 }
 

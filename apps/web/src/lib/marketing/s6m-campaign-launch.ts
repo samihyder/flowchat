@@ -13,6 +13,7 @@ import {
   isTestSendValid,
 } from '@/lib/marketing/s6m-campaign-sender';
 import { getMarketingCampaign } from '@/lib/marketing/s6m-campaigns';
+import { resolveRecipientScheduledAt } from '@/lib/marketing/campaign-schedule-time';
 import { canLaunchCampaign } from '@/lib/marketing/permissions';
 import { getAccountSettings } from '@/lib/account-settings-db';
 import { getMarketingCronState, isCronHealthy } from '@/lib/marketing/marketing-cron-state';
@@ -307,13 +308,28 @@ export async function launchMarketingCampaign(
   `;
 
   const recipients = await sql`
-    SELECT id, contact_id as "contactId"
-    FROM marketing_campaign_recipients
-    WHERE campaign_id = ${campaignId}::uuid
+    SELECT r.id, r.contact_id as "contactId", c.timezone
+    FROM marketing_campaign_recipients r
+    LEFT JOIN contacts c ON c.id = r.contact_id
+    WHERE r.campaign_id = ${campaignId}::uuid
   `;
 
+  const scheduleTimezone = campaign.scheduleTimezone || 'UTC';
+  const scheduleMode = campaign.scheduleMode || 'recipient_local';
+
   for (const step of steps) {
-    for (const recipient of recipients as { id: string }[]) {
+    if (!step.sendAt) continue;
+    for (const recipient of recipients as {
+      id: string;
+      contactId: string;
+      timezone: string | null;
+    }[]) {
+      const scheduledAt = resolveRecipientScheduledAt(
+        step.sendAt,
+        scheduleTimezone,
+        recipient.timezone,
+        scheduleMode
+      );
       await sql`
         INSERT INTO marketing_campaign_recipient_steps (
           campaign_id, campaign_step_id, recipient_id, status, scheduled_at
@@ -323,7 +339,7 @@ export async function launchMarketingCampaign(
           ${step.id}::uuid,
           ${recipient.id}::uuid,
           'pending',
-          ${step.sendAt}::timestamptz
+          ${scheduledAt}::timestamptz
         )
         ON CONFLICT (recipient_id, campaign_step_id) DO NOTHING
       `;

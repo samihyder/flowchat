@@ -25,6 +25,7 @@ import {
 import { CampaignWizardChrome } from '@/components/marketing/ui/campaign-wizard-chrome';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import { marketingErrorMessage } from '@/lib/marketing/error-messages';
+import { resolveScheduleTimezone } from '@/lib/timezone';
 import {
   type CampaignStepDraft,
   type StepFieldError,
@@ -83,6 +84,8 @@ export default function CampaignWizardPage() {
   const [stepFieldErrors, setStepFieldErrors] = useState<StepFieldError[]>([]);
   const [senderConfig, setSenderConfig] = useState<CampaignSenderConfig | null>(null);
   const [preflight, setPreflight] = useState<PreflightResult | null>(null);
+  const [scheduleTimezone, setScheduleTimezone] = useState('UTC');
+  const [scheduleMode, setScheduleMode] = useState<'campaign' | 'recipient_local'>('recipient_local');
   const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedFadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -100,6 +103,10 @@ export default function CampaignWizardPage() {
       .then(([campaignRes, recipientsRes, stepsRes, senderRes, accessRes]) => {
         setCampaign(campaignRes.campaign);
         setName(campaignRes.campaign.name);
+        setScheduleTimezone(
+          campaignRes.campaign.scheduleTimezone || resolveScheduleTimezone()
+        );
+        setScheduleMode(campaignRes.campaign.scheduleMode || 'recipient_local');
         setIsAdmin(accessRes.isAdmin);
         if (recipientsRes) {
           setSelectedIds(new Set(recipientsRes.contactIds));
@@ -143,6 +150,17 @@ export default function CampaignWizardPage() {
     }
   };
 
+  const saveScheduleSettings = async () => {
+    if (!token || !accountId) return;
+    const res = await api.marketing.campaigns.patch(
+      accountId,
+      campaignId,
+      { scheduleTimezone, scheduleMode },
+      token
+    );
+    setCampaign(res.campaign);
+  };
+
   const saveSequence = async (): Promise<boolean> => {
     if (!token || !accountId) return false;
     const clientErrors = validateCampaignStepDrafts(sequenceSteps);
@@ -152,6 +170,7 @@ export default function CampaignWizardPage() {
       return false;
     }
     try {
+      await saveScheduleSettings();
       const res = await api.marketing.campaigns.putSteps(
         accountId,
         campaignId,
@@ -296,6 +315,7 @@ export default function CampaignWizardPage() {
         );
       } else if (activeStep === 2) {
         try {
+          await saveScheduleSettings();
           await api.marketing.campaigns.putSteps(
             accountId,
             campaignId,
@@ -498,6 +518,12 @@ export default function CampaignWizardPage() {
           onStepsChange={setSequenceSteps}
           recipients={lastPutRecipients ?? []}
           fieldErrors={stepFieldErrors}
+          scheduleTimezone={scheduleTimezone}
+          scheduleMode={scheduleMode}
+          onScheduleSettingsChange={(patch) => {
+            if (patch.scheduleTimezone) setScheduleTimezone(patch.scheduleTimezone);
+            if (patch.scheduleMode) setScheduleMode(patch.scheduleMode);
+          }}
         />
       )}
       {activeStep === 3 && token && accountId && (

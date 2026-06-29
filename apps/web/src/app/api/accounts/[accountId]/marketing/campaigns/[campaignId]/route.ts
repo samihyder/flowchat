@@ -31,11 +31,21 @@ export async function PATCH(req: Request, { params }: Params) {
     const auth = await authorizeAccount(token, accountId);
     if (!auth) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-    const body = (await req.json()) as { name?: string; current_step?: number; currentStep?: number };
+    const body = (await req.json()) as {
+      name?: string;
+      current_step?: number;
+      currentStep?: number;
+      schedule_timezone?: string;
+      scheduleTimezone?: string;
+      schedule_mode?: 'campaign' | 'recipient_local';
+      scheduleMode?: 'campaign' | 'recipient_local';
+    };
     const sql = neon(process.env.DATABASE_URL!);
     const campaign = await patchMarketingCampaign(sql, accountId, campaignId, {
       name: body.name,
       currentStep: body.current_step ?? body.currentStep,
+      scheduleTimezone: body.schedule_timezone ?? body.scheduleTimezone,
+      scheduleMode: body.schedule_mode ?? body.scheduleMode,
     });
 
     return Response.json({ campaign });

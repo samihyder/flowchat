@@ -17,7 +17,8 @@ import {
   validateCampaignStepDrafts,
 } from '@/lib/marketing/campaign-step-draft';
 import { formatSendAtLabel } from '@/lib/marketing/automation-email-draft';
-import { resolveScheduleTimezone } from '@/lib/timezone';
+import { scheduleModeLabel } from '@/lib/marketing/campaign-schedule-time';
+import { marketingTimezoneOptions, timezoneShortLabel } from '@/lib/timezone';
 
 type Props = {
   accountId: string;
@@ -26,6 +27,12 @@ type Props = {
   onStepsChange: (steps: CampaignStepDraft[]) => void;
   recipients: CampaignRecipientDetail[];
   fieldErrors?: StepFieldError[];
+  scheduleTimezone: string;
+  scheduleMode: 'campaign' | 'recipient_local';
+  onScheduleSettingsChange: (patch: {
+    scheduleTimezone?: string;
+    scheduleMode?: 'campaign' | 'recipient_local';
+  }) => void;
 };
 
 function stepErrors(errors: StepFieldError[], stepOrder: number) {
@@ -48,12 +55,17 @@ export function CampaignSequenceStep({
   onStepsChange,
   recipients,
   fieldErrors = [],
+  scheduleTimezone,
+  scheduleMode,
+  onScheduleSettingsChange,
 }: Props) {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [messageSourceStep, setMessageSourceStep] = useState<number | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [timezone, setTimezone] = useState(() => resolveScheduleTimezone());
+  const [timezoneOptions, setTimezoneOptions] = useState<string[]>(() =>
+    marketingTimezoneOptions(scheduleTimezone)
+  );
   const [locale, setLocale] = useState('en');
 
   useEffect(() => {
@@ -63,10 +75,12 @@ export function CampaignSequenceStep({
       api.account.get(accountId, token),
     ]).then(([t, account]) => {
       setTemplates(t.templates);
-      setTimezone(resolveScheduleTimezone(account.account.timezone));
+      setTimezoneOptions(
+        marketingTimezoneOptions(scheduleTimezone || account.account.timezone)
+      );
       setLocale(account.account.locale || 'en');
     });
-  }, [accountId, token]);
+  }, [accountId, token, scheduleTimezone]);
 
   const sortedSteps = useMemo(
     () => [...steps].sort((a, b) => a.stepOrder - b.stepOrder),
@@ -234,6 +248,70 @@ export function CampaignSequenceStep({
         </button>
       </div>
 
+      <section className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <MarketingIcon name="schedule" className="text-primary" />
+          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Schedule timezone</h3>
+        </div>
+        <p className="text-sm text-gray-500">
+          Pick the timezone for your send times below. With{' '}
+          <strong>each recipient&apos;s local time</strong>, someone in London and someone in
+          Tokyo both receive email 1 at the same clock time in their own timezone.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-gray-600">Campaign timezone</span>
+            <select
+              value={scheduleTimezone}
+              onChange={(e) => onScheduleSettingsChange({ scheduleTimezone: e.target.value })}
+              className="w-full border border-gray-200 rounded-lg text-sm px-3 py-2 bg-white"
+            >
+              {timezoneOptions.map((tz) => (
+                <option key={tz} value={tz}>
+                  {timezoneShortLabel(tz)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <fieldset className="space-y-2">
+            <legend className="text-xs font-medium text-gray-600">Delivery mode</legend>
+            <label className="flex items-start gap-2 text-sm text-gray-700">
+              <input
+                type="radio"
+                name="scheduleMode"
+                checked={scheduleMode === 'recipient_local'}
+                onChange={() => onScheduleSettingsChange({ scheduleMode: 'recipient_local' })}
+                className="mt-1"
+              />
+              <span>
+                <strong>Each recipient&apos;s local time</strong>
+                <span className="block text-xs text-gray-500">
+                  Recommended for global audiences
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-2 text-sm text-gray-700">
+              <input
+                type="radio"
+                name="scheduleMode"
+                checked={scheduleMode === 'campaign'}
+                onChange={() => onScheduleSettingsChange({ scheduleMode: 'campaign' })}
+                className="mt-1"
+              />
+              <span>
+                <strong>Same moment for everyone</strong>
+                <span className="block text-xs text-gray-500">
+                  All recipients get each step at the same instant ({timezoneShortLabel(scheduleTimezone)})
+                </span>
+              </span>
+            </label>
+          </fieldset>
+        </div>
+        <p className="text-xs text-gray-400">
+          Mode: {scheduleModeLabel(scheduleMode)} · Times shown in {timezoneShortLabel(scheduleTimezone)}
+        </p>
+      </section>
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -292,7 +370,7 @@ export function CampaignSequenceStep({
                     </h3>
                     {step.sendAt && (
                       <span className="text-xs text-gray-500 font-data-mono">
-                        {formatSendAtLabel(step.sendAt, locale, timezone)}
+                        {formatSendAtLabel(step.sendAt, locale, scheduleTimezone)}
                       </span>
                     )}
                   </div>
@@ -421,7 +499,7 @@ export function CampaignSequenceStep({
                   <SendDateTimeField
                     value={step.sendAt}
                     onChange={(iso) => updateStep(index, { sendAt: iso })}
-                    timezone={timezone}
+                    timezone={scheduleTimezone}
                     locale={locale}
                   />
                   {hasScheduleErr && (
@@ -443,7 +521,7 @@ export function CampaignSequenceStep({
         open={bulkOpen}
         templates={templates}
         existingSteps={sortedSteps}
-        timezone={timezone}
+        timezone={scheduleTimezone}
         locale={locale}
         onClose={() => setBulkOpen(false)}
         onConfirm={handleBulkConfirm}

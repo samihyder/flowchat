@@ -22,6 +22,10 @@ export type MarketingCampaignRow = {
   launchedBy: string | null;
   launchedAt: string | null;
   recipientCount: number;
+  scheduleTimezone: string;
+  scheduleMode: 'campaign' | 'recipient_local';
+  nextScheduledAt: string | null;
+  firstSendAt: string | null;
 };
 
 export type ListCampaignsOptions = {
@@ -63,6 +67,14 @@ function serializeCampaign(
     launchedBy: (row.launchedBy as string | null) ?? null,
     launchedAt: row.launchedAt ? new Date(row.launchedAt as Date).toISOString() : null,
     recipientCount,
+    scheduleTimezone: (row.scheduleTimezone as string) || 'UTC',
+    scheduleMode: (row.scheduleMode as 'campaign' | 'recipient_local') || 'recipient_local',
+    nextScheduledAt: row.nextScheduledAt
+      ? new Date(row.nextScheduledAt as Date).toISOString()
+      : null,
+    firstSendAt: row.firstSendAt
+      ? new Date(row.firstSendAt as Date).toISOString()
+      : null,
   };
 }
 
@@ -117,8 +129,11 @@ export async function listMarketingCampaigns(
     SELECT c.id, c.name, c.status, c.current_step as "currentStep",
            c.created_by as "createdBy", c.created_at as "createdAt", c.updated_at as "updatedAt",
            c.launched_by as "launchedBy", c.launched_at as "launchedAt",
+           c.schedule_timezone as "scheduleTimezone", c.schedule_mode as "scheduleMode",
            COALESCE(r.cnt, 0)::int as "recipientCount",
            COALESCE(s.cnt, 0)::int as "stepCount",
+           next_send."nextScheduledAt",
+           first_step."firstSendAt",
            au.display_name as "createdByName"
     FROM marketing_campaigns c
     LEFT JOIN (
@@ -131,6 +146,18 @@ export async function listMarketingCampaigns(
       FROM marketing_campaign_steps
       GROUP BY campaign_id
     ) s ON s.campaign_id = c.id
+    LEFT JOIN (
+      SELECT rs.campaign_id, MIN(rs.scheduled_at) as "nextScheduledAt"
+      FROM marketing_campaign_recipient_steps rs
+      WHERE rs.status = 'pending' AND rs.scheduled_at IS NOT NULL
+      GROUP BY rs.campaign_id
+    ) next_send ON next_send.campaign_id = c.id
+    LEFT JOIN (
+      SELECT campaign_id, MIN(send_at) as "firstSendAt"
+      FROM marketing_campaign_steps
+      WHERE send_at IS NOT NULL
+      GROUP BY campaign_id
+    ) first_step ON first_step.campaign_id = c.id
     LEFT JOIN account_users au
       ON au.user_id = c.created_by AND au.account_id = c.account_id
     WHERE c.account_id = ${accountId}::uuid
@@ -166,18 +193,29 @@ export async function createMarketingCampaignDraft(
   userId: string,
   name?: string
 ): Promise<MarketingCampaignRow> {
+  const accountRows = await sql`
+    SELECT timezone FROM accounts WHERE id = ${accountId}::uuid LIMIT 1
+  `;
+  const accountTz =
+    (accountRows[0] as { timezone: string } | undefined)?.timezone?.trim() || 'UTC';
+
   const rows = await sql`
-    INSERT INTO marketing_campaigns (account_id, name, created_by, status, current_step)
+    INSERT INTO marketing_campaigns (
+      account_id, name, created_by, status, current_step, schedule_timezone, schedule_mode
+    )
     VALUES (
       ${accountId}::uuid,
       ${name?.trim() || 'Untitled Campaign'},
       ${userId}::uuid,
       'draft',
-      1
+      1,
+      ${accountTz},
+      'recipient_local'
     )
     RETURNING id, name, status, current_step as "currentStep",
               created_by as "createdBy", created_at as "createdAt", updated_at as "updatedAt",
-              launched_by as "launchedBy", launched_at as "launchedAt"
+              launched_by as "launchedBy", launched_at as "launchedAt",
+              schedule_timezone as "scheduleTimezone", schedule_mode as "scheduleMode"
   `;
   return serializeCampaign(rows[0] as Record<string, unknown>, 0);
 }
@@ -191,7 +229,10 @@ export async function getMarketingCampaign(
     SELECT c.id, c.name, c.status, c.current_step as "currentStep",
            c.created_by as "createdBy", c.created_at as "createdAt", c.updated_at as "updatedAt",
            c.launched_by as "launchedBy", c.launched_at as "launchedAt",
-           COALESCE(r.cnt, 0)::int as "recipientCount"
+           c.schedule_timezone as "scheduleTimezone", c.schedule_mode as "scheduleMode",
+           COALESCE(r.cnt, 0)::int as "recipientCount",
+           next_send."nextScheduledAt",
+           first_step."firstSendAt"
     FROM marketing_campaigns c
     LEFT JOIN (
       SELECT campaign_id, COUNT(*)::int as cnt
@@ -199,6 +240,20 @@ export async function getMarketingCampaign(
       WHERE campaign_id = ${campaignId}::uuid
       GROUP BY campaign_id
     ) r ON r.campaign_id = c.id
+    LEFT JOIN (
+      SELECT rs.campaign_id, MIN(rs.scheduled_at) as "nextScheduledAt"
+      FROM marketing_campaign_recipient_steps rs
+      WHERE rs.campaign_id = ${campaignId}::uuid
+        AND rs.status = 'pending'
+        AND rs.scheduled_at IS NOT NULL
+      GROUP BY rs.campaign_id
+    ) next_send ON next_send.campaign_id = c.id
+    LEFT JOIN (
+      SELECT campaign_id, MIN(send_at) as "firstSendAt"
+      FROM marketing_campaign_steps
+      WHERE campaign_id = ${campaignId}::uuid AND send_at IS NOT NULL
+      GROUP BY campaign_id
+    ) first_step ON first_step.campaign_id = c.id
     WHERE c.id = ${campaignId}::uuid AND c.account_id = ${accountId}::uuid
     LIMIT 1
   `;
@@ -207,11 +262,18 @@ export async function getMarketingCampaign(
   return serializeCampaign(row, Number(row.recipientCount ?? 0));
 }
 
+export type PatchMarketingCampaignInput = {
+  name?: string;
+  currentStep?: number;
+  scheduleTimezone?: string;
+  scheduleMode?: 'campaign' | 'recipient_local';
+};
+
 export async function patchMarketingCampaign(
   sql: AppSql,
   accountId: string,
   campaignId: string,
-  patch: { name?: string; currentStep?: number }
+  patch: PatchMarketingCampaignInput
 ): Promise<MarketingCampaignRow> {
   const existing = await getMarketingCampaign(sql, accountId, campaignId);
   if (!existing) {
@@ -228,16 +290,21 @@ export async function patchMarketingCampaign(
     patch.currentStep !== undefined
       ? Math.min(4, Math.max(1, patch.currentStep))
       : existing.currentStep;
+  const scheduleTimezone = patch.scheduleTimezone?.trim() || existing.scheduleTimezone;
+  const scheduleMode = patch.scheduleMode ?? existing.scheduleMode;
 
   const rows = await sql`
     UPDATE marketing_campaigns
     SET name = ${name},
         current_step = ${currentStep},
+        schedule_timezone = ${scheduleTimezone},
+        schedule_mode = ${scheduleMode},
         updated_at = now()
     WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, status, current_step as "currentStep",
               created_by as "createdBy", created_at as "createdAt", updated_at as "updatedAt",
-              launched_by as "launchedBy", launched_at as "launchedAt"
+              launched_by as "launchedBy", launched_at as "launchedAt",
+              schedule_timezone as "scheduleTimezone", schedule_mode as "scheduleMode"
   `;
   return serializeCampaign(rows[0] as Record<string, unknown>, existing.recipientCount);
 }

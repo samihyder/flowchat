@@ -28,7 +28,8 @@ export async function duplicateMarketingCampaign(
     INSERT INTO marketing_campaigns (
       account_id, name, status, current_step, created_by,
       from_name, from_email, reply_to, signature_html, use_workspace_signature,
-      meeting_link, portfolio_link, credential_id
+      meeting_link, portfolio_link, credential_id,
+      schedule_timezone, schedule_mode
     )
     SELECT
       account_id,
@@ -37,7 +38,8 @@ export async function duplicateMarketingCampaign(
       2,
       ${userId}::uuid,
       from_name, from_email, reply_to, signature_html, use_workspace_signature,
-      meeting_link, portfolio_link, credential_id
+      meeting_link, portfolio_link, credential_id,
+      schedule_timezone, schedule_mode
     FROM marketing_campaigns
     WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, status, current_step as "currentStep",
@@ -91,5 +93,9 @@ export async function duplicateMarketingCampaign(
     launchedBy: null,
     launchedAt: null,
     recipientCount: 0,
+    scheduleTimezone: source.scheduleTimezone,
+    scheduleMode: source.scheduleMode,
+    nextScheduledAt: null,
+    firstSendAt: null,
   };
 }

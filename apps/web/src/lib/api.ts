@@ -423,6 +423,10 @@ export type MarketingCampaign = {
   launchedBy: string | null;
   launchedAt: string | null;
   recipientCount: number;
+  scheduleTimezone: string;
+  scheduleMode: 'campaign' | 'recipient_local';
+  nextScheduledAt?: string | null;
+  firstSendAt?: string | null;
 };
 
 export type CampaignRecipientDetail = {
@@ -507,6 +511,7 @@ export type CampaignStatsOverview = {
 export type CampaignStepStats = {
   stepOrder: number;
   subject: string;
+  sendAt: string | null;
   sent: number;
   delivered: number;
   opened: number;
@@ -537,6 +542,8 @@ export type CampaignStatsResult = {
   steps: CampaignStepStats[];
   recipients: CampaignRecipientStats[];
   activity: CampaignActivityEvent[];
+  scheduleTimezone: string;
+  scheduleMode: 'campaign' | 'recipient_local';
 };
 
 export type EmailAutomation = {
@@ -1567,7 +1574,12 @@ export const api = {
       patch: (
         accountId: string,
         campaignId: string,
-        body: { name?: string; currentStep?: number },
+        body: {
+          name?: string;
+          currentStep?: number;
+          scheduleTimezone?: string;
+          scheduleMode?: 'campaign' | 'recipient_local';
+        },
         token: string
       ) =>
         request<{ campaign: MarketingCampaign }>(

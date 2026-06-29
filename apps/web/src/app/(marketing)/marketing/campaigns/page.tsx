@@ -16,6 +16,8 @@ import { MarketingMetricCard, MarketingMetricGrid } from '@/components/marketing
 import { MarketingPageHeader } from '@/components/marketing/ui/marketing-page-header';
 import { marketingRoutes } from '@/lib/marketing/routes';
 
+import { formatInTimezone, timezoneShortLabel } from '@/lib/timezone';
+
 const STATUS_TABS = [
   { id: 'all', label: 'All Campaigns' },
   { id: 'draft', label: 'Drafts' },
@@ -32,28 +34,40 @@ function formatCampaignId(id: string) {
 
 function formatNextSend(c: MarketingCampaign) {
   if (c.status === 'draft') {
+    if (c.firstSendAt) {
+      const tz = c.scheduleTimezone || 'UTC';
+      return (
+        <div className="flex flex-col text-sm font-data-mono text-gray-700">
+          <span>{formatInTimezone(c.firstSendAt, tz, 'en', { dateStyle: 'medium', timeStyle: undefined })}</span>
+          <span className="text-xs text-gray-400">
+            {formatInTimezone(c.firstSendAt, tz, 'en', { dateStyle: undefined, timeStyle: 'short' })} {timezoneShortLabel(tz)}
+          </span>
+        </div>
+      );
+    }
     return <span className="text-sm text-gray-400 italic">Not scheduled</span>;
   }
   if (c.status === 'completed' || c.status === 'cancelled') {
     const d = c.launchedAt ?? c.updatedAt;
+    const tz = c.scheduleTimezone || 'UTC';
     return (
       <span className="text-sm text-gray-400 italic">
-        Finished {new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        Finished {formatInTimezone(d, tz, 'en', { dateStyle: 'medium', timeStyle: undefined })}
       </span>
     );
   }
-  const d = c.launchedAt ?? c.updatedAt;
-  const date = new Date(d);
-  const isScheduled = c.status === 'scheduled';
+  const d = c.nextScheduledAt ?? c.firstSendAt ?? c.launchedAt ?? c.updatedAt;
+  const tz = c.scheduleTimezone || 'UTC';
+  const isScheduled = c.status === 'scheduled' || Boolean(c.nextScheduledAt);
   return (
     <div
       className={`flex flex-col text-sm font-data-mono ${
         isScheduled ? 'text-primary font-semibold' : 'text-gray-700'
       }`}
     >
-      <span>{date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+      <span>{formatInTimezone(d, tz, 'en', { dateStyle: 'medium', timeStyle: undefined })}</span>
       <span className={`text-xs ${isScheduled ? '' : 'text-gray-400'}`}>
-        {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        {formatInTimezone(d, tz, 'en', { dateStyle: undefined, timeStyle: 'short' })} {timezoneShortLabel(tz)}
       </span>
     </div>
   );

@@ -18,7 +18,9 @@ import {
   type PreflightResult,
 } from '@/lib/api';
 import { formatSendAtLabel } from '@/lib/marketing/automation-email-draft';
+import { scheduleModeLabel } from '@/lib/marketing/campaign-schedule-time';
 import { marketingErrorMessage } from '@/lib/marketing/error-messages';
+import { timezoneShortLabel } from '@/lib/timezone';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import { CampaignLaunchModal } from '@/components/marketing/campaign-launch-modal';
 import {
@@ -80,7 +82,8 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
     const [launchOpen, setLaunchOpen] = useState(false);
     const [walkthroughOpen, setWalkthroughOpen] = useState(false);
     const [recipientPage, setRecipientPage] = useState(1);
-    const [timezone, setTimezone] = useState('UTC');
+    const scheduleTimezone = campaign.scheduleTimezone || 'UTC';
+    const scheduleMode = campaign.scheduleMode || 'recipient_local';
 
     const load = () => {
       if (!token || !accountId) return;
@@ -94,9 +97,6 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
           setPreflight(null);
           onPreflightChange?.(null);
         });
-      api.account.get(accountId, token).then((r) => {
-        setTimezone(r.account.timezone || 'UTC');
-      });
     };
 
     useEffect(() => {
@@ -515,7 +515,7 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
 
           {sortedSteps.length > 0 && (
             <div className="col-span-12 bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2">
                 <h3 className="text-headline-sm text-on-surface">Email schedule</h3>
                 <Link
                   href={`/marketing/campaigns/${campaignId}/edit?step=2` as Route}
@@ -524,6 +524,9 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
                   Edit sequence
                 </Link>
               </div>
+              <p className="text-xs text-gray-500 mb-4">
+                {scheduleModeLabel(scheduleMode)} · Times in {timezoneShortLabel(scheduleTimezone)}
+              </p>
               <div className="overflow-x-auto border border-gray-100 rounded-lg">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 text-left text-label-caps text-on-surface-variant">
@@ -540,7 +543,7 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
                         <td className="px-4 py-2 font-medium text-gray-900">{step.subject}</td>
                         <td className="px-4 py-2 text-gray-600 font-data-mono">
                           {step.sendAt
-                            ? formatSendAtLabel(step.sendAt, 'en', timezone)
+                            ? formatSendAtLabel(step.sendAt, 'en', scheduleTimezone)
                             : '—'}
                         </td>
                       </tr>
@@ -560,7 +563,7 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
           stepCount={sortedSteps.length}
           firstSendLabel={
             sortedSteps[0]?.sendAt
-              ? formatSendAtLabel(sortedSteps[0].sendAt, 'en', timezone)
+              ? formatSendAtLabel(sortedSteps[0].sendAt, 'en', scheduleTimezone)
               : 'Immediate send'
           }
           onConfirm={async () => {

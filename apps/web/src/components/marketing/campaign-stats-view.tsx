@@ -7,6 +7,8 @@ import type {
   CampaignStatsResult,
   MarketingCampaign,
 } from '@/lib/api';
+import { scheduleModeLabel } from '@/lib/marketing/campaign-schedule-time';
+import { formatInTimezone, timezoneShortLabel } from '@/lib/timezone';
 import { CampaignStatusBadge } from '@/components/marketing/ui/campaign-status-badge';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 
@@ -207,6 +209,9 @@ export function CampaignStatsView({
   }
 
   const { overview, steps, recipients, activity } = stats;
+  const scheduleTimezone = stats.scheduleTimezone || campaign.scheduleTimezone || 'UTC';
+  const scheduleMode = stats.scheduleMode || campaign.scheduleMode || 'recipient_local';
+  const formatTs = (iso: string) => formatInTimezone(iso, scheduleTimezone);
 
   const canControl =
     isAdmin &&
@@ -224,10 +229,12 @@ export function CampaignStatsView({
           </div>
           <p className="text-gray-500 font-body-md">
             {campaign.launchedAt
-              ? `Started ${new Date(campaign.launchedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`
+              ? `Started ${formatInTimezone(campaign.launchedAt, scheduleTimezone)}`
               : 'Not launched'}
             {' · '}
             {overview.totalRecipients} recipients
+            {' · '}
+            {scheduleModeLabel(scheduleMode)} ({timezoneShortLabel(scheduleTimezone)})
           </p>
         </div>
         {canControl && (
@@ -404,9 +411,16 @@ export function CampaignStatsView({
                           <span className="flex items-center justify-center w-8 h-8 bg-primary-surface text-primary rounded-full font-bold text-sm">
                             {step.stepOrder}
                           </span>
-                          <h3 className="font-headline-sm text-headline-sm">
-                            {step.subject || `Step ${step.stepOrder}`}
-                          </h3>
+                          <div>
+                            <h3 className="font-headline-sm text-headline-sm">
+                              {step.subject || `Step ${step.stepOrder}`}
+                            </h3>
+                            {step.sendAt && (
+                              <p className="text-xs text-gray-500 font-data-mono mt-0.5">
+                                Scheduled {formatTs(step.sendAt)} ({timezoneShortLabel(scheduleTimezone)})
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
                       {step.pending > 0 && (
@@ -589,7 +603,7 @@ export function CampaignStatsView({
                                       {s.sentAt && (
                                         <p className="text-xs text-gray-500 flex items-center gap-1">
                                           <MarketingIcon name="schedule" className="text-sm" />
-                                          {new Date(s.sentAt).toLocaleString()}
+                                          {formatTs(s.sentAt!)}
                                         </p>
                                       )}
                                     </div>
@@ -638,7 +652,7 @@ export function CampaignStatsView({
                   className="grid grid-cols-[160px_180px_1fr] px-6 py-3 border-b border-gray-50 hover:bg-gray-50/50 items-center"
                 >
                   <div className="font-data-mono text-[12px] text-gray-500">
-                    {new Date(ev.createdAt).toLocaleString()}
+                    {formatTs(ev.createdAt)}
                   </div>
                   <div>
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
