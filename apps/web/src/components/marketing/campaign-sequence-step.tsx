@@ -477,7 +477,6 @@ export function CampaignSequenceStep({
             ) {
               setMessageSourceStep(editingStep.stepOrder);
             }
-            setEditingIndex(null);
           }}
         />
       )}

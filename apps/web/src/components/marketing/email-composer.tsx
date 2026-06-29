@@ -1,13 +1,14 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ComposerMergeChip } from '@/components/marketing/composer-merge-chip';
+import { ComposerSmartSuggest } from '@/components/marketing/composer-smart-suggest';
+import { EmailRichEditor, type InsertMergeTagFn } from '@/components/marketing/email-rich-editor';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import {
   MERGE_TAG_GROUPS,
   htmlToPlainText,
   mergeChipByKey,
-  mergeTagChipLabel,
   previewWithSampleMergeTags,
 } from '@/lib/marketing/merge-tags';
 
@@ -19,6 +20,8 @@ export type EmailComposerSaveData = {
   saveAsTemplate: boolean;
   templateName: string;
 };
+
+type FocusField = 'subject' | 'body';
 
 type Props = {
   title: string;
@@ -33,6 +36,31 @@ type Props = {
   onClose: () => void;
 };
 
+function insertIntoInput(
+  input: HTMLInputElement,
+  token: string,
+  setValue: (value: string) => void
+) {
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? start;
+  const next = input.value.slice(0, start) + token + input.value.slice(end);
+  setValue(next);
+  requestAnimationFrame(() => {
+    input.focus();
+    const pos = start + token.length;
+    input.setSelectionRange(pos, pos);
+  });
+}
+
+function formatAutosaveAgo(at: Date): string {
+  const sec = Math.floor((Date.now() - at.getTime()) / 1000);
+  if (sec < 15) return 'just now';
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min === 1) return '1 min ago';
+  return `${min} mins ago`;
+}
+
 export function EmailComposer({
   title,
   initialName = '',
@@ -45,7 +73,10 @@ export function EmailComposer({
   onSave,
   onClose,
 }: Props) {
-  const insertRef = useRef<(tag: string) => void>(() => {});
+  const insertRef = useRef<InsertMergeTagFn>(() => {});
+  const subjectInputRef = useRef<HTMLInputElement | null>(null);
+  const mobileSubjectInputRef = useRef<HTMLInputElement | null>(null);
+
   const [name, setName] = useState(initialName);
   const [subject, setSubject] = useState(initialSubject);
   const [htmlBody, setHtmlBody] = useState(initialHtmlBody);
@@ -57,11 +88,27 @@ export function EmailComposer({
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [error, setError] = useState('');
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+  const [focusField, setFocusField] = useState<FocusField>('body');
+  const [lastAutosaveAt, setLastAutosaveAt] = useState<Date | null>(null);
+  const [autosaveLabel, setAutosaveLabel] = useState<string | null>(null);
 
-  const charCount = useMemo(
-    () => htmlToPlainText(htmlBody).length,
-    [htmlBody]
-  );
+  const charCount = htmlToPlainText(htmlBody).length + subject.length;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setLastAutosaveAt(new Date());
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [htmlBody, subject, name, textBody]);
+
+  useEffect(() => {
+    if (!lastAutosaveAt) return;
+    const tick = () => setAutosaveLabel(formatAutosaveAgo(lastAutosaveAt));
+    tick();
+    const iv = window.setInterval(tick, 15000);
+    return () => window.clearInterval(iv);
+  }, [lastAutosaveAt]);
 
   const handleHtmlChange = (html: string) => {
     setHtmlBody(html);
@@ -70,9 +117,24 @@ export function EmailComposer({
     }
   };
 
-  const insertTag = useCallback((tag: string) => {
-    insertRef.current(tag);
-  }, []);
+  const activeSubjectInput = () =>
+    focusField === 'subject'
+      ? subjectInputRef.current ?? mobileSubjectInputRef.current
+      : null;
+
+  const insertTag = useCallback(
+    (tag: string, drop?: { clientX: number; clientY: number }) => {
+      if (focusField === 'subject') {
+        const input = activeSubjectInput();
+        if (input) {
+          insertIntoInput(input, tag, setSubject);
+          return;
+        }
+      }
+      insertRef.current(tag, drop);
+    },
+    [focusField]
+  );
 
   const handleSave = async () => {
     if (!subject.trim()) {
@@ -88,14 +150,23 @@ export function EmailComposer({
       return;
     }
     setError('');
-    await onSave({
-      name: name.trim(),
-      subject: subject.trim(),
-      htmlBody,
-      textBody: textBody.trim() || htmlToPlainText(htmlBody),
-      saveAsTemplate,
-      templateName: templateName.trim(),
-    });
+    try {
+      await onSave({
+        name: name.trim(),
+        subject: subject.trim(),
+        htmlBody,
+        textBody: textBody.trim() || htmlToPlainText(htmlBody),
+        saveAsTemplate,
+        templateName: templateName.trim(),
+      });
+      setSaveToast(
+        showTemplateName ? 'Template saved successfully' : 'Campaign saved successfully'
+      );
+      await new Promise((r) => window.setTimeout(r, 2000));
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    }
   };
 
   const handleClose = () => {
@@ -106,12 +177,18 @@ export function EmailComposer({
     onClose();
   };
 
+  const applySmartSuggest = (html: string) => {
+    const hasBody = htmlBody.replace(/<[^>]+>/g, '').trim().length > 0;
+    if (hasBody && !window.confirm('Replace current body with the suggested draft?')) return;
+    handleHtmlChange(html);
+    setFocusField('body');
+  };
+
   const previewSubject = previewWithSampleMergeTags(subject);
   const previewHtml = previewWithSampleMergeTags(htmlBody);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white shadow-xl animate-marketing-slide-up">
-      {/* Top bar — Stitch campaign_wizard_full_screen_composer */}
       <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-white shrink-0 gap-4">
         <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 max-w-3xl">
           {showTemplateName ? (
@@ -128,8 +205,10 @@ export function EmailComposer({
             <>
               <span className="text-gray-400 font-medium whitespace-nowrap text-sm">Subject:</span>
               <input
+                ref={subjectInputRef}
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
+                onFocus={() => setFocusField('subject')}
                 placeholder="Enter campaign subject line…"
                 className="w-full border-none focus:ring-0 text-headline-sm font-semibold placeholder-gray-300 min-w-0"
               />
@@ -173,8 +252,10 @@ export function EmailComposer({
         {showTemplateName && (
           <div className="shrink-0 border-b lg:border-b-0 border-gray-100 px-4 sm:px-6 py-3 lg:hidden">
             <input
+              ref={mobileSubjectInputRef}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
+              onFocus={() => setFocusField('subject')}
               placeholder="Subject — Hi {{first_name}}"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-border"
             />
@@ -192,24 +273,40 @@ export function EmailComposer({
             />
           </div>
         ) : (
-          <EmailRichEditor
-            value={htmlBody}
-            onChange={handleHtmlChange}
-            variant="composer"
-            hideMergeTags
-            mobilePreview={mobilePreview}
-            onInsertTag={(fn) => {
-              insertRef.current = fn;
-            }}
-          />
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {showTemplateName && (
+              <div className="hidden lg:block shrink-0 border-b border-gray-100 px-6 py-3 bg-white">
+                <label className="text-xs font-medium text-gray-500 block mb-1">Subject line</label>
+                <input
+                  ref={subjectInputRef}
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  onFocus={() => setFocusField('subject')}
+                  placeholder="Subject — Hi {{first_name}}"
+                  className="w-full max-w-3xl border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-border"
+                />
+              </div>
+            )}
+            <EmailRichEditor
+              value={htmlBody}
+              onChange={handleHtmlChange}
+              variant="composer"
+              hideMergeTags
+              mobilePreview={mobilePreview}
+              onFocusEditor={() => setFocusField('body')}
+              onInsertTag={(fn) => {
+                insertRef.current = fn;
+              }}
+            />
+          </div>
         )}
 
-        {/* Right rail — Stitch S6M-15 Personalization */}
         <aside className="w-full lg:w-80 shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 bg-gray-50 flex flex-col">
           <div className="p-5 sm:p-6 border-b border-gray-200 bg-white shrink-0">
             <h3 className="text-headline-sm font-semibold text-gray-900 mb-1">Personalization</h3>
             <p className="text-xs text-gray-500">
-              Click a tag to insert dynamic customer data at the cursor.
+              Drag or click tags to insert into the{' '}
+              {focusField === 'subject' ? 'subject line' : 'email body'}.
             </p>
           </div>
           <div className="p-5 sm:p-6 space-y-6 overflow-y-auto composer-scrollbar flex-1">
@@ -223,24 +320,20 @@ export function EmailComposer({
                     const chip = mergeChipByKey(key);
                     if (!chip) return null;
                     return (
-                      <button
+                      <ComposerMergeChip
                         key={key}
-                        type="button"
+                        label={key}
+                        tagKey={key}
                         title={chip.label}
-                        onClick={() => insertTag(chip.tag)}
-                        className="merge-chip-transition bg-primary-surface text-primary border border-primary-border rounded-full px-2.5 py-1 text-xs font-medium hover:bg-primary-container cursor-pointer font-data-mono flex items-center gap-2 group"
-                      >
-                        <MarketingIcon
-                          name="drag_indicator"
-                          className="text-xs text-gray-400 group-hover:text-primary transition-colors"
-                        />
-                        {mergeTagChipLabel(chip.tag)}
-                      </button>
+                        onInsert={insertTag}
+                      />
                     );
                   })}
                 </div>
               </div>
             ))}
+
+            <ComposerSmartSuggest onApply={applySmartSuggest} />
 
             {showTemplateName && (
               <div className="pt-4 border-t border-gray-200">
@@ -269,7 +362,6 @@ export function EmailComposer({
         </aside>
       </div>
 
-      {/* Bottom bar — Stitch §4.9 / S6M-13 */}
       <footer className="h-16 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-8 bg-white shrink-0">
         <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
           <div className="flex items-center gap-3">
@@ -322,14 +414,25 @@ export function EmailComposer({
         </div>
 
         <div className="flex items-center gap-4 text-xs text-gray-400">
-          <div className="hidden sm:flex items-center gap-1.5">
-            <MarketingIcon name="edit_note" className="text-[14px]" />
-            <span className="truncate max-w-[140px]">{title}</span>
-          </div>
-          <div className="hidden sm:block h-4 w-px bg-gray-200" />
+          {autosaveLabel && (
+            <>
+              <div className="flex items-center gap-1.5 animate-marketing-pulse-subtle">
+                <MarketingIcon name="cloud_done" className="text-[14px]" />
+                <span>Auto-saved {autosaveLabel}</span>
+              </div>
+              <div className="hidden sm:block h-4 w-px bg-gray-200" />
+            </>
+          )}
           <span>Characters: {charCount.toLocaleString()}</span>
         </div>
       </footer>
+
+      {saveToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-[100] animate-marketing-slide-up">
+          <MarketingIcon name="check_circle" className="text-status-success-text" />
+          <span className="text-sm font-medium">{saveToast}</span>
+        </div>
+      )}
     </div>
   );
 }

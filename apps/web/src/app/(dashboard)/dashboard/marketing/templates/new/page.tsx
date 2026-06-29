@@ -31,7 +31,6 @@ export default function NewTemplatePage() {
         },
         token
       );
-      router.push('/dashboard/marketing/templates' as Route);
     } finally {
       setSaving(false);
     }

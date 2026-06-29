@@ -59,7 +59,6 @@ export default function EditTemplatePage() {
         },
         token
       );
-      router.push('/dashboard/marketing/templates' as Route);
     } finally {
       setSaving(false);
     }

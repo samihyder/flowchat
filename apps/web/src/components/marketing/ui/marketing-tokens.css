@@ -126,6 +126,22 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.marketing-module .ProseMirror .merge-tag-chip,
+.merge-tag-chip {
+  display: inline;
+  background-color: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 0.25rem;
+  padding: 0 0.375rem;
+  font-family: var(--font-jetbrains-mono, 'JetBrains Mono'), ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #4648d4;
+  margin: 0 2px;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
 @keyframes marketing-slide-up {
   from {
     transform: translateY(100%);
