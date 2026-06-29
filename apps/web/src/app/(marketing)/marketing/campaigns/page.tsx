@@ -253,7 +253,7 @@ export default function CampaignsPage() {
         }
       />
 
-      <div className="flex-1 overflow-auto p-8 max-w-container-max-list mx-auto w-full space-y-8">
+      <div className="flex-1 overflow-auto p-4 md:p-8 max-w-container-max-list mx-auto w-full space-y-8">
         {!isEmpty && (
           <MarketingMetricGrid>
             <MarketingMetricCard label="Total Campaigns" value={loading ? '—' : stats.total} />
@@ -312,7 +312,7 @@ export default function CampaignsPage() {
           </section>
         ) : (
           <>
-            <div className="md:hidden p-4">
+            <div className="md:hidden">
               <CampaignMobileList
                 campaigns={paged}
                 isAdmin={isAdmin}
@@ -342,18 +342,6 @@ export default function CampaignsPage() {
                 ))}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <div className="relative mr-4">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
-                    <MarketingIcon name="search" className="text-[18px]" />
-                  </span>
-                  <input
-                    type="search"
-                    value={tableFilter}
-                    onChange={(e) => setTableFilter(e.target.value)}
-                    placeholder="Filter table..."
-                    className="block w-48 pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary-border focus:border-primary text-xs"
-                  />
-                </div>
                 <button type="button" className="text-gray-400 hover:text-gray-600" aria-label="Filter">
                   <MarketingIcon name="filter_list" />
                 </button>

@@ -224,10 +224,10 @@ export function CampaignStatsView({
       <div className="flex justify-between items-start gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-3 mb-1 flex-wrap">
-            <h1 className="font-headline-lg text-headline-lg text-gray-900">{campaign.name}</h1>
+            <h1 className="text-headline-lg text-on-surface">{campaign.name}</h1>
             <CampaignStatusBadge status={campaign.status} />
           </div>
-          <p className="text-gray-500 font-body-md">
+          <p className="text-on-surface-variant text-body-md">
             {campaign.launchedAt
               ? `Started ${formatInTimezone(campaign.launchedAt, scheduleTimezone)}`
               : 'Not launched'}
@@ -335,7 +335,7 @@ export function CampaignStatsView({
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-8 bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
-              <h3 className="text-label-caps font-label-caps text-gray-400 mb-8 uppercase">
+              <h3 className="text-label-caps text-on-surface-variant mb-8 uppercase">
                 Engagement Funnel
               </h3>
               <div className="space-y-6">
@@ -349,7 +349,7 @@ export function CampaignStatsView({
                   <div key={row.label}>
                     <div className="flex justify-between items-end mb-2">
                       <span className="text-gray-500 text-[13px] font-medium">{row.label}</span>
-                      <span className="font-headline-sm">{row.value.toLocaleString()}</span>
+                      <span className="text-headline-sm">{row.value.toLocaleString()}</span>
                     </div>
                     <div className="h-10 bg-gray-50 rounded-lg relative overflow-hidden">
                       <div
@@ -363,7 +363,7 @@ export function CampaignStatsView({
             </div>
 
             <div className="lg:col-span-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-              <h3 className="text-label-caps font-label-caps text-gray-400 mb-6 uppercase">
+              <h3 className="text-label-caps text-on-surface-variant mb-6 uppercase">
                 Stop Metrics
               </h3>
               <div className="space-y-4">
@@ -412,7 +412,7 @@ export function CampaignStatsView({
                             {step.stepOrder}
                           </span>
                           <div>
-                            <h3 className="font-headline-sm text-headline-sm">
+                            <h3 className="text-headline-sm">
                               {step.subject || `Step ${step.stepOrder}`}
                             </h3>
                             {step.sendAt && (
@@ -501,9 +501,9 @@ export function CampaignStatsView({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-4 font-label-caps text-label-caps text-gray-500">Recipient</th>
-                  <th className="px-6 py-4 font-label-caps text-label-caps text-gray-500">Status</th>
-                  <th className="px-6 py-4 font-label-caps text-label-caps text-gray-500">Progress</th>
+                  <th className="px-6 py-4 text-label-caps text-on-surface-variant">Recipient</th>
+                  <th className="px-6 py-4 text-label-caps text-on-surface-variant">Status</th>
+                  <th className="px-6 py-4 text-label-caps text-on-surface-variant">Progress</th>
                   <th className="px-6 py-4 w-12" />
                 </tr>
               </thead>
@@ -542,7 +542,7 @@ export function CampaignStatsView({
                               <div>
                                 <Link
                                   href={`/dashboard/contacts/${r.contactId}` as Route}
-                                  className="font-body-lg text-body-lg text-on-surface hover:text-primary"
+                                  className="text-body-lg text-on-surface hover:text-primary"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {r.name}
@@ -553,7 +553,7 @@ export function CampaignStatsView({
                           </td>
                           <td className="px-6 py-5">
                             <span
-                              className={`px-2.5 py-1 rounded-full font-label-caps text-[11px] capitalize ${statusBadgeClass(r.stoppedReason ? 'stopped' : r.steps.at(-1)?.status ?? 'pending')}`}
+                              className={`px-2.5 py-1 rounded-full text-label-caps text-[11px] capitalize ${statusBadgeClass(r.stoppedReason ? 'stopped' : r.steps.at(-1)?.status ?? 'pending')}`}
                             >
                               {recipientStatusLabel(r)}
                             </span>
@@ -591,7 +591,7 @@ export function CampaignStatsView({
                                     <div className="absolute -left-[45px] top-1.5 w-4 h-4 rounded-full bg-white border-2 border-primary z-10" />
                                     <div className="flex flex-col gap-1">
                                       <div className="flex items-center gap-3">
-                                        <p className="font-body-lg text-body-lg">
+                                        <p className="text-body-lg">
                                           Step {s.stepOrder}
                                         </p>
                                         <span

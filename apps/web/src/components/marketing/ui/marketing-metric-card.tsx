@@ -23,7 +23,7 @@ export function MarketingMetricCard({
   return (
     <div className={`bg-white border border-gray-200 rounded-xl p-6 shadow-sm ${variantClass}`}>
       <p className="text-label-caps text-gray-500 uppercase">{label}</p>
-      <h3 className="text-3xl font-bold text-gray-900 mt-1">{value}</h3>
+      <h3 className="text-3xl font-bold text-on-surface mt-1">{value}</h3>
       {hint ? <div className="text-xs text-gray-400 font-medium mt-2">{hint}</div> : null}
     </div>
   );

@@ -52,7 +52,7 @@ export function CampaignMobileList({
             <div className="flex items-start justify-between gap-3">
               <Link href={href} className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h3 className="font-headline-sm text-on-surface font-semibold truncate">
+                  <h3 className="text-headline-sm text-on-surface font-semibold truncate">
                     {c.name}
                   </h3>
                   <CampaignStatusBadge status={c.status} />
@@ -91,7 +91,7 @@ export function CampaignMobileList({
                     style={{ width: `${Math.min(100, c.currentStep * 25)}%` }}
                   />
                 </div>
-                <p className="text-[10px] mt-1 text-gray-500 font-label-caps uppercase">
+                <p className="text-[10px] mt-1 text-on-surface-variant text-label-caps uppercase">
                   Setup {c.currentStep * 25}% complete
                 </p>
               </div>

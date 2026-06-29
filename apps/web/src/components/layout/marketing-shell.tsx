@@ -40,7 +40,7 @@ function MarketingShellInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="marketing-module min-h-screen flex bg-surface text-on-surface">
+    <div className="marketing-module min-h-screen bg-surface text-on-surface">
       {sidebarOpen && (
         <button
           type="button"
@@ -51,7 +51,7 @@ function MarketingShellInner({ children }: { children: React.ReactNode }) {
       )}
 
       <div
-        className={`fixed lg:static inset-y-0 left-0 z-50 shrink-0 transform transition-transform duration-200 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -61,20 +61,22 @@ function MarketingShellInner({ children }: { children: React.ReactNode }) {
         />
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-surface border-b border-gray-200 shrink-0">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
-            aria-label="Open menu"
-          >
-            <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
-            </svg>
-          </button>
-          <p className="text-headline-sm font-bold text-primary">FlowChat</p>
-        </div>
+      <div className="flex flex-col min-h-screen min-w-0 lg:ml-64">
+        {!isWizard && (
+          <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-surface border-b border-gray-200 shrink-0">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-lg hover:bg-gray-100 text-on-surface-variant"
+              aria-label="Open menu"
+            >
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
+              </svg>
+            </button>
+            <p className="text-headline-sm font-bold text-primary">FlowChat</p>
+          </div>
+        )}
         {children}
       </div>
     </div>

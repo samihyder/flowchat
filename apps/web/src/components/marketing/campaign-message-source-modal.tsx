@@ -145,7 +145,7 @@ export function CampaignMessageSourceModal({
             <label
               key={m.value}
               className={`flex gap-3 p-3 rounded-lg border cursor-pointer ${
-                mode === m.value ? 'border-primary-300 bg-primary-50' : 'border-gray-200'
+                mode === m.value ? 'border-primary-border bg-primary-surface' : 'border-gray-200'
               }`}
             >
               <input

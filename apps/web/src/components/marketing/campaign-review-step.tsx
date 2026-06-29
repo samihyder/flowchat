@@ -186,7 +186,7 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
     );
 
     return (
-      <div className="max-w-container-max-wizard mx-auto">
+      <div className="space-y-6">
         {!isAdmin && (
           <div className="rounded-xl border border-primary-border bg-primary-surface px-4 py-3 text-sm text-primary flex items-start gap-2 mb-6">
             <MarketingIcon name="info" className="shrink-0 mt-0.5" />

@@ -185,7 +185,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
     const previewPlain = previewSignature.replace(/<[^>]+>/g, '\n').replace(/\n+/g, '\n').trim();
 
     return (
-      <div className="max-w-container-max-wizard mx-auto space-y-6">
+      <div className="space-y-6">
         <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <div className="mb-6">
             <h3 className="text-headline-sm text-on-surface mb-1">Sender Information</h3>
@@ -218,7 +218,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
               <input
                 value={fromName}
                 onChange={(e) => setFromName(e.target.value)}
-                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none font-body-md"
+                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none text-body-md"
               />
             </div>
             <div className="space-y-2">
@@ -227,7 +227,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
                 type="email"
                 value={fromEmail}
                 onChange={(e) => setFromEmail(e.target.value)}
-                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none font-body-md"
+                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none text-body-md"
               />
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -236,7 +236,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
                 type="email"
                 value={replyTo}
                 onChange={(e) => setReplyTo(e.target.value)}
-                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none font-body-md"
+                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none text-body-md"
               />
             </div>
           </div>
@@ -336,7 +336,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
               Email Footer Preview
             </div>
             <div className="mt-4 space-y-4">
-              <div className="font-body-md text-on-surface opacity-80 whitespace-pre-wrap">
+              <div className="text-body-md text-on-surface opacity-80 whitespace-pre-wrap">
                 {previewPlain || 'Your signature will appear here.'}
               </div>
               {(meetingLink || portfolioLink) && (

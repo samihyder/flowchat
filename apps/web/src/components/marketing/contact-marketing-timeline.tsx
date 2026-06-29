@@ -50,8 +50,8 @@ export function ContactMarketingTimeline({ events }: Props) {
   return (
     <section className="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-2">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="font-headline-sm text-headline-sm text-on-surface">Marketing Activity Timeline</h2>
-        <span className="text-xs text-gray-400 font-label-caps uppercase">Campaign events only</span>
+        <h2 className="text-headline-sm text-on-surface">Marketing Activity Timeline</h2>
+        <span className="text-xs text-on-surface-variant text-label-caps uppercase">Campaign events only</span>
       </div>
       <ol className="relative border-l border-gray-200 ml-3 space-y-8">
         {events.map((e) => {

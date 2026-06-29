@@ -139,7 +139,7 @@ export function CampaignSequenceStep({
   const editingStep = editingIndex !== null ? steps[editingIndex] : null;
 
   return (
-    <div className="max-w-container-max-wizard mx-auto space-y-8">
+    <div className="space-y-8">
       <div>
         <h2 className="text-headline-md text-on-surface">Email sequence</h2>
         <p className="text-sm text-on-surface-variant mt-1">

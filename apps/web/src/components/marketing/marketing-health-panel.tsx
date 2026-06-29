@@ -42,7 +42,7 @@ export function MarketingHealthPanel({ health, loading }: Props) {
       <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
         <div className="flex items-center gap-3">
           <MarketingIcon name="monitor_heart" className="text-primary text-[24px]" />
-          <h2 className="font-headline-sm text-headline-sm text-on-surface">Marketing Health</h2>
+          <h2 className="text-headline-sm text-on-surface">Marketing Health</h2>
         </div>
         {(hasProviderError || hasDomainError || hasCronError) && (
           <span className="bg-status-danger-bg text-status-danger-text px-3 py-1 rounded-full text-[10px] font-bold uppercase">

@@ -52,7 +52,7 @@ export function CampaignControlModal({
       >
         <div className="px-8 py-6 border-b border-gray-100">
           <div className="flex justify-between items-start mb-1">
-            <h3 id="control-modal-title" className="font-headline-md text-headline-md text-on-surface">
+            <h3 id="control-modal-title" className="text-headline-md text-on-surface">
               Pause or Cancel Campaign?
             </h3>
             <button
@@ -76,7 +76,7 @@ export function CampaignControlModal({
               <MarketingIcon name="groups" className="text-[28px]" filled />
             </div>
             <div>
-              <p className="text-headline-sm font-headline-sm text-primary">
+              <p className="text-headline-sm text-primary">
                 {recipients.toLocaleString()} recipients
               </p>
               <p className="text-sm text-on-surface-variant">

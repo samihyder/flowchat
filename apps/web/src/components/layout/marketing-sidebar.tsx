@@ -49,7 +49,7 @@ export function MarketingSidebar({ variant = 'list', onNavigate }: MarketingSide
   };
 
   return (
-    <aside className="h-full w-64 border-r border-gray-200 bg-surface flex flex-col p-4">
+    <aside className="h-screen w-64 border-r border-gray-200 bg-surface flex flex-col p-4">
       <div className="mb-8 px-4">
         <h1 className="text-headline-sm font-bold text-primary">FlowChat</h1>
         <p className="text-[12px] text-gray-500 uppercase tracking-wider font-semibold">

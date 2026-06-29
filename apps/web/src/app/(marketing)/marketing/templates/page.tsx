@@ -86,7 +86,7 @@ export default function TemplatesPage() {
   }, [templates, search]);
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col flex-1 min-h-0">
       <MarketingPageHeader
         title="Templates"
         search={
@@ -114,7 +114,7 @@ export default function TemplatesPage() {
         }
       />
 
-      <div className="flex-1 overflow-auto p-8 max-w-container-max-list mx-auto w-full">
+      <div className="flex-1 overflow-auto p-4 md:p-8 max-w-container-max-list mx-auto w-full">
         <header className="mb-8">
           <h2 className="text-headline-lg text-on-surface mb-2">Template library</h2>
           <p className="text-on-surface-variant max-w-lg text-sm">

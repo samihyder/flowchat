@@ -69,7 +69,7 @@ export function CampaignWizardChrome({
     <div className="flex flex-col flex-1 min-h-0">
       <CampaignBuilderTopBar onLaunch={onLaunch} launchDisabled={launchDisabled} />
 
-      <div className="bg-white border-b border-gray-200 px-8 py-6 sticky top-16 z-30 shrink-0">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-8 py-6 sticky top-16 z-30 shrink-0">
         <div className="max-w-container-max-list mx-auto flex flex-col gap-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0 flex-wrap">
@@ -150,7 +150,7 @@ export function CampaignWizardChrome({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-8 py-8 pb-24">
+      <div className="flex-1 overflow-auto px-4 md:px-8 py-6 md:py-8 pb-24">
         <div className="max-w-container-max-list mx-auto space-y-6">
           {error ? (
             <div className="rounded-lg border border-status-danger-bg bg-status-danger-bg px-4 py-3 text-sm text-status-danger-text flex items-start gap-2">
@@ -162,7 +162,7 @@ export function CampaignWizardChrome({
         </div>
       </div>
 
-      <footer className="fixed bottom-0 left-0 lg:left-64 right-0 h-16 bg-white border-t border-gray-200 px-8 flex items-center justify-between shadow-2xl z-50">
+      <footer className="fixed bottom-0 left-0 lg:left-64 right-0 h-16 bg-white border-t border-gray-200 px-4 md:px-8 flex items-center justify-between shadow-2xl z-50">
         <div className="flex items-center gap-6 min-w-0">
           {autosaveStatus !== 'idle' && (
             <span
