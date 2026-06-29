@@ -6,11 +6,13 @@ import type { Route } from 'next';
 import { api, type CampaignSenderConfig, type MarketingSender } from '@/lib/api';
 import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
+import { marketingErrorMessage } from '@/lib/marketing/error-messages';
 
 const DEFAULT_SIGNATURE = `<p>Best regards,</p><p><strong>{{sender_name}}</strong><br/>{{company_name}}</p>`;
 
 export type CampaignSenderStepHandle = {
-  save: () => Promise<boolean>;
+  /** Returns null on success, or a user-facing error message. */
+  save: () => Promise<string | null>;
 };
 
 type Props = {
@@ -107,26 +109,32 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
       setSignatureHtml(generated);
     };
 
-    const save = async (): Promise<boolean> => {
+    const save = async (): Promise<string | null> => {
+      if (!fromEmail.trim()) {
+        return 'From email is required before continuing.';
+      }
+      if (!useWorkspaceSignature && !signatureHtml.replace(/<[^>]+>/g, '').trim()) {
+        return 'Add a signature or enable the workspace default signature.';
+      }
       try {
         await api.marketing.campaigns.putSender(
           accountId,
           campaignId,
           {
-            senderId: selectedSenderId || null,
+            ...(selectedSenderId ? { senderId: selectedSenderId } : {}),
             fromName,
             fromEmail,
             replyTo: replyTo || null,
-            signatureHtml: useWorkspaceSignature ? null : signatureHtml,
+            ...(useWorkspaceSignature ? {} : { signatureHtml }),
             useWorkspaceSignature,
             meetingLink: meetingLink || null,
             portfolioLink: portfolioLink || null,
           },
           token
         );
-        return true;
-      } catch {
-        return false;
+        return null;
+      } catch (err) {
+        return marketingErrorMessage(err, 'Failed to save sender settings.');
       }
     };
 

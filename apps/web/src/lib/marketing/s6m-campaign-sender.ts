@@ -114,13 +114,12 @@ export async function putCampaignSender(
     const sender = senderRows[0] as
       | { fromName: string; fromEmail: string; replyTo: string | null; credentialId: string | null }
       | undefined;
-    if (!sender) {
-      throw new MarketingError(MarketingErrorCode.VALIDATION, { message: 'Sender not found.' });
+    if (sender) {
+      fromName = sender.fromName;
+      fromEmail = sender.fromEmail;
+      replyTo = sender.replyTo;
+      credentialId = sender.credentialId;
     }
-    fromName = sender.fromName;
-    fromEmail = sender.fromEmail;
-    replyTo = sender.replyTo;
-    credentialId = sender.credentialId;
   }
 
   if (!fromEmail.trim()) {
@@ -171,7 +170,7 @@ export async function putCampaignSender(
       use_workspace_signature = ${useWorkspaceSignature},
       meeting_link = ${meetingLink},
       portfolio_link = ${portfolioLink},
-      credential_id = ${credentialId}::uuid,
+      credential_id = ${credentialId},
       updated_at = NOW()
     WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid
   `;

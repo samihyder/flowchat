@@ -59,7 +59,13 @@ export default function CampaignWizardPage() {
   const reviewStepRef = useRef<CampaignReviewStepHandle>(null);
 
   const stepParam = Number(searchParams.get('step') ?? '1');
-  const activeStep = Number.isFinite(stepParam) ? Math.min(4, Math.max(1, stepParam)) : 1;
+  const urlStep = Number.isFinite(stepParam) ? Math.min(4, Math.max(1, stepParam)) : 1;
+  const [displayStep, setDisplayStep] = useState<number | null>(null);
+  const activeStep = displayStep ?? urlStep;
+
+  useEffect(() => {
+    setDisplayStep(null);
+  }, [urlStep]);
 
   const [campaign, setCampaign] = useState<MarketingCampaign | null>(null);
   const [name, setName] = useState('');
@@ -174,16 +180,24 @@ export default function CampaignWizardPage() {
   };
 
   const saveSender = async (): Promise<boolean> => {
-    if (!senderStepRef.current) return false;
-    const ok = await senderStepRef.current.save();
-    if (!ok) {
-      setError('Failed to save sender settings.');
+    if (!senderStepRef.current) {
+      setError('Sender settings are still loading. Please wait a moment.');
       return false;
     }
-    const senderRes = await api.marketing.campaigns.getSender(accountId!, campaignId, token!);
-    setSenderConfig(senderRes.sender);
-    setError('');
-    return true;
+    const saveError = await senderStepRef.current.save();
+    if (saveError) {
+      setError(saveError);
+      return false;
+    }
+    try {
+      const senderRes = await api.marketing.campaigns.getSender(accountId!, campaignId, token!);
+      setSenderConfig(senderRes.sender);
+      setError('');
+      return true;
+    } catch (err) {
+      setError(marketingErrorMessage(err, 'Failed to load sender settings.'));
+      return false;
+    }
   };
 
   const goToStep = async (step: number) => {
@@ -202,12 +216,9 @@ export default function CampaignWizardPage() {
       if (activeStep === 2 && step < 2) {
         await saveSequence();
       }
-      if (activeStep === 3 && step > 3) {
+      if (activeStep === 3 && step !== 3) {
         const ok = await saveSender();
         if (!ok) return;
-      }
-      if (activeStep === 3 && step !== 3) {
-        await saveSender();
       }
 
       const res = await api.marketing.campaigns.patch(
@@ -231,9 +242,10 @@ export default function CampaignWizardPage() {
         setRecipientSummary(recipientsRes.summary);
       }
 
-      router.push(
-        `/marketing/campaigns/${campaignId}/edit?step=${step}` as Route
-      );
+      setDisplayStep(step);
+      router.replace(`/marketing/campaigns/${campaignId}/edit?step=${step}` as Route);
+    } catch (err) {
+      setError(marketingErrorMessage(err, 'Could not save this step. Please try again.'));
     } finally {
       setSaving(false);
     }
@@ -304,7 +316,8 @@ export default function CampaignWizardPage() {
           /* draft autosave — sequence may be incomplete */
         }
       } else if (activeStep === 3 && senderStepRef.current) {
-        await senderStepRef.current.save();
+        const saveErr = await senderStepRef.current.save();
+        if (saveErr) throw new Error(saveErr);
       }
       await api.marketing.campaigns.patch(
         accountId,
