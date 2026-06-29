@@ -242,7 +242,8 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
                       ,
                     </p>
                     <p className="mt-3 line-clamp-3">
-                      {firstStep.htmlBody.replace(/<[^>]+>/g, ' ').trim() || 'Email body preview…'}
+                      {(firstStep.htmlBody ?? '').replace(/<[^>]+>/g, ' ').trim() ||
+                        'Email body preview…'}
                     </p>
                   </div>
                 </div>
@@ -520,7 +521,7 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
                         <td className="px-4 py-2 font-medium text-gray-900">{step.subject}</td>
                         <td className="px-4 py-2 text-gray-600 font-data-mono">
                           {step.sendAt
-                            ? formatSendAtLabel(step.sendAt, timezone, 'en')
+                            ? formatSendAtLabel(step.sendAt, 'en', timezone)
                             : '—'}
                         </td>
                       </tr>
@@ -540,7 +541,7 @@ export const CampaignReviewStep = forwardRef<CampaignReviewStepHandle, Props>(
           stepCount={sortedSteps.length}
           firstSendLabel={
             sortedSteps[0]?.sendAt
-              ? formatSendAtLabel(sortedSteps[0].sendAt, timezone, 'en')
+              ? formatSendAtLabel(sortedSteps[0].sendAt, 'en', timezone)
               : 'Immediate send'
           }
           onConfirm={async () => {
