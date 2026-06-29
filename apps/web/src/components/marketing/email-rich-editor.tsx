@@ -4,7 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 
 const MERGE_TAGS = [
@@ -92,6 +92,26 @@ export function EmailRichEditor({
     }
   }, [value, editor]);
 
+  const insertTag = useCallback(
+    (tag: string) => {
+      if (!editor) return;
+      if (htmlMode) {
+        const next = `${htmlSource}${tag}`;
+        setHtmlSource(next);
+        onChange(next);
+        return;
+      }
+      editor.chain().focus().insertContent(tag).run();
+    },
+    [editor, htmlMode, htmlSource, onChange]
+  );
+
+  useEffect(() => {
+    if (editor && onInsertTag) {
+      onInsertTag(insertTag);
+    }
+  }, [editor, onInsertTag, insertTag]);
+
   if (!editor) {
     return (
       <div
@@ -100,22 +120,6 @@ export function EmailRichEditor({
       />
     );
   }
-
-  const insertTag = (tag: string) => {
-    if (htmlMode) {
-      const next = `${htmlSource}${tag}`;
-      setHtmlSource(next);
-      onChange(next);
-      return;
-    }
-    editor.chain().focus().insertContent(tag).run();
-  };
-
-  useEffect(() => {
-    if (editor && onInsertTag) {
-      onInsertTag(insertTag);
-    }
-  }, [editor, onInsertTag, htmlMode, htmlSource]);
 
   const toolbar = (
     <div
