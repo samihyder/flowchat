@@ -50,6 +50,78 @@ export function newAutomationEmailDraft(
   };
 }
 
+/** Value for <input type="datetime-local" /> in a specific IANA timezone. */
+export function isoToDatetimeLocalInTimezone(iso: string, timeZone: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(d);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? '00';
+  let hour = get('hour');
+  if (hour === '24') hour = '00';
+  return `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}`;
+}
+
+/** Parse datetime-local input as wall time in a specific IANA timezone → ISO UTC. */
+export function datetimeLocalInTimezoneToIso(value: string, timeZone: string): string {
+  if (!value) return '';
+  const [datePart, timePart] = value.split('T');
+  if (!datePart || !timePart) return '';
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute] = timePart.split(':').map(Number);
+  if (
+    year === undefined ||
+    month === undefined ||
+    day === undefined ||
+    hour === undefined ||
+    minute === undefined ||
+    Number.isNaN(year) ||
+    Number.isNaN(month) ||
+    Number.isNaN(day) ||
+    Number.isNaN(hour) ||
+    Number.isNaN(minute)
+  ) {
+    return '';
+  }
+
+  // Iteratively find UTC instant for wall time in timeZone (same approach as campaign-schedule-time)
+  let t = Date.UTC(year, month - 1, day, hour, minute, 0);
+  for (let i = 0; i < 4; i++) {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(new Date(t));
+    const get = (type: Intl.DateTimeFormatPartTypes) =>
+      Number(parts.find((p) => p.type === type)?.value ?? 0);
+    let zh = get('hour');
+    if (zh === 24) zh = 0;
+    const diffMinutes =
+      (get('year') - year) * 525600 +
+      (get('month') - month) * 43200 +
+      (get('day') - day) * 1440 +
+      (zh - hour) * 60 +
+      (get('minute') - minute);
+    if (diffMinutes === 0) break;
+    t -= diffMinutes * 60_000;
+  }
+  return new Date(t).toISOString();
+}
+
 /** Value for <input type="datetime-local" /> from an ISO string (browser local time). */
 export function isoToDatetimeLocal(iso: string): string {
   const d = new Date(iso);

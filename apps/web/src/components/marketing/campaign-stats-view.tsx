@@ -23,6 +23,8 @@ type Props = {
   onResume?: () => void;
   onCancel: () => void;
   onExport: () => void;
+  onProcessDue?: () => Promise<void>;
+  processingDue?: boolean;
   exporting?: boolean;
 };
 
@@ -174,6 +176,8 @@ export function CampaignStatsView({
   onResume,
   onCancel,
   onExport,
+  onProcessDue,
+  processingDue,
   exporting,
 }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
@@ -315,14 +319,29 @@ export function CampaignStatsView({
 
       {tab === 'overview' && (
         <>
-          {overview.pending > 0 && campaign.status === 'running' && (
-            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
+          {overview.pending > 0 && (campaign.status === 'running' || campaign.status === 'scheduled') && (
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+              <div className="flex justify-between items-center mb-4 gap-4 flex-wrap">
                 <div className="flex items-center gap-2 text-primary font-semibold">
                   <MarketingIcon name="sync" className="animate-spin duration-[3000ms]" />
-                  Processing — {overview.sent} of {overview.sent + overview.pending} sends
+                  {campaign.status === 'scheduled' ? 'Scheduled — waiting to send' : 'Processing'} —{' '}
+                  {overview.sent} of {overview.sent + overview.pending} sends
                 </div>
-                <span className="text-gray-500 font-data-mono">{overview.progressPercent}% completed</span>
+                <div className="flex items-center gap-3">
+                  {isAdmin && onProcessDue ? (
+                    <button
+                      type="button"
+                      onClick={() => void onProcessDue()}
+                      disabled={processingDue}
+                      className="marketing-btn-primary px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-60"
+                    >
+                      {processingDue ? 'Processing…' : 'Process due sends now'}
+                    </button>
+                  ) : null}
+                  <span className="text-on-surface-variant font-data-mono">
+                    {overview.progressPercent}% completed
+                  </span>
+                </div>
               </div>
               <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
@@ -330,6 +349,12 @@ export function CampaignStatsView({
                   style={{ width: `${overview.progressPercent}%` }}
                 />
               </div>
+              {campaign.status === 'scheduled' && (
+                <p className="text-xs text-on-surface-variant">
+                  Sends run via the background scheduler every minute. On preview deployments, use
+                  &quot;Process due sends now&quot; if emails are past their scheduled time.
+                </p>
+              )}
             </div>
           )}
 

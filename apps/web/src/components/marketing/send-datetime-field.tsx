@@ -2,9 +2,9 @@
 
 import { Input } from '@/components/ui/input';
 import {
-  datetimeLocalToIso,
+  datetimeLocalInTimezoneToIso,
   formatSendAtLabel,
-  isoToDatetimeLocal,
+  isoToDatetimeLocalInTimezone,
   minutesFromNow,
 } from '@/lib/marketing/automation-email-draft';
 
@@ -23,7 +23,10 @@ const QUICK_OPTIONS = [
 ] as const;
 
 export function SendDateTimeField({ value, onChange, timezone, locale }: Props) {
-  const minLocal = isoToDatetimeLocal(new Date(Date.now() + 60_000).toISOString());
+  const minLocal = isoToDatetimeLocalInTimezone(
+    new Date(Date.now() + 60_000).toISOString(),
+    timezone
+  );
 
   return (
     <div>
@@ -31,10 +34,10 @@ export function SendDateTimeField({ value, onChange, timezone, locale }: Props) 
       <div className="flex flex-wrap items-center gap-2">
         <Input
           type="datetime-local"
-          value={isoToDatetimeLocal(value)}
+          value={isoToDatetimeLocalInTimezone(value, timezone)}
           min={minLocal}
           onChange={(e) => {
-            const iso = datetimeLocalToIso(e.target.value);
+            const iso = datetimeLocalInTimezoneToIso(e.target.value, timezone);
             if (iso) onChange(iso);
           }}
           className="max-w-xs"

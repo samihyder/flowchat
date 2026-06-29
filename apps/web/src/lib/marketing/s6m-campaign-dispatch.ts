@@ -105,6 +105,15 @@ export async function processS6mCampaignBatch(
   const rows = due as DueStepRow[];
   if (!rows.length) return { processed: 0, sent: 0, failed: 0 };
 
+  const campaignIds = [...new Set(rows.map((r) => r.campaignId))];
+  for (const campaignId of campaignIds) {
+    await sql`
+      UPDATE marketing_campaigns
+      SET status = 'running', updated_at = NOW()
+      WHERE id = ${campaignId}::uuid AND status = 'scheduled'
+    `;
+  }
+
   const settingsCache = new Map<string, AccountSettings>();
   const brandingCache = new Map<string, { name: string; logoUrl: string | null }>();
   let sent = 0;

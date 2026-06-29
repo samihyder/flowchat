@@ -33,6 +33,7 @@ export default function CampaignDetailPage() {
   const [controlAction, setControlAction] = useState<'pause' | 'cancel'>('pause');
   const [controlPreview, setControlPreview] = useState<CampaignControlPreview | null>(null);
   const [controlBusy, setControlBusy] = useState(false);
+  const [processingDue, setProcessingDue] = useState(false);
 
   const load = useCallback(() => {
     if (!token || !accountId) return;
@@ -88,6 +89,17 @@ export default function CampaignDetailPage() {
     load();
   };
 
+  const handleProcessDue = async () => {
+    if (!token || !accountId || !isAdmin) return;
+    setProcessingDue(true);
+    try {
+      await api.marketing.processDue(accountId, token);
+      load();
+    } finally {
+      setProcessingDue(false);
+    }
+  };
+
   const handleExport = async () => {
     if (!token || !accountId) return;
     setExporting(true);
@@ -141,6 +153,8 @@ export default function CampaignDetailPage() {
         onResume={isAdmin ? () => void handleResume() : undefined}
         onCancel={() => void openControl('cancel')}
         onExport={() => void handleExport()}
+        onProcessDue={isAdmin ? () => handleProcessDue() : undefined}
+        processingDue={processingDue}
         exporting={exporting}
       />
 

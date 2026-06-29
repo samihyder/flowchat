@@ -1381,6 +1381,13 @@ export const api = {
         webhookUrl: string;
         fromEmail: string;
       }>(`/accounts/${accountId}/marketing/health`, { token }),
+    processDue: (accountId: string, token: string) =>
+      request<{
+        ok: boolean;
+        s6mProcessed: number;
+        s6mSent: number;
+        error?: string;
+      }>(`/accounts/${accountId}/marketing/process-due`, { method: 'POST', token }),
     senders: {
       list: (accountId: string, token: string) =>
         request<{ senders: MarketingSender[] }>(`/accounts/${accountId}/marketing/senders`, { token }),

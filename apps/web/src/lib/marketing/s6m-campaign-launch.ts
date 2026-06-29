@@ -64,8 +64,7 @@ export async function getCampaignPreflight(
 
   const cronState = await getMarketingCronState(sql);
   const cronOk =
-    isCronHealthy(cronState) ||
-    Boolean(process.env.CRON_SECRET || process.env.VERCEL || process.env.NODE_ENV === 'development');
+    isCronHealthy(cronState) || process.env.NODE_ENV === 'development';
   const cronDetail = cronOk
     ? cronState.lastRunAt
       ? `Last run ${new Date(cronState.lastRunAt).toLocaleString()}`
