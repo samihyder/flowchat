@@ -15,15 +15,5 @@
       "destination": "/FlowChat/sign-in",
       "permanent": false
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/wa-automation",
-      "destination": "https://wa-automation-neon.vercel.app/wa-automation"
-    },
-    {
-      "source": "/wa-automation/:path*",
-      "destination": "https://wa-automation-neon.vercel.app/wa-automation/:path*"
-    }
   ]
 }
