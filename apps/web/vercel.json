@@ -24,6 +24,14 @@
     {
       "source": "/wa-automation/:path*",
       "destination": "https://wa-automation-neon.vercel.app/wa-automation/:path*"
+    },
+    {
+      "source": "/lead-monitor",
+      "destination": "https://leadmonitor-psi.vercel.app/lead-monitor"
+    },
+    {
+      "source": "/lead-monitor/:path*",
+      "destination": "https://leadmonitor-psi.vercel.app/lead-monitor/:path*"
     }
   ]
 }
