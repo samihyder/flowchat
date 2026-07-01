@@ -10,11 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ContactImportModal } from '@/components/contacts/contact-import-modal';
 import { ContactMergeModal } from '@/components/contacts/contact-merge-modal';
-import { MarketingStatusBadge } from '@/components/contacts/marketing-status-badge';
 import { ContactQuickActionsPanel } from '@/components/contacts/contact-quick-actions-panel';
+import { ContactListItem } from '@/components/contacts/contact-list-item';
+import { ContactWorkflowStrip } from '@/components/contacts/contact-workflow-strip';
 import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
-import { Badge } from '@/components/ui/badge';
-import { contactTypeBadgeClass, formatRelativeTime, initialsFromName } from '@/lib/format';
 import { countryLabel, COUNTRY_OPTIONS } from '@/lib/country';
 import type { ColumnMapping } from '@/lib/csv-import-utils';
 
@@ -55,7 +54,8 @@ export default function ContactsPage() {
   const [duplicateGroups, setDuplicateGroups] = useState(0);
   const [stats, setStats] = useState({ hasEmail: 0, hasPhone: 0 });
   const [bulkLabelId, setBulkLabelId] = useState('');
-  const [quickActionsContactId, setQuickActionsContactId] = useState<string | null>(null);
+  const [activeContactId, setActiveContactId] = useState<string | null>(null);
+  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
 
   useEffect(() => {
     if (!token || !accountId || !access.isAdmin) return;
@@ -122,6 +122,17 @@ export default function ContactsPage() {
   useEffect(() => {
     setPage(0);
   }, [q, type, labelId, marketingStatus, country, sortKey]);
+
+  useEffect(() => {
+    if (contacts.length === 0) {
+      setActiveContactId(null);
+      return;
+    }
+    if (!activeContactId || !contacts.some((c) => c.id === activeContactId)) {
+      const first = contacts[0];
+      if (first) setActiveContactId(first.id);
+    }
+  }, [contacts, activeContactId]);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -230,7 +241,7 @@ export default function ContactsPage() {
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <PageHeader
         title="Contacts"
-        description={`${total} contact${total === 1 ? '' : 's'} · Mutex Systems CRM`}
+        description="Engage leads, run automations, and grow relationships"
         action={
           <div className="flex flex-wrap gap-2">
             {access.isAdmin && (
@@ -255,8 +266,23 @@ export default function ContactsPage() {
         }
       />
 
+      <div className="px-6 pb-4 space-y-4">
+        <ContactWorkflowStrip />
+        <MetricGrid className="grid-cols-2 lg:grid-cols-4">
+          <MetricCard label="Total contacts" value={loading ? '—' : total} accent="primary" />
+          <MetricCard label="Reachable email" value={stats.hasEmail} hint="Campaign-ready" accent="accent" />
+          <MetricCard label="Has phone" value={stats.hasPhone} accent="accent" />
+          <MetricCard
+            label="Duplicates"
+            value={duplicateGroups}
+            accent={duplicateGroups > 0 ? 'amber' : 'primary'}
+            hint={duplicateGroups > 0 ? 'Needs review' : 'All clear'}
+          />
+        </MetricGrid>
+      </div>
+
       {access.isAdmin && !access.canImport && (
-        <div className="mx-6 mb-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+        <div className="mx-6 mb-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
           Contact import is turned off.{' '}
           <Link href={'/settings/crm' as Route} className="font-medium underline">
             Enable it in Settings → CRM
@@ -265,117 +291,26 @@ export default function ContactsPage() {
         </div>
       )}
 
-      {!access.canImport && !access.isAdmin && (
-        <div className="mx-6 mb-4 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
-          Ask an administrator to enable CSV import under Settings → CRM.
-        </div>
-      )}
-
-      <div className="px-6 pb-4">
-        <MetricGrid className="grid-cols-2 lg:grid-cols-3">
-          <MetricCard label="Total contacts" value={loading ? '—' : total} accent="primary" />
-          <MetricCard label="On this page" value={contacts.length} hint={`Page ${page + 1}`} accent="accent" />
-          <MetricCard label="Selected" value={selected.size} hint="Bulk export when selected" />
-          <MetricCard
-            label="Duplicate groups"
-            value={duplicateGroups}
-            accent={duplicateGroups > 0 ? 'amber' : 'primary'}
-          />
-          <MetricCard label="Has email" value={stats.hasEmail} accent="accent" />
-          <MetricCard label="Has phone" value={stats.hasPhone} accent="accent" />
-        </MetricGrid>
-      </div>
-
-      <div className="sticky top-0 z-10 bg-gray-50 px-6 pb-4 pt-1 flex flex-wrap gap-3 items-center">
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search name, email, phone, external ID…"
-          className="max-w-xs"
-        />
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
-        >
-          {TYPES.map((t) => (
-            <option key={t || 'all'} value={t}>
-              {t ? t.charAt(0).toUpperCase() + t.slice(1) : 'All types'}
-            </option>
-          ))}
-        </select>
-        <select
-          value={marketingStatus}
-          onChange={(e) => setMarketingStatus(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white"
-        >
-          <option value="">Subscription: All</option>
-          <option value="subscribed">Subscribed</option>
-          <option value="unsubscribed">Unsubscribed</option>
-          <option value="pending">Pending</option>
-          <option value="bounced">Bounced</option>
-          <option value="complained">Complained</option>
-        </select>
-        <select
-          value={labelId}
-          onChange={(e) => setLabelId(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
-        >
-          <option value="">All labels</option>
-          {labels.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white"
-        >
-          <option value="">All countries</option>
-          {COUNTRY_OPTIONS.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={sortKey}
-          onChange={(e) => setSortKey(e.target.value)}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
-        >
-          {SORTS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-        {importStatus && <p className="text-sm text-gray-600">{importStatus}</p>}
-      </div>
-
       {access.isAdmin && duplicateGroups > 0 && (
-        <div className="mx-6 mb-4 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+        <div className="mx-6 mb-3 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
           <span aria-hidden>⚠️</span>
           <p className="flex-1 text-sm text-amber-900">
             <strong>
-              {duplicateGroups} duplicate group{duplicateGroups === 1 ? '' : 's'} found
+              {duplicateGroups} duplicate group{duplicateGroups === 1 ? '' : 's'}
             </strong>{' '}
-            — matching by email or phone.
+            — merge to keep your CRM clean.
           </p>
           <Button type="button" variant="secondary" size="sm" onClick={() => setMergeOpen(true)}>
-            Review &amp; merge
+            Review
           </Button>
         </div>
       )}
 
       {selected.size > 0 && (
-        <div className="mx-6 mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3">
-          <span className="text-sm text-primary-900 font-medium">
-            {selected.size === contacts.length ? 'All on page selected' : `${selected.size} selected`}
-          </span>
+        <div className="mx-6 mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3">
+          <span className="text-sm text-primary-900 font-medium">{selected.size} selected</span>
           <button type="button" onClick={toggleAll} className="text-xs text-primary-600 hover:underline">
-            {selected.size === contacts.length ? 'Clear selection' : 'Select all on page'}
+            {selected.size === contacts.length ? 'Clear' : 'Select page'}
           </button>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <select
@@ -390,18 +325,12 @@ export default function ContactsPage() {
                 </option>
               ))}
             </select>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={!bulkLabelId}
-              onClick={() => void handleBulkLabel()}
-            >
+            <Button type="button" variant="secondary" size="sm" disabled={!bulkLabelId} onClick={() => void handleBulkLabel()}>
               Apply
             </Button>
             {access.isAdmin && (
               <Button type="button" variant="secondary" size="sm" onClick={() => void handleBulkDelete()}>
-                Delete selected
+                Delete
               </Button>
             )}
           </div>
@@ -411,7 +340,7 @@ export default function ContactsPage() {
       {showCreate && (
         <form
           onSubmit={handleCreate}
-          className="mx-6 mb-4 p-4 bg-white border border-gray-200 rounded-xl flex flex-wrap gap-3 items-end"
+          className="mx-6 mb-3 p-4 bg-white border border-gray-200 rounded-xl flex flex-wrap gap-3 items-end shadow-sm"
         >
           <div>
             <label className="text-xs text-gray-500">Name</label>
@@ -425,138 +354,106 @@ export default function ContactsPage() {
         </form>
       )}
 
-      <div className="flex-1 overflow-auto px-6 pb-6">
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs text-gray-500 uppercase">
-              <tr>
-                <th className="px-4 py-3 w-10">
-                  <input
-                    type="checkbox"
-                    checked={contacts.length > 0 && selected.size === contacts.length}
-                    onChange={toggleAll}
-                  />
-                </th>
-                <th className="px-4 py-3">Contact</th>
-                <th className="px-4 py-3">Phone</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Country</th>
-                <th className="px-4 py-3">Labels</th>
-                <th className="px-4 py-3">Subscription</th>
-                <th className="px-4 py-3">Last activity</th>
-                <th className="px-4 py-3 w-16" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-400">
-                    Loading…
-                  </td>
-                </tr>
-              ) : contacts.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-400">
-                    No contacts found.
-                  </td>
-                </tr>
-              ) : (
-                contacts.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selected.has(c.id)}
-                        onChange={() => toggleSelect(c.id)}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-semibold shrink-0">
-                          {initialsFromName(c.name)}
-                        </div>
-                        <div className="min-w-0">
-                          <Link
-                            href={`/dashboard/contacts/${c.id}` as Route}
-                            className="font-medium text-gray-900 hover:text-primary-600 block truncate"
-                          >
-                            {c.name}
-                          </Link>
-                          <p className="text-xs text-gray-500 truncate">{c.email ?? 'No email'}</p>
-                          {c.isBlocked && <span className="text-xs text-red-500">Blocked</span>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{c.phone ?? '—'}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${contactTypeBadgeClass(c.type)}`}
-                      >
-                        {c.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {c.country ? <Badge color="gray">{countryLabel(c.country)}</Badge> : <span className="text-gray-400">—</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {(c.labels ?? []).map((l) => (
-                          <span
-                            key={l.id}
-                            className="text-xs px-1.5 py-0.5 rounded-full text-white"
-                            style={{ backgroundColor: l.color }}
-                          >
-                            {l.name}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <MarketingStatusBadge status={c.marketingStatus} />
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
-                      {formatRelativeTime(c.lastActivityAt)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setQuickActionsContactId(c.id)}
-                          className="text-xs text-gray-400 hover:text-primary-600"
-                          title="Quick actions"
-                        >
-                          ⚡
-                        </button>
-                        <Link
-                          href={`/dashboard/contacts/${c.id}` as Route}
-                          className="text-xs text-primary-600 hover:underline"
-                        >
-                          View →
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
-            <span>
-              Showing {rangeStart}–{rangeEnd} of {total}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={page === 0}
-                onClick={() => setPage((p) => p - 1)}
+      <div className="flex-1 flex min-h-0 mx-6 mb-6 gap-0 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex-1 min-w-0 flex flex-col min-h-0">
+          <div className="shrink-0 p-3 border-b border-gray-100 bg-slate-50/80 space-y-2">
+            <div className="flex flex-wrap gap-2 items-center">
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search contacts…"
+                className="flex-1 min-w-[140px]"
+              />
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
               >
+                {TYPES.map((t) => (
+                  <option key={t || 'all'} value={t}>
+                    {t ? t.charAt(0).toUpperCase() + t.slice(1) : 'All types'}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={marketingStatus}
+                onChange={(e) => setMarketingStatus(e.target.value)}
+                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+              >
+                <option value="">Subscription</option>
+                <option value="subscribed">Subscribed</option>
+                <option value="unsubscribed">Unsubscribed</option>
+                <option value="pending">Pending</option>
+                <option value="bounced">Bounced</option>
+              </select>
+              <select
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white max-w-[120px]"
+              >
+                <option value="">Country</option>
+                {COUNTRY_OPTIONS.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value)}
+                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+              >
+                {SORTS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {importStatus && <p className="text-xs text-gray-500">{importStatus}</p>}
+          </div>
+
+          <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-gray-100 text-xs text-gray-500">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={contacts.length > 0 && selected.size === contacts.length}
+                onChange={toggleAll}
+              />
+              Select all
+            </label>
+            <span>
+              {loading ? 'Loading…' : `${rangeStart}–${rangeEnd} of ${total}`}
+            </span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {loading ? (
+              <p className="p-8 text-center text-sm text-gray-400">Loading contacts…</p>
+            ) : contacts.length === 0 ? (
+              <p className="p-8 text-center text-sm text-gray-400">No contacts match your filters.</p>
+            ) : (
+              contacts.map((c) => (
+                <ContactListItem
+                  key={c.id}
+                  contact={c}
+                  active={activeContactId === c.id}
+                  onActivate={() => setActiveContactId(c.id)}
+                  bulkSelected={selected.has(c.id)}
+                  onBulkToggle={() => toggleSelect(c.id)}
+                />
+              ))
+            )}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="shrink-0 flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm">
+              <Button type="button" variant="secondary" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
                 Previous
               </Button>
+              <span className="text-xs text-gray-500">
+                Page {page + 1} / {totalPages}
+              </span>
               <Button
                 type="button"
                 variant="secondary"
@@ -567,9 +464,31 @@ export default function ContactsPage() {
                 Next
               </Button>
             </div>
+          )}
+        </div>
+
+        {accountId && token && (
+          <div className="hidden xl:flex w-[360px] shrink-0 min-h-0">
+            <ContactQuickActionsPanel
+              accountId={accountId}
+              token={token}
+              contactId={activeContactId}
+              layout="dock"
+              onContactUpdated={() => void load()}
+            />
           </div>
         )}
       </div>
+
+      {accountId && token && activeContactId && (
+        <button
+          type="button"
+          onClick={() => setMobileActionsOpen(true)}
+          className="xl:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-sm font-semibold shadow-lg"
+        >
+          ⚡ Quick actions
+        </button>
+      )}
 
       <ContactImportModal
         open={importOpen}
@@ -577,19 +496,18 @@ export default function ContactsPage() {
         onImport={handleImportJob}
         customAttrKeys={customAttrKeys}
       />
-      <ContactMergeModal
-        open={mergeOpen}
-        onClose={() => setMergeOpen(false)}
-        onMerged={() => void load()}
-      />
+      <ContactMergeModal open={mergeOpen} onClose={() => setMergeOpen(false)} onMerged={() => void load()} />
       {accountId && token && (
-        <ContactQuickActionsPanel
-          accountId={accountId}
-          token={token}
-          contactId={quickActionsContactId}
-          open={quickActionsContactId !== null}
-          onClose={() => setQuickActionsContactId(null)}
-        />
+        <div className="xl:hidden">
+          <ContactQuickActionsPanel
+            accountId={accountId}
+            token={token}
+            contactId={activeContactId}
+            open={mobileActionsOpen}
+            onClose={() => setMobileActionsOpen(false)}
+            onContactUpdated={() => void load()}
+          />
+        </div>
       )}
     </div>
   );
