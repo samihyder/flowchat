@@ -11,8 +11,11 @@ import { Input } from '@/components/ui/input';
 import { ContactImportModal } from '@/components/contacts/contact-import-modal';
 import { ContactMergeModal } from '@/components/contacts/contact-merge-modal';
 import { MarketingStatusBadge } from '@/components/contacts/marketing-status-badge';
+import { ContactQuickActionsPanel } from '@/components/contacts/contact-quick-actions-panel';
 import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
+import { Badge } from '@/components/ui/badge';
 import { contactTypeBadgeClass, formatRelativeTime, initialsFromName } from '@/lib/format';
+import { countryLabel, COUNTRY_OPTIONS } from '@/lib/country';
 import type { ColumnMapping } from '@/lib/csv-import-utils';
 
 const TYPES = ['', 'visitor', 'lead', 'customer'] as const;
@@ -36,6 +39,7 @@ export default function ContactsPage() {
   const [type, setType] = useState('');
   const [labelId, setLabelId] = useState('');
   const [marketingStatus, setMarketingStatus] = useState('');
+  const [country, setCountry] = useState('');
   const [sortKey, setSortKey] = useState('last_activity_at:desc');
   const [labels, setLabels] = useState<Label[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +53,9 @@ export default function ContactsPage() {
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [duplicateGroups, setDuplicateGroups] = useState(0);
+  const [stats, setStats] = useState({ hasEmail: 0, hasPhone: 0 });
+  const [bulkLabelId, setBulkLabelId] = useState('');
+  const [quickActionsContactId, setQuickActionsContactId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token || !accountId || !access.isAdmin) return;
@@ -57,6 +64,18 @@ export default function ContactsPage() {
       .then((r) => setDuplicateGroups(r.groups.length))
       .catch(() => setDuplicateGroups(0));
   }, [token, accountId, access.isAdmin, mergeOpen]);
+
+  const loadStats = useCallback(() => {
+    if (!token || !accountId) return;
+    api.contacts
+      .getStats(accountId, token)
+      .then((r) => setStats({ hasEmail: r.stats.hasEmail, hasPhone: r.stats.hasPhone }))
+      .catch(() => setStats({ hasEmail: 0, hasPhone: 0 }));
+  }, [token, accountId]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   const [sort, order] = sortKey.split(':') as [string, string];
 
@@ -69,6 +88,7 @@ export default function ContactsPage() {
         type: type || undefined,
         labelId: labelId || undefined,
         marketingStatus: marketingStatus || undefined,
+        country: country || undefined,
         sort,
         order,
         limit: PAGE_SIZE,
@@ -82,7 +102,7 @@ export default function ContactsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, accountId, q, type, labelId, marketingStatus, sort, order, page]);
+  }, [token, accountId, q, type, labelId, marketingStatus, country, sort, order, page]);
 
   useEffect(() => {
     if (!token || !accountId) return;
@@ -101,7 +121,7 @@ export default function ContactsPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [q, type, labelId, marketingStatus, sortKey]);
+  }, [q, type, labelId, marketingStatus, country, sortKey]);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -171,6 +191,7 @@ export default function ContactsPage() {
     setNewEmail('');
     setShowCreate(false);
     await load();
+    loadStats();
   };
 
   const handleBulkDelete = async () => {
@@ -181,14 +202,12 @@ export default function ContactsPage() {
     }
     setSelected(new Set());
     await load();
+    loadStats();
   };
 
   const handleBulkLabel = async () => {
-    if (!token || !accountId || selected.size === 0 || labels.length === 0) return;
-    const labelName = prompt(
-      `Label selected contacts. Enter label name:\n${labels.map((l) => l.name).join(', ')}`
-    );
-    const label = labels.find((l) => l.name.toLowerCase() === labelName?.toLowerCase());
+    if (!token || !accountId || selected.size === 0 || !bulkLabelId) return;
+    const label = labels.find((l) => l.id === bulkLabelId);
     if (!label) return;
     for (const id of selected) {
       const c = contacts.find((x) => x.id === id);
@@ -199,6 +218,7 @@ export default function ContactsPage() {
         .catch(() => {});
     }
     setSelected(new Set());
+    setBulkLabelId('');
     await load();
   };
 
@@ -252,7 +272,7 @@ export default function ContactsPage() {
       )}
 
       <div className="px-6 pb-4">
-        <MetricGrid>
+        <MetricGrid className="grid-cols-2 lg:grid-cols-3">
           <MetricCard label="Total contacts" value={loading ? '—' : total} accent="primary" />
           <MetricCard label="On this page" value={contacts.length} hint={`Page ${page + 1}`} accent="accent" />
           <MetricCard label="Selected" value={selected.size} hint="Bulk export when selected" />
@@ -261,10 +281,12 @@ export default function ContactsPage() {
             value={duplicateGroups}
             accent={duplicateGroups > 0 ? 'amber' : 'primary'}
           />
+          <MetricCard label="Has email" value={stats.hasEmail} accent="accent" />
+          <MetricCard label="Has phone" value={stats.hasPhone} accent="accent" />
         </MetricGrid>
       </div>
 
-      <div className="px-6 pb-4 flex flex-wrap gap-3 items-center">
+      <div className="sticky top-0 z-10 bg-gray-50 px-6 pb-4 pt-1 flex flex-wrap gap-3 items-center">
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -307,6 +329,18 @@ export default function ContactsPage() {
           ))}
         </select>
         <select
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white"
+        >
+          <option value="">All countries</option>
+          {COUNTRY_OPTIONS.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <select
           value={sortKey}
           onChange={(e) => setSortKey(e.target.value)}
           className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
@@ -343,9 +377,27 @@ export default function ContactsPage() {
           <button type="button" onClick={toggleAll} className="text-xs text-primary-600 hover:underline">
             {selected.size === contacts.length ? 'Clear selection' : 'Select all on page'}
           </button>
-          <div className="ml-auto flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={() => void handleBulkLabel()}>
-              Label selected
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <select
+              value={bulkLabelId}
+              onChange={(e) => setBulkLabelId(e.target.value)}
+              className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+            >
+              <option value="">Apply label…</option>
+              {labels.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!bulkLabelId}
+              onClick={() => void handleBulkLabel()}
+            >
+              Apply
             </Button>
             {access.isAdmin && (
               <Button type="button" variant="secondary" size="sm" onClick={() => void handleBulkDelete()}>
@@ -388,6 +440,7 @@ export default function ContactsPage() {
                 <th className="px-4 py-3">Contact</th>
                 <th className="px-4 py-3">Phone</th>
                 <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Country</th>
                 <th className="px-4 py-3">Labels</th>
                 <th className="px-4 py-3">Subscription</th>
                 <th className="px-4 py-3">Last activity</th>
@@ -397,13 +450,13 @@ export default function ContactsPage() {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-400">
                     Loading…
                   </td>
                 </tr>
               ) : contacts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-400">
                     No contacts found.
                   </td>
                 </tr>
@@ -443,6 +496,9 @@ export default function ContactsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
+                      {c.country ? <Badge color="gray">{countryLabel(c.country)}</Badge> : <span className="text-gray-400">—</span>}
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {(c.labels ?? []).map((l) => (
                           <span
@@ -462,12 +518,22 @@ export default function ContactsPage() {
                       {formatRelativeTime(c.lastActivityAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/dashboard/contacts/${c.id}` as Route}
-                        className="text-xs text-primary-600 hover:underline"
-                      >
-                        View →
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setQuickActionsContactId(c.id)}
+                          className="text-xs text-gray-400 hover:text-primary-600"
+                          title="Quick actions"
+                        >
+                          ⚡
+                        </button>
+                        <Link
+                          href={`/dashboard/contacts/${c.id}` as Route}
+                          className="text-xs text-primary-600 hover:underline"
+                        >
+                          View →
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -516,6 +582,15 @@ export default function ContactsPage() {
         onClose={() => setMergeOpen(false)}
         onMerged={() => void load()}
       />
+      {accountId && token && (
+        <ContactQuickActionsPanel
+          accountId={accountId}
+          token={token}
+          contactId={quickActionsContactId}
+          open={quickActionsContactId !== null}
+          onClose={() => setQuickActionsContactId(null)}
+        />
+      )}
     </div>
   );
 }

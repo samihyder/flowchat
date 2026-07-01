@@ -10,6 +10,8 @@ import { ContactMarketingTimeline } from '@/components/marketing/contact-marketi
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CustomAttributeFields } from '@/components/contacts/custom-attribute-fields';
+import { ContactQuickActionsPanel } from '@/components/contacts/contact-quick-actions-panel';
+import { COUNTRY_OPTIONS } from '@/lib/country';
 
 const TYPES = ['visitor', 'lead', 'customer'] as const;
 
@@ -27,7 +29,9 @@ export default function ContactProfilePage() {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
+  const [editCountry, setEditCountry] = useState('');
   const [editType, setEditType] = useState<(typeof TYPES)[number]>('lead');
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
   const [customAttributes, setCustomAttributes] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
@@ -67,6 +71,7 @@ export default function ContactProfilePage() {
     setEditName(res.contact.name);
     setEditEmail(res.contact.email ?? '');
     setEditPhone(res.contact.phone ?? '');
+    setEditCountry(res.contact.country ?? '');
     setEditType(res.contact.type);
     setSelectedLabelIds(res.labels.map((l) => l.id));
     setCustomAttributes((res.contact.customAttributes as Record<string, unknown>) ?? {});
@@ -174,6 +179,7 @@ export default function ContactProfilePage() {
           name: editName,
           email: editEmail || null,
           phone: editPhone || null,
+          country: editCountry || null,
           type: editType,
           labelIds: selectedLabelIds,
           customAttributes,
@@ -237,11 +243,16 @@ export default function ContactProfilePage() {
             {contact.externalId && ` · External ID: ${contact.externalId}`}
           </p>
         </div>
-        {isAdmin && (
-          <Button type="button" variant="danger" size="sm" onClick={() => void handleDelete()}>
-            Delete contact
+        <div className="flex items-center gap-2 shrink-0">
+          <Button type="button" variant="secondary" size="sm" onClick={() => setQuickActionsOpen(true)}>
+            ⚡ Quick actions
           </Button>
-        )}
+          {isAdmin && (
+            <Button type="button" variant="danger" size="sm" onClick={() => void handleDelete()}>
+              Delete contact
+            </Button>
+          )}
+        </div>
       </header>
 
       <div className="flex-1 overflow-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -250,6 +261,18 @@ export default function ContactProfilePage() {
           <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name" />
           <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="Email" type="email" />
           <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="Phone" />
+          <select
+            value={editCountry}
+            onChange={(e) => setEditCountry(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"
+          >
+            <option value="">No country</option>
+            {COUNTRY_OPTIONS.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
           <select
             value={editType}
             onChange={(e) => setEditType(e.target.value as (typeof TYPES)[number])}
@@ -558,6 +581,15 @@ export default function ContactProfilePage() {
           </ul>
         </section>
       </div>
+      {accountId && token && (
+        <ContactQuickActionsPanel
+          accountId={accountId}
+          token={token}
+          contactId={contactId}
+          open={quickActionsOpen}
+          onClose={() => setQuickActionsOpen(false)}
+        />
+      )}
     </div>
   );
 }

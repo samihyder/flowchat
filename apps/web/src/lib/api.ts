@@ -269,6 +269,7 @@ export type Contact = {
   name: string;
   email: string | null;
   phone: string | null;
+  country?: string | null;
   type: 'visitor' | 'lead' | 'customer';
   marketingStatus?: string;
   externalId?: string | null;
@@ -1119,6 +1120,7 @@ export const api = {
         type?: string;
         labelId?: string;
         marketingStatus?: string;
+        country?: string;
         ids?: string[];
         sort?: string;
         order?: string;
@@ -1131,6 +1133,7 @@ export const api = {
       if (params?.type) qs.set('type', params.type);
       if (params?.labelId) qs.set('labelId', params.labelId);
       if (params?.marketingStatus) qs.set('marketingStatus', params.marketingStatus);
+      if (params?.country) qs.set('country', params.country);
       if (params?.ids?.length) qs.set('ids', params.ids.join(','));
       if (params?.sort) qs.set('sort', params.sort);
       if (params?.order) qs.set('order', params.order);
@@ -1157,6 +1160,7 @@ export const api = {
         name: string;
         email?: string | null;
         phone?: string | null;
+        country?: string | null;
         type?: string;
         labelIds?: string[];
         customAttributes?: Record<string, unknown>;
@@ -1171,6 +1175,7 @@ export const api = {
         name?: string;
         email?: string | null;
         phone?: string | null;
+        country?: string | null;
         type?: string;
         labelIds?: string[];
         customAttributes?: Record<string, unknown>;
@@ -1182,6 +1187,12 @@ export const api = {
         body,
         token,
       }),
+
+    getStats: (accountId: string, token: string) =>
+      request<{ stats: { total: number; hasEmail: number; hasPhone: number } }>(
+        `/accounts/${accountId}/contacts/stats`,
+        { token }
+      ),
 
     enrich: (
       accountId: string,
@@ -1625,6 +1636,16 @@ export const api = {
         }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}/recipients/import-segment`, {
           method: 'POST',
           body: { segment_id: segmentId, contact_ids: contactIds },
+          token,
+        }),
+      addContact: (accountId: string, campaignId: string, contactId: string, token: string) =>
+        request<{
+          selected: number;
+          excluded: { suppressed: number; reasons: Record<string, number> };
+          recipients: CampaignRecipientDetail[];
+        }>(`/accounts/${accountId}/marketing/campaigns/${campaignId}/recipients/add-contact`, {
+          method: 'POST',
+          body: { contact_id: contactId },
           token,
         }),
       getSteps: (accountId: string, campaignId: string, token: string) =>

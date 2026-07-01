@@ -11,6 +11,7 @@ export const contacts = pgTable('contacts', {
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }),
   phone: varchar('phone', { length: 50 }),
+  country: varchar('country', { length: 2 }),
   type: contactTypeEnum('type').notNull().default('visitor'),
   avatarUrl: text('avatar_url'),
   lastActivityAt: timestamp('last_activity_at', { withTimezone: true }),

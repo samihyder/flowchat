@@ -37,6 +37,7 @@ export async function GET(req: Request, { params }: Params) {
     type,
     labelId: url.searchParams.get('labelId'),
     marketingStatus: url.searchParams.get('marketingStatus'),
+    country: url.searchParams.get('country'),
     ids,
     sort: url.searchParams.get('sort') ?? 'last_activity_at',
     orderAsc: url.searchParams.get('order') === 'asc',
@@ -75,6 +76,7 @@ export async function POST(req: Request, { params }: Params) {
     email?: string | null;
     phone?: string | null;
     type?: string;
+    country?: string | null;
     labelIds?: string[];
     customAttributes?: Record<string, unknown>;
   };
@@ -85,6 +87,15 @@ export async function POST(req: Request, { params }: Params) {
   const type = body.type?.trim() ?? 'lead';
   if (!VALID_TYPES.includes(type as (typeof VALID_TYPES)[number])) {
     return Response.json({ error: 'Invalid contact type' }, { status: 400 });
+  }
+
+  let country: string | null = null;
+  if (body.country) {
+    const upper = body.country.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(upper)) {
+      return Response.json({ error: 'Invalid country code' }, { status: 400 });
+    }
+    country = upper;
   }
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
@@ -101,17 +112,18 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const rows = await sql`
-    INSERT INTO contacts (account_id, name, email, phone, type, custom_attributes, last_activity_at)
+    INSERT INTO contacts (account_id, name, email, phone, country, type, custom_attributes, last_activity_at)
     VALUES (
       ${accountId}::uuid,
       ${name},
       ${body.email?.trim() || null},
       ${body.phone?.trim() || null},
+      ${country},
       ${type},
       ${JSON.stringify(customAttributes)}::jsonb,
       NOW()
     )
-    RETURNING id, name, email, phone, type, external_id as "externalId",
+    RETURNING id, name, email, phone, country, type, external_id as "externalId",
               custom_attributes as "customAttributes",
               last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
               created_at as "createdAt", updated_at as "updatedAt"

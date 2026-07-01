@@ -20,7 +20,7 @@ export async function GET(req: Request, { params }: Params) {
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
   const rows = await sql`
-    SELECT c.id, c.name, c.email, c.phone, c.type, c.external_id as "externalId",
+    SELECT c.id, c.name, c.email, c.phone, c.country, c.type, c.external_id as "externalId",
            c.avatar_url as "avatarUrl", c.company_id as "companyId",
            c.enrichment_status as "enrichmentStatus",
            c.enrichment_provider as "enrichmentProvider",
@@ -107,12 +107,26 @@ export async function PATCH(req: Request, { params }: Params) {
     email?: string | null;
     phone?: string | null;
     type?: string;
+    country?: string | null;
     labelIds?: string[];
     customAttributes?: Record<string, unknown>;
   };
 
   if (body.type && !VALID_TYPES.includes(body.type as (typeof VALID_TYPES)[number])) {
     return Response.json({ error: 'Invalid contact type' }, { status: 400 });
+  }
+
+  let country: string | null | undefined;
+  if (body.country !== undefined) {
+    if (body.country) {
+      const upper = body.country.trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(upper)) {
+        return Response.json({ error: 'Invalid country code' }, { status: 400 });
+      }
+      country = upper;
+    } else {
+      country = null;
+    }
   }
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
@@ -149,11 +163,12 @@ export async function PATCH(req: Request, { params }: Params) {
       name = COALESCE(${body.name?.trim() ?? null}, name),
       email = CASE WHEN ${body.email !== undefined} THEN ${body.email?.trim() || null} ELSE email END,
       phone = CASE WHEN ${body.phone !== undefined} THEN ${body.phone?.trim() || null} ELSE phone END,
+      country = CASE WHEN ${country !== undefined} THEN ${country ?? null} ELSE country END,
       type = COALESCE(${body.type ?? null}, type),
       custom_attributes = CASE WHEN ${customAttributesJson !== null} THEN ${customAttributesJson}::jsonb ELSE custom_attributes END,
       updated_at = NOW()
     WHERE id = ${contactId}::uuid AND account_id = ${accountId}::uuid
-    RETURNING id, name, email, phone, type, external_id as "externalId",
+    RETURNING id, name, email, phone, country, type, external_id as "externalId",
               custom_attributes as "customAttributes",
               last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
               created_at as "createdAt", updated_at as "updatedAt"

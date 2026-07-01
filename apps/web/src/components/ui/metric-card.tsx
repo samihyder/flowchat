@@ -33,8 +33,12 @@ export function MetricCard({
   );
 }
 
-export function MetricGrid({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">{children}</div>
-  );
+export function MetricGrid({
+  children,
+  className = 'grid-cols-2 lg:grid-cols-4',
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <div className={`grid ${className} gap-4 mb-6`}>{children}</div>;
 }
