@@ -1894,6 +1894,11 @@ export const api = {
           `/accounts/${accountId}/marketing/automations/${automationId}/process`,
           { method: 'POST', token }
         ),
+      enroll: (accountId: string, automationId: string, contactId: string, token: string) =>
+        request<{ ok: boolean; enrolled: boolean; reason?: string }>(
+          `/accounts/${accountId}/marketing/automations/${automationId}/enroll`,
+          { method: 'POST', body: { contactId }, token }
+        ),
       restart: (accountId: string, automationId: string, token: string, contactIds?: string[]) =>
         request<{ ok: boolean; processed: number }>(
           `/accounts/${accountId}/marketing/automations/${automationId}/restart`,

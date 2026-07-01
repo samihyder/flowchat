@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CustomAttributeFields } from '@/components/contacts/custom-attribute-fields';
 import { ContactQuickActionsPanel } from '@/components/contacts/contact-quick-actions-panel';
+import { ContactQuickActionBar } from '@/components/contacts/contact-quick-action-bar';
+import { marketingRoutes } from '@/lib/marketing/routes';
 import { COUNTRY_OPTIONS } from '@/lib/country';
 
 const TYPES = ['visitor', 'lead', 'customer'] as const;
@@ -49,6 +51,8 @@ export default function ContactProfilePage() {
   const [suggestions, setSuggestions] = useState<EnrichmentSuggestion[]>([]);
   const [selectedFields, setSelectedFields] = useState<Record<string, Set<string>>>({});
   const [applyBusy, setApplyBusy] = useState(false);
+  const [headerTypeBusy, setHeaderTypeBusy] = useState(false);
+  const [headerCampaignBusy, setHeaderCampaignBusy] = useState(false);
 
   const load = async () => {
     if (!token || !accountId) return;
@@ -225,6 +229,33 @@ export default function ContactProfilePage() {
     );
   };
 
+  const handleQuickSetType = async (type: (typeof TYPES)[number]) => {
+    if (!token || !accountId || contact?.type === type) return;
+    setHeaderTypeBusy(true);
+    try {
+      await api.contacts.update(accountId, contactId, { type }, token);
+      await load();
+    } finally {
+      setHeaderTypeBusy(false);
+    }
+  };
+
+  const handleQuickCreateCampaign = async () => {
+    if (!token || !accountId || !contact?.email) return;
+    setHeaderCampaignBusy(true);
+    try {
+      const res = await api.marketing.campaigns.create(
+        accountId,
+        { name: `${contact.name} campaign` },
+        token
+      );
+      await api.marketing.campaigns.addContact(accountId, res.campaign.id, contactId, token);
+      router.push(marketingRoutes.campaignEdit(res.campaign.id, 1) as Route);
+    } finally {
+      setHeaderCampaignBusy(false);
+    }
+  };
+
   if (!contact) {
     return <div className="p-8 text-sm text-gray-400">Loading contact…</div>;
   }
@@ -254,6 +285,17 @@ export default function ContactProfilePage() {
           )}
         </div>
       </header>
+
+      <div className="bg-white border-b border-gray-200 px-6 py-3">
+        <ContactQuickActionBar
+          contact={{ ...contact, conversations }}
+          onOpenPanel={() => setQuickActionsOpen(true)}
+          onSetType={handleQuickSetType}
+          onCreateCampaign={() => void handleQuickCreateCampaign()}
+          typeBusy={headerTypeBusy}
+          campaignBusy={headerCampaignBusy}
+        />
+      </div>
 
       <div className="flex-1 overflow-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
@@ -588,6 +630,7 @@ export default function ContactProfilePage() {
           contactId={contactId}
           open={quickActionsOpen}
           onClose={() => setQuickActionsOpen(false)}
+          onContactUpdated={() => void load()}
         />
       )}
     </div>
