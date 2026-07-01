@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { getSessionCookie } from '@/lib/session-cookie';
+import { getSessionCookie, refreshSessionCookie } from '@/lib/session-cookie';
 import { fetchWorkspace } from '@/lib/workspace';
-import { api } from '@/lib/api';
+import { withBasePath } from '@/lib/base-path';
 
 function isValidUser(user: unknown): user is { id: string; name?: string | null; email: string } {
   if (!user || typeof user !== 'object') return false;
@@ -20,6 +20,42 @@ function normalizeUser(user: { id: string; name?: string | null; email: string; 
     name: user.name?.trim() || emailLocal || 'Agent',
     avatarUrl: user.avatarUrl,
   };
+}
+
+async function recoverFromCookie(cookieToken: string): Promise<'valid' | 'expired' | 'unknown'> {
+  try {
+    const res = await fetch(withBasePath('/api/auth/me'), {
+      headers: { Authorization: `Bearer ${cookieToken}` },
+    });
+    if (res.status === 401) return 'expired';
+    if (!res.ok) return 'unknown';
+
+    const me = (await res.json()) as {
+      user: { id: string; name?: string | null; email: string; avatarUrl?: string | null };
+      account: { id: string; name: string } | null;
+    };
+
+    if (!isValidUser(me.user)) return 'unknown';
+
+    let accountId = me.account?.id ?? null;
+    let accountName = me.account?.name ?? '';
+
+    if (!accountId) {
+      const workspace = await fetchWorkspace(cookieToken);
+      if (workspace && 'accountId' in workspace) {
+        accountId = workspace.accountId;
+        accountName = workspace.accountName;
+      }
+    }
+
+    if (!accountId) return 'unknown';
+
+    useAuthStore.getState().setAuth(normalizeUser(me.user), cookieToken, accountId, accountName);
+    refreshSessionCookie(cookieToken);
+    return 'valid';
+  } catch {
+    return 'unknown';
+  }
 }
 
 /** Wait for persisted auth, recover from session cookie, and backfill workspace. */
@@ -46,7 +82,6 @@ export function useAuthBootstrap() {
 
       const state = useAuthStore.getState();
 
-      // Drop corrupted persisted auth (e.g. partial localStorage after schema changes).
       if ((state.token && !isValidUser(state.user)) || (state.user && !state.token)) {
         state.clearAuth();
       } else if (state.user && isValidUser(state.user) && !state.user.name?.trim()) {
@@ -57,31 +92,14 @@ export function useAuthBootstrap() {
       const cookieToken = getSessionCookie();
 
       if (!activeToken && cookieToken) {
-        try {
-          const me = await api.auth.me(cookieToken);
-          if (isValidUser(me.user) && me.account?.id) {
-            useAuthStore.getState().setAuth(
-              normalizeUser(me.user),
-              cookieToken,
-              me.account.id,
-              me.account.name
-            );
-            activeToken = cookieToken;
-          } else {
-            const workspace = await fetchWorkspace(cookieToken);
-            if (workspace && 'accountId' in workspace && isValidUser(me.user)) {
-              useAuthStore.getState().setAuth(
-                normalizeUser(me.user),
-                cookieToken,
-                workspace.accountId,
-                workspace.accountName
-              );
-              activeToken = cookieToken;
-            }
-          }
-        } catch {
+        const recovery = await recoverFromCookie(cookieToken);
+        if (recovery === 'valid') {
+          activeToken = cookieToken;
+        } else if (recovery === 'expired') {
           useAuthStore.getState().clearAuth();
         }
+      } else if (activeToken) {
+        refreshSessionCookie(activeToken);
       }
 
       if (activeToken && !useAuthStore.getState().accountId) {

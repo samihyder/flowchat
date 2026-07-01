@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless';
+import { touchSession } from '@/lib/auth-server';
 
 function getSql() {
   const url = process.env.DATABASE_URL;
@@ -24,6 +25,7 @@ export async function authorizeAccount(
   const row = rows[0] as { user_id: string; role: string; status: string } | undefined;
   if (!row) return null;
   if (row.status !== 'active') return null;
+  await touchSession(token);
   return { userId: row.user_id, role: row.role, status: row.status };
 }
 

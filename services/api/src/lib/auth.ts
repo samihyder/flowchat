@@ -5,6 +5,8 @@ import { eq, and } from 'drizzle-orm';
 import { sign, verify as jwtVerify } from 'hono/jwt';
 import { env } from './env.js';
 
+const SESSION_IDLE_MS = 24 * 60 * 60 * 1000;
+
 const ARGON2_OPTIONS = {
   memoryCost: 65536,
   timeCost: 3,
@@ -21,11 +23,16 @@ export async function verifyPassword(hash: string, password: string) {
 
 export async function createSession(userId: string) {
   const token = createId();
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+  const expiresAt = new Date(Date.now() + SESSION_IDLE_MS);
 
   await db.insert(sessions).values({ userId, token, expiresAt });
 
   return { token, expiresAt };
+}
+
+async function extendSession(token: string) {
+  const expiresAt = new Date(Date.now() + SESSION_IDLE_MS);
+  await db.update(sessions).set({ expiresAt }).where(eq(sessions.token, token));
 }
 
 export async function validateSession(token: string) {
@@ -42,6 +49,7 @@ export async function validateSession(token: string) {
     return null;
   }
 
+  await extendSession(token);
   return session;
 }
 

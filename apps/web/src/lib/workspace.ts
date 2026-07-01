@@ -1,27 +1,21 @@
 import { useAuthStore } from '@/store/auth';
+import { withBasePath } from '@/lib/base-path';
 import { api } from '@/lib/api';
 
 export type Workspace =
   | { accountId: string; accountName: string }
   | { pendingApproval: true };
 
-/** Load workspace from API or Vercel /api/workspace fallback. */
+/** Load workspace from Vercel API first, then Railway fallback. */
 export async function fetchWorkspace(token: string): Promise<Workspace | null> {
   try {
-    const me = await api.auth.me(token);
-    if (me.account?.id) {
-      return { accountId: me.account.id, accountName: me.account.name };
-    }
-  } catch {
-    // Railway API may be stale.
-  }
-
-  try {
-    const res = await fetch('/api/workspace', {
+    const res = await fetch(withBasePath('/api/workspace'), {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.status === 503) {
-      throw new Error('DATABASE_URL is not configured on Vercel. Add your Neon connection string in Project Settings → Environment Variables.');
+      throw new Error(
+        'DATABASE_URL is not configured on Vercel. Add your Neon connection string in Project Settings → Environment Variables.'
+      );
     }
     if (res.ok) {
       const data = (await res.json()) as {
@@ -35,8 +29,20 @@ export async function fetchWorkspace(token: string): Promise<Workspace | null> {
         return { accountId: data.account.id, accountName: data.account.name };
       }
     }
+    if (res.status === 401) {
+      return null;
+    }
   } catch (err) {
     if (err instanceof Error && err.message.includes('DATABASE_URL')) throw err;
+  }
+
+  try {
+    const me = await api.auth.me(token);
+    if (me.account?.id) {
+      return { accountId: me.account.id, accountName: me.account.name };
+    }
+  } catch {
+    // Railway API may be stale.
   }
 
   return null;

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import type { Route } from 'next';
 import { useAuthStore } from '@/store/auth';
 import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
+import { useSessionKeepAlive } from '@/lib/useSessionKeepAlive';
 import { MarketingSidebar } from '@/components/layout/marketing-sidebar';
 
 function MarketingShellFallback() {
@@ -20,6 +21,7 @@ function MarketingShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, token, accountId } = useAuthStore();
   const { ready: authReady } = useAuthBootstrap();
+  useSessionKeepAlive();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isWizard = pathname.includes('/edit');

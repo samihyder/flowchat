@@ -11,6 +11,7 @@ import { useVisitorAlarm } from '@/lib/useVisitorAlarm';
 import { useMessageAlert } from '@/lib/useMessageAlert';
 import { isMessageAlertMuted, setMessageAlertMuted } from '@/lib/message-alert';
 import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
+import { useSessionKeepAlive } from '@/lib/useSessionKeepAlive';
 import { api } from '@/lib/api';
 import { countryLabel } from '@/lib/country';
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
@@ -42,6 +43,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const conversationFilter = searchParams.get('filter');
   const { user, token, accountId, accountName, clearAuth } = useAuthStore();
   const { ready: authReady } = useAuthBootstrap();
+  useSessionKeepAlive();
   const { sendPresence, presence, lastMissedChatEvent, clearMissedChatEvent } = useWsStore();
   const [showAvailability, setShowAvailability] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);

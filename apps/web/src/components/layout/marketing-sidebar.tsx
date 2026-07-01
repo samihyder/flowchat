@@ -10,6 +10,8 @@ import { marketingRoutes } from '@/lib/marketing/routes';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import { initials } from '@/components/conversations/conversation-badges';
 
+const CRM_HOME = '/dashboard/contacts' as const;
+
 const navItems = [
   { label: 'Campaigns', href: marketingRoutes.campaigns, icon: 'mail' },
   { label: 'Templates', href: marketingRoutes.templates, icon: 'description' },
@@ -55,6 +57,17 @@ export function MarketingSidebar({ variant = 'list', onNavigate }: MarketingSide
         <p className="text-[12px] text-gray-500 uppercase tracking-wider font-semibold">
           Campaign Manager
         </p>
+      </div>
+
+      <div className="mb-6 px-2">
+        <Link
+          href={CRM_HOME as Route}
+          onClick={onNavigate}
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-primary-border bg-primary-surface text-primary font-semibold text-body-md transition-colors hover:bg-primary-fixed hover:border-primary-fixed-dim"
+        >
+          <MarketingIcon name="arrow_back" className="text-[20px]" />
+          <span>Back to CRM</span>
+        </Link>
       </div>
 
       <nav className="flex-1 space-y-1">

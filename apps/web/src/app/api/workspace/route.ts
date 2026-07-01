@@ -1,10 +1,17 @@
 import { neon } from '@neondatabase/serverless';
+import { touchSession } from '@/lib/auth-server';
+import { getBearerToken } from '@/lib/db-auth';
 
 /** Resolve workspace from session when Railway API is on a stale build. */
 export async function GET(req: Request) {
-  const token = req.headers.get('Authorization')?.replace('Bearer ', '');
+  const token = getBearerToken(req);
   if (!token) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const userId = await touchSession(token);
+  if (!userId) {
+    return Response.json({ error: 'Session expired or invalid' }, { status: 401 });
   }
 
   const databaseUrl = process.env.DATABASE_URL;
@@ -19,6 +26,7 @@ export async function GET(req: Request) {
     JOIN account_users au ON au.user_id = s.user_id
     JOIN accounts a ON a.id = au.account_id
     WHERE s.token = ${token}
+      AND s.user_id = ${userId}::uuid
       AND s.expires_at > NOW()
       AND au.status = 'active'
     ORDER BY au.created_at ASC

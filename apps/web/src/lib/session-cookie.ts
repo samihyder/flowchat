@@ -1,7 +1,7 @@
 import { getBasePath } from '@/lib/base-path';
+import { SESSION_IDLE_SECONDS } from '@/lib/session-policy';
 
 const COOKIE_NAME = 'fc_session';
-const MAX_AGE_DAYS = 30;
 
 function sessionCookiePath(): string {
   return getBasePath() || '/';
@@ -19,9 +19,13 @@ export function getSessionCookie(): string | null {
 }
 
 export function setSessionCookie(token: string) {
-  const maxAge = MAX_AGE_DAYS * 24 * 60 * 60;
   const path = sessionCookiePath();
-  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(token)}; path=${path}; max-age=${maxAge}; SameSite=Lax`;
+  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(token)}; path=${path}; max-age=${SESSION_IDLE_SECONDS}; SameSite=Lax`;
+}
+
+/** Reset browser cookie idle timer after server session touch. */
+export function refreshSessionCookie(token: string) {
+  setSessionCookie(token);
 }
 
 export function clearSessionCookie() {
