@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contacts Module — Final (List, Profile, Import, Merge)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F9FAFB;color:#111827;font-size:14px}
+a{color:#6366F1;text-decoration:none}
+.layout{display:flex;height:100vh;overflow:hidden;position:relative}
+
+/* sidebar */
+.sidebar{width:220px;background:#1E1B4B;color:#C7D2FE;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-logo{padding:18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #312E81}
+.sidebar-logo-icon{width:32px;height:32px;background:#6366F1;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px}
+.sidebar-logo-name{font-weight:700;font-size:15px;color:#fff}
+.sidebar-section{padding:12px 0 4px}
+.sidebar-section-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6366F1;padding:0 16px 6px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:7px 16px;cursor:pointer;color:#C7D2FE;font-size:13px}
+.sidebar-item:hover,.sidebar-item.active{background:#312E81;color:#fff}
+.sidebar-item .icon{width:16px;text-align:center;opacity:.7}
+.sidebar-item.active .icon{opacity:1}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* view switcher */
+.view-switch{display:flex;align-items:center;gap:4px;background:#fff;border-bottom:1px solid #E5E7EB;padding:8px 20px;flex-shrink:0}
+.view-btn{padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;color:#6B7280;background:transparent}
+.view-btn.active{background:#EEF2FF;color:#6366F1;border-color:#C7D2FE}
+.view-hint{margin-left:auto;font-size:11px;color:#9CA3AF}
+
+.view{flex:1;display:none;flex-direction:column;overflow:hidden}
+.view.active{display:flex}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer;border:none;white-space:nowrap}
+.btn-primary{background:#6366F1;color:#fff}
+.btn-secondary{background:#fff;color:#374151;border:1px solid #D1D5DB}
+.btn-danger-ghost{background:transparent;color:#EF4444;border:1px solid #FCA5A5}
+.btn-sm{padding:5px 11px;font-size:11.5px}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.badge-green{background:#D1FAE5;color:#065F46}
+.badge-orange{background:#FFEDD5;color:#9A3412}
+.badge-blue{background:#DBEAFE;color:#1E40AF}
+.badge-gray{background:#F3F4F6;color:#374151}
+.badge-purple{background:#EDE9FE;color:#5B21B6}
+.badge-soon{background:#FEF3C7;color:#92400E}
+.badge-live{background:#D1FAE5;color:#065F46}
+.badge-red{background:#FEE2E2;color:#991B1B}
+.badge-yellow{background:#FEF3C7;color:#92400E}
+.avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.avatar-sm{width:28px;height:28px;border-radius:50%;background:#6366F1;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:11px;flex-shrink:0}
+.form-input{padding:7px 10px;border:1px solid #D1D5DB;border-radius:7px;font-size:12px;background:#fff;color:#111827}
+.annotation-box{background:#EFF6FF;border:1px solid #93C5FD;border-radius:8px;padding:10px 14px;font-size:12px;color:#1E40AF;margin:0 0 14px}
+.annotation-box strong{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;color:#1D4ED8}
+
+/* ================= LIST VIEW ================= */
+.list-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#fff;border-bottom:1px solid #E5E7EB;flex-shrink:0}
+.list-header-left h1{font-size:18px;font-weight:700}
+.list-header-left p{font-size:12px;color:#6B7280;margin-top:1px}
+
+.facts-strip{display:flex;align-items:stretch;background:#fff;border-bottom:1px solid #E5E7EB;padding:0 20px;flex-shrink:0;overflow-x:auto}
+.fact{padding:10px 18px;border-right:1px solid #F3F4F6;flex-shrink:0}
+.fact:last-child{border-right:none}
+.fact .k{font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.04em}
+.fact .v{font-size:13px;font-weight:600;color:#111827;margin-top:2px}
+
+.toolbar{display:flex;align-items:center;gap:8px;background:#fff;border-bottom:1px solid #E5E7EB;padding:10px 20px;flex-shrink:0}
+.toolbar .search{flex:1;min-width:160px;max-width:320px}
+
+.table-wrap{flex:1;overflow-y:auto;background:#fff}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;padding:9px 20px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;position:sticky;top:0}
+td{padding:10px 20px;border-bottom:1px solid #F3F4F6;font-size:13px;vertical-align:middle}
+tr{cursor:pointer}
+tr:hover td{background:#FAFAFA}
+.auto-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#5B21B6;background:#EDE9FE;padding:2px 8px;border-radius:12px}
+
+.list-bottom-bar{display:flex;align-items:center;gap:10px;background:#fff;border-top:1px solid #E5E7EB;padding:10px 20px;flex-shrink:0}
+.list-bottom-bar .label{font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0}
+.action-chip{display:flex;align-items:center;gap:6px;padding:7px 12px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;font-size:12px;color:#374151;cursor:pointer;flex-shrink:0;white-space:nowrap}
+.action-chip:hover{background:#F3F4F6}
+.action-sep{width:1px;height:20px;background:#E5E7EB;flex-shrink:0}
+.pager-right{margin-left:auto;font-size:12px;color:#6B7280;display:flex;align-items:center;gap:10px}
+
+/* ================= PROFILE VIEW ================= */
+.head{background:#fff;border-bottom:1px solid #E5E7EB;padding:14px 20px;flex-shrink:0}
+.back-link{font-size:11.5px;color:#6B7280;margin-bottom:8px;display:block;cursor:pointer}
+.head-row{display:flex;align-items:center;gap:14px}
+.head-id .name{font-size:16px;font-weight:700}
+.head-id .email{font-size:11.5px;color:#6B7280}
+.head-divider{width:1px;height:32px;background:#E5E7EB;flex-shrink:0}
+.head-actions{margin-left:auto;display:flex;gap:8px;flex-shrink:0}
+
+.body{flex:1;display:flex;overflow:hidden}
+.tabs{display:flex;border-bottom:2px solid #E5E7EB;padding:0 20px;flex-shrink:0;background:#fff}
+.tab{padding:11px 14px;font-size:12.5px;font-weight:500;color:#6B7280;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+.tab.active{color:#6366F1;border-bottom-color:#6366F1}
+
+.center{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.tab-body{flex:1;overflow-y:auto;padding:18px 20px}
+.card-title{font-size:12px;font-weight:700;color:#374151;margin-bottom:10px}
+
+.h-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.h-card{flex:1;min-width:220px;background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:13px}
+.h-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.h-card .title{font-size:12.5px;font-weight:600;color:#111827}
+.h-card .body-text{font-size:11.5px;color:#6B7280;line-height:1.5}
+.progress-bar{height:5px;background:#E5E7EB;border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:#6366F1;border-radius:3px}
+.h-card .foot{margin-top:10px;display:flex;gap:6px}
+
+.chip-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:11.5px;font-weight:500;background:#F3F4F6;color:#374151}
+.chip-label{font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.04em;margin-right:4px}
+
+.action-bar{display:flex;align-items:center;gap:10px;background:#fff;border-top:1px solid #E5E7EB;padding:10px 20px;flex-shrink:0;overflow-x:auto}
+.action-bar .label{font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;margin-right:4px}
+
+/* ================= OVERLAYS (Import + Merge) ================= */
+.overlay{position:fixed;inset:0;background:rgba(17,24,39,.45);display:none;align-items:center;justify-content:center;z-index:50}
+.overlay.active{display:flex}
+.modal{background:#fff;border-radius:14px;max-width:92vw;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.modal-head{padding:16px 20px;border-bottom:1px solid #E5E7EB;flex-shrink:0}
+.modal-title-row{display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9CA3AF;cursor:pointer;font-size:16px;border:none;background:transparent}
+.modal-body{flex:1;overflow-y:auto;padding:18px 20px}
+.modal-foot{display:flex;align-items:center;gap:8px;padding:12px 20px;border-top:1px solid #E5E7EB;flex-shrink:0}
+.modal-foot .spacer{flex:1}
+
+/* import steps */
+.import-modal{width:640px}
+.steps{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:11.5px}
+.step{display:flex;align-items:center;gap:5px;color:#9CA3AF;font-weight:500}
+.step .dot{width:16px;height:16px;border-radius:50%;background:#E5E7EB;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step.done .dot{background:#10B981}
+.step.active{color:#6366F1}
+.step.active .dot{background:#6366F1}
+.step-sep{width:20px;height:1px;background:#E5E7EB}
+.dropzone{border:2px dashed #C7D2FE;border-radius:12px;padding:28px;text-align:center;background:#F9FAFB;cursor:pointer}
+.dropzone .icon{font-size:30px;margin-bottom:6px}
+.dropzone .title{font-size:13.5px;font-weight:600;color:#374151}
+.dropzone .sub{font-size:11.5px;color:#6B7280;margin-top:3px}
+.dropzone .hint{font-size:10.5px;color:#9CA3AF;margin-top:6px}
+.upload-links{display:flex;gap:10px;margin-top:10px;font-size:12px}
+.map-legend{display:grid;grid-template-columns:140px 1fr 160px 90px;gap:10px;padding:0 4px 6px;font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #F3F4F6;margin-bottom:6px}
+.map-row{display:grid;grid-template-columns:140px 1fr 160px 90px;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid #F3F4F6}
+.map-row:last-child{border-bottom:none}
+.map-col{font-family:ui-monospace,monospace;font-size:11.5px;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.map-sample{font-size:11px;color:#9CA3AF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.map-select{width:100%;padding:5px 8px;border:1px solid #D1D5DB;border-radius:6px;font-size:11.5px}
+.dup-row{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid #F3F4F6}
+.dup-row label{font-size:12px;color:#374151;font-weight:500;flex-shrink:0}
+.dup-row select{padding:6px 10px;border:1px solid #D1D5DB;border-radius:7px;font-size:12px}
+.result-strip{display:flex;border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;margin-bottom:12px}
+.result-cell{flex:1;padding:12px 14px;text-align:center;border-right:1px solid #F3F4F6}
+.result-cell:last-child{border-right:none}
+.result-cell .val{font-size:19px;font-weight:700}
+.result-cell .lbl{font-size:10.5px;color:#6B7280;margin-top:2px;text-transform:uppercase;letter-spacing:.03em}
+
+/* merge modal */
+.merge-modal{width:760px}
+.merge-summary{display:flex;border:1px solid #E5E7EB;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.merge-summary .cell{flex:1;padding:11px 14px;text-align:center;border-right:1px solid #F3F4F6}
+.merge-summary .cell:last-child{border-right:none}
+.merge-summary .val{font-size:17px;font-weight:700}
+.merge-summary .lbl{font-size:10.5px;color:#6B7280;margin-top:2px;text-transform:uppercase;letter-spacing:.03em}
+.merge-group{border:1px solid #E5E7EB;border-radius:10px;margin-bottom:12px;overflow:hidden}
+.merge-group-head{display:flex;align-items:center;gap:8px;padding:9px 14px;background:#F9FAFB;border-bottom:1px solid #E5E7EB}
+.merge-group-head .title{font-size:12px;font-weight:600;flex:1}
+.merge-compare{display:grid;grid-template-columns:100px 1fr 1fr;gap:0}
+.merge-compare .field-label{padding:8px 12px;font-size:10.5px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.03em;border-top:1px solid #F3F4F6;display:flex;align-items:center}
+.merge-compare .field-val{padding:8px 12px;font-size:12px;color:#374151;border-top:1px solid #F3F4F6;border-left:1px solid #F3F4F6;display:flex;align-items:center;gap:6px}
+.merge-compare .field-val.chosen{background:#EEF2FF;font-weight:600;color:#111827}
+.merge-col-head{padding:10px 12px;border-left:1px solid #F3F4F6;display:flex;align-items:center;gap:8px}
+.merge-col-head input{accent-color:#6366F1}
+.merge-group-foot{display:flex;gap:8px;padding:9px 14px;border-top:1px solid #E5E7EB;background:#FAFAFA}
+
+.view-switch-buttons{display:flex;gap:6px}
+</style></head>
+<body>
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-logo"><div class="sidebar-logo-icon">F</div><div class="sidebar-logo-name">FlowChat</div></div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">CRM</div>
+      <div class="sidebar-item active"><span class="icon">🧑‍💼</span>Contacts</div>
+      <div class="sidebar-item"><span class="icon">📧</span>Marketing</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="view-switch">
+      <div class="view-btn active" onclick="showView('list')">📋 List</div>
+      <div class="view-btn" onclick="showView('profile')">🧑‍💼 Profile</div>
+      <div class="view-hint">All 4 contact screens live in this one file — click a row to open Profile, or use the header buttons to preview Import / Merge</div>
+    </div>
+
+    <!-- ================= LIST VIEW ================= -->
+    <div class="view active" id="view-list">
+      <div class="list-header">
+        <div class="list-header-left"><h1>Contacts</h1><p>247 contacts · 12 new this week</p></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="openModal('import')">⬆ Import</button>
+          <button class="btn btn-secondary btn-sm" onclick="openModal('merge')">⇄ Merge duplicates</button>
+          <button class="btn btn-primary btn-sm">+ New contact</button>
+        </div>
+      </div>
+
+      <div class="facts-strip">
+        <div class="fact"><div class="k">Total</div><div class="v">247</div></div>
+        <div class="fact"><div class="k">Reachable email</div><div class="v">211</div></div>
+        <div class="fact"><div class="k">Has phone</div><div class="v">158</div></div>
+        <div class="fact"><div class="k">In automation</div><div class="v">89</div></div>
+        <div class="fact"><div class="k">Duplicates</div><div class="v"><a href="#" onclick="openModal('merge');return false">4 groups →</a></div></div>
+      </div>
+
+      <div class="toolbar">
+        <input class="form-input search" placeholder="🔍 Search name, email, phone…">
+        <select class="form-input"><option>All types</option></select>
+        <select class="form-input"><option>All labels</option></select>
+        <select class="form-input"><option>Subscription</option></select>
+        <select class="form-input"><option>Automation</option></select>
+        <button class="btn btn-secondary btn-sm" style="margin-left:auto">Sort: Last activity</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th style="width:28px"><input type="checkbox"></th><th>Name</th><th>Type</th><th>Labels</th><th>Subscription</th><th>Automation</th><th>Last activity</th></tr></thead>
+          <tbody>
+            <tr onclick="showView('profile')">
+              <td onclick="event.stopPropagation()"><input type="checkbox" checked></td>
+              <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-sm">JA</div><div><div style="font-weight:500">James Abbot</div><div style="font-size:11px;color:#6B7280">james.abbot@techcorp.co.uk</div></div></div></td>
+              <td><span class="badge badge-orange">Lead</span></td>
+              <td><span class="chip" style="background:#FEE2E2;color:#991B1B">Hot Lead</span></td>
+              <td><span class="badge badge-green">Subscribed</span></td>
+              <td><span class="auto-tag">⚡ Welcome Drip · 2/3</span></td>
+              <td style="color:#6B7280;font-size:12px">2 min ago</td>
+            </tr>
+            <tr onclick="showView('profile')">
+              <td onclick="event.stopPropagation()"><input type="checkbox"></td>
+              <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-sm" style="background:#D1FAE5;color:#065F46">SM</div><div><div style="font-weight:500">Sarah Mitchell</div><div style="font-size:11px;color:#6B7280">sarah@innovatech.io</div></div></div></td>
+              <td><span class="badge badge-orange">Lead</span></td>
+              <td><span class="chip" style="background:#FEF3C7;color:#92400E">Warm Lead</span></td>
+              <td><span class="badge badge-green">Subscribed</span></td>
+              <td><span style="color:#9CA3AF;font-size:12px">— none</span></td>
+              <td style="color:#6B7280;font-size:12px">18 min ago</td>
+            </tr>
+            <tr onclick="showView('profile')">
+              <td onclick="event.stopPropagation()"><input type="checkbox"></td>
+              <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-sm" style="background:#E0E7FF;color:#4338CA">RP</div><div><div style="font-weight:500">Robert Park</div><div style="font-size:11px;color:#6B7280">rpark@globalfin.com</div></div></div></td>
+              <td><span class="badge badge-blue">Customer</span></td>
+              <td><span class="chip" style="background:#EDE9FE;color:#5B21B6">US</span></td>
+              <td><span class="badge badge-green">Subscribed</span></td>
+              <td><span class="auto-tag">⚡ Renewal · 1/2</span></td>
+              <td style="color:#6B7280;font-size:12px">1h ago</td>
+            </tr>
+            <tr onclick="showView('profile')">
+              <td onclick="event.stopPropagation()"><input type="checkbox"></td>
+              <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar-sm" style="background:#FCE7F3;color:#9D174D">LK</div><div><div style="font-weight:500">Laura King</div><div style="font-size:11px;color:#6B7280">l.king@brightmark.co.uk</div></div></div></td>
+              <td><span class="badge badge-orange">Lead</span></td>
+              <td><span class="chip" style="background:#EDE9FE;color:#5B21B6">UK</span></td>
+              <td><span class="badge badge-gray">Unsubscribed</span></td>
+              <td><span style="color:#9CA3AF;font-size:12px">— none</span></td>
+              <td style="color:#6B7280;font-size:12px">5h ago</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="list-bottom-bar">
+        <span class="label">3 selected</span>
+        <div class="action-chip">⚡ Automate selected</div>
+        <div class="action-chip">🧭 Route/assign</div>
+        <div class="action-chip">🏷 Label</div>
+        <div class="action-chip" style="color:#EF4444">🗑 Delete</div>
+        <div class="pager-right">
+          <span>Showing 1–25 of 247</span>
+          <button class="btn btn-secondary btn-sm">← Prev</button>
+          <button class="btn btn-secondary btn-sm">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= PROFILE VIEW ================= -->
+    <div class="view" id="view-profile">
+      <div class="head">
+        <a class="back-link" onclick="showView('list')">← All contacts</a>
+        <div class="head-row">
+          <div class="avatar">JA</div>
+          <div class="head-id">
+            <div class="name">James Abbot</div>
+            <div class="email">james.abbot@techcorp.co.uk · +44 7700 900123</div>
+          </div>
+          <div class="head-divider"></div>
+          <span class="badge badge-orange">Lead</span>
+          <span class="badge badge-green">Subscribed</span>
+          <span class="badge badge-gray">🇬🇧 UK</span>
+          <span class="badge badge-purple">⚡ 1 automation</span>
+          <div class="head-actions">
+            <button class="btn btn-secondary btn-sm">✏ Edit</button>
+            <button class="btn btn-danger-ghost btn-sm">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="facts-strip">
+        <div class="fact"><div class="k">Type</div><div class="v">Lead</div></div>
+        <div class="fact"><div class="k">Country</div><div class="v">🇬🇧 UK</div></div>
+        <div class="fact"><div class="k">Lead score</div><div class="v">78</div></div>
+        <div class="fact"><div class="k">Company</div><div class="v">TechCorp Ltd</div></div>
+        <div class="fact"><div class="k">Created</div><div class="v">Jun 15</div></div>
+        <div class="fact"><div class="k">Last activity</div><div class="v">2 min ago</div></div>
+        <div class="fact"><div class="k">Assigned to</div><div class="v">Sami Haider</div></div>
+      </div>
+
+      <div class="body">
+        <div class="center">
+          <div class="tabs">
+            <div class="tab">💬 Conversations (3)</div>
+            <div class="tab">📝 Notes (2)</div>
+            <div class="tab">📈 Activity</div>
+            <div class="tab active">⚡ Automation</div>
+          </div>
+          <div class="tab-body">
+            <div class="chip-row">
+              <span class="chip-label">Labels</span>
+              <span class="chip">Hot Lead</span><span class="chip">Newsletter</span><span class="chip" style="background:#EEF2FF;color:#6366F1">+ Add</span>
+            </div>
+
+            <div class="card-title">Automation</div>
+            <div class="h-row">
+              <div class="h-card">
+                <div class="top"><span class="title">📧 Email sequence</span><span class="badge badge-live">Live</span></div>
+                <div class="body-text">June Welcome Drip — step 2 of 3, next send in 1 day</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:66%"></div></div>
+                <div class="foot"><button class="btn btn-secondary btn-sm">Pause</button><button class="btn btn-secondary btn-sm">Enroll in another</button></div>
+              </div>
+              <div class="h-card">
+                <div class="top"><span class="title">🧭 Routing</span><span class="badge badge-live">Live</span></div>
+                <div class="body-text">Assigned to Sami Haider (UK Sales team)</div>
+                <div class="foot"><button class="btn btn-secondary btn-sm">Re-assign</button></div>
+              </div>
+              <div class="h-card">
+                <div class="top"><span class="title">🎯 Trigger rules</span><span class="badge badge-soon">Coming soon</span></div>
+                <div class="body-text">Event → action automation (e.g. type changes → auto-enroll). Needs a backend rules engine — shown as target design.</div>
+                <div class="foot"><button class="btn btn-secondary btn-sm" disabled style="opacity:.5">+ New rule</button></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <span class="label">Quick actions</span>
+            <div class="action-chip">✉️ Email</div>
+            <div class="action-chip">📞 Call</div>
+            <div class="action-chip">💬 Open chat</div>
+            <div class="action-sep"></div>
+            <div class="action-chip">Lead ▾</div>
+            <div class="action-sep"></div>
+            <div class="action-chip">✨ Enrich contact</div>
+            <div class="action-chip">+ Add to segment</div>
+            <div class="action-chip">+ Enroll in campaign</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= IMPORT MODAL OVERLAY ================= -->
+<div class="overlay" id="overlay-import">
+  <div class="modal import-modal">
+    <div class="modal-head">
+      <div class="modal-title-row">
+        <div class="modal-title">Import contacts from CSV</div>
+        <button class="modal-close" onclick="closeModal('import')">✕</button>
+      </div>
+      <div class="steps">
+        <div class="step active" id="is1"><span class="dot">1</span>Upload</div>
+        <div class="step-sep"></div>
+        <div class="step" id="is2"><span class="dot">2</span>Map columns</div>
+        <div class="step-sep"></div>
+        <div class="step" id="is3"><span class="dot">3</span>Result</div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="importStep1">
+        <div class="dropzone">
+          <div class="icon">📂</div>
+          <div class="title">Drop your CSV file here</div>
+          <div class="sub">or <b style="color:#6366F1">click to browse</b></div>
+          <div class="hint">Max 50 MB · UTF-8 recommended</div>
+        </div>
+        <div class="upload-links">
+          <a href="#">⬇ Download template CSV</a>
+          <a href="#">📖 Import guide</a>
+        </div>
+      </div>
+      <div id="importStep2" style="display:none">
+        <div class="map-legend"><div>CSV column</div><div>Sample value</div><div>Maps to field</div><div>Required</div></div>
+        <div class="map-row"><div class="map-col">Full Name</div><div class="map-sample">James Abbot, Sarah M…</div><select class="map-select"><option selected>Name</option></select><span class="badge badge-red">Required</span></div>
+        <div class="map-row"><div class="map-col">Email Address</div><div class="map-sample">james@techcorp.co.uk…</div><select class="map-select"><option selected>Email</option></select><span class="badge badge-yellow">Dedup key</span></div>
+        <div class="map-row"><div class="map-col">Mobile</div><div class="map-sample">+44 7700 900123…</div><select class="map-select"><option selected>Phone</option></select><span></span></div>
+        <div class="map-row"><div class="map-col">Company</div><div class="map-sample">TechCorp Ltd, Innova…</div><select class="map-select"><option selected>Company (custom)</option></select><span></span></div>
+        <div class="dup-row">
+          <label>On duplicate email</label>
+          <select><option selected>Update existing contact</option><option>Skip duplicate</option><option>Create duplicate (not recommended)</option></select>
+        </div>
+      </div>
+      <div id="importStep3" style="display:none">
+        <div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:100%"></div></div>
+        <div style="font-size:11.5px;color:#6B7280;margin-bottom:10px">142 / 142 rows processed · done</div>
+        <div class="result-strip">
+          <div class="result-cell"><div class="val" style="color:#065F46">84</div><div class="lbl">Created</div></div>
+          <div class="result-cell"><div class="val" style="color:#1E40AF">9</div><div class="lbl">Updated</div></div>
+          <div class="result-cell"><div class="val" style="color:#374151">2</div><div class="lbl">Skipped</div></div>
+          <div class="result-cell"><div class="val" style="color:#991B1B">2</div><div class="lbl">Errors</div></div>
+        </div>
+        <button class="btn btn-secondary btn-sm">⬇ Download error report (2 rows) <span class="badge badge-live">Live</span></button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-sm" id="importBack" onclick="importStep(1)" style="display:none">← Back</button>
+      <div class="spacer"></div>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('import')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="importNext" onclick="importStep(2)">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MERGE MODAL OVERLAY ================= -->
+<div class="overlay" id="overlay-merge">
+  <div class="modal merge-modal">
+    <div class="modal-head">
+      <div class="modal-title-row">
+        <div class="modal-title">Merge duplicate contacts</div>
+        <button class="modal-close" onclick="closeModal('merge')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="annotation-box">
+        <strong>New screen — not previously wireframed</strong>
+        Duplicate groups shown as horizontal comparisons: each column is one duplicate record, each row a field. Pick the primary record per group with the radio at the top of its column; the highlighted column is what survives the merge.
+      </div>
+
+      <div class="merge-summary">
+        <div class="cell"><div class="val">4</div><div class="lbl">Groups found</div></div>
+        <div class="cell"><div class="val">9</div><div class="lbl">Contacts affected</div></div>
+        <div class="cell"><div class="val">5</div><div class="lbl">Will be removed</div></div>
+      </div>
+
+      <div class="merge-group">
+        <div class="merge-group-head">
+          <span class="title">Group 1 · matched by email</span>
+          <span class="badge badge-yellow">james.abbot@techcorp.co.uk</span>
+        </div>
+        <div class="merge-compare">
+          <div class="field-label"></div>
+          <div class="merge-col-head"><input type="radio" name="g1" checked><b>James Abbot</b><span class="badge badge-live" style="margin-left:auto">Keep</span></div>
+          <div class="merge-col-head"><input type="radio" name="g1"><b>J. Abbot</b></div>
+
+          <div class="field-label">Email</div>
+          <div class="field-val chosen">james.abbot@techcorp.co.uk</div>
+          <div class="field-val">james.abbot@techcorp.co.uk</div>
+
+          <div class="field-label">Phone</div>
+          <div class="field-val chosen">+44 7700 900123</div>
+          <div class="field-val" style="color:#9CA3AF">— empty</div>
+
+          <div class="field-label">Created</div>
+          <div class="field-val">Jun 15, 2026</div>
+          <div class="field-val chosen">Mar 2, 2026</div>
+
+          <div class="field-label">Activity</div>
+          <div class="field-val chosen">3 conversations, 2 notes</div>
+          <div class="field-val">0 conversations, 0 notes</div>
+        </div>
+        <div class="merge-group-foot">
+          <button class="btn btn-primary btn-sm">Merge this group</button>
+          <button class="btn btn-secondary btn-sm">Skip</button>
+        </div>
+      </div>
+
+      <div class="merge-group">
+        <div class="merge-group-head">
+          <span class="title">Group 2 · matched by phone</span>
+          <span class="badge badge-yellow">+1 415 555 0198</span>
+        </div>
+        <div class="merge-compare">
+          <div class="field-label"></div>
+          <div class="merge-col-head"><input type="radio" name="g2" checked><b>Robert Park</b><span class="badge badge-live" style="margin-left:auto">Keep</span></div>
+          <div class="merge-col-head"><input type="radio" name="g2"><b>Rob Park</b></div>
+
+          <div class="field-label">Email</div>
+          <div class="field-val chosen">rpark@globalfin.com</div>
+          <div class="field-val" style="color:#9CA3AF">— empty</div>
+
+          <div class="field-label">Phone</div>
+          <div class="field-val chosen">+1 415 555 0198</div>
+          <div class="field-val chosen">+1 415 555 0198</div>
+
+          <div class="field-label">Activity</div>
+          <div class="field-val chosen">1 conversation</div>
+          <div class="field-val">0 conversations</div>
+        </div>
+        <div class="merge-group-foot">
+          <button class="btn btn-primary btn-sm">Merge this group</button>
+          <button class="btn btn-secondary btn-sm">Skip</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:11.5px;color:#9CA3AF;padding:6px 0">2 more groups below — same horizontal comparison pattern</div>
+    </div>
+    <div class="modal-foot">
+      <span style="font-size:11.5px;color:#6B7280">4 groups · 9 contacts</span>
+      <div class="spacer"></div>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('merge')">Close</button>
+      <button class="btn btn-primary btn-sm">Merge all groups</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.view-switch .view-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelector('.view-switch .view-btn'+(name==='list'?':nth-child(1)':':nth-child(2)')).classList.add('active');
+}
+function openModal(name){ document.getElementById('overlay-'+name).classList.add('active'); }
+function closeModal(name){ document.getElementById('overlay-'+name).classList.remove('active'); }
+function importStep(n){
+  [1,2,3].forEach(i=>{
+    document.getElementById('importStep'+i).style.display = i===n ? 'block' : 'none';
+    document.getElementById('is'+i).classList.toggle('active', i===n);
+    document.getElementById('is'+i).classList.toggle('done', i<n);
+  });
+  document.getElementById('importBack').style.display = n>1 ? 'inline-flex' : 'none';
+  const next=document.getElementById('importNext');
+  if(n===1){ next.textContent='Continue →'; next.onclick=()=>importStep(2); }
+  else if(n===2){ next.textContent='Start import →'; next.onclick=()=>importStep(3); }
+  else { next.textContent='Done'; next.onclick=()=>closeModal('import'); }
+}
+document.getElementById('importBack').onclick=()=>importStep(1);
+</script>
+</body></html>

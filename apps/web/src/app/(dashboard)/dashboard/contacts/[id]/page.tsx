@@ -15,19 +15,59 @@ import {
   type MarketingTimelineEvent,
   type ServiceCredential,
   type EnrichmentSuggestion,
+  type EmailAutomation,
+  type ContactTask,
 } from '@/lib/api';
 import { ContactMarketingTimeline } from '@/components/marketing/contact-marketing-timeline';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CustomAttributeFields } from '@/components/contacts/custom-attribute-fields';
 import { ContactQuickActionsPanel } from '@/components/contacts/contact-quick-actions-panel';
-import { ContactCollapsible } from '@/components/contacts/contact-collapsible';
-import { ContactWorkflowStrip } from '@/components/contacts/contact-workflow-strip';
 import { MarketingStatusBadge } from '@/components/contacts/marketing-status-badge';
 import { contactTypeBadgeClass, formatRelativeTime, initialsFromName } from '@/lib/format';
 import { countryLabel, COUNTRY_OPTIONS } from '@/lib/country';
 
 const TYPES = ['visitor', 'lead', 'customer'] as const;
+const TABS = ['conversations', 'notes', 'activity', 'automation'] as const;
+type Tab = (typeof TABS)[number];
+
+function Fact({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="px-4 py-2.5 border-r border-gray-100 last:border-r-0 shrink-0">
+      <p className="text-[10px] uppercase tracking-wide text-gray-400">{label}</p>
+      <p className="text-sm font-semibold text-gray-900 mt-0.5">{value}</p>
+    </div>
+  );
+}
+
+function Modal({
+  title,
+  onClose,
+  children,
+  wide,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+  wide?: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className={`bg-white rounded-xl shadow-xl w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[90vh] flex flex-col overflow-hidden`}>
+        <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">
+            ✕
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+const actionChip =
+  'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:border-primary-200 hover:bg-primary-50/40 transition-colors disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap';
 
 export default function ContactProfilePage() {
   const params = useParams();
@@ -45,7 +85,6 @@ export default function ContactProfilePage() {
   const [editPhone, setEditPhone] = useState('');
   const [editCountry, setEditCountry] = useState('');
   const [editType, setEditType] = useState<(typeof TYPES)[number]>('lead');
-  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
   const [customAttributes, setCustomAttributes] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
@@ -63,20 +102,56 @@ export default function ContactProfilePage() {
   const [suggestions, setSuggestions] = useState<EnrichmentSuggestion[]>([]);
   const [selectedFields, setSelectedFields] = useState<Record<string, Set<string>>>({});
   const [applyBusy, setApplyBusy] = useState(false);
+  const [automations, setAutomations] = useState<EmailAutomation[]>([]);
+  const [enrolledAutomations, setEnrolledAutomations] = useState<Set<string>>(new Set());
+  const [automationBusy, setAutomationBusy] = useState<string | null>(null);
+  const [automationMsg, setAutomationMsg] = useState('');
+  const [typeBusy, setTypeBusy] = useState(false);
+  const [agents, setAgents] = useState<{ userId: string; name: string }[]>([]);
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
+  const [assigneeSelect, setAssigneeSelect] = useState('');
+  const [teamSelect, setTeamSelect] = useState('');
+  const [assignBusy, setAssignBusy] = useState(false);
+  const [tasks, setTasks] = useState<ContactTask[]>([]);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDue, setNewTaskDue] = useState('');
+  const [taskBusy, setTaskBusy] = useState(false);
+  const [taskActionId, setTaskActionId] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState<Tab>('conversations');
+  const [editOpen, setEditOpen] = useState(false);
+  const [enrichOpen, setEnrichOpen] = useState(false);
+  const [moreActionsOpen, setMoreActionsOpen] = useState(false);
 
   const load = async () => {
     if (!token || !accountId) return;
-    const [res, labelRes, attrRes, access, eventsRes, timelineRes, enrichCredsRes, suggestionsRes] =
-      await Promise.all([
-        api.contacts.get(accountId, contactId, token),
-        api.labels.list(accountId, token),
-        api.customAttributes.list(accountId, token),
-        api.contacts.access(accountId, token),
-        api.contacts.listEmailEvents(accountId, contactId, token),
-        api.contacts.getMarketingTimeline(accountId, contactId, token).catch(() => ({ events: [] })),
-        api.serviceCredentials.list(accountId, token, 'data_enrichment'),
-        api.contacts.listEnrichmentSuggestions(accountId, contactId, token),
-      ]);
+    const [
+      res,
+      labelRes,
+      attrRes,
+      access,
+      eventsRes,
+      timelineRes,
+      enrichCredsRes,
+      suggestionsRes,
+      automationsRes,
+      agentsRes,
+      teamsRes,
+      tasksRes,
+    ] = await Promise.all([
+      api.contacts.get(accountId, contactId, token),
+      api.labels.list(accountId, token),
+      api.customAttributes.list(accountId, token),
+      api.contacts.access(accountId, token),
+      api.contacts.listEmailEvents(accountId, contactId, token),
+      api.contacts.getMarketingTimeline(accountId, contactId, token).catch(() => ({ events: [] })),
+      api.serviceCredentials.list(accountId, token, 'data_enrichment'),
+      api.contacts.listEnrichmentSuggestions(accountId, contactId, token),
+      api.marketing.automations.list(accountId, token).catch(() => ({ automations: [] })),
+      api.agents.list(accountId, token).catch(() => ({ agents: [] })),
+      api.teams.list(accountId, token).catch(() => ({ teams: [] })),
+      api.contacts.tasks.list(accountId, contactId, token).catch(() => ({ tasks: [] })),
+    ]);
     setContact({ ...res.contact, labels: res.labels } as ContactDetail);
     setNotes(res.notes);
     setConversations(res.conversations);
@@ -102,6 +177,12 @@ export default function ContactProfilePage() {
       initial[s.id] = new Set(s.fields.map((f) => f.key));
     }
     setSelectedFields(initial);
+    setAutomations(automationsRes.automations.filter((a) => a.enabled));
+    setAgents(agentsRes.agents.map((a) => ({ userId: a.userId, name: a.displayName || a.name })));
+    setTeams(teamsRes.teams);
+    setTasks(tasksRes.tasks);
+    setAssigneeSelect(res.contact.assigneeId ?? '');
+    setTeamSelect(res.contact.teamId ?? '');
   };
 
   const runEnrichment = async () => {
@@ -194,8 +275,101 @@ export default function ContactProfilePage() {
         token
       );
       await load();
+      setEditOpen(false);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleQuickTypeChange = async (type: (typeof TYPES)[number]) => {
+    if (!token || !accountId || !contact || contact.type === type) return;
+    setTypeBusy(true);
+    try {
+      await api.contacts.update(accountId, contactId, { type }, token);
+      await load();
+    } finally {
+      setTypeBusy(false);
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!token || !accountId) return;
+    setAssignBusy(true);
+    try {
+      await api.contacts.update(
+        accountId,
+        contactId,
+        { assigneeId: assigneeSelect || null, teamId: teamSelect || null },
+        token
+      );
+      await load();
+    } finally {
+      setAssignBusy(false);
+    }
+  };
+
+  const handleAddTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !accountId || !newTaskTitle.trim()) return;
+    setTaskBusy(true);
+    try {
+      await api.contacts.tasks.create(
+        accountId,
+        contactId,
+        // append a local noon time so the YYYY-MM-DD input value isn't parsed as UTC
+        // midnight, which shifts the displayed due date back a day in negative-UTC zones
+        { title: newTaskTitle.trim(), dueAt: newTaskDue ? new Date(`${newTaskDue}T12:00:00`).toISOString() : null },
+        token
+      );
+      setNewTaskTitle('');
+      setNewTaskDue('');
+      await load();
+    } finally {
+      setTaskBusy(false);
+    }
+  };
+
+  const handleToggleTask = async (task: ContactTask) => {
+    if (!token || !accountId) return;
+    setTaskActionId(task.id);
+    try {
+      await api.contacts.tasks.update(
+        accountId,
+        contactId,
+        task.id,
+        { status: task.status === 'open' ? 'done' : 'open' },
+        token
+      );
+      await load();
+    } finally {
+      setTaskActionId(null);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!token || !accountId) return;
+    setTaskActionId(taskId);
+    try {
+      await api.contacts.tasks.remove(accountId, contactId, taskId, token);
+      await load();
+    } finally {
+      setTaskActionId(null);
+    }
+  };
+
+  const handleEnrollAutomation = async (automationId: string) => {
+    if (!token || !accountId) return;
+    setAutomationBusy(automationId);
+    setAutomationMsg('');
+    try {
+      const res = await api.marketing.automations.enroll(accountId, automationId, contactId, token);
+      if (res.enrolled) {
+        setEnrolledAutomations((prev) => new Set(prev).add(automationId));
+      } else {
+        setAutomationMsg(res.reason ?? 'Could not enroll in automation');
+      }
+    } finally {
+      setAutomationBusy(null);
     }
   };
 
@@ -236,85 +410,131 @@ export default function ContactProfilePage() {
     return <div className="p-8 text-sm text-gray-400">Loading contact…</div>;
   }
 
-  const activityCount = conversations.length + notes.length + marketingTimeline.length;
-
   return (
-    <div className="flex h-full min-h-0 animate-fade-in">
-      <div className="flex-1 min-w-0 flex flex-col min-h-0 overflow-hidden">
-        <header className="shrink-0 bg-gradient-to-r from-slate-50 to-white border-b border-gray-200 px-6 py-5">
-          <Link href={'/dashboard/contacts' as Route} className="text-xs font-medium text-primary-600 hover:underline">
-            ← All contacts
-          </Link>
-          <div className="mt-3 flex items-start justify-between gap-4">
-            <div className="flex items-start gap-4 min-w-0">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 text-white flex items-center justify-center text-lg font-bold shadow-md shrink-0">
-                {initialsFromName(contact.name)}
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-xl font-bold text-gray-900 truncate">{contact.name}</h1>
-                <p className="text-sm text-gray-500 truncate mt-0.5">
-                  {contact.email ?? 'No email'}
-                  {contact.phone ? ` · ${contact.phone}` : ''}
-                </p>
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <span
-                    className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${contactTypeBadgeClass(contact.type)}`}
-                  >
-                    {contact.type}
-                  </span>
-                  <MarketingStatusBadge status={contact.marketingStatus} />
-                  {contact.country && (
-                    <span className="text-xs text-gray-500">{countryLabel(contact.country)}</span>
-                  )}
-                  <span className="text-xs text-gray-400">Active {formatRelativeTime(contact.lastActivityAt)}</span>
-                  {contact.isBlocked && <span className="text-xs text-red-600 font-medium">Blocked</span>}
-                </div>
-              </div>
+    <div className="flex h-full min-h-0 flex-col animate-fade-in">
+      <header className="shrink-0 bg-gradient-to-r from-slate-50 to-white border-b border-gray-200 px-6 py-5">
+        <Link href={'/dashboard/contacts' as Route} className="text-xs font-medium text-primary-600 hover:underline">
+          ← All contacts
+        </Link>
+        <div className="mt-3 flex items-start justify-between gap-4">
+          <div className="flex items-start gap-4 min-w-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 text-white flex items-center justify-center text-lg font-bold shadow-md shrink-0">
+              {initialsFromName(contact.name)}
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="xl:hidden"
-                onClick={() => setMobileActionsOpen(true)}
-              >
-                ⚡ Actions
-              </Button>
-              {isAdmin && (
-                <Button type="button" variant="danger" size="sm" onClick={() => void handleDelete()}>
-                  Delete
-                </Button>
-              )}
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-gray-900 truncate">{contact.name}</h1>
+              <p className="text-sm text-gray-500 truncate mt-0.5">
+                {contact.email ?? 'No email'}
+                {contact.phone ? ` · ${contact.phone}` : ''}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span
+                  className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${contactTypeBadgeClass(contact.type)}`}
+                >
+                  {contact.type}
+                </span>
+                <MarketingStatusBadge status={contact.marketingStatus} />
+                {contact.country && (
+                  <span className="text-xs text-gray-500">{countryLabel(contact.country)}</span>
+                )}
+                <span className="text-xs text-gray-400">Active {formatRelativeTime(contact.lastActivityAt)}</span>
+                {contact.isBlocked && <span className="text-xs text-red-600 font-medium">Blocked</span>}
+              </div>
             </div>
           </div>
-        </header>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button type="button" variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
+              ✏ Edit
+            </Button>
+            {isAdmin && (
+              <Button type="button" variant="danger" size="sm" onClick={() => void handleDelete()}>
+                Delete
+              </Button>
+            )}
+          </div>
+        </div>
+      </header>
 
-        <div className="flex-1 overflow-y-auto min-h-0">
-          <div className="p-6 space-y-6 max-w-4xl">
-            <ContactWorkflowStrip />
-
-            <div className="rounded-xl border border-primary-100 bg-gradient-to-br from-primary-50/60 to-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary-700">Activity hub</p>
-              <p className="text-sm text-gray-600 mt-1">
-                {activityCount > 0
-                  ? `${activityCount} touchpoint${activityCount === 1 ? '' : 's'} — conversations, marketing, and notes`
-                  : 'Start engaging — open a chat, enroll in automation, or log a note from quick actions →'}
-              </p>
-            </div>
-
-            <section className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-gray-900">Conversations</h2>
-                {conversations[0] && (
-                  <Link
-                    href={`/dashboard?conversation=${conversations[0].id}` as Route}
-                    className="text-xs font-medium text-primary-600 hover:underline"
+      {/* one horizontal facts strip replaces the old vertical rail / accordion clutter */}
+      <div className="shrink-0 flex items-stretch bg-white border-b border-gray-200 overflow-x-auto">
+        <Fact label="Company" value={contact.company?.name ?? '—'} />
+        <Fact label="Created" value={new Date(contact.createdAt).toLocaleDateString()} />
+        <Fact
+          label="Labels"
+          value={
+            contact.labels.length > 0 ? (
+              <span className="flex flex-wrap gap-1">
+                {contact.labels.slice(0, 3).map((l) => (
+                  <span
+                    key={l.id}
+                    className="text-[11px] px-1.5 py-0.5 rounded-full text-white"
+                    style={{ backgroundColor: l.color }}
                   >
-                    Open latest →
-                  </Link>
-                )}
-              </div>
+                    {l.name}
+                  </span>
+                ))}
+                {contact.labels.length > 3 && <span className="text-xs text-gray-400">+{contact.labels.length - 3}</span>}
+              </span>
+            ) : (
+              <button type="button" onClick={() => setEditOpen(true)} className="text-xs text-primary-600 hover:underline">
+                + Add
+              </button>
+            )
+          }
+        />
+        <Fact
+          label="Custom attributes"
+          value={
+            attrDefs.length > 0 ? (
+              <button type="button" onClick={() => setEditOpen(true)} className="text-primary-600 hover:underline">
+                {Object.keys(customAttributes).filter((k) => customAttributes[k] != null && customAttributes[k] !== '').length} set · Edit
+              </button>
+            ) : (
+              '—'
+            )
+          }
+        />
+        <Fact
+          label="Assigned to"
+          value={
+            contact.assigneeName || contact.teamName ? (
+              [contact.assigneeName, contact.teamName].filter(Boolean).join(' · ')
+            ) : (
+              <button
+                type="button"
+                onClick={() => setActiveTab('automation')}
+                className="text-xs text-primary-600 hover:underline"
+              >
+                Unassigned · Assign
+              </button>
+            )
+          }
+        />
+      </div>
+
+      {/* tabs replace the long vertical stack of always-rendered cards */}
+      <div className="shrink-0 flex items-center gap-1 px-6 border-b border-gray-200 bg-white">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setActiveTab(t)}
+            className={`px-3 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors capitalize ${
+              activeTab === t ? 'text-primary-600 border-primary-600' : 'text-gray-500 border-transparent hover:text-gray-700'
+            }`}
+          >
+            {t === 'conversations' && `Conversations${conversations.length > 0 ? ` (${conversations.length})` : ''}`}
+            {t === 'notes' && `Notes${notes.length > 0 ? ` (${notes.length})` : ''}`}
+            {t === 'activity' && 'Activity'}
+            {t === 'automation' && 'Automation'}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="p-6 max-w-4xl">
+          {activeTab === 'conversations' && (
+            <section>
               {conversations.length === 0 ? (
                 <p className="text-sm text-gray-400">No conversations yet. Messages will appear here when this contact chats.</p>
               ) : (
@@ -338,11 +558,10 @@ export default function ContactProfilePage() {
                 </ul>
               )}
             </section>
+          )}
 
-            <ContactMarketingTimeline events={marketingTimeline} />
-
-            <section className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-              <h2 className="font-semibold text-gray-900 mb-3">Notes</h2>
+          {activeTab === 'notes' && (
+            <section>
               <form onSubmit={handleAddNote} className="flex gap-2 mb-4">
                 <Input
                   value={noteDraft}
@@ -406,227 +625,408 @@ export default function ContactProfilePage() {
                 {notes.length === 0 && <p className="text-sm text-gray-400">No notes yet.</p>}
               </ul>
             </section>
+          )}
 
-            <ContactCollapsible
-              title="Edit contact"
-              subtitle="Name, email, labels, and custom fields"
-              badge="Profile"
-            >
-              <div className="space-y-3 pt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name" />
-                  <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="Email" type="email" />
-                  <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="Phone" />
-                  <select
-                    value={editCountry}
-                    onChange={(e) => setEditCountry(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"
-                  >
-                    <option value="">No country</option>
-                    {COUNTRY_OPTIONS.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {TYPES.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setEditType(t)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-colors capitalize ${
-                        editType === t
-                          ? 'bg-primary-600 text-white border-primary-600'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-primary-200'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+          {activeTab === 'activity' && (
+            <section className="space-y-6">
+              <ContactMarketingTimeline events={marketingTimeline} />
+              {emailEvents.length > 0 && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-2">Labels</p>
-                  <div className="flex flex-wrap gap-2">
-                    {allLabels.map((l) => {
-                      const active = selectedLabelIds.includes(l.id);
+                  <h2 className="text-sm font-semibold text-gray-900 mb-3">Legacy email events</h2>
+                  <ul className="space-y-2 text-sm">
+                    {emailEvents.map((e) => (
+                      <li key={e.id} className="flex justify-between gap-4 border-b border-gray-100 pb-2">
+                        <span>
+                          <span className="font-medium capitalize">{e.eventType.replace(/_/g, ' ')}</span>
+                          {e.subject && <span className="text-gray-500"> · {e.subject}</span>}
+                        </span>
+                        <span className="text-gray-400 shrink-0 text-xs">{new Date(e.createdAt).toLocaleString()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+          )}
+
+          {activeTab === 'automation' && (
+            <section className="flex flex-wrap gap-4">
+              <div className="flex-1 min-w-[260px] bg-white border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2.5">
+                  <h3 className="text-sm font-semibold text-gray-900">📧 Email sequences</h3>
+                  <span className="text-[10px] font-semibold text-green-700 bg-green-100 rounded-full px-2 py-0.5">Live</span>
+                </div>
+                {automationMsg && <p className="text-xs text-amber-700 mb-2">{automationMsg}</p>}
+                {automations.length === 0 ? (
+                  <p className="text-xs text-gray-400">No active email sequences configured.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {automations.map((a) => {
+                      const enrolled = enrolledAutomations.has(a.id);
                       return (
-                        <button
-                          key={l.id}
-                          type="button"
-                          onClick={() => toggleLabel(l.id)}
-                          className={`text-xs px-2 py-1 rounded-full border transition-colors ${
-                            active ? 'text-white border-transparent' : 'text-gray-600 border-gray-200 bg-white'
-                          }`}
-                          style={active ? { backgroundColor: l.color } : undefined}
-                        >
-                          {l.name}
-                        </button>
+                        <li key={a.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-2.5 py-2">
+                          <div className="min-w-0">
+                            <span className="text-xs font-medium text-gray-800 block truncate">{a.name}</span>
+                            <span className="text-[10px] text-gray-400">{a.emailCount} emails</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant={enrolled ? 'secondary' : 'primary'}
+                            size="sm"
+                            disabled={enrolled || automationBusy === a.id || !contact.email}
+                            onClick={() => void handleEnrollAutomation(a.id)}
+                          >
+                            {enrolled ? '✓ Enrolled' : automationBusy === a.id ? '…' : 'Enroll'}
+                          </Button>
+                        </li>
                       );
                     })}
-                  </div>
-                </div>
-                {attrDefs.length > 0 && (
-                  <CustomAttributeFields definitions={attrDefs} values={customAttributes} onChange={setCustomAttributes} />
+                  </ul>
                 )}
-                <Button type="button" onClick={() => void handleSave()} disabled={saving}>
-                  {saving ? 'Saving…' : 'Save changes'}
-                </Button>
               </div>
-            </ContactCollapsible>
 
-            <ContactCollapsible
-              title="Company & enrichment"
-              subtitle={contact.company ? contact.company.name : 'Link company data and enrich profile'}
-              badge={suggestions.length > 0 ? `${suggestions.length} pending` : undefined}
-              defaultOpen={suggestions.length > 0}
-            >
-              <div className="space-y-4 pt-4">
-                {contact.company ? (
-                  <div className="text-sm space-y-1 rounded-lg bg-slate-50 border border-gray-100 p-3">
-                    <p className="font-medium text-gray-900">{contact.company.name}</p>
-                    <p className="text-gray-500">{contact.company.domain}</p>
-                    {contact.company.website && (
-                      <a
-                        href={contact.company.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary-600 hover:underline text-sm"
-                      >
-                        {contact.company.website}
-                      </a>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">
-                    No company linked. Use a corporate email domain to auto-link, or run enrichment.
-                  </p>
-                )}
-
-                {enrichmentCreds.length === 0 ? (
-                  <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                    Connect an enrichment provider in Settings → Connected services.
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
+              <div className="flex-1 min-w-[260px] bg-white border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2.5">
+                  <h3 className="text-sm font-semibold text-gray-900">🧭 Routing &amp; assignment</h3>
+                  <span className="text-[10px] font-semibold text-green-700 bg-green-100 rounded-full px-2 py-0.5">Live</span>
+                </div>
+                <div className="space-y-2">
+                  <div>
+                    <label htmlFor="assign-assignee" className="text-[10px] uppercase tracking-wide text-gray-400 block mb-1">
+                      Assignee
+                    </label>
                     <select
-                      value={enrichCredentialId}
-                      onChange={(e) => setEnrichCredentialId(e.target.value)}
-                      className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
+                      id="assign-assignee"
+                      value={assigneeSelect}
+                      onChange={(e) => setAssigneeSelect(e.target.value)}
+                      className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5"
                     >
-                      {enrichmentCreds.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.label}
+                      <option value="">Unassigned</option>
+                      {agents.map((a) => (
+                        <option key={a.userId} value={a.userId}>
+                          {a.name}
                         </option>
                       ))}
                     </select>
+                  </div>
+                  <div>
+                    <label htmlFor="assign-team" className="text-[10px] uppercase tracking-wide text-gray-400 block mb-1">
+                      Team
+                    </label>
                     <select
-                      value={enrichScope}
-                      onChange={(e) => setEnrichScope(e.target.value as 'auto' | 'company' | 'person')}
-                      className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
+                      id="assign-team"
+                      value={teamSelect}
+                      onChange={(e) => setTeamSelect(e.target.value)}
+                      className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5"
                     >
-                      <option value="auto">Auto</option>
-                      <option value="company">Company</option>
-                      <option value="person">Person</option>
-                    </select>
-                    <Button
-                      type="button"
-                      disabled={enrichBusy || !enrichCredentialId || !contact.email}
-                      onClick={() => void runEnrichment()}
-                    >
-                      {enrichBusy ? 'Enriching…' : '✨ Enrich'}
-                    </Button>
-                  </div>
-                )}
-                {enrichMsg && (
-                  <p
-                    className={`text-sm rounded-lg px-3 py-2 border ${
-                      enrichError ? 'text-red-800 bg-red-50 border-red-200' : 'text-green-800 bg-green-50 border-green-200'
-                    }`}
-                  >
-                    {enrichMsg}
-                  </p>
-                )}
-
-                {suggestions.map((s) => (
-                  <div key={s.id} className="border border-gray-100 rounded-lg p-3 space-y-2">
-                    <p className="text-sm font-medium text-gray-800">
-                      {s.providerLabel} · {s.fields.length} field(s)
-                    </p>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {s.fields.map((f) => (
-                        <label key={f.key} className="flex items-center gap-2 text-xs text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={selectedFields[s.id]?.has(f.key) ?? false}
-                            onChange={() => toggleField(s.id, f.key)}
-                          />
-                          <span className="font-medium">{f.label}</span>
-                          <span className="text-gray-400 truncate">{f.proposed}</span>
-                        </label>
+                      <option value="">No team</option>
+                      {teams.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
                       ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button type="button" size="sm" disabled={applyBusy} onClick={() => void applySuggestion(s.id)}>
-                        Apply selected
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        disabled={applyBusy}
-                        onClick={() => void dismissSuggestion(s.id)}
-                      >
-                        Dismiss
-                      </Button>
-                    </div>
+                    </select>
                   </div>
-                ))}
+                  <Button type="button" size="sm" disabled={assignBusy} onClick={() => void handleAssign()}>
+                    {assignBusy ? 'Saving…' : 'Save assignment'}
+                  </Button>
+                </div>
               </div>
-            </ContactCollapsible>
 
-            {emailEvents.length > 0 && (
-              <ContactCollapsible title="Legacy email events" subtitle={`${emailEvents.length} events`}>
-                <ul className="space-y-2 text-sm pt-4">
-                  {emailEvents.map((e) => (
-                    <li key={e.id} className="flex justify-between gap-4 border-b border-gray-100 pb-2">
-                      <span>
-                        <span className="font-medium capitalize">{e.eventType.replace(/_/g, ' ')}</span>
-                        {e.subject && <span className="text-gray-500"> · {e.subject}</span>}
-                      </span>
-                      <span className="text-gray-400 shrink-0 text-xs">{new Date(e.createdAt).toLocaleString()}</span>
-                    </li>
-                  ))}
-                </ul>
-              </ContactCollapsible>
-            )}
-          </div>
+              <div className="flex-1 min-w-[260px] bg-white border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2.5">
+                  <h3 className="text-sm font-semibold text-gray-900">✅ Tasks</h3>
+                  <span className="text-[10px] font-semibold text-green-700 bg-green-100 rounded-full px-2 py-0.5">Live</span>
+                </div>
+                <form onSubmit={handleAddTask} className="flex flex-wrap gap-1.5 mb-2.5">
+                  <Input
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    placeholder="Follow up call…"
+                    className="flex-1 min-w-[120px] text-xs"
+                  />
+                  <input
+                    type="date"
+                    value={newTaskDue}
+                    onChange={(e) => setNewTaskDue(e.target.value)}
+                    className="text-xs border border-gray-200 rounded-lg px-2"
+                  />
+                  <Button type="submit" size="sm" disabled={!newTaskTitle.trim() || taskBusy}>
+                    +
+                  </Button>
+                </form>
+                {tasks.length === 0 ? (
+                  <p className="text-xs text-gray-400">No tasks yet.</p>
+                ) : (
+                  <ul className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {tasks.map((t) => (
+                      <li key={t.id} className="flex items-start gap-2 text-xs rounded-lg border border-gray-100 px-2 py-1.5">
+                        <input
+                          type="checkbox"
+                          checked={t.status === 'done'}
+                          disabled={taskActionId === t.id}
+                          onChange={() => void handleToggleTask(t)}
+                          className="mt-0.5"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className={`truncate ${t.status === 'done' ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                            {t.title}
+                          </p>
+                          {t.dueAt && (
+                            <p className="text-[10px] text-gray-400">Due {new Date(t.dueAt).toLocaleDateString()}</p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          disabled={taskActionId === t.id}
+                          onClick={() => void handleDeleteTask(t.id)}
+                          className="text-gray-300 hover:text-red-500 shrink-0"
+                        >
+                          ✕
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="flex-1 min-w-[260px] bg-white border border-dashed border-gray-300 rounded-xl p-4 opacity-80">
+                <div className="flex items-center justify-between mb-2.5">
+                  <h3 className="text-sm font-semibold text-gray-900">🎯 Trigger rules</h3>
+                  <span className="text-[10px] font-semibold text-amber-800 bg-amber-100 rounded-full px-2 py-0.5">Coming soon</span>
+                </div>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Event-based automation (e.g. type changes → auto-enroll, inactive N days → notify) isn&apos;t
+                  built. A similar 3-event trigger system existed in this codebase but was deliberately retired in
+                  favor of campaign-based marketing — reviving or replacing it is a product decision, not wired up
+                  here.
+                </p>
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
+      {/* thin bottom action bar replaces the old persistent side dock */}
+      <div className="shrink-0 flex flex-wrap items-center gap-2 px-6 py-3 border-t border-gray-200 bg-white overflow-x-auto">
+        <span className="text-[10px] uppercase tracking-wide text-gray-400 mr-1">Quick actions</span>
+        {conversations[0] && (
+          <Link href={`/dashboard?conversation=${conversations[0].id}` as Route} className={actionChip}>
+            💬 Open chat
+          </Link>
+        )}
+        <a href={contact.email ? `mailto:${contact.email}` : undefined} className={actionChip} aria-disabled={!contact.email}>
+          ✉️ Email
+        </a>
+        <a href={contact.phone ? `tel:${contact.phone}` : undefined} className={actionChip} aria-disabled={!contact.phone}>
+          📞 Call
+        </a>
+        <span className="w-px h-5 bg-gray-200" />
+        {TYPES.map((t) => (
+          <button
+            key={t}
+            type="button"
+            disabled={typeBusy || contact.type === t}
+            onClick={() => void handleQuickTypeChange(t)}
+            className={`${actionChip} capitalize ${contact.type === t ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-600' : ''}`}
+          >
+            {t}
+          </button>
+        ))}
+        <span className="w-px h-5 bg-gray-200" />
+        <button type="button" className={actionChip} onClick={() => setEnrichOpen(true)}>
+          ✨ Enrich contact
+        </button>
+        <button type="button" className={actionChip} onClick={() => setMoreActionsOpen(true)}>
+          ⚡ More actions
+        </button>
+      </div>
+
+      {editOpen && (
+        <Modal title="Edit contact" onClose={() => setEditOpen(false)}>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name" />
+              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="Email" type="email" />
+              <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="Phone" />
+              <select
+                value={editCountry}
+                onChange={(e) => setEditCountry(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"
+              >
+                <option value="">No country</option>
+                {COUNTRY_OPTIONS.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {TYPES.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setEditType(t)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors capitalize ${
+                    editType === t
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-primary-200'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-2">Labels</p>
+              <div className="flex flex-wrap gap-2">
+                {allLabels.map((l) => {
+                  const active = selectedLabelIds.includes(l.id);
+                  return (
+                    <button
+                      key={l.id}
+                      type="button"
+                      onClick={() => toggleLabel(l.id)}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                        active ? 'text-white border-transparent' : 'text-gray-600 border-gray-200 bg-white'
+                      }`}
+                      style={active ? { backgroundColor: l.color } : undefined}
+                    >
+                      {l.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {attrDefs.length > 0 && (
+              <CustomAttributeFields definitions={attrDefs} values={customAttributes} onChange={setCustomAttributes} />
+            )}
+            <Button type="button" onClick={() => void handleSave()} disabled={saving}>
+              {saving ? 'Saving…' : 'Save changes'}
+            </Button>
+          </div>
+        </Modal>
+      )}
+
+      {enrichOpen && (
+        <Modal title="Enrich contact data" onClose={() => setEnrichOpen(false)} wide>
+          <div className="space-y-4">
+            {contact.company ? (
+              <div className="text-sm space-y-1 rounded-lg bg-slate-50 border border-gray-100 p-3">
+                <p className="font-medium text-gray-900">{contact.company.name}</p>
+                <p className="text-gray-500">{contact.company.domain}</p>
+                {contact.company.website && (
+                  <a
+                    href={contact.company.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary-600 hover:underline text-sm"
+                  >
+                    {contact.company.website}
+                  </a>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                No company linked. Use a corporate email domain to auto-link, or run enrichment.
+              </p>
+            )}
+
+            {enrichmentCreds.length === 0 ? (
+              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                Connect an enrichment provider in Settings → Connected services.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                <select
+                  value={enrichCredentialId}
+                  onChange={(e) => setEnrichCredentialId(e.target.value)}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
+                >
+                  {enrichmentCreds.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={enrichScope}
+                  onChange={(e) => setEnrichScope(e.target.value as 'auto' | 'company' | 'person')}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
+                >
+                  <option value="auto">Auto</option>
+                  <option value="company">Company</option>
+                  <option value="person">Person</option>
+                </select>
+                <Button
+                  type="button"
+                  disabled={enrichBusy || !enrichCredentialId || !contact.email}
+                  onClick={() => void runEnrichment()}
+                >
+                  {enrichBusy ? 'Enriching…' : '✨ Enrich'}
+                </Button>
+              </div>
+            )}
+            {enrichMsg && (
+              <p
+                className={`text-sm rounded-lg px-3 py-2 border ${
+                  enrichError ? 'text-red-800 bg-red-50 border-red-200' : 'text-green-800 bg-green-50 border-green-200'
+                }`}
+              >
+                {enrichMsg}
+              </p>
+            )}
+
+            {suggestions.map((s) => (
+              <div key={s.id} className="border border-gray-100 rounded-lg p-3 space-y-2">
+                <p className="text-sm font-medium text-gray-800">
+                  {s.providerLabel} · {s.fields.length} field(s)
+                </p>
+                <div className="space-y-1 max-h-40 overflow-y-auto">
+                  {s.fields.map((f) => (
+                    <label key={f.key} className="flex items-center gap-2 text-xs text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={selectedFields[s.id]?.has(f.key) ?? false}
+                        onChange={() => toggleField(s.id, f.key)}
+                      />
+                      <span className="font-medium">{f.label}</span>
+                      <span className="text-gray-400 truncate">{f.proposed}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" disabled={applyBusy} onClick={() => void applySuggestion(s.id)}>
+                    Apply selected
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={applyBusy}
+                    onClick={() => void dismissSuggestion(s.id)}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Modal>
+      )}
+
       {accountId && token && (
-        <>
-          <div className="hidden xl:flex w-[360px] shrink-0 min-h-0 border-l border-gray-200">
-            <ContactQuickActionsPanel
-              accountId={accountId}
-              token={token}
-              contactId={contactId}
-              layout="dock"
-              onContactUpdated={() => void load()}
-            />
-          </div>
-          <div className="xl:hidden">
-            <ContactQuickActionsPanel
-              accountId={accountId}
-              token={token}
-              contactId={contactId}
-              open={mobileActionsOpen}
-              onClose={() => setMobileActionsOpen(false)}
-              onContactUpdated={() => void load()}
-            />
-          </div>
-        </>
+        <div>
+          <ContactQuickActionsPanel
+            accountId={accountId}
+            token={token}
+            contactId={contactId}
+            open={moreActionsOpen}
+            onClose={() => setMoreActionsOpen(false)}
+            onContactUpdated={() => void load()}
+          />
+        </div>
       )}
     </div>
   );

@@ -2,19 +2,17 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { api, type Contact, type Label } from '@/lib/api';
+import { api, type Contact, type Label, type EmailAutomation } from '@/lib/api';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ContactImportModal } from '@/components/contacts/contact-import-modal';
+import { ContactImportModal, type ImportProgress } from '@/components/contacts/contact-import-modal';
 import { ContactMergeModal } from '@/components/contacts/contact-merge-modal';
-import { ContactQuickActionsPanel } from '@/components/contacts/contact-quick-actions-panel';
+import { ContactCreateModal } from '@/components/contacts/contact-create-modal';
 import { ContactListItem } from '@/components/contacts/contact-list-item';
-import { ContactWorkflowStrip } from '@/components/contacts/contact-workflow-strip';
-import { MetricCard, MetricGrid } from '@/components/ui/metric-card';
-import { countryLabel, COUNTRY_OPTIONS } from '@/lib/country';
+import { COUNTRY_OPTIONS } from '@/lib/country';
 import type { ColumnMapping } from '@/lib/csv-import-utils';
 
 const TYPES = ['', 'visitor', 'lead', 'customer'] as const;
@@ -28,6 +26,15 @@ const SORTS = [
 ] as const;
 
 const PAGE_SIZE = 50;
+
+function Fact({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="px-4 py-2.5 border-r border-gray-100 last:border-r-0 shrink-0">
+      <p className="text-[10px] uppercase tracking-wide text-gray-400">{label}</p>
+      <p className="text-sm font-semibold text-gray-900 mt-0.5">{value}</p>
+    </div>
+  );
+}
 
 export default function ContactsPage() {
   const { token, accountId } = useAuthStore();
@@ -46,16 +53,21 @@ export default function ContactsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [importOpen, setImportOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
-  const [importStatus, setImportStatus] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [customAttrKeys, setCustomAttrKeys] = useState<{ key: string; label: string }[]>([]);
-  const [showCreate, setShowCreate] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newEmail, setNewEmail] = useState('');
   const [duplicateGroups, setDuplicateGroups] = useState(0);
   const [stats, setStats] = useState({ hasEmail: 0, hasPhone: 0 });
   const [bulkLabelId, setBulkLabelId] = useState('');
-  const [activeContactId, setActiveContactId] = useState<string | null>(null);
-  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
+  const [automations, setAutomations] = useState<EmailAutomation[]>([]);
+  const [agents, setAgents] = useState<{ userId: string; name: string }[]>([]);
+  const [bulkAutomationId, setBulkAutomationId] = useState('');
+  const [bulkAssigneeId, setBulkAssigneeId] = useState('');
+  const [bulkAutomateBusy, setBulkAutomateBusy] = useState(false);
+  const [bulkAssignBusy, setBulkAssignBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState('');
+  const [exportError, setExportError] = useState('');
+  const importCancelledRef = useRef(false);
 
   useEffect(() => {
     if (!token || !accountId || !access.isAdmin) return;
@@ -112,6 +124,14 @@ export default function ContactsPage() {
       .list(accountId, token)
       .then((r) => setCustomAttrKeys(r.definitions.map((d) => ({ key: d.key, label: d.label }))))
       .catch(() => {});
+    api.marketing.automations
+      .list(accountId, token)
+      .then((r) => setAutomations(r.automations.filter((a) => a.enabled)))
+      .catch(() => setAutomations([]));
+    api.agents
+      .list(accountId, token)
+      .then((r) => setAgents(r.agents.map((a) => ({ userId: a.userId, name: a.displayName || a.name }))))
+      .catch(() => setAgents([]));
   }, [token, accountId]);
 
   useEffect(() => {
@@ -122,17 +142,6 @@ export default function ContactsPage() {
   useEffect(() => {
     setPage(0);
   }, [q, type, labelId, marketingStatus, country, sortKey]);
-
-  useEffect(() => {
-    if (contacts.length === 0) {
-      setActiveContactId(null);
-      return;
-    }
-    if (!activeContactId || !contacts.some((c) => c.id === activeContactId)) {
-      const first = contacts[0];
-      if (first) setActiveContactId(first.id);
-    }
-  }, [contacts, activeContactId]);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -150,31 +159,46 @@ export default function ContactsPage() {
 
   const handleImportJob = async (file: File, columnMapping: ColumnMapping, upsertByEmail: boolean) => {
     if (!token || !accountId) return;
+    importCancelledRef.current = false;
     const { job } = await api.contacts.startImportJob(accountId, file, token, {
       columnMapping,
       upsertByEmail,
     });
-    setImportStatus(`Import started (${job.totalRows} rows)…`);
+    if (importCancelledRef.current) return;
+    setImportProgress({
+      totalRows: job.totalRows,
+      processedRows: 0,
+      importedCount: 0,
+      skippedCount: 0,
+      errors: [],
+      done: false,
+    });
     const poll = async () => {
+      if (importCancelledRef.current) return;
       const res = await api.contacts.pollImportJob(accountId, job.id, token);
+      if (importCancelledRef.current) return;
       const j = res.job;
+      setImportProgress({
+        totalRows: j.totalRows ?? job.totalRows,
+        processedRows: j.processedRows ?? 0,
+        importedCount: j.importedCount ?? 0,
+        skippedCount: j.skippedCount ?? 0,
+        errors: j.errors ?? [],
+        done: res.done,
+      });
       if (!res.done) {
-        setImportStatus(
-          `Importing… ${j.processedRows ?? 0}/${j.totalRows} (${j.importedCount ?? 0} imported, ${j.skippedCount ?? 0} skipped)`
-        );
         setTimeout(poll, 1500);
         return;
       }
-      setImportStatus(
-        `Done: ${j.importedCount ?? 0} imported, ${j.skippedCount ?? 0} skipped.${(j.errors?.length ?? 0) > 0 ? ` ${j.errors!.length} errors — download from import status.` : ''}`
-      );
       await load();
+      loadStats();
     };
     void poll();
   };
 
   const handleExport = async () => {
     if (!token || !accountId) return;
+    setExportError('');
     try {
       const ids = selected.size > 0 ? [...selected] : undefined;
       const blob = await api.contacts.exportCsv(accountId, token, {
@@ -190,17 +214,13 @@ export default function ContactsPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      setImportStatus(err instanceof Error ? err.message : 'Export failed');
+      setExportError(err instanceof Error ? err.message : 'Export failed');
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token || !accountId || !newName.trim()) return;
-    await api.contacts.create(accountId, { name: newName.trim(), email: newEmail || null, type: 'lead' }, token);
-    setNewName('');
-    setNewEmail('');
-    setShowCreate(false);
+  const handleCreate = async (name: string, email: string) => {
+    if (!token || !accountId) return;
+    await api.contacts.create(accountId, { name, email: email || null, type: 'lead' }, token);
     await load();
     loadStats();
   };
@@ -233,6 +253,39 @@ export default function ContactsPage() {
     await load();
   };
 
+  const handleBulkAutomate = async () => {
+    if (!token || !accountId || selected.size === 0 || !bulkAutomationId) return;
+    setBulkAutomateBusy(true);
+    setBulkMsg('');
+    try {
+      const res = await api.marketing.automations.bulkEnroll(accountId, bulkAutomationId, [...selected], token);
+      setBulkMsg(`Enrolled ${res.enrolledCount} of ${selected.size} contact(s) in automation.`);
+      setSelected(new Set());
+      setBulkAutomationId('');
+    } catch (err) {
+      setBulkMsg(err instanceof Error ? err.message : 'Bulk enrollment failed');
+    } finally {
+      setBulkAutomateBusy(false);
+    }
+  };
+
+  const handleBulkAssign = async () => {
+    if (!token || !accountId || selected.size === 0 || !bulkAssigneeId) return;
+    setBulkAssignBusy(true);
+    setBulkMsg('');
+    try {
+      const res = await api.contacts.bulkAssign(accountId, { contactIds: [...selected], assigneeId: bulkAssigneeId }, token);
+      setBulkMsg(`Assigned ${res.updatedCount} of ${selected.size} contact(s).`);
+      setSelected(new Set());
+      setBulkAssigneeId('');
+      await load();
+    } catch (err) {
+      setBulkMsg(err instanceof Error ? err.message : 'Bulk assignment failed');
+    } finally {
+      setBulkAssignBusy(false);
+    }
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rangeStart = total === 0 ? 0 : page * PAGE_SIZE + 1;
   const rangeEnd = Math.min(total, (page + 1) * PAGE_SIZE);
@@ -259,26 +312,34 @@ export default function ContactsPage() {
                 Export{selected.size > 0 ? ` (${selected.size})` : ''}
               </Button>
             )}
-            <Button type="button" onClick={() => setShowCreate(!showCreate)}>
+            <Button type="button" onClick={() => setCreateOpen(true)}>
               + New contact
             </Button>
           </div>
         }
       />
 
-      <div className="px-6 pb-4 space-y-4">
-        <ContactWorkflowStrip />
-        <MetricGrid className="grid-cols-2 lg:grid-cols-4">
-          <MetricCard label="Total contacts" value={loading ? '—' : total} accent="primary" />
-          <MetricCard label="Reachable email" value={stats.hasEmail} hint="Campaign-ready" accent="accent" />
-          <MetricCard label="Has phone" value={stats.hasPhone} accent="accent" />
-          <MetricCard
-            label="Duplicates"
-            value={duplicateGroups}
-            accent={duplicateGroups > 0 ? 'amber' : 'primary'}
-            hint={duplicateGroups > 0 ? 'Needs review' : 'All clear'}
-          />
-        </MetricGrid>
+      {/* one horizontal facts strip replaces the old workflow-strip + 2x4 metric grid */}
+      <div className="mx-6 mt-4 mb-3 flex items-stretch bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto shrink-0">
+        <Fact label="Total contacts" value={loading ? '—' : total} />
+        <Fact label="Reachable email" value={stats.hasEmail} />
+        <Fact label="Has phone" value={stats.hasPhone} />
+        <Fact
+          label="Duplicates"
+          value={
+            duplicateGroups > 0 ? (
+              <button
+                type="button"
+                onClick={() => setMergeOpen(true)}
+                className="text-amber-700 hover:underline"
+              >
+                {duplicateGroups} group{duplicateGroups === 1 ? '' : 's'} →
+              </button>
+            ) : (
+              <span className="text-gray-400">All clear</span>
+            )
+          }
+        />
       </div>
 
       {access.isAdmin && !access.canImport && (
@@ -291,18 +352,9 @@ export default function ContactsPage() {
         </div>
       )}
 
-      {access.isAdmin && duplicateGroups > 0 && (
-        <div className="mx-6 mb-3 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
-          <span aria-hidden>⚠️</span>
-          <p className="flex-1 text-sm text-amber-900">
-            <strong>
-              {duplicateGroups} duplicate group{duplicateGroups === 1 ? '' : 's'}
-            </strong>{' '}
-            — merge to keep your CRM clean.
-          </p>
-          <Button type="button" variant="secondary" size="sm" onClick={() => setMergeOpen(true)}>
-            Review
-          </Button>
+      {exportError && (
+        <div className="mx-6 mb-3 text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+          Export failed: {exportError}
         </div>
       )}
 
@@ -312,6 +364,7 @@ export default function ContactsPage() {
           <button type="button" onClick={toggleAll} className="text-xs text-primary-600 hover:underline">
             {selected.size === contacts.length ? 'Clear' : 'Select page'}
           </button>
+          {bulkMsg && <span className="text-xs text-primary-800">{bulkMsg}</span>}
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <select
               value={bulkLabelId}
@@ -328,6 +381,48 @@ export default function ContactsPage() {
             <Button type="button" variant="secondary" size="sm" disabled={!bulkLabelId} onClick={() => void handleBulkLabel()}>
               Apply
             </Button>
+            <select
+              value={bulkAutomationId}
+              onChange={(e) => setBulkAutomationId(e.target.value)}
+              className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+            >
+              <option value="">⚡ Enroll in automation…</option>
+              {automations.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!bulkAutomationId || bulkAutomateBusy}
+              onClick={() => void handleBulkAutomate()}
+            >
+              {bulkAutomateBusy ? 'Enrolling…' : 'Enroll'}
+            </Button>
+            <select
+              value={bulkAssigneeId}
+              onChange={(e) => setBulkAssigneeId(e.target.value)}
+              className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+            >
+              <option value="">🧭 Assign to…</option>
+              {agents.map((a) => (
+                <option key={a.userId} value={a.userId}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!bulkAssigneeId || bulkAssignBusy}
+              onClick={() => void handleBulkAssign()}
+            >
+              {bulkAssignBusy ? 'Assigning…' : 'Assign'}
+            </Button>
             {access.isAdmin && (
               <Button type="button" variant="secondary" size="sm" onClick={() => void handleBulkDelete()}>
                 Delete
@@ -337,26 +432,9 @@ export default function ContactsPage() {
         </div>
       )}
 
-      {showCreate && (
-        <form
-          onSubmit={handleCreate}
-          className="mx-6 mb-3 p-4 bg-white border border-gray-200 rounded-xl flex flex-wrap gap-3 items-end shadow-sm"
-        >
-          <div>
-            <label className="text-xs text-gray-500">Name</label>
-            <Input value={newName} onChange={(e) => setNewName(e.target.value)} required />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500">Email</label>
-            <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
-          </div>
-          <Button type="submit">Save</Button>
-        </form>
-      )}
-
       <div className="flex-1 flex min-h-0 mx-6 mb-6 gap-0 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="flex-1 min-w-0 flex flex-col min-h-0">
-          <div className="shrink-0 p-3 border-b border-gray-100 bg-slate-50/80 space-y-2">
+          <div className="shrink-0 p-3 border-b border-gray-100 bg-slate-50/80">
             <div className="flex flex-wrap gap-2 items-center">
               <Input
                 value={q}
@@ -399,9 +477,21 @@ export default function ContactsPage() {
                 ))}
               </select>
               <select
+                value={labelId}
+                onChange={(e) => setLabelId(e.target.value)}
+                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+              >
+                <option value="">All labels</option>
+                {labels.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+              <select
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value)}
-                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                className="ml-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
               >
                 {SORTS.map((s) => (
                   <option key={s.value} value={s.value}>
@@ -410,7 +500,6 @@ export default function ContactsPage() {
                 ))}
               </select>
             </div>
-            {importStatus && <p className="text-xs text-gray-500">{importStatus}</p>}
           </div>
 
           <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-gray-100 text-xs text-gray-500">
@@ -437,8 +526,6 @@ export default function ContactsPage() {
                 <ContactListItem
                   key={c.id}
                   contact={c}
-                  active={activeContactId === c.id}
-                  onActivate={() => setActiveContactId(c.id)}
                   bulkSelected={selected.has(c.id)}
                   onBulkToggle={() => toggleSelect(c.id)}
                 />
@@ -446,69 +533,39 @@ export default function ContactsPage() {
             )}
           </div>
 
-          {totalPages > 1 && (
-            <div className="shrink-0 flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm">
-              <Button type="button" variant="secondary" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-                Previous
-              </Button>
-              <span className="text-xs text-gray-500">
-                Page {page + 1} / {totalPages}
-              </span>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={page + 1 >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {accountId && token && (
-          <div className="hidden xl:flex w-[360px] shrink-0 min-h-0">
-            <ContactQuickActionsPanel
-              accountId={accountId}
-              token={token}
-              contactId={activeContactId}
-              layout="dock"
-              onContactUpdated={() => void load()}
-            />
+          <div className="shrink-0 flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm">
+            <Button type="button" variant="secondary" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+              Previous
+            </Button>
+            <span className="text-xs text-gray-500">
+              Page {page + 1} / {totalPages}
+            </span>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
           </div>
-        )}
+        </div>
       </div>
 
-      {accountId && token && activeContactId && (
-        <button
-          type="button"
-          onClick={() => setMobileActionsOpen(true)}
-          className="xl:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-primary-600 to-indigo-600 text-white text-sm font-semibold shadow-lg"
-        >
-          ⚡ Quick actions
-        </button>
-      )}
-
+      <ContactCreateModal open={createOpen} onClose={() => setCreateOpen(false)} onCreate={handleCreate} />
       <ContactImportModal
         open={importOpen}
-        onClose={() => setImportOpen(false)}
+        onClose={() => {
+          importCancelledRef.current = true;
+          setImportOpen(false);
+          setImportProgress(null);
+        }}
         onImport={handleImportJob}
+        progress={importProgress}
         customAttrKeys={customAttrKeys}
       />
       <ContactMergeModal open={mergeOpen} onClose={() => setMergeOpen(false)} onMerged={() => void load()} />
-      {accountId && token && (
-        <div className="xl:hidden">
-          <ContactQuickActionsPanel
-            accountId={accountId}
-            token={token}
-            contactId={activeContactId}
-            open={mobileActionsOpen}
-            onClose={() => setMobileActionsOpen(false)}
-            onContactUpdated={() => void load()}
-          />
-        </div>
-      )}
     </div>
   );
 }

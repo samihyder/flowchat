@@ -131,7 +131,6 @@ export function ContactQuickActionsPanel({
     }
     setError('');
     setSuccess('');
-    setCopied(null);
     setAddedSegments(new Set());
     setEnrolledCampaigns(new Set());
     setEnrolledAutomations(new Set());

@@ -4,6 +4,7 @@ import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
 import { getGlobalCompanyById, linkContactToGlobalCompany, toCompanySummary } from '@/lib/companies/resolve';
 import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
 import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-attributes';
+import { validateAssignment } from '@/lib/assign';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string; contactId: string }> };
@@ -27,8 +28,12 @@ export async function GET(req: Request, { params }: Params) {
            c.enriched_at as "enrichedAt",
            c.custom_attributes as "customAttributes",
            c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
-           c.blocked_at as "blockedAt", c.created_at as "createdAt", c.updated_at as "updatedAt"
+           c.blocked_at as "blockedAt", c.created_at as "createdAt", c.updated_at as "updatedAt",
+           c.assignee_id as "assigneeId", au_user.name as "assigneeName",
+           c.team_id as "teamId", team.name as "teamName"
     FROM contacts c
+    LEFT JOIN users au_user ON au_user.id = c.assignee_id
+    LEFT JOIN teams team ON team.id = c.team_id
     WHERE c.id = ${contactId}::uuid AND c.account_id = ${accountId}::uuid
     LIMIT 1
   `;
@@ -110,6 +115,8 @@ export async function PATCH(req: Request, { params }: Params) {
     country?: string | null;
     labelIds?: string[];
     customAttributes?: Record<string, unknown>;
+    assigneeId?: string | null;
+    teamId?: string | null;
   };
 
   if (body.type && !VALID_TYPES.includes(body.type as (typeof VALID_TYPES)[number])) {
@@ -134,6 +141,12 @@ export async function PATCH(req: Request, { params }: Params) {
     SELECT id FROM contacts WHERE id = ${contactId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
   `;
   if (!existing[0]) return Response.json({ error: 'Contact not found' }, { status: 404 });
+
+  const assignmentError = await validateAssignment(sql, accountId, {
+    assigneeId: body.assigneeId,
+    teamId: body.teamId,
+  });
+  if (assignmentError) return Response.json({ error: assignmentError }, { status: 400 });
 
   let customAttributesJson: string | null = null;
   if (body.customAttributes !== undefined) {
@@ -166,11 +179,14 @@ export async function PATCH(req: Request, { params }: Params) {
       country = CASE WHEN ${country !== undefined} THEN ${country ?? null} ELSE country END,
       type = COALESCE(${body.type ?? null}, type),
       custom_attributes = CASE WHEN ${customAttributesJson !== null} THEN ${customAttributesJson}::jsonb ELSE custom_attributes END,
+      assignee_id = CASE WHEN ${body.assigneeId !== undefined} THEN ${body.assigneeId ?? null}::uuid ELSE assignee_id END,
+      team_id = CASE WHEN ${body.teamId !== undefined} THEN ${body.teamId ?? null}::uuid ELSE team_id END,
       updated_at = NOW()
     WHERE id = ${contactId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, email, phone, country, type, external_id as "externalId",
               custom_attributes as "customAttributes",
               last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
+              assignee_id as "assigneeId", team_id as "teamId",
               created_at as "createdAt", updated_at as "updatedAt"
   `;
 

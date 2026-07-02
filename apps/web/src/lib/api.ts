@@ -328,6 +328,10 @@ export type ContactDetail = Contact & {
   enrichmentStatus?: string | null;
   enrichmentProvider?: string | null;
   enrichedAt?: string | null;
+  assigneeId?: string | null;
+  assigneeName?: string | null;
+  teamId?: string | null;
+  teamName?: string | null;
   labels: Label[];
   conversations: {
     id: string;
@@ -338,6 +342,16 @@ export type ContactDetail = Contact & {
     createdAt: string;
   }[];
   notes: ContactNote[];
+};
+
+export type ContactTask = {
+  id: string;
+  title: string;
+  dueAt: string | null;
+  status: 'open' | 'done';
+  createdAt: string;
+  completedAt: string | null;
+  createdByName?: string | null;
 };
 
 export type DuplicateGroup = {
@@ -1179,6 +1193,8 @@ export const api = {
         type?: string;
         labelIds?: string[];
         customAttributes?: Record<string, unknown>;
+        assigneeId?: string | null;
+        teamId?: string | null;
       },
       token: string
     ) =>
@@ -1187,6 +1203,48 @@ export const api = {
         body,
         token,
       }),
+
+    bulkAssign: (
+      accountId: string,
+      body: { contactIds: string[]; assigneeId?: string | null; teamId?: string | null },
+      token: string
+    ) =>
+      request<{ ok: boolean; updatedCount: number }>(`/accounts/${accountId}/contacts/bulk-assign`, {
+        method: 'POST',
+        body,
+        token,
+      }),
+
+    tasks: {
+      list: (accountId: string, contactId: string, token: string) =>
+        request<{ tasks: ContactTask[] }>(`/accounts/${accountId}/contacts/${contactId}/tasks`, { token }),
+
+      create: (accountId: string, contactId: string, body: { title: string; dueAt?: string | null }, token: string) =>
+        request<{ task: ContactTask }>(`/accounts/${accountId}/contacts/${contactId}/tasks`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+
+      update: (
+        accountId: string,
+        contactId: string,
+        taskId: string,
+        body: { title?: string; dueAt?: string | null; status?: 'open' | 'done' },
+        token: string
+      ) =>
+        request<{ task: ContactTask }>(`/accounts/${accountId}/contacts/${contactId}/tasks/${taskId}`, {
+          method: 'PATCH',
+          body,
+          token,
+        }),
+
+      remove: (accountId: string, contactId: string, taskId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/contacts/${contactId}/tasks/${taskId}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
 
     getStats: (accountId: string, token: string) =>
       request<{ stats: { total: number; hasEmail: number; hasPhone: number } }>(
@@ -1899,6 +1957,16 @@ export const api = {
           `/accounts/${accountId}/marketing/automations/${automationId}/enroll`,
           { method: 'POST', body: { contactId }, token }
         ),
+      bulkEnroll: (accountId: string, automationId: string, contactIds: string[], token: string) =>
+        request<{
+          ok: boolean;
+          enrolledCount: number;
+          results: { contactId: string; enrolled: boolean; reason?: string }[];
+        }>(`/accounts/${accountId}/marketing/automations/${automationId}/bulk-enroll`, {
+          method: 'POST',
+          body: { contactIds },
+          token,
+        }),
       restart: (accountId: string, automationId: string, token: string, contactIds?: string[]) =>
         request<{ ok: boolean; processed: number }>(
           `/accounts/${accountId}/marketing/automations/${automationId}/restart`,
