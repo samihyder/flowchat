@@ -38,6 +38,7 @@ export async function GET(req: Request, { params }: Params) {
     labelId: url.searchParams.get('labelId'),
     marketingStatus: url.searchParams.get('marketingStatus'),
     country: url.searchParams.get('country'),
+    hasAutomation: url.searchParams.get('hasAutomation'),
     ids,
     sort: url.searchParams.get('sort') ?? 'last_activity_at',
     orderAsc: url.searchParams.get('order') === 'asc',

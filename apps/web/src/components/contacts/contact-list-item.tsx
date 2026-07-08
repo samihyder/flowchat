@@ -47,6 +47,29 @@ export function ContactListItem({
           <p className="text-xs text-gray-500 truncate">{contact.email ?? 'No email'}</p>
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             <MarketingStatusBadge status={contact.marketingStatus} />
+            {contact.labels && contact.labels.length > 0 && (
+              <span className="flex flex-wrap gap-1">
+                {contact.labels.slice(0, 2).map((l) => (
+                  <span
+                    key={l.id}
+                    className="text-[10px] px-1.5 py-0.5 rounded-full text-white"
+                    style={{ backgroundColor: l.color }}
+                  >
+                    {l.name}
+                  </span>
+                ))}
+                {contact.labels.length > 2 && (
+                  <span className="text-[10px] text-gray-400">+{contact.labels.length - 2}</span>
+                )}
+              </span>
+            )}
+            {contact.activeAutomation ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-700 bg-violet-100 px-1.5 py-0.5 rounded-full">
+                ⚡ {contact.activeAutomation.name} · {contact.activeAutomation.currentStep}/{contact.activeAutomation.totalSteps}
+              </span>
+            ) : (
+              <span className="text-[10px] text-gray-400">— no automation</span>
+            )}
             {contact.country && (
               <span className="text-[10px] text-gray-500">{countryLabel(contact.country)}</span>
             )}

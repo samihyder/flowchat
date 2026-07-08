@@ -10,6 +10,7 @@ export type ContactListParams = {
   orderAsc?: boolean;
   marketingStatus?: string | null;
   country?: string | null;
+  hasAutomation?: string | null;
   limit?: number;
   offset?: number;
 };
@@ -34,6 +35,17 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
                 WHERE cl.contact_id = c.id),
                '[]'::json
              ) as labels,
+             (SELECT json_build_object(
+                'name', mw.name,
+                'currentStep', mwe.current_step_order,
+                'totalSteps', (SELECT COUNT(*)::int FROM marketing_workflow_steps mws WHERE mws.workflow_id = mw.id)
+              )
+              FROM marketing_workflow_enrollments mwe
+              INNER JOIN marketing_workflows mw ON mw.id = mwe.workflow_id
+              WHERE mwe.contact_id = c.id AND mwe.status = 'active'
+              ORDER BY mwe.enrolled_at DESC
+              LIMIT 1
+             ) as "activeAutomation",
              COUNT(*) OVER()::int as "totalCount"
       FROM contacts c
       WHERE c.account_id = ${p.accountId}::uuid
@@ -45,6 +57,12 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
         AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
         AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
         AND (${p.country ?? null}::text IS NULL OR c.country = ${p.country ?? null})
+        AND (${p.hasAutomation ?? null}::text IS NULL OR
+          (${p.hasAutomation ?? null}::text = 'yes') = EXISTS (
+            SELECT 1 FROM marketing_workflow_enrollments mwe2
+            WHERE mwe2.contact_id = c.id AND mwe2.status = 'active'
+          )
+        )
       ORDER BY c.name ASC
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -62,6 +80,17 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
                 WHERE cl.contact_id = c.id),
                '[]'::json
              ) as labels,
+             (SELECT json_build_object(
+                'name', mw.name,
+                'currentStep', mwe.current_step_order,
+                'totalSteps', (SELECT COUNT(*)::int FROM marketing_workflow_steps mws WHERE mws.workflow_id = mw.id)
+              )
+              FROM marketing_workflow_enrollments mwe
+              INNER JOIN marketing_workflows mw ON mw.id = mwe.workflow_id
+              WHERE mwe.contact_id = c.id AND mwe.status = 'active'
+              ORDER BY mwe.enrolled_at DESC
+              LIMIT 1
+             ) as "activeAutomation",
              COUNT(*) OVER()::int as "totalCount"
       FROM contacts c
       WHERE c.account_id = ${p.accountId}::uuid
@@ -73,6 +102,12 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
         AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
         AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
         AND (${p.country ?? null}::text IS NULL OR c.country = ${p.country ?? null})
+        AND (${p.hasAutomation ?? null}::text IS NULL OR
+          (${p.hasAutomation ?? null}::text = 'yes') = EXISTS (
+            SELECT 1 FROM marketing_workflow_enrollments mwe2
+            WHERE mwe2.contact_id = c.id AND mwe2.status = 'active'
+          )
+        )
       ORDER BY c.name DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -90,6 +125,17 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
                 WHERE cl.contact_id = c.id),
                '[]'::json
              ) as labels,
+             (SELECT json_build_object(
+                'name', mw.name,
+                'currentStep', mwe.current_step_order,
+                'totalSteps', (SELECT COUNT(*)::int FROM marketing_workflow_steps mws WHERE mws.workflow_id = mw.id)
+              )
+              FROM marketing_workflow_enrollments mwe
+              INNER JOIN marketing_workflows mw ON mw.id = mwe.workflow_id
+              WHERE mwe.contact_id = c.id AND mwe.status = 'active'
+              ORDER BY mwe.enrolled_at DESC
+              LIMIT 1
+             ) as "activeAutomation",
              COUNT(*) OVER()::int as "totalCount"
       FROM contacts c
       WHERE c.account_id = ${p.accountId}::uuid
@@ -101,6 +147,12 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
         AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
         AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
         AND (${p.country ?? null}::text IS NULL OR c.country = ${p.country ?? null})
+        AND (${p.hasAutomation ?? null}::text IS NULL OR
+          (${p.hasAutomation ?? null}::text = 'yes') = EXISTS (
+            SELECT 1 FROM marketing_workflow_enrollments mwe2
+            WHERE mwe2.contact_id = c.id AND mwe2.status = 'active'
+          )
+        )
       ORDER BY c.created_at ASC
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -118,6 +170,17 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
                 WHERE cl.contact_id = c.id),
                '[]'::json
              ) as labels,
+             (SELECT json_build_object(
+                'name', mw.name,
+                'currentStep', mwe.current_step_order,
+                'totalSteps', (SELECT COUNT(*)::int FROM marketing_workflow_steps mws WHERE mws.workflow_id = mw.id)
+              )
+              FROM marketing_workflow_enrollments mwe
+              INNER JOIN marketing_workflows mw ON mw.id = mwe.workflow_id
+              WHERE mwe.contact_id = c.id AND mwe.status = 'active'
+              ORDER BY mwe.enrolled_at DESC
+              LIMIT 1
+             ) as "activeAutomation",
              COUNT(*) OVER()::int as "totalCount"
       FROM contacts c
       WHERE c.account_id = ${p.accountId}::uuid
@@ -129,6 +192,12 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
         AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
         AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
         AND (${p.country ?? null}::text IS NULL OR c.country = ${p.country ?? null})
+        AND (${p.hasAutomation ?? null}::text IS NULL OR
+          (${p.hasAutomation ?? null}::text = 'yes') = EXISTS (
+            SELECT 1 FROM marketing_workflow_enrollments mwe2
+            WHERE mwe2.contact_id = c.id AND mwe2.status = 'active'
+          )
+        )
       ORDER BY c.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -146,6 +215,17 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
                 WHERE cl.contact_id = c.id),
                '[]'::json
              ) as labels,
+             (SELECT json_build_object(
+                'name', mw.name,
+                'currentStep', mwe.current_step_order,
+                'totalSteps', (SELECT COUNT(*)::int FROM marketing_workflow_steps mws WHERE mws.workflow_id = mw.id)
+              )
+              FROM marketing_workflow_enrollments mwe
+              INNER JOIN marketing_workflows mw ON mw.id = mwe.workflow_id
+              WHERE mwe.contact_id = c.id AND mwe.status = 'active'
+              ORDER BY mwe.enrolled_at DESC
+              LIMIT 1
+             ) as "activeAutomation",
              COUNT(*) OVER()::int as "totalCount"
       FROM contacts c
       WHERE c.account_id = ${p.accountId}::uuid
@@ -157,6 +237,12 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
         AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
         AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
         AND (${p.country ?? null}::text IS NULL OR c.country = ${p.country ?? null})
+        AND (${p.hasAutomation ?? null}::text IS NULL OR
+          (${p.hasAutomation ?? null}::text = 'yes') = EXISTS (
+            SELECT 1 FROM marketing_workflow_enrollments mwe2
+            WHERE mwe2.contact_id = c.id AND mwe2.status = 'active'
+          )
+        )
       ORDER BY c.last_activity_at ASC NULLS LAST
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -173,6 +259,17 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
               WHERE cl.contact_id = c.id),
              '[]'::json
            ) as labels,
+           (SELECT json_build_object(
+              'name', mw.name,
+              'currentStep', mwe.current_step_order,
+              'totalSteps', (SELECT COUNT(*)::int FROM marketing_workflow_steps mws WHERE mws.workflow_id = mw.id)
+            )
+            FROM marketing_workflow_enrollments mwe
+            INNER JOIN marketing_workflows mw ON mw.id = mwe.workflow_id
+            WHERE mwe.contact_id = c.id AND mwe.status = 'active'
+            ORDER BY mwe.enrolled_at DESC
+            LIMIT 1
+           ) as "activeAutomation",
            COUNT(*) OVER()::int as "totalCount"
     FROM contacts c
     WHERE c.account_id = ${p.accountId}::uuid
@@ -184,6 +281,12 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
       AND (${ids}::uuid[] IS NULL OR c.id = ANY(${ids}::uuid[]))
       AND (${p.marketingStatus ?? null}::text IS NULL OR c.marketing_status = ${p.marketingStatus ?? null})
       AND (${p.country ?? null}::text IS NULL OR c.country = ${p.country ?? null})
+      AND (${p.hasAutomation ?? null}::text IS NULL OR
+        (${p.hasAutomation ?? null}::text = 'yes') = EXISTS (
+          SELECT 1 FROM marketing_workflow_enrollments mwe2
+          WHERE mwe2.contact_id = c.id AND mwe2.status = 'active'
+        )
+      )
     ORDER BY c.last_activity_at DESC NULLS LAST
     LIMIT ${limit} OFFSET ${offset}
   `;

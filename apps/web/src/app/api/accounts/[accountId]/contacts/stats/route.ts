@@ -17,10 +17,19 @@ export async function GET(req: Request, { params }: Params) {
     SELECT
       COUNT(*)::int AS total,
       COUNT(*) FILTER (WHERE email IS NOT NULL AND email <> '')::int AS "hasEmail",
-      COUNT(*) FILTER (WHERE phone IS NOT NULL AND phone <> '')::int AS "hasPhone"
+      COUNT(*) FILTER (WHERE phone IS NOT NULL AND phone <> '')::int AS "hasPhone",
+      COUNT(*) FILTER (
+        WHERE EXISTS (
+          SELECT 1 FROM marketing_workflow_enrollments mwe
+          WHERE mwe.contact_id = contacts.id AND mwe.status = 'active'
+        )
+      )::int AS "inAutomation",
+      COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days')::int AS "newThisWeek"
     FROM contacts
     WHERE account_id = ${accountId}::uuid
   `;
 
-  return Response.json({ stats: rows[0] ?? { total: 0, hasEmail: 0, hasPhone: 0 } });
+  return Response.json({
+    stats: rows[0] ?? { total: 0, hasEmail: 0, hasPhone: 0, inAutomation: 0, newThisWeek: 0 },
+  });
 }

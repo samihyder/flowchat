@@ -46,6 +46,7 @@ export default function ContactsPage() {
   const [labelId, setLabelId] = useState('');
   const [marketingStatus, setMarketingStatus] = useState('');
   const [country, setCountry] = useState('');
+  const [hasAutomation, setHasAutomation] = useState('');
   const [sortKey, setSortKey] = useState('last_activity_at:desc');
   const [labels, setLabels] = useState<Label[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,7 @@ export default function ContactsPage() {
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const [customAttrKeys, setCustomAttrKeys] = useState<{ key: string; label: string }[]>([]);
   const [duplicateGroups, setDuplicateGroups] = useState(0);
-  const [stats, setStats] = useState({ hasEmail: 0, hasPhone: 0 });
+  const [stats, setStats] = useState({ hasEmail: 0, hasPhone: 0, inAutomation: 0, newThisWeek: 0 });
   const [bulkLabelId, setBulkLabelId] = useState('');
   const [automations, setAutomations] = useState<EmailAutomation[]>([]);
   const [agents, setAgents] = useState<{ userId: string; name: string }[]>([]);
@@ -81,8 +82,15 @@ export default function ContactsPage() {
     if (!token || !accountId) return;
     api.contacts
       .getStats(accountId, token)
-      .then((r) => setStats({ hasEmail: r.stats.hasEmail, hasPhone: r.stats.hasPhone }))
-      .catch(() => setStats({ hasEmail: 0, hasPhone: 0 }));
+      .then((r) =>
+        setStats({
+          hasEmail: r.stats.hasEmail,
+          hasPhone: r.stats.hasPhone,
+          inAutomation: r.stats.inAutomation,
+          newThisWeek: r.stats.newThisWeek,
+        })
+      )
+      .catch(() => setStats({ hasEmail: 0, hasPhone: 0, inAutomation: 0, newThisWeek: 0 }));
   }, [token, accountId]);
 
   useEffect(() => {
@@ -101,6 +109,7 @@ export default function ContactsPage() {
         labelId: labelId || undefined,
         marketingStatus: marketingStatus || undefined,
         country: country || undefined,
+        hasAutomation: hasAutomation || undefined,
         sort,
         order,
         limit: PAGE_SIZE,
@@ -114,7 +123,7 @@ export default function ContactsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, accountId, q, type, labelId, marketingStatus, country, sort, order, page]);
+  }, [token, accountId, q, type, labelId, marketingStatus, country, hasAutomation, sort, order, page]);
 
   useEffect(() => {
     if (!token || !accountId) return;
@@ -141,7 +150,7 @@ export default function ContactsPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [q, type, labelId, marketingStatus, country, sortKey]);
+  }, [q, type, labelId, marketingStatus, country, hasAutomation, sortKey]);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -294,7 +303,11 @@ export default function ContactsPage() {
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <PageHeader
         title="Contacts"
-        description="Engage leads, run automations, and grow relationships"
+        description={
+          loading
+            ? 'Engage leads, run automations, and grow relationships'
+            : `${total} contact${total === 1 ? '' : 's'}${stats.newThisWeek > 0 ? ` · ${stats.newThisWeek} new this week` : ''}`
+        }
         action={
           <div className="flex flex-wrap gap-2">
             {access.isAdmin && (
@@ -324,6 +337,7 @@ export default function ContactsPage() {
         <Fact label="Total contacts" value={loading ? '—' : total} />
         <Fact label="Reachable email" value={stats.hasEmail} />
         <Fact label="Has phone" value={stats.hasPhone} />
+        <Fact label="In automation" value={stats.inAutomation} />
         <Fact
           label="Duplicates"
           value={
@@ -487,6 +501,15 @@ export default function ContactsPage() {
                     {l.name}
                   </option>
                 ))}
+              </select>
+              <select
+                value={hasAutomation}
+                onChange={(e) => setHasAutomation(e.target.value)}
+                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+              >
+                <option value="">Automation</option>
+                <option value="yes">In automation</option>
+                <option value="no">No automation</option>
               </select>
               <select
                 value={sortKey}

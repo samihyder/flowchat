@@ -274,6 +274,7 @@ export type Contact = {
   marketingStatus?: string;
   externalId?: string | null;
   labels?: Label[];
+  activeAutomation?: { name: string; currentStep: number; totalSteps: number } | null;
   lastActivityAt: string | null;
   isBlocked: boolean;
   createdAt: string;
@@ -1135,6 +1136,7 @@ export const api = {
         labelId?: string;
         marketingStatus?: string;
         country?: string;
+        hasAutomation?: string;
         ids?: string[];
         sort?: string;
         order?: string;
@@ -1148,6 +1150,7 @@ export const api = {
       if (params?.labelId) qs.set('labelId', params.labelId);
       if (params?.marketingStatus) qs.set('marketingStatus', params.marketingStatus);
       if (params?.country) qs.set('country', params.country);
+      if (params?.hasAutomation) qs.set('hasAutomation', params.hasAutomation);
       if (params?.ids?.length) qs.set('ids', params.ids.join(','));
       if (params?.sort) qs.set('sort', params.sort);
       if (params?.order) qs.set('order', params.order);
@@ -1247,7 +1250,9 @@ export const api = {
     },
 
     getStats: (accountId: string, token: string) =>
-      request<{ stats: { total: number; hasEmail: number; hasPhone: number } }>(
+      request<{
+        stats: { total: number; hasEmail: number; hasPhone: number; inAutomation: number; newThisWeek: number };
+      }>(
         `/accounts/${accountId}/contacts/stats`,
         { token }
       ),
