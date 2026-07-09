@@ -9,6 +9,9 @@ type Team = {
   name: string;
   description: string | null;
   isEnabled: boolean;
+  autoAssignment: boolean;
+  conversationsToday: number;
+  memberCount: number;
 };
 
 type Member = {
@@ -83,6 +86,18 @@ export default function TeamsPage() {
       setError(err.message);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleToggleAutoAssignment = async (team: Team) => {
+    if (!token || !accountId) return;
+    try {
+      await api.teams.update(accountId, team.id, { autoAssignment: !team.autoAssignment }, token);
+      const updated = { ...team, autoAssignment: !team.autoAssignment };
+      setTeams((prev) => prev.map((t) => (t.id === team.id ? updated : t)));
+      setSelectedTeam((prev) => (prev?.id === team.id ? updated : prev));
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -199,7 +214,12 @@ export default function TeamsPage() {
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <span className="font-medium truncate">{team.name}</span>
+                  <span className="min-w-0">
+                    <span className="font-medium truncate block">{team.name}</span>
+                    <span className="text-[11px] text-gray-400 block">
+                      {team.memberCount} member{team.memberCount === 1 ? '' : 's'}
+                    </span>
+                  </span>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(team.id); }}
                     className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity ml-1 shrink-0"
@@ -217,11 +237,24 @@ export default function TeamsPage() {
         {/* Team members panel */}
         {selectedTeam && (
           <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900">{selectedTeam.name}</h3>
-              {selectedTeam.description && (
-                <p className="text-xs text-gray-400 mt-0.5">{selectedTeam.description}</p>
-              )}
+            <div className="px-5 py-4 border-b border-gray-200 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">{selectedTeam.name}</h3>
+                {selectedTeam.description && (
+                  <p className="text-xs text-gray-400 mt-0.5">{selectedTeam.description}</p>
+                )}
+                <p className="text-xs text-gray-400 mt-1">
+                  {selectedTeam.conversationsToday} conversation{selectedTeam.conversationsToday === 1 ? '' : 's'} today
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-gray-600 shrink-0">
+                <input
+                  type="checkbox"
+                  checked={selectedTeam.autoAssignment}
+                  onChange={() => void handleToggleAutoAssignment(selectedTeam)}
+                />
+                Auto-assignment (round-robin)
+              </label>
             </div>
 
             <div className="p-5">

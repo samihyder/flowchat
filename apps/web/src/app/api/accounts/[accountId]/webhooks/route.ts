@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { writeAuditLog } from '@/lib/audit-log';
+import { getClientIp } from '@/lib/request-ip';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -71,6 +72,7 @@ export async function POST(req: Request, { params }: Params) {
     action: 'webhook.created',
     resourceType: 'webhook',
     resourceId: (rows[0] as { id: string }).id,
+    ipAddress: getClientIp(req),
   });
 
   return Response.json({ webhook: rows[0] }, { status: 201 });

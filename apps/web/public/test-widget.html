@@ -24,8 +24,9 @@
 
   <!-- FlowChat Widget — paste before </body> -->
   <script>
+    var params = new URLSearchParams(window.location.search);
     window.flowchat = {
-      inboxId: "b9d1bc74-652f-4bf1-b339-904af115d033",
+      inboxId: params.get("inboxId") || "b9d1bc74-652f-4bf1-b339-904af115d033",
       apiUrl: window.location.hostname === "localhost"
         ? window.location.origin + "/api"
         : "https://flowchat-web-ten.vercel.app/api",

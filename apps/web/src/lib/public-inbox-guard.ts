@@ -36,7 +36,7 @@ export async function guardPublicInboxRequest(
   const sql = neon(databaseUrl);
 
   const inboxRows = await sql`
-    SELECT allowed_domains as "allowedDomains" FROM inboxes
+    SELECT allowed_domains as "allowedDomains", account_id as "accountId" FROM inboxes
     WHERE id = ${inboxId}::uuid AND is_enabled = true LIMIT 1
   `;
   if (!inboxRows[0]) {
@@ -50,9 +50,11 @@ export async function guardPublicInboxRequest(
     return { ok: false, response: Response.json({ error: 'Domain not authorized' }, { status: 403 }) };
   }
 
+  const accountId = (inboxRows[0] as { accountId: string }).accountId;
   const blocked = await sql`
     SELECT 1 FROM blocked_ips
     WHERE ip_address = ${ip}
+      AND account_id = ${accountId}::uuid
       AND (inbox_id = ${inboxId}::uuid OR inbox_id IS NULL)
     LIMIT 1
   `;

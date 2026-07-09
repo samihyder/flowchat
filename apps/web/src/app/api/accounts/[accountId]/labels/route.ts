@@ -14,9 +14,11 @@ export async function GET(req: Request, { params }: Params) {
 
   const sql = neon(process.env.DATABASE_URL!);
   const rows = await sql`
-    SELECT id, name, color FROM labels
-    WHERE account_id = ${accountId}::uuid
-    ORDER BY name ASC
+    SELECT l.id, l.name, l.color, l.created_at as "createdAt",
+           (SELECT COUNT(*)::int FROM conversation_labels cl WHERE cl.label_id = l.id) as "conversationCount"
+    FROM labels l
+    WHERE l.account_id = ${accountId}::uuid
+    ORDER BY l.name ASC
   `;
   return Response.json({ labels: rows });
 }

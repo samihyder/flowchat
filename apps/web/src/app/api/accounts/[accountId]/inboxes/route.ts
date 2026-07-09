@@ -31,10 +31,12 @@ export async function GET(req: Request, { params }: Params) {
            greeting_message as "greetingMessage", greeting_messages as "greetingMessages",
            welcome_title as "welcomeTitle", welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
            default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled",
+           (SELECT COUNT(*)::int FROM inbox_members im WHERE im.inbox_id = inboxes.id) as "agentCount",
            allowed_domains as "allowedDomains", business_hours as "businessHours",
            offline_message as "offlineMessage", privacy_policy_url as "privacyPolicyUrl",
            require_consent as "requireConsent", round_robin_enabled as "roundRobinEnabled",
-           use_business_hours as "useBusinessHours", missed_chat_minutes as "missedChatMinutes"
+           use_business_hours as "useBusinessHours", missed_chat_minutes as "missedChatMinutes",
+           csat_enabled as "csatEnabled", pre_chat_fields as "preChatFields"
     FROM inboxes
     WHERE account_id = ${accountId}::uuid AND is_enabled = true
     ORDER BY created_at ASC

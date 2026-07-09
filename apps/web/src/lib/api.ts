@@ -49,6 +49,7 @@ export type Inbox = {
   csatEnabled?: boolean;
   preChatFields?: PreChatField[];
   isEnabled: boolean;
+  agentCount?: number;
 };
 
 export type InboxAnalytics = {
@@ -175,7 +176,13 @@ export type VisitorContext = {
   lastSeenAt: string | null;
 };
 
-export type CannedResponse = { id: string; shortcut: string; title: string; content: string };
+export type CannedResponse = {
+  id: string;
+  shortcut: string;
+  title: string;
+  content: string;
+  createdByName?: string | null;
+};
 
 export type AccountCrmSettings = {
   crmImportEnabled?: boolean;
@@ -262,6 +269,7 @@ export type CustomAttributeDefinition = {
   attrType: 'text' | 'number' | 'date' | 'select' | 'boolean';
   options: string[] | null;
   sortOrder: number;
+  required: boolean;
 };
 
 export type Contact = {
@@ -675,7 +683,7 @@ export const api = {
         expiresAt: string;
       }>('/auth/sign-up', { method: 'POST', body }),
 
-    signIn: (body: { email: string; password: string }) =>
+    signIn: (body: { email: string; password: string; rememberMe?: boolean }) =>
       request<
         | {
             user: { id: string; name: string; email: string };
@@ -686,6 +694,32 @@ export const api = {
         | { requiresTwoFactor: true; userId: string }
         | { pendingApproval: true; accountName?: string }
       >('/auth/sign-in', { method: 'POST', body }),
+
+    forgotPassword: (email: string) =>
+      request<{ ok: boolean }>('/auth/forgot-password', { method: 'POST', body: { email } }),
+
+    checkResetToken: (token: string) =>
+      request<{ valid: boolean }>(`/auth/reset-password?token=${encodeURIComponent(token)}`),
+
+    resetPassword: (token: string, password: string) =>
+      request<{ ok: boolean }>('/auth/reset-password', { method: 'POST', body: { token, password } }),
+
+    sessions: {
+      list: (token: string) =>
+        request<{
+          sessions: {
+            id: string;
+            userAgent: string | null;
+            ipAddress: string | null;
+            lastSeenAt: string;
+            createdAt: string;
+            rememberMe: boolean;
+            isCurrent: boolean;
+          }[];
+        }>('/auth/sessions', { token }),
+      revoke: (sessionId: string, token: string) =>
+        request<{ ok: boolean }>(`/auth/sessions?id=${sessionId}`, { method: 'DELETE', token }),
+    },
 
     googleUrl: () => `${getApiUrl()}/auth/google`,
 
@@ -717,6 +751,7 @@ export const api = {
           avatarUrl: string | null;
           isActive: boolean;
           displayName: string | null;
+          inboxNames: string[];
         }[];
       }>(`/accounts/${accountId}/agents`, { token }),
 
@@ -857,9 +892,15 @@ export const api = {
       request<{ backupCodes: string[] }>('/auth/2fa/enable', { method: 'POST', body: { code }, token }),
     disable: (code: string, token: string) =>
       request<{ message: string }>('/auth/2fa/disable', { method: 'POST', body: { code }, token }),
-    verify: (userId: string, code: string) =>
+    regenerateBackupCodes: (code: string, token: string) =>
+      request<{ backupCodes: string[] }>('/auth/2fa/regenerate-backup-codes', {
+        method: 'POST',
+        body: { code },
+        token,
+      }),
+    verify: (userId: string, code: string, rememberMe?: boolean) =>
       request<{ user: { id: string; name: string; email: string }; account: { id: string; name: string; slug: string } | null; token: string; expiresAt: string }>(
-        '/auth/2fa/verify', { method: 'POST', body: { userId, code } }
+        '/auth/2fa/verify', { method: 'POST', body: { userId, code, rememberMe } }
       ),
   },
 
@@ -957,7 +998,10 @@ export const api = {
 
   labels: {
     list: (accountId: string, token: string) =>
-      request<{ labels: Label[] }>(`/accounts/${accountId}/labels`, { token }),
+      request<{ labels: (Label & { createdAt: string; conversationCount: number })[] }>(
+        `/accounts/${accountId}/labels`,
+        { token }
+      ),
     create: (accountId: string, body: { name: string; color?: string }, token: string) =>
       request<{ label: Label }>(`/accounts/${accountId}/labels`, { method: 'POST', body, token }),
     update: (
@@ -1429,6 +1473,27 @@ export const api = {
         `/accounts/${accountId}/contacts/${contactId}/marketing-timeline`,
         { token }
       ),
+  },
+
+  blockedVisitors: {
+    list: (accountId: string, token: string) =>
+      request<{
+        entries: { id: string; type: 'ip' | 'contact'; value: string; reason: string | null; blockedAt: string | null }[];
+      }>(`/accounts/${accountId}/blocked-visitors`, { token }),
+    block: (
+      accountId: string,
+      body: { type: 'ip'; value: string; reason?: string } | { type: 'contact'; contactId: string; reason?: string },
+      token: string
+    ) =>
+      request<{ entry: { id: string; type: 'ip' | 'contact'; value: string; reason: string | null; blockedAt: string | null } }>(
+        `/accounts/${accountId}/blocked-visitors`,
+        { method: 'POST', body, token }
+      ),
+    unblock: (accountId: string, entryId: string, type: 'ip' | 'contact', token: string) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/blocked-visitors/${entryId}?type=${type}`, {
+        method: 'DELETE',
+        token,
+      }),
   },
 
   marketing: {
@@ -2039,12 +2104,24 @@ export const api = {
         attrType?: string;
         options?: string[];
         sortOrder?: number;
+        required?: boolean;
       },
       token: string
     ) =>
       request<{ definition: CustomAttributeDefinition }>(
         `/accounts/${accountId}/custom-attributes`,
         { method: 'POST', body, token }
+      ),
+
+    update: (
+      accountId: string,
+      definitionId: string,
+      body: { label?: string; options?: string[]; sortOrder?: number; required?: boolean },
+      token: string
+    ) =>
+      request<{ definition: CustomAttributeDefinition }>(
+        `/accounts/${accountId}/custom-attributes/${definitionId}`,
+        { method: 'PATCH', body, token }
       ),
 
     remove: (accountId: string, definitionId: string, token: string) =>
@@ -2145,6 +2222,30 @@ export const api = {
         `/accounts/${accountId}/webhooks`,
         { method: 'POST', body, token }
       ),
+    update: (
+      accountId: string,
+      webhookId: string,
+      body: { url?: string; events?: string[]; enabled?: boolean },
+      token: string
+    ) =>
+      request<{ webhook: { id: string; url: string; events: string[]; enabled: boolean } }>(
+        `/accounts/${accountId}/webhooks/${webhookId}`,
+        { method: 'PATCH', body, token }
+      ),
+    remove: (accountId: string, webhookId: string, token: string) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/webhooks/${webhookId}`, { method: 'DELETE', token }),
+    deliveries: (accountId: string, webhookId: string, token: string) =>
+      request<{
+        deliveries: {
+          id: string;
+          event: string;
+          status: string;
+          attempts: number;
+          lastError: string | null;
+          createdAt: string;
+          deliveredAt: string | null;
+        }[];
+      }>(`/accounts/${accountId}/webhooks/${webhookId}/deliveries`, { token }),
   },
 
   serviceCredentials: {
@@ -2249,35 +2350,54 @@ export const api = {
   },
 
   auditLogs: {
-    list: (accountId: string, token: string) =>
-      request<{
+    list: (accountId: string, token: string, params?: { action?: string; since?: string; until?: string }) => {
+      const qs = new URLSearchParams();
+      if (params?.action) qs.set('action', params.action);
+      if (params?.since) qs.set('since', params.since);
+      if (params?.until) qs.set('until', params.until);
+      const query = qs.toString();
+      return request<{
         logs: {
           id: string;
           action: string;
           resourceType: string;
           resourceId: string | null;
           metadata: Record<string, unknown>;
+          ipAddress: string | null;
           createdAt: string;
           actorName: string | null;
           actorEmail: string | null;
         }[];
-      }>(`/accounts/${accountId}/audit-logs`, { token }),
+      }>(`/accounts/${accountId}/audit-logs${query ? `?${query}` : ''}`, { token });
+    },
   },
 
   teams: {
     list: (accountId: string, token: string) =>
-      request<{ teams: { id: string; name: string; description: string | null; isEnabled: boolean }[] }>(
-        `/accounts/${accountId}/teams`,
-        { token }
-      ),
+      request<{
+        teams: {
+          id: string;
+          name: string;
+          description: string | null;
+          isEnabled: boolean;
+          autoAssignment: boolean;
+          conversationsToday: number;
+          memberCount: number;
+        }[];
+      }>(`/accounts/${accountId}/teams`, { token }),
 
     create: (accountId: string, body: { name: string; description?: string }, token: string) =>
-      request<{ team: { id: string; name: string; description: string | null } }>(
+      request<{ team: { id: string; name: string; description: string | null; autoAssignment: boolean } }>(
         `/accounts/${accountId}/teams`,
         { method: 'POST', body, token }
       ),
 
-    update: (accountId: string, teamId: string, body: { name?: string; description?: string | null; isEnabled?: boolean }, token: string) =>
+    update: (
+      accountId: string,
+      teamId: string,
+      body: { name?: string; description?: string | null; isEnabled?: boolean; autoAssignment?: boolean },
+      token: string
+    ) =>
       request<{ team: unknown }>(`/accounts/${accountId}/teams/${teamId}`, {
         method: 'PATCH',
         body,

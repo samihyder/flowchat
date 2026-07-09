@@ -9,17 +9,19 @@ export async function writeAuditLog(
     resourceType: string;
     resourceId?: string | null;
     metadata?: Record<string, unknown>;
+    ipAddress?: string | null;
   }
 ) {
   await sql`
-    INSERT INTO audit_logs (account_id, actor_id, action, resource_type, resource_id, metadata)
+    INSERT INTO audit_logs (account_id, actor_id, action, resource_type, resource_id, metadata, ip_address)
     VALUES (
       ${entry.accountId}::uuid,
       ${entry.actorId ?? null}::uuid,
       ${entry.action},
       ${entry.resourceType},
       ${entry.resourceId ?? null},
-      ${JSON.stringify(entry.metadata ?? {})}::jsonb
+      ${JSON.stringify(entry.metadata ?? {})}::jsonb,
+      ${entry.ipAddress ?? null}
     )
   `;
 }

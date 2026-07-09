@@ -16,9 +16,12 @@ export async function GET(req: Request, { params }: Params) {
 
   const sql = neon(databaseUrl);
   const rows = await sql`
-    SELECT id, name, description, is_enabled as "isEnabled"
-    FROM teams WHERE account_id = ${accountId}::uuid
-    ORDER BY created_at ASC
+    SELECT t.id, t.name, t.description, t.is_enabled as "isEnabled", t.auto_assignment as "autoAssignment",
+           (SELECT COUNT(*)::int FROM conversations c
+            WHERE c.team_id = t.id AND c.created_at >= CURRENT_DATE) as "conversationsToday",
+           (SELECT COUNT(*)::int FROM team_members tm WHERE tm.team_id = t.id) as "memberCount"
+    FROM teams t WHERE t.account_id = ${accountId}::uuid
+    ORDER BY t.created_at ASC
   `;
 
   return Response.json({ teams: rows });
@@ -45,7 +48,7 @@ export async function POST(req: Request, { params }: Params) {
   const rows = await sql`
     INSERT INTO teams (account_id, name, description)
     VALUES (${accountId}::uuid, ${body.name.trim()}, ${body.description ?? null})
-    RETURNING id, name, description, is_enabled as "isEnabled"
+    RETURNING id, name, description, is_enabled as "isEnabled", auto_assignment as "autoAssignment"
   `;
 
   return Response.json({ team: rows[0] }, { status: 201 });

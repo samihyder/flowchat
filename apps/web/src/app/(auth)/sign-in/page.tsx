@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import type { Route } from 'next';
 import { signInSchema, type SignInInput } from '@/lib/schemas';
 import { api } from '@/lib/api';
 import { resolveWorkspace } from '@/lib/complete-sign-in';
@@ -34,13 +35,14 @@ function SignInPage() {
   const [twoFaCode, setTwoFaCode] = useState('');
   const [twoFaError, setTwoFaError] = useState('');
   const [twoFaLoading, setTwoFaLoading] = useState(false);
+  const [twoFaRememberMe, setTwoFaRememberMe] = useState(true);
 
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<SignInInput>({ resolver: zodResolver(signInSchema) });
+  } = useForm<SignInInput>({ resolver: zodResolver(signInSchema), defaultValues: { rememberMe: true } });
 
   useEffect(() => {
     const oauthError = searchParams.get('error');
@@ -55,8 +57,10 @@ function SignInPage() {
 
   const onSubmit = async (data: SignInInput) => {
     try {
-      const res = await api.auth.signIn(data);
+      const rememberMe = data.rememberMe ?? true;
+      const res = await api.auth.signIn({ ...data, rememberMe });
       if ('requiresTwoFactor' in res) {
+        setTwoFaRememberMe(rememberMe);
         setTwoFaUserId(res.userId);
         return;
       }
@@ -88,7 +92,7 @@ function SignInPage() {
     setTwoFaLoading(true);
     setTwoFaError('');
     try {
-      const res = await api.twoFa.verify(twoFaUserId, twoFaCode);
+      const res = await api.twoFa.verify(twoFaUserId, twoFaCode, twoFaRememberMe);
       const workspace = await resolveWorkspace(res.token, res.account);
       if (workspace && 'pendingApproval' in workspace) {
         router.push('/pending-approval' as import('next').Route);
@@ -157,7 +161,12 @@ function SignInPage() {
         </div>
 
         <div>
-          <label className={authLabelClass}>Password</label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className={authLabelClass.replace('mb-1.5', '')}>Password</label>
+            <Link href={'/forgot-password' as Route} className="text-xs text-primary-600 hover:underline">
+              Forgot password?
+            </Link>
+          </div>
           <input
             {...register('password')}
             type="password"
@@ -167,6 +176,11 @@ function SignInPage() {
           />
           {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
         </div>
+
+        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+          <input type="checkbox" {...register('rememberMe')} className="w-3.5 h-3.5 accent-primary-500" />
+          Remember me for 30 days
+        </label>
 
         <button type="submit" disabled={isSubmitting} className={authSubmitClass}>
           {isSubmitting ? 'Signing in…' : 'Sign in'}

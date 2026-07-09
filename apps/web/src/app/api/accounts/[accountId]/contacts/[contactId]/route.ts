@@ -151,20 +151,13 @@ export async function PATCH(req: Request, { params }: Params) {
   let customAttributesJson: string | null = null;
   if (body.customAttributes !== undefined) {
     const defRows = await sql`
-      SELECT id, entity_type as "entityType", key, label, attr_type as "attrType", options, sort_order as "sortOrder"
+      SELECT id, entity_type as "entityType", key, label, attr_type as "attrType", options,
+             sort_order as "sortOrder", required
       FROM custom_attribute_definitions
       WHERE account_id = ${accountId}::uuid AND entity_type = 'contact'
     `;
-    const definitions = (defRows as Record<string, unknown>[]).map((r) => ({
-      id: r.id as string,
-      entityType: r.entityType as 'contact',
-      key: r.key as string,
-      label: r.label as string,
-      attrType: r.attrType as 'text',
-      options: (r.options as string[] | null) ?? null,
-      sortOrder: Number(r.sortOrder ?? 0),
-    }));
-    const { valid, errors } = validateCustomAttributes(definitions, body.customAttributes);
+    const definitions = (defRows as Record<string, unknown>[]).map(serializeDefinitionRow);
+    const { valid, errors } = validateCustomAttributes(definitions, body.customAttributes, { enforceRequired: true });
     if (errors.length > 0) {
       return Response.json({ error: errors.join('; ') }, { status: 400 });
     }

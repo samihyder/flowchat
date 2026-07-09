@@ -18,6 +18,7 @@ export async function PATCH(req: Request, { params }: Params) {
     name?: string;
     description?: string | null;
     isEnabled?: boolean;
+    autoAssignment?: boolean;
   };
 
   const databaseUrl = process.env.DATABASE_URL;
@@ -29,9 +30,10 @@ export async function PATCH(req: Request, { params }: Params) {
       name = COALESCE(${body.name ?? null}, name),
       description = COALESCE(${body.description !== undefined ? body.description : null}, description),
       is_enabled = COALESCE(${body.isEnabled ?? null}, is_enabled),
+      auto_assignment = COALESCE(${body.autoAssignment ?? null}, auto_assignment),
       updated_at = NOW()
     WHERE id = ${teamId}::uuid AND account_id = ${accountId}::uuid
-    RETURNING id, name, description, is_enabled as "isEnabled"
+    RETURNING id, name, description, is_enabled as "isEnabled", auto_assignment as "autoAssignment"
   `;
 
   if (!rows[0]) return Response.json({ error: 'Team not found' }, { status: 404 });

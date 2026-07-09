@@ -6,6 +6,7 @@ import { sign, verify as jwtVerify } from 'hono/jwt';
 import { env } from './env.js';
 
 const SESSION_IDLE_MS = 24 * 60 * 60 * 1000;
+const SESSION_REMEMBER_ME_MS = 30 * 24 * 60 * 60 * 1000;
 
 const ARGON2_OPTIONS = {
   memoryCost: 65536,
@@ -21,18 +22,31 @@ export async function verifyPassword(hash: string, password: string) {
   return verify(hash, password, ARGON2_OPTIONS);
 }
 
-export async function createSession(userId: string) {
+export async function createSession(
+  userId: string,
+  rememberMe = false,
+  meta?: { userAgent?: string | null; ipAddress?: string | null }
+) {
   const token = createId();
-  const expiresAt = new Date(Date.now() + SESSION_IDLE_MS);
+  const idleMs = rememberMe ? SESSION_REMEMBER_ME_MS : SESSION_IDLE_MS;
+  const expiresAt = new Date(Date.now() + idleMs);
 
-  await db.insert(sessions).values({ userId, token, expiresAt });
+  await db.insert(sessions).values({
+    userId,
+    token,
+    expiresAt,
+    rememberMe,
+    userAgent: meta?.userAgent ?? null,
+    ipAddress: meta?.ipAddress ?? null,
+  });
 
   return { token, expiresAt };
 }
 
-async function extendSession(token: string) {
-  const expiresAt = new Date(Date.now() + SESSION_IDLE_MS);
-  await db.update(sessions).set({ expiresAt }).where(eq(sessions.token, token));
+async function extendSession(token: string, rememberMe: boolean) {
+  const idleMs = rememberMe ? SESSION_REMEMBER_ME_MS : SESSION_IDLE_MS;
+  const expiresAt = new Date(Date.now() + idleMs);
+  await db.update(sessions).set({ expiresAt, lastSeenAt: new Date() }).where(eq(sessions.token, token));
 }
 
 export async function validateSession(token: string) {
@@ -49,7 +63,7 @@ export async function validateSession(token: string) {
     return null;
   }
 
-  await extendSession(token);
+  await extendSession(token, session.session.rememberMe);
   return session;
 }
 

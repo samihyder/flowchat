@@ -36,7 +36,7 @@ const LOCALES = [
 ];
 
 export default function AccountSettingsPage() {
-  const { token, accountId, accountName, setAuth, user } = useAuthStore();
+  const { token, accountId, setAuth, user } = useAuthStore();
   const [name, setName] = useState('');
   const [timezone, setTimezone] = useState('UTC');
   const [locale, setLocale] = useState('en');
@@ -47,6 +47,7 @@ export default function AccountSettingsPage() {
   const [error, setError] = useState('');
   const [inviteDomainsText, setInviteDomainsText] = useState('');
   const [dataRetentionDays, setDataRetentionDays] = useState(365);
+  const [slug, setSlug] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const timezoneOptions = useMemo(() => {
     const browser = getBrowserTimezone();
@@ -61,6 +62,7 @@ export default function AccountSettingsPage() {
       setTimezone(!tz || tz === 'UTC' ? getBrowserTimezone() : tz);
       setLocale(res.account.locale);
       setLogoUrl(res.account.logoUrl);
+      setSlug(res.account.slug);
       setInviteDomainsText((res.account.settings?.allowedInviteDomains ?? []).join('\n'));
       setDataRetentionDays(res.account.settings?.dataRetentionDays ?? 365);
     }).catch(() => {});
@@ -154,9 +156,9 @@ export default function AccountSettingsPage() {
             <Input value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div>
-            <label className={labelClass}>Account</label>
-            <Input value={accountName ?? ''} disabled className="bg-gray-50" />
-            <p className="text-[11px] text-gray-400 mt-1">Workspace identifier</p>
+            <label className={labelClass}>Workspace slug</label>
+            <Input value={slug} disabled className="bg-gray-50 font-mono" />
+            <p className="text-[11px] text-gray-400 mt-1">Unique workspace identifier, assigned at creation</p>
           </div>
         </div>
         <div>

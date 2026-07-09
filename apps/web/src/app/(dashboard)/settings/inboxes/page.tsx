@@ -73,6 +73,12 @@ export default function InboxesPage() {
   return (
     <div className="space-y-4">
 
+      {!loading && (
+        <p className="text-sm text-gray-500">
+          {inboxes.length} active inbox{inboxes.length === 1 ? '' : 'es'}
+        </p>
+      )}
+
       <CreateInboxForm
         agents={agents}
         token={token ?? ''}
@@ -102,11 +108,16 @@ export default function InboxesPage() {
                       <p className="text-xs text-gray-400 capitalize">
                         {inbox.channelType.replace('_', ' ')}
                         {inbox.widgetIcon ? ` · ${inbox.widgetIcon} icon` : ''}
+                        {' · '}
+                        {inbox.agentCount ?? 0} agent{(inbox.agentCount ?? 0) === 1 ? '' : 's'}
                         {!inbox.defaultAssigneeId && (
                           <span className="text-amber-600"> · No agent assigned</span>
                         )}
                       </p>
                     </div>
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-700 shrink-0">
+                      {inbox.isEnabled ? 'Active' : 'Inactive'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {inbox.channelType === 'web_widget' && (
@@ -167,6 +178,26 @@ export default function InboxesPage() {
                     <pre className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
                       {embedSnippet(inbox.id)}
                     </pre>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(embedSnippet(inbox.id));
+                          setListMessage('Embed code copied to clipboard.');
+                        }}
+                        className="text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+                      >
+                        📋 Copy code
+                      </button>
+                      <a
+                        href={`/test-widget.html?inboxId=${inbox.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+                      >
+                        🧪 Test widget
+                      </a>
+                    </div>
                   </div>
                 )}
               </li>

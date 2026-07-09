@@ -11,8 +11,8 @@ import {
   contactInboxes,
   conversations,
   messages,
-} from '../db/index.js';
-import { insertMessage, serializeMessage } from '../lib/conversations.js';
+} from '../../db/index.js';
+import { insertMessage, serializeMessage } from '../../lib/conversations.js';
 
 export const publicWidgetRouter = new Hono();
 

@@ -11,9 +11,11 @@ import { LabelColorPicker } from '@/components/settings/label-color-picker';
 import { RECOMMENDED_LABELS, missingRecommendedLabels } from '@/lib/labels/defaults';
 import { normalizeLabelColor } from '@/lib/labels/colors';
 
+type LabelRow = Label & { createdAt: string; conversationCount: number };
+
 export default function LabelsSettingsPage() {
   const { token, accountId } = useAuthStore();
-  const [labels, setLabels] = useState<Label[]>([]);
+  const [labels, setLabels] = useState<LabelRow[]>([]);
   const [name, setName] = useState('');
   const [color, setColor] = useState('#6366F1');
   const [search, setSearch] = useState('');
@@ -130,7 +132,7 @@ export default function LabelsSettingsPage() {
     setMessage('');
     try {
       const res = await api.labels.seedRecommended(accountId, token);
-      setLabels(res.labels);
+      await load();
       setMessage(
         `Recommended labels ready: ${res.created} added` +
           (res.updated ? `, ${res.updated} colours updated` : '') +
@@ -206,13 +208,15 @@ export default function LabelsSettingsPage() {
               <tr>
                 <th className="px-4 py-2.5">Label</th>
                 <th className="px-4 py-2.5 hidden sm:table-cell">Purpose</th>
+                <th className="px-4 py-2.5">Conversations</th>
+                <th className="px-4 py-2.5 hidden md:table-cell">Created</th>
                 <th className="px-4 py-2.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
                     {search ? (
                       'No labels match your search.'
                     ) : (
@@ -232,7 +236,7 @@ export default function LabelsSettingsPage() {
                   if (isEditing) {
                     return (
                       <tr key={label.id} className="bg-primary-50/40">
-                        <td colSpan={3} className="px-4 py-4">
+                        <td colSpan={5} className="px-4 py-4">
                           <div className="space-y-3 max-w-md">
                             <Input
                               value={editName}
@@ -268,6 +272,10 @@ export default function LabelsSettingsPage() {
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500 hidden sm:table-cell">
                         {recommended?.description ?? 'Custom label'}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">{label.conversationCount}</td>
+                      <td className="px-4 py-3 text-xs text-gray-400 hidden md:table-cell">
+                        {new Date(label.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
                         <button

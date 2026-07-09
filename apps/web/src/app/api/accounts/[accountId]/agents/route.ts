@@ -27,7 +27,13 @@ export async function GET(req: Request, { params }: Params) {
       u.name,
       u.email,
       u.avatar_url as "avatarUrl",
-      u.is_active as "isActive"
+      u.is_active as "isActive",
+      COALESCE(
+        (SELECT json_agg(i.name ORDER BY i.name)
+         FROM inbox_members im INNER JOIN inboxes i ON i.id = im.inbox_id
+         WHERE im.user_id = au.user_id AND i.account_id = ${accountId}::uuid),
+        '[]'::json
+      ) as "inboxNames"
     FROM account_users au
     INNER JOIN users u ON u.id = au.user_id
     WHERE au.account_id = ${accountId}::uuid

@@ -15,6 +15,7 @@ export const twoFaRouter = new Hono();
 twoFaRouter.use('/setup', sessionMiddleware);
 twoFaRouter.use('/enable', sessionMiddleware);
 twoFaRouter.use('/disable', sessionMiddleware);
+twoFaRouter.use('/regenerate-backup-codes', sessionMiddleware);
 
 // Generate TOTP secret + URI for authenticator app
 twoFaRouter.get('/setup', async (c) => {
@@ -66,6 +67,44 @@ twoFaRouter.post(
   }
 );
 
+// Regenerate backup codes — invalidates all previous codes
+twoFaRouter.post(
+  '/regenerate-backup-codes',
+  zValidator('json', z.object({ code: z.string() })),
+  async (c) => {
+    const userId = c.get('userId');
+    const { code } = c.req.valid('json');
+
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!user?.totpEnabledAt || !user.totpSecret) {
+      return c.json({ error: '2FA is not enabled' }, 400);
+    }
+
+    let valid = false;
+    if (code.length === 6) {
+      const secretBytes = decodeBase32(user.totpSecret);
+      valid = await new TOTPController().verify(code, secretBytes);
+    } else if (user.backupCodes) {
+      for (const hashed of user.backupCodes) {
+        if (await argon2Verify(hashed, code)) { valid = true; break; }
+      }
+    }
+
+    if (!valid) return c.json({ error: 'Invalid code' }, 400);
+
+    const backupCodes = Array.from({ length: 8 }, () =>
+      `${createId().slice(0, 5)}-${createId().slice(0, 5)}`
+    );
+    const hashedCodes = await Promise.all(
+      backupCodes.map((bc) => hash(bc, { memoryCost: 1024, timeCost: 1, parallelism: 1 }))
+    );
+
+    await db.update(users).set({ backupCodes: hashedCodes }).where(eq(users.id, userId));
+
+    return c.json({ backupCodes });
+  }
+);
+
 // Disable 2FA using TOTP code or backup code
 twoFaRouter.post(
   '/disable',
@@ -103,9 +142,9 @@ twoFaRouter.post(
 // Verify TOTP during sign-in (after requiresTwoFactor: true response)
 twoFaRouter.post(
   '/verify',
-  zValidator('json', z.object({ userId: z.string().uuid(), code: z.string() })),
+  zValidator('json', z.object({ userId: z.string().uuid(), code: z.string(), rememberMe: z.boolean().optional() })),
   async (c) => {
-    const { userId, code } = c.req.valid('json');
+    const { userId, code, rememberMe } = c.req.valid('json');
 
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user?.totpEnabledAt || !user.totpSecret) {
@@ -129,7 +168,10 @@ twoFaRouter.post(
 
     if (!valid) return c.json({ error: 'Invalid code' }, 401);
 
-    const { token, expiresAt } = await createSession(userId);
+    const { token, expiresAt } = await createSession(userId, rememberMe ?? false, {
+      userAgent: c.req.header('user-agent') ?? null,
+      ipAddress: c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? c.req.header('x-real-ip') ?? null,
+    });
 
     const [membership] = await db
       .select({ accountId: accountUsers.accountId })

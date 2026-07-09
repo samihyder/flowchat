@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ type Agent = {
   avatarUrl: string | null;
   isActive: boolean;
   displayName: string | null;
+  inboxNames: string[];
 };
 
 const availabilityColor: Record<string, string> = {
@@ -39,6 +40,8 @@ export default function AgentsPage() {
   const [inboxes, setInboxes] = useState<{ id: string; name: string }[]>([]);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [approveInboxIds, setApproveInboxIds] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
 
   const fetchAgents = async () => {
     if (!token || !accountId) {
@@ -126,6 +129,27 @@ export default function AgentsPage() {
     }
   };
 
+  const handleDecline = async (userId: string) => {
+    if (!token || !accountId || !confirm('Decline this pending invite?')) return;
+    try {
+      await api.agents.remove(accountId, userId, token);
+      fetchAgents();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Decline failed');
+    }
+  };
+
+  const pendingAgents = useMemo(() => agents.filter((a) => a.membershipStatus === 'pending'), [agents]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return agents.filter((a) => {
+      if (roleFilter && a.role !== roleFilter) return false;
+      if (q && !a.name.toLowerCase().includes(q) && !a.email.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [agents, search, roleFilter]);
+
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto w-full">
       <Card className="mb-6">
@@ -171,6 +195,45 @@ export default function AgentsPage() {
         </CardBody>
       </Card>
 
+      {pendingAgents.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <span className="text-sm text-amber-900 font-medium">
+            {pendingAgents.length} agent{pendingAgents.length === 1 ? '' : 's'} awaiting approval
+          </span>
+          <div className="flex flex-wrap gap-2 ml-auto">
+            {pendingAgents.map((a) => (
+              <span key={a.userId} className="flex items-center gap-1.5 text-xs bg-white border border-amber-200 rounded-full px-2.5 py-1">
+                {a.name}
+                <button type="button" onClick={() => startApprove(a.userId)} className="text-green-700 font-medium hover:underline">
+                  Approve
+                </button>
+                <button type="button" onClick={() => void handleDecline(a.userId)} className="text-red-600 font-medium hover:underline">
+                  Decline
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search agents…"
+          className="max-w-xs"
+        />
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white"
+        >
+          <option value="">All roles</option>
+          <option value="agent">Agent</option>
+          <option value="administrator">Admin</option>
+        </select>
+      </div>
+
       <Card className="overflow-hidden">
         {loading ? (
           <ListSkeleton rows={4} />
@@ -181,11 +244,19 @@ export default function AgentsPage() {
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Agent</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Role</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Access</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Inboxes</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {agents.map((agent) => (
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                    No agents match your filters.
+                  </td>
+                </tr>
+              )}
+              {filtered.map((agent) => (
                 <tr key={agent.userId} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -228,16 +299,27 @@ export default function AgentsPage() {
                       <span className={`w-2 h-2 rounded-full ${availabilityColor[agent.availability] ?? 'bg-gray-300'}`} />
                     </div>
                   </td>
+                  <td className="px-4 py-3 text-xs text-gray-500">
+                    {agent.inboxNames.length > 0 ? agent.inboxNames.join(', ') : '—'}
+                  </td>
                   <td className="px-4 py-3 text-right space-x-2">
                     {agent.membershipStatus === 'pending' && agent.userId !== user?.id && (
-                      <button
-                        onClick={() => startApprove(agent.userId)}
-                        className="text-xs text-green-600 hover:text-green-800 font-medium"
-                      >
-                        Approve
-                      </button>
+                      <>
+                        <button
+                          onClick={() => startApprove(agent.userId)}
+                          className="text-xs text-green-600 hover:text-green-800 font-medium"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => void handleDecline(agent.userId)}
+                          className="text-xs text-red-500 hover:text-red-700 font-medium"
+                        >
+                          Decline
+                        </button>
+                      </>
                     )}
-                    {agent.userId !== user?.id && (
+                    {agent.membershipStatus !== 'pending' && agent.userId !== user?.id && (
                       <button
                         onClick={() => handleRemove(agent.userId)}
                         className="text-xs text-red-500 hover:text-red-700 font-medium"

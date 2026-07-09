@@ -154,6 +154,7 @@ export async function processImportJobBatch(
     attrType: r.attrType as CustomAttributeDefinition['attrType'],
     options: (r.options as string[] | null) ?? null,
     sortOrder: 0,
+    required: false,
   }));
 
   const { headers, rows } = parseCsvRaw(job.csvText as string);

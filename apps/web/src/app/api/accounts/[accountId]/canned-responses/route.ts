@@ -20,18 +20,22 @@ export async function GET(req: Request, { params }: Params) {
   const sql = neon(databaseUrl);
   const rows = q
     ? await sql`
-        SELECT id, shortcut, title, content, created_at as "createdAt"
-        FROM canned_responses
-        WHERE account_id = ${accountId}::uuid
-          AND (LOWER(shortcut) LIKE ${`%${q}%`} OR LOWER(title) LIKE ${`%${q}%`})
-        ORDER BY shortcut ASC
+        SELECT cr.id, cr.shortcut, cr.title, cr.content, cr.created_at as "createdAt",
+               u.name as "createdByName"
+        FROM canned_responses cr
+        LEFT JOIN users u ON u.id = cr.created_by
+        WHERE cr.account_id = ${accountId}::uuid
+          AND (LOWER(cr.shortcut) LIKE ${`%${q}%`} OR LOWER(cr.title) LIKE ${`%${q}%`})
+        ORDER BY cr.shortcut ASC
         LIMIT 50
       `
     : await sql`
-        SELECT id, shortcut, title, content, created_at as "createdAt"
-        FROM canned_responses
-        WHERE account_id = ${accountId}::uuid
-        ORDER BY shortcut ASC
+        SELECT cr.id, cr.shortcut, cr.title, cr.content, cr.created_at as "createdAt",
+               u.name as "createdByName"
+        FROM canned_responses cr
+        LEFT JOIN users u ON u.id = cr.created_by
+        WHERE cr.account_id = ${accountId}::uuid
+        ORDER BY cr.shortcut ASC
       `;
 
   return Response.json({ responses: rows });

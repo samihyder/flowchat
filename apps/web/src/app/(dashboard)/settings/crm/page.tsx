@@ -340,12 +340,25 @@ function LeadSnapperProvisioningSection() {
 function CustomAttributesSection() {
   const { token, accountId } = useAuthStore();
   const [definitions, setDefinitions] = useState<
-    { id: string; label: string; key: string; attrType: string; options: string[] | null }[]
+    {
+      id: string;
+      label: string;
+      key: string;
+      attrType: string;
+      options: string[] | null;
+      sortOrder: number;
+      required: boolean;
+    }[]
   >([]);
   const [newLabel, setNewLabel] = useState('');
   const [newType, setNewType] = useState('text');
   const [newOptions, setNewOptions] = useState('');
+  const [newRequired, setNewRequired] = useState(false);
   const [msg, setMsg] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editOptions, setEditOptions] = useState('');
+  const [editRequired, setEditRequired] = useState(false);
 
   const load = () => {
     if (!token || !accountId) return;
@@ -363,11 +376,14 @@ function CustomAttributesSection() {
         label: newLabel.trim(),
         attrType: newType,
         options: newType === 'select' ? newOptions.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+        required: newRequired,
+        sortOrder: definitions.length,
       },
       token
     );
     setNewLabel('');
     setNewOptions('');
+    setNewRequired(false);
     setMsg('Attribute added.');
     load();
   };
@@ -375,6 +391,44 @@ function CustomAttributesSection() {
   const remove = async (id: string) => {
     if (!token || !accountId || !confirm('Remove this attribute definition?')) return;
     await api.customAttributes.remove(accountId, id, token);
+    load();
+  };
+
+  const startEdit = (d: (typeof definitions)[number]) => {
+    setEditingId(d.id);
+    setEditLabel(d.label);
+    setEditOptions((d.options ?? []).join(', '));
+    setEditRequired(d.required);
+  };
+
+  const saveEdit = async (id: string) => {
+    if (!token || !accountId || !editLabel.trim()) return;
+    const def = definitions.find((d) => d.id === id);
+    await api.customAttributes.update(
+      accountId,
+      id,
+      {
+        label: editLabel.trim(),
+        options: def?.attrType === 'select' ? editOptions.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+        required: editRequired,
+      },
+      token
+    );
+    setEditingId(null);
+    load();
+  };
+
+  const move = async (index: number, direction: -1 | 1) => {
+    if (!token || !accountId) return;
+    const target = index + direction;
+    if (target < 0 || target >= definitions.length) return;
+    const a = definitions[index];
+    const b = definitions[target];
+    if (!a || !b) return;
+    await Promise.all([
+      api.customAttributes.update(accountId, a.id, { sortOrder: b.sortOrder }, token),
+      api.customAttributes.update(accountId, b.id, { sortOrder: a.sortOrder }, token),
+    ]);
     load();
   };
 
@@ -387,16 +441,72 @@ function CustomAttributesSection() {
         </p>
       </div>
       <ul className="space-y-2 text-sm">
-        {definitions.map((d) => (
-          <li key={d.id} className="flex items-center justify-between gap-2">
-            <span>
-              <span className="font-medium">{d.label}</span>{' '}
-              <code className="text-gray-400 text-xs">{d.key}</code>{' '}
-              <span className="text-gray-400">({d.attrType})</span>
-            </span>
-            <Button type="button" variant="danger" size="sm" onClick={() => void remove(d.id)}>
-              Remove
-            </Button>
+        {definitions.map((d, i) => (
+          <li key={d.id} className="border border-gray-100 rounded-lg p-2.5">
+            {editingId === d.id ? (
+              <div className="space-y-2">
+                <input
+                  value={editLabel}
+                  onChange={(e) => setEditLabel(e.target.value)}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg"
+                />
+                {d.attrType === 'select' && (
+                  <input
+                    value={editOptions}
+                    onChange={(e) => setEditOptions(e.target.value)}
+                    placeholder="Options, comma-separated"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-200 rounded-lg"
+                  />
+                )}
+                <label className="flex items-center gap-1.5 text-xs text-gray-600">
+                  <input type="checkbox" checked={editRequired} onChange={(e) => setEditRequired(e.target.checked)} />
+                  Required
+                </label>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" onClick={() => void saveEdit(d.id)}>
+                    Save
+                  </Button>
+                  <Button type="button" size="sm" variant="secondary" onClick={() => setEditingId(null)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <span>
+                  <span className="font-medium">{d.label}</span>{' '}
+                  <code className="text-gray-400 text-xs">{d.key}</code>{' '}
+                  <span className="text-gray-400">({d.attrType})</span>
+                  {d.required && <span className="ml-2 text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full">Required</span>}
+                </span>
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => void move(i, -1)}
+                    disabled={i === 0}
+                    className="text-gray-400 hover:text-gray-700 disabled:opacity-30 px-1"
+                    aria-label="Move up"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void move(i, 1)}
+                    disabled={i === definitions.length - 1}
+                    className="text-gray-400 hover:text-gray-700 disabled:opacity-30 px-1"
+                    aria-label="Move down"
+                  >
+                    ↓
+                  </button>
+                  <Button type="button" variant="secondary" size="sm" onClick={() => startEdit(d)}>
+                    Edit
+                  </Button>
+                  <Button type="button" variant="danger" size="sm" onClick={() => void remove(d.id)}>
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
         {definitions.length === 0 && <p className="text-gray-400">No custom attributes yet.</p>}
@@ -437,6 +547,10 @@ function CustomAttributesSection() {
             />
           </div>
         )}
+        <label className="flex items-center gap-1.5 text-xs text-gray-600 pb-2">
+          <input type="checkbox" checked={newRequired} onChange={(e) => setNewRequired(e.target.checked)} />
+          Required
+        </label>
         <Button type="submit">Add attribute</Button>
       </form>
       {msg && <p className="text-sm text-green-600">{msg}</p>}

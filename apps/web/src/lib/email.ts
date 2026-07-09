@@ -52,6 +52,19 @@ export async function sendMissedChatEmail(
   });
 }
 
+export async function sendPasswordResetEmail(to: string, resetUrl: string, name: string) {
+  return sendEmail({
+    to,
+    subject: 'Reset your FlowChat password',
+    html: `
+      <p>Hi ${name || 'there'},</p>
+      <p>We received a request to reset your FlowChat password. Click below to choose a new one:</p>
+      <p><a href="${resetUrl}">Reset password</a></p>
+      <p style="color:#6b7280;font-size:12px">This link expires in 1 hour. If you did not request this, you can ignore this email.</p>
+    `,
+  });
+}
+
 export async function sendAgentInviteEmail(to: string, inviteUrl: string, workspaceName: string) {
   return sendEmail({
     to,

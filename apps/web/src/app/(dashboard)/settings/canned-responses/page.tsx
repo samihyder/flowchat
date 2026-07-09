@@ -363,6 +363,9 @@ export default function CannedResponsesPage() {
                         <p className="text-xs text-gray-400 mt-0.5">{recommended.description}</p>
                       )}
                       <p className="text-sm text-gray-600 whitespace-pre-wrap mt-2">{r.content}</p>
+                      {r.createdByName && (
+                        <p className="text-[11px] text-gray-400 mt-1.5">Created by {r.createdByName}</p>
+                      )}
                     </div>
                     <div className="flex gap-3 shrink-0">
                       <button

@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { verifyPassword, createSession } from '@/lib/auth-server';
+import { getClientIp } from '@/lib/request-ip';
 
 export async function POST(req: Request) {
   const databaseUrl = process.env.DATABASE_URL;
@@ -7,9 +8,10 @@ export async function POST(req: Request) {
     return Response.json({ error: 'DATABASE_URL not configured' }, { status: 503 });
   }
 
-  const body = (await req.json()) as { email?: string; password?: string };
+  const body = (await req.json()) as { email?: string; password?: string; rememberMe?: boolean };
   const email = body.email?.trim().toLowerCase();
   const password = body.password;
+  const rememberMe = body.rememberMe ?? false;
 
   if (!email || !password) {
     return Response.json({ error: 'Email and password are required' }, { status: 400 });
@@ -64,7 +66,10 @@ export async function POST(req: Request) {
     return Response.json({ error: 'No active workspace access. Contact your administrator.' }, { status: 403 });
   }
 
-  const { token, expiresAt } = await createSession(user.id);
+  const { token, expiresAt } = await createSession(user.id, rememberMe, {
+    userAgent: req.headers.get('user-agent'),
+    ipAddress: getClientIp(req),
+  });
 
   return Response.json({
     user: { id: user.id, name: user.name, email: user.email },

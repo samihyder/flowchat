@@ -8,6 +8,7 @@ export type CustomAttributeDefinition = {
   attrType: AttributeType;
   options: string[] | null;
   sortOrder: number;
+  required: boolean;
 };
 
 export function slugifyAttributeKey(label: string): string {
@@ -21,7 +22,8 @@ export function slugifyAttributeKey(label: string): string {
 
 export function validateCustomAttributes(
   definitions: CustomAttributeDefinition[],
-  values: Record<string, unknown> | null | undefined
+  values: Record<string, unknown> | null | undefined,
+  options: { enforceRequired?: boolean } = {}
 ): { valid: Record<string, unknown>; errors: string[] } {
   const errors: string[] = [];
   const valid: Record<string, unknown> = {};
@@ -29,7 +31,10 @@ export function validateCustomAttributes(
 
   for (const def of definitions) {
     const raw = input[def.key];
-    if (raw === undefined || raw === null || raw === '') continue;
+    if (raw === undefined || raw === null || raw === '') {
+      if (options.enforceRequired && def.required) errors.push(`${def.label} is required`);
+      continue;
+    }
 
     switch (def.attrType) {
       case 'text':
@@ -82,5 +87,6 @@ export function serializeDefinitionRow(row: Record<string, unknown>): CustomAttr
     attrType: row.attrType as AttributeType,
     options: Array.isArray(options) ? options : null,
     sortOrder: Number(row.sortOrder ?? 0),
+    required: Boolean(row.required),
   };
 }

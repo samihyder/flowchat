@@ -55,6 +55,7 @@ export function InboxAgentFields({
   );
 }
 
+/** Combined flat variant used by the simpler create-inbox flow; EditInboxForm uses the split components below across tabs. */
 export function InboxTrustFields({
   settings,
   onChange,
@@ -64,6 +65,24 @@ export function InboxTrustFields({
 }) {
   return (
     <div className="space-y-4 pt-2 border-t border-gray-100">
+      <InboxSecurityFields settings={settings} onChange={onChange} />
+      <InboxGdprFields settings={settings} onChange={onChange} />
+      <InboxBusinessHoursFields settings={settings} onChange={onChange} />
+      <InboxAnalyticsFields settings={settings} onChange={onChange} />
+      <InboxPreChatFields settings={settings} onChange={onChange} />
+    </div>
+  );
+}
+
+export function InboxSecurityFields({
+  settings,
+  onChange,
+}: {
+  settings: WidgetSettingsInput;
+  onChange: (s: WidgetSettingsInput) => void;
+}) {
+  return (
+    <div className="space-y-4">
       <h4 className="text-sm font-semibold text-gray-900">Security & availability</h4>
       <div>
         <label className={labelClass}>
@@ -85,41 +104,15 @@ export function InboxTrustFields({
           rows={2}
         />
       </div>
-      <div>
-        <label className={labelClass}>Privacy policy URL</label>
-        <Input
-          type="url"
-          value={settings.privacyPolicyUrl}
-          onChange={(e) => onChange({ ...settings, privacyPolicyUrl: e.target.value })}
-          placeholder="https://example.com/privacy"
+      <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
+        <input
+          type="checkbox"
+          className={checkboxClass}
+          checked={settings.roundRobinEnabled}
+          onChange={(e) => onChange({ ...settings, roundRobinEnabled: e.target.checked })}
         />
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-6">
-        <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
-          <input
-            type="checkbox"
-            className={checkboxClass}
-            checked={settings.requireConsent}
-            onChange={(e) => onChange({ ...settings, requireConsent: e.target.checked })}
-          />
-          Require pre-chat consent
-        </label>
-        <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
-          <input
-            type="checkbox"
-            className={checkboxClass}
-            checked={settings.roundRobinEnabled}
-            onChange={(e) => onChange({ ...settings, roundRobinEnabled: e.target.checked })}
-          />
-          Round-robin assignment
-        </label>
-      </div>
-      <BusinessHoursEditor
-        enabled={settings.useBusinessHours}
-        hours={settings.businessHours}
-        onEnabledChange={(useBusinessHours) => onChange({ ...settings, useBusinessHours })}
-        onChange={(businessHours) => onChange({ ...settings, businessHours })}
-      />
+        Round-robin assignment
+      </label>
       <div className="max-w-xs">
         <label className={labelClass}>Missed-chat alert threshold (minutes)</label>
         <Input
@@ -133,32 +126,103 @@ export function InboxTrustFields({
         />
         <p className="mt-1 text-xs text-gray-400">Agents are alerted if no reply within this window.</p>
       </div>
+    </div>
+  );
+}
+
+export function InboxGdprFields({
+  settings,
+  onChange,
+}: {
+  settings: WidgetSettingsInput;
+  onChange: (s: WidgetSettingsInput) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <h4 className="text-sm font-semibold text-gray-900">GDPR & consent</h4>
+      <div>
+        <label className={labelClass}>Privacy policy URL</label>
+        <Input
+          type="url"
+          value={settings.privacyPolicyUrl}
+          onChange={(e) => onChange({ ...settings, privacyPolicyUrl: e.target.value })}
+          placeholder="https://example.com/privacy"
+        />
+      </div>
       <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
         <input
           type="checkbox"
           className={checkboxClass}
-          checked={settings.csatEnabled}
-          onChange={(e) => onChange({ ...settings, csatEnabled: e.target.checked })}
+          checked={settings.requireConsent}
+          onChange={(e) => onChange({ ...settings, requireConsent: e.target.checked })}
         />
-        Post-chat CSAT survey after resolve
+        Require pre-chat consent
       </label>
-      <div>
-        <label className={labelClass}>
-          Custom pre-chat fields <span className="font-normal text-gray-400">(JSON array)</span>
-        </label>
-        <Textarea
-          value={JSON.stringify(settings.preChatFields, null, 2)}
-          onChange={(e) => {
-            try {
-              const parsed = JSON.parse(e.target.value) as typeof settings.preChatFields;
-              onChange({ ...settings, preChatFields: parsed });
-            } catch { /* ignore invalid JSON while typing */ }
-          }}
-          rows={6}
-          className="font-mono text-xs"
-          placeholder={'[\n  {"id":"company","label":"Company","type":"text","required":true}\n]'}
-        />
-      </div>
+    </div>
+  );
+}
+
+export function InboxBusinessHoursFields({
+  settings,
+  onChange,
+}: {
+  settings: WidgetSettingsInput;
+  onChange: (s: WidgetSettingsInput) => void;
+}) {
+  return (
+    <BusinessHoursEditor
+      enabled={settings.useBusinessHours}
+      hours={settings.businessHours}
+      onEnabledChange={(useBusinessHours) => onChange({ ...settings, useBusinessHours })}
+      onChange={(businessHours) => onChange({ ...settings, businessHours })}
+    />
+  );
+}
+
+export function InboxAnalyticsFields({
+  settings,
+  onChange,
+}: {
+  settings: WidgetSettingsInput;
+  onChange: (s: WidgetSettingsInput) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
+      <input
+        type="checkbox"
+        className={checkboxClass}
+        checked={settings.csatEnabled}
+        onChange={(e) => onChange({ ...settings, csatEnabled: e.target.checked })}
+      />
+      Post-chat CSAT survey after resolve
+    </label>
+  );
+}
+
+export function InboxPreChatFields({
+  settings,
+  onChange,
+}: {
+  settings: WidgetSettingsInput;
+  onChange: (s: WidgetSettingsInput) => void;
+}) {
+  return (
+    <div>
+      <label className={labelClass}>
+        Custom pre-chat fields <span className="font-normal text-gray-400">(JSON array)</span>
+      </label>
+      <Textarea
+        value={JSON.stringify(settings.preChatFields, null, 2)}
+        onChange={(e) => {
+          try {
+            const parsed = JSON.parse(e.target.value) as typeof settings.preChatFields;
+            onChange({ ...settings, preChatFields: parsed });
+          } catch { /* ignore invalid JSON while typing */ }
+        }}
+        rows={10}
+        className="font-mono text-xs"
+        placeholder={'[\n  {"id":"company","label":"Company","type":"text","required":true}\n]'}
+      />
     </div>
   );
 }

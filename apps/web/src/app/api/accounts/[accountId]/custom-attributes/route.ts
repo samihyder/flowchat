@@ -21,7 +21,7 @@ export async function GET(req: Request, { params }: Params) {
   const sql = neon(process.env.DATABASE_URL!);
   const rows = await sql`
     SELECT id, entity_type as "entityType", key, label,
-           attr_type as "attrType", options, sort_order as "sortOrder"
+           attr_type as "attrType", options, sort_order as "sortOrder", required
     FROM custom_attribute_definitions
     WHERE account_id = ${accountId}::uuid AND entity_type = ${entityType}
     ORDER BY sort_order ASC, label ASC
@@ -50,6 +50,7 @@ export async function POST(req: Request, { params }: Params) {
     attrType?: string;
     options?: string[];
     sortOrder?: number;
+    required?: boolean;
   };
 
   const label = body.label?.trim();
@@ -70,7 +71,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const sql = neon(process.env.DATABASE_URL!);
   const rows = await sql`
-    INSERT INTO custom_attribute_definitions (account_id, entity_type, key, label, attr_type, options, sort_order)
+    INSERT INTO custom_attribute_definitions (account_id, entity_type, key, label, attr_type, options, sort_order, required)
     VALUES (
       ${accountId}::uuid,
       ${entityType},
@@ -78,15 +79,17 @@ export async function POST(req: Request, { params }: Params) {
       ${label},
       ${attrType},
       ${body.options ? JSON.stringify(body.options) : null}::jsonb,
-      ${body.sortOrder ?? 0}
+      ${body.sortOrder ?? 0},
+      ${body.required ?? false}
     )
     ON CONFLICT (account_id, entity_type, key) DO UPDATE SET
       label = EXCLUDED.label,
       attr_type = EXCLUDED.attr_type,
       options = EXCLUDED.options,
-      sort_order = EXCLUDED.sort_order
+      sort_order = EXCLUDED.sort_order,
+      required = EXCLUDED.required
     RETURNING id, entity_type as "entityType", key, label,
-              attr_type as "attrType", options, sort_order as "sortOrder"
+              attr_type as "attrType", options, sort_order as "sortOrder", required
   `;
 
   return Response.json(
