@@ -225,6 +225,20 @@ tr:hover td{background:#FAFAFA}
 
 /* ── color swatches for label ── */
 .swatch{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:4px}
+
+/* ── demo view toggle + empty state (cosmetic pass, borrowed from Stitch design system) ── */
+.demo-toggle{display:inline-flex;background:#F3F4F6;border-radius:8px;padding:3px;gap:2px}
+.demo-toggle-btn{border:none;background:transparent;color:#6B7280;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:6px;cursor:pointer}
+.demo-toggle-btn.active{background:#fff;color:#4F46E5;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.cview{display:none}
+.cview.active{display:block}
+.empty-illustration{background:linear-gradient(135deg,#EEF2FF 0%,#F0FDFA 100%);border:1px solid #E0E7FF;border-radius:16px;padding:56px 24px;text-align:center}
+.empty-illo-stack{position:relative;width:120px;height:100px;margin:0 auto 20px}
+.empty-illo-card{position:absolute;border-radius:14px;box-shadow:0 8px 24px rgba(79,70,229,.12)}
+.empty-illo-card-back{width:88px;height:88px;background:#fff;border:1px solid #E5E7EB;top:0;left:16px;transform:rotate(-6deg)}
+.empty-illo-card-front{width:88px;height:88px;background:#fff;border:1px solid #E0E7FF;top:12px;left:0;transform:rotate(5deg);display:flex;align-items:center;justify-content:center;font-size:32px}
+.empty-illustration h2{font-size:19px;font-weight:700;color:#111827;margin-bottom:8px}
+.empty-illustration p{font-size:13px;color:#6B7280;max-width:440px;margin:0 auto;line-height:1.6}
 </style></head>
 <body>
 <div class="layout">
@@ -269,15 +283,10 @@ tr:hover td{background:#FAFAFA}
       </div>
     </div>
 <div class="main">
-<div style="padding:4px 20px 0"><span class="sprint-ref">🏃 S6-14, S6-22, S6-23</span></div>
-
     <div class="topbar">
-      <div style="flex:1">
-        <div class="topbar-title">Campaigns</div>
-        <div class="topbar-sub">One-time and recurring email sends</div>
-      </div>
+      <div style="flex:1"></div>
       <div class="search-box">🔍 Search conversations…</div>
-      
+
   <button class="btn btn-primary">+ New campaign</button>
 
     </div>
@@ -287,15 +296,37 @@ tr:hover td{background:#FAFAFA}
       <h1>Campaigns</h1>
       <p>Plan, schedule, and monitor email campaigns to your segments</p>
     </div>
-    <span class="sprint-ref">🏃 S6-14, S6-22, S6-23</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="demo-toggle">
+        <button class="demo-toggle-btn active" onclick="showCampaignView('populated', this)">With campaigns</button>
+        <button class="demo-toggle-btn" onclick="showCampaignView('empty', this)">Empty state</button>
+      </div>
+      <span class="sprint-ref">🏃 S6-14, S6-22, S6-23</span>
+    </div>
   </div>
 
+  <div id="view-empty" class="cview">
+    <div class="empty-illustration">
+      <div class="empty-illo-stack">
+        <div class="empty-illo-card empty-illo-card-back"></div>
+        <div class="empty-illo-card empty-illo-card-front">📅</div>
+      </div>
+      <h2>No campaigns yet</h2>
+      <p>Create a multi-step email campaign to engage your leads on autopilot. Connect your CRM, design your flow, and watch your conversion rates grow.</p>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:6px">
+        <button class="btn btn-primary">+ Create your first campaign</button>
+        <button class="btn btn-secondary">View tutorials</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-populated" class="cview active">
   <!-- KPI strip -->
   <div class="grid-4" style="margin-bottom:18px">
-    <div class="stat-card"><div class="stat-value">5</div><div class="stat-label">Active campaigns</div></div>
-    <div class="stat-card"><div class="stat-value">1,842</div><div class="stat-label">Emails sent (30d)</div></div>
-    <div class="stat-card"><div class="stat-value">47.2%</div><div class="stat-label">Avg. open rate</div></div>
-    <div class="stat-card"><div class="stat-value">9.8%</div><div class="stat-label">Avg. click rate</div></div>
+    <div class="metric-card"><div class="metric-value">5</div><div class="metric-label">Active campaigns</div></div>
+    <div class="metric-card"><div class="metric-value">1,842</div><div class="metric-label">Emails sent (30d)</div></div>
+    <div class="metric-card"><div class="metric-value">47.2%</div><div class="metric-label">Avg. open rate</div></div>
+    <div class="metric-card"><div class="metric-value">9.8%</div><div class="metric-label">Avg. click rate</div></div>
   </div>
 
   <!-- tabs -->
@@ -392,6 +423,7 @@ tr:hover td{background:#FAFAFA}
       </tbody>
     </table>
   </div>
+  </div>
 
   <!-- New campaign wizard -->
   <div class="card" style="margin-top:20px">
@@ -458,4 +490,12 @@ tr:hover td{background:#FAFAFA}
 
 </div>
 </div>
+<script>
+function showCampaignView(name, btn){
+  document.getElementById('view-populated').classList.toggle('active', name === 'populated');
+  document.getElementById('view-empty').classList.toggle('active', name === 'empty');
+  btn.parentElement.querySelectorAll('.demo-toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
 </body></html>

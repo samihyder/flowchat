@@ -180,6 +180,21 @@ tr:hover td{background:#FAFAFA}
 .toggle.on::after{left:20px}
 .progress-bar{height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden}
 .progress-fill{height:100%;background:#6366F1;border-radius:3px}
+
+/* ── delivery funnel (cosmetic pass, borrowed from Stitch design system) ── */
+.funnel{display:flex;flex-direction:column;gap:14px}
+.funnel-row{margin-left:calc(var(--taper) * 16px);width:calc(100% - var(--taper) * 16px);padding-left:calc(var(--taper) * 14px);position:relative}
+.funnel-row:not(:first-child){border-left:2px solid #E5E7EB}
+.funnel-row-label{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:#6B7280;margin-bottom:5px}
+.funnel-row-value{font-size:15px;font-weight:700;color:#111827}
+.funnel-row-pct{font-size:11.5px;font-weight:500}
+.funnel-track{height:14px;background:#F3F4F6;border-radius:7px;overflow:hidden}
+.funnel-fill{height:100%;border-radius:7px;transition:width .3s}
+.funnel-exceptions{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;padding-top:14px;border-top:1px solid #F3F4F6}
+.funnel-exception{display:flex;align-items:center;gap:6px;font-size:11.5px}
+.funnel-exception-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.funnel-exception-label{color:#9CA3AF}
+.funnel-exception-value{font-weight:600}
 .step-row{display:flex;align-items:center;gap:12px;padding:14px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;margin-bottom:8px}
 .step-icon{width:32px;height:32px;border-radius:8px;background:#EDE9FE;color:#6366F1;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .metric-card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:16px 20px}
@@ -269,15 +284,8 @@ tr:hover td{background:#FAFAFA}
       </div>
     </div>
 <div class="main">
-<div style="padding:4px 20px 0"><span class="sprint-ref">🏃 S6-18, S6-19</span></div>
-
     <div class="topbar">
-      <div style="flex:1">
-        <div class="topbar-title">Campaign Report</div>
-        <div class="topbar-sub">June Welcome Drip — Day 0</div>
-      </div>
-      
-      
+      <div style="flex:1"></div>
   <button class="btn btn-secondary btn-sm">⬇ Export CSV</button>
   <button class="btn btn-secondary btn-sm">⬇ Export PDF</button>
 
@@ -315,34 +323,39 @@ tr:hover td{background:#FAFAFA}
     <!-- funnel chart -->
     <div class="card">
       <div class="card-title">Delivery funnel</div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Sent</span><span>247</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      <div class="funnel">
+        <div class="funnel-row" style="--taper:0">
+          <div class="funnel-row-label"><span>Sent</span><span class="funnel-row-value">247</span></div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:100%;background:#818CF8"></div></div>
         </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Delivered</span><span style="color:#059669">244 (98.8%)</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:98.8%"></div></div>
+        <div class="funnel-row" style="--taper:1">
+          <div class="funnel-row-label"><span>Delivered</span><span class="funnel-row-value" style="color:#059669">244 <span class="funnel-row-pct">(98.8%)</span></span></div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:98.8%;background:#34D399"></div></div>
         </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Opened</span><span style="color:#14B8A6">129 (52.2%)</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:52.2%;background:#14B8A6"></div></div>
+        <div class="funnel-row" style="--taper:2">
+          <div class="funnel-row-label"><span>Opened</span><span class="funnel-row-value" style="color:#0D9488">129 <span class="funnel-row-pct">(52.2%)</span></span></div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:52.2%;background:#2DD4BF"></div></div>
         </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Clicked</span><span style="color:#6366F1">28 (11.3%)</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:11.3%;background:#6366F1"></div></div>
+        <div class="funnel-row" style="--taper:3">
+          <div class="funnel-row-label"><span>Clicked</span><span class="funnel-row-value" style="color:#4338CA">28 <span class="funnel-row-pct">(11.3%)</span></span></div>
+          <div class="funnel-track"><div class="funnel-fill" style="width:11.3%;background:#6366F1"></div></div>
         </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Unsubscribed</span><span style="color:#EF4444">3 (1.2%)</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:1.2%;background:#EF4444"></div></div>
+      </div>
+      <div class="funnel-exceptions">
+        <div class="funnel-exception">
+          <span class="funnel-exception-dot" style="background:#EF4444"></span>
+          <span class="funnel-exception-label">Unsubscribed</span>
+          <span class="funnel-exception-value" style="color:#EF4444">3 (1.2%)</span>
         </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Bounced</span><span style="color:#F59E0B">3 (1.2%)</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:1.2%;background:#F59E0B"></div></div>
+        <div class="funnel-exception">
+          <span class="funnel-exception-dot" style="background:#F59E0B"></span>
+          <span class="funnel-exception-label">Bounced</span>
+          <span class="funnel-exception-value" style="color:#B45309">3 (1.2%)</span>
         </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>Marked as spam</span><span style="color:#6B7280">1 (0.4%)</span></div>
-          <div class="progress-bar"><div class="progress-fill" style="width:0.4%;background:#9CA3AF"></div></div>
+        <div class="funnel-exception">
+          <span class="funnel-exception-dot" style="background:#9CA3AF"></span>
+          <span class="funnel-exception-label">Marked as spam</span>
+          <span class="funnel-exception-value" style="color:#6B7280">1 (0.4%)</span>
         </div>
       </div>
     </div>

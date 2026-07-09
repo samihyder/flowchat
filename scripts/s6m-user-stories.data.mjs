@@ -536,4 +536,17 @@ export const S6M_STORIES = [
     'Acceptance Criteria':
       '• On complained webhook: global suppress + campaign_recipient.stopped_reason=complaint\n• Pending steps status=stopped_complaint for that campaign only (same as hard bounce)\n• Admin alert or activity log entry for complaint events\n• Stats aggregate stopped_complaint count',
   },
+  {
+    ...S6M_META,
+    'Story ID': 'S6M-45',
+    Status: 'Completed',
+    'Epic / Theme': 'Visual design',
+    Role: 'Admin',
+    'User Story':
+      'As a Admin, I want the marketing module wireframes and the live app to match the cosmetic polish of the Stitch design-system benchmark (stitch_flow_marketing_module_design_system/), so that the campaigns experience feels as smooth as a shipped SaaS product without losing the wireframes’ functional depth.',
+    'Story Points': 5,
+    Priority: 'Should',
+    'Acceptance Criteria':
+      '• Benchmarked stitch_flow_marketing_module_design_system/ against userstory-wireframes/24–28; kept the wireframes as the structural/functional source of truth (real app already matches their nav, badges, data density) and ported only cosmetic wins, since Stitch’s own screens were internally inconsistent (mismatched top bars, wizard-footer chrome leaking onto non-wizard pages, SalesHub vs FlowChat branding)\n• 26-marketing-campaigns.html, 24/25/27/28: removed the redundant slim-topbar-title + large-H1 duplicate header\n• 26-marketing-campaigns.html: fixed KPI strip using undefined stat-card/stat-value/stat-label classes (rendered unstyled) — corrected to the file’s real metric-card/metric-value/metric-label classes\n• 26-marketing-campaigns.html: added a Stitch-style illustrated empty state (layered card icon, gradient panel, dual CTA) behind a With-campaigns/Empty-state demo toggle\n• 27-marketing-campaign-analytics.html: redesigned the delivery funnel as tapering, indented, thick-pill bars with bold values (Stitch-style), while keeping the wireframe’s superior data density (opens-over-time chart, link-click table, per-recipient drill-down) that Stitch’s version lacks; split out Unsubscribed/Bounced/Marked-as-spam as de-emphasized exception metrics rather than funnel stages\n• Same empty-state and funnel-bar treatment ported into the live app (apps/web marketing campaigns list + campaign detail)',
+  },
 ];

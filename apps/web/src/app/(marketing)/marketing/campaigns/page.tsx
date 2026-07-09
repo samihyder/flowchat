@@ -290,8 +290,9 @@ export default function CampaignsPage() {
           <section className="relative min-h-[500px] rounded-3xl overflow-hidden flex items-center justify-center p-12">
             <div className="absolute inset-0 bg-gradient-to-br from-[#EEF2FF] to-[#F0FDFA] opacity-70" />
             <div className="relative z-10 text-center max-w-lg">
-              <div className="mb-8 relative inline-block">
-                <div className="w-32 h-32 bg-white rounded-2xl shadow-xl flex items-center justify-center mx-auto ring-1 ring-gray-100 rotate-3">
+              <div className="mb-8 relative w-32 h-32 mx-auto">
+                <div className="absolute inset-0 w-24 h-24 bg-white rounded-2xl shadow-lg ring-1 ring-gray-100 -rotate-6 top-1 left-4" />
+                <div className="absolute inset-0 w-24 h-24 bg-white rounded-2xl shadow-xl flex items-center justify-center ring-1 ring-gray-100 rotate-6 top-2">
                   <MarketingIcon name="mail" className="text-5xl text-primary/40" />
                 </div>
               </div>
@@ -300,14 +301,22 @@ export default function CampaignsPage() {
                 Create a multi-step email campaign to engage your leads on autopilot. Connect your CRM,
                 design your flow, and watch your conversion rates grow.
               </p>
-              <button
-                type="button"
-                onClick={() => void handleNewCampaign()}
-                disabled={creating}
-                className="marketing-btn-primary px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-all disabled:opacity-60"
-              >
-                Create your first campaign
-              </button>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => void handleNewCampaign()}
+                  disabled={creating}
+                  className="marketing-btn-primary px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-all disabled:opacity-60"
+                >
+                  Create your first campaign
+                </button>
+                <Link
+                  href={marketingRoutes.templates as Route}
+                  className="px-8 py-4 rounded-xl font-bold text-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Browse templates
+                </Link>
+              </div>
             </div>
           </section>
         ) : (

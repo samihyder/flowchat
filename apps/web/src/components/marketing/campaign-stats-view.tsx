@@ -365,22 +365,26 @@ export function CampaignStatsView({
               <h3 className="text-label-caps text-on-surface-variant mb-8 uppercase">
                 Engagement Funnel
               </h3>
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {[
                   { label: 'Enrolled', value: overview.totalRecipients, width: 100, color: 'bg-gray-200' },
                   { label: 'Sent', value: overview.sent, width: overview.totalRecipients ? (overview.sent / overview.totalRecipients) * 100 : 0, color: 'bg-primary/40' },
                   { label: 'Delivered', value: overview.delivered, width: overview.sent ? (overview.delivered / overview.sent) * 100 : 0, color: 'bg-primary/60' },
                   { label: 'Opened', value: overview.opened, width: overview.delivered ? (overview.opened / overview.delivered) * 100 : 0, color: 'bg-primary' },
                   { label: 'Clicked', value: overview.clicked, width: overview.opened ? (overview.clicked / overview.opened) * 100 : 0, color: 'bg-primary-container' },
-                ].map((row) => (
-                  <div key={row.label}>
-                    <div className="flex justify-between items-end mb-2">
+                ].map((row, i) => (
+                  <div
+                    key={row.label}
+                    className={i > 0 ? 'border-l-2 border-gray-200' : ''}
+                    style={{ marginLeft: `${i * 18}px`, paddingLeft: i > 0 ? '16px' : undefined }}
+                  >
+                    <div className="flex justify-between items-baseline mb-2">
                       <span className="text-gray-500 text-[13px] font-medium">{row.label}</span>
-                      <span className="text-headline-sm">{row.value.toLocaleString()}</span>
+                      <span className="text-headline-sm font-bold">{row.value.toLocaleString()}</span>
                     </div>
-                    <div className="h-10 bg-gray-50 rounded-lg relative overflow-hidden">
+                    <div className="h-8 bg-gray-50 rounded-full relative overflow-hidden">
                       <div
-                        className={`h-full ${row.color} absolute left-0 top-0 transition-all`}
+                        className={`h-full ${row.color} absolute left-0 top-0 rounded-full transition-all`}
                         style={{ width: `${Math.max(row.width, row.value > 0 ? 4 : 0)}%` }}
                       />
                     </div>
