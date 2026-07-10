@@ -104,6 +104,7 @@ export default function WorkflowsPage() {
                   <th className="px-6 py-4 text-label-caps text-on-surface-variant">Workflow</th>
                   <th className="px-6 py-4 text-label-caps text-on-surface-variant">Status</th>
                   <th className="px-6 py-4 text-label-caps text-on-surface-variant">Enrolled</th>
+                  <th className="px-6 py-4 text-label-caps text-on-surface-variant">Completed</th>
                   <th className="px-6 py-4 text-label-caps text-on-surface-variant">Emails sent</th>
                   <th className="px-6 py-4 w-40" />
                 </tr>
@@ -141,6 +142,18 @@ export default function WorkflowsPage() {
                       </button>
                     </td>
                     <td className="px-6 py-4 font-semibold text-on-surface">{w.contactCount}</td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {w.contactCount === 0 ? (
+                        <span className="text-gray-400">Draft</span>
+                      ) : (
+                        <>
+                          {w.completedCount}{' '}
+                          <span className="text-gray-400">
+                            ({Math.round((w.completedCount / w.contactCount) * 100)}%)
+                          </span>
+                        </>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-gray-600">{w.emailsSent}</td>
                     <td className="px-6 py-4 text-right space-x-3">
                       <Link

@@ -582,6 +582,7 @@ export type EmailAutomation = {
   enabled: boolean;
   createdAt: string;
   contactCount: number;
+  completedCount: number;
   emailCount: number;
   emailsSent: number;
 };

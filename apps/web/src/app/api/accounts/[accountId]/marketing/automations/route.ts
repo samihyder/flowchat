@@ -20,6 +20,8 @@ export async function GET(req: Request, { params }: Params) {
   const rows = await sql`
     SELECT w.id, w.name, w.enabled, w.created_at as "createdAt",
            (SELECT COUNT(*)::int FROM marketing_workflow_enrollments e WHERE e.workflow_id = w.id) as "contactCount",
+           (SELECT COUNT(*)::int FROM marketing_workflow_enrollments e
+            WHERE e.workflow_id = w.id AND e.status = 'completed') as "completedCount",
            (SELECT COUNT(*)::int FROM marketing_workflow_steps s
             WHERE s.workflow_id = w.id AND s.step_type = 'send_email') as "emailCount",
            (SELECT COUNT(*)::int FROM contact_email_events ev
