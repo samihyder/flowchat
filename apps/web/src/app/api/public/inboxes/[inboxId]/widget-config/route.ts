@@ -74,7 +74,7 @@ export async function GET(req: Request, { params }: Params) {
       );
     }
 
-    const primary = inbox.widgetColor ?? '#6366F1';
+    const primary = inbox.widgetColor ?? '#06B6D4';
     const accountSettings = parseAccountSettings(inbox.accountSettings);
     const greetingMessages = resolveGreetingMessages(
       inbox.greetingMessages,

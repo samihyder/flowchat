@@ -2,27 +2,28 @@
 @import "../components/marketing/ui/marketing-tokens.css";
 
 @theme {
-  --color-primary-50: #EEF2FF;
-  --color-primary-100: #E0E7FF;
-  --color-primary-200: #C7D2FE;
-  --color-primary-300: #A5B4FC;
-  --color-primary-400: #818CF8;
-  --color-primary-500: #6366F1;
-  --color-primary-600: #4F46E5;
-  --color-primary-700: #4338CA;
-  --color-primary-800: #3730A3;
-  --color-primary-900: #312E81;
+  /* Mutex Systems — turquoise / aqua (wa-automation icon) */
+  --color-primary-50: #ECFEFF;
+  --color-primary-100: #CFFAFE;
+  --color-primary-200: #A5F3FC;
+  --color-primary-300: #67E8F9;
+  --color-primary-400: #2DD4BF;
+  --color-primary-500: #06B6D4;
+  --color-primary-600: #0891B2;
+  --color-primary-700: #0E7490;
+  --color-primary-800: #155E75;
+  --color-primary-900: #164E63;
 
   --color-accent-50: #F0FDFA;
   --color-accent-100: #CCFBF1;
-  --color-accent-500: #14B8A6;
-  --color-accent-600: #0D9488;
+  --color-accent-500: #2DD4BF;
+  --color-accent-600: #14B8A6;
 
-  --color-sidebar-bg: #1E1B4B;
-  --color-sidebar-hover: #312E81;
-  --color-sidebar-text: #C7D2FE;
-  --color-sidebar-muted: #818CF8;
-  --color-sidebar-label: #6366F1;
+  --color-sidebar-bg: #134E4A;
+  --color-sidebar-hover: #115E59;
+  --color-sidebar-text: #CCFBF1;
+  --color-sidebar-muted: #5EEAD4;
+  --color-sidebar-label: #2DD4BF;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
@@ -44,13 +45,13 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* Primary actions — works in marketing module and dashboard settings */
+/* Primary actions — Mutex aqua brand */
 .marketing-btn-primary {
-  background-color: #4648d4;
+  background-color: #06B6D4;
   color: #ffffff;
 }
 .marketing-btn-primary:hover:not(:disabled) {
-  background-color: #4f46e5;
+  background-color: #0891B2;
 }
 .marketing-btn-primary:disabled {
   opacity: 0.6;
@@ -64,8 +65,8 @@ body {
 }
 
 ::selection {
-  background: #E0E7FF;
-  color: #312E81;
+  background: #CFFAFE;
+  color: #164E63;
 }
 
 @keyframes fade-in {
@@ -96,6 +97,6 @@ body {
 }
 
 .tiptap a {
-  color: #4f46e5;
+  color: #0891B2;
   text-decoration: underline;
 }

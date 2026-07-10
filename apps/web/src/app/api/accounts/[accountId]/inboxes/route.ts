@@ -87,7 +87,7 @@ export async function POST(req: Request, { params }: Params) {
     return Response.json({ error: 'Selected agent is not in this workspace' }, { status: 400 });
   }
 
-  const primary = body.widgetColor ?? '#6366F1';
+  const primary = body.widgetColor ?? '#06B6D4';
   const theme = mergeWidgetTheme(body.widgetTheme, primary);
   const accountSettings = await getAccountSettings(sql, accountId);
 

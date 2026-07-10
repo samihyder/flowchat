@@ -22,9 +22,9 @@
   };
 
   const DEFAULT_THEME = {
-    launcherBg: '#6366F1',
+    launcherBg: '#06B6D4',
     launcherIcon: '#ffffff',
-    headerBg: '#6366F1',
+    headerBg: '#06B6D4',
     headerTitle: '#ffffff',
     headerSubtitle: 'rgba(255,255,255,0.9)',
     panelBg: '#ffffff',
@@ -32,7 +32,7 @@
     messagesBg: '#f9fafb',
     agentBubbleBg: '#ffffff',
     agentBubbleText: '#111827',
-    visitorBubbleBg: '#6366F1',
+    visitorBubbleBg: '#06B6D4',
     visitorBubbleText: '#ffffff',
     systemText: '#6b7280',
     labelText: '#374151',
@@ -41,7 +41,7 @@
     inputBorder: '#d1d5db',
     inputPlaceholder: '#9ca3af',
     composerBg: '#ffffff',
-    buttonBg: '#6366F1',
+    buttonBg: '#06B6D4',
     buttonText: '#ffffff',
   };
 
@@ -253,7 +253,7 @@
   }
 
   function theme() {
-    const primary = state.inbox?.widgetColor || '#6366F1';
+    const primary = state.inbox?.widgetColor || '#06B6D4';
     return parseTheme(state.inbox?.widgetTheme, primary);
   }
 

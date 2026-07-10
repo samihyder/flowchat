@@ -4,7 +4,7 @@ import Link from 'next/link';
 export function AuthLogo({ centered = true }: { centered?: boolean }) {
   return (
     <div className={`flex items-center gap-2.5 mb-7 ${centered ? 'justify-center' : ''}`}>
-      <div className="w-10 h-10 rounded-[10px] bg-primary-500 flex items-center justify-center text-white font-bold text-lg">
+      <div className="w-10 h-10 rounded-[10px] bg-gradient-to-br from-[#2DD4BF] to-[#06B6D4] flex items-center justify-center text-white font-bold text-lg">
         F
       </div>
       <span className="text-xl font-bold text-gray-900">FlowChat</span>

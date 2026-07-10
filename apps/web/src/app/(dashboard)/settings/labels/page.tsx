@@ -17,7 +17,7 @@ export default function LabelsSettingsPage() {
   const { token, accountId } = useAuthStore();
   const [labels, setLabels] = useState<LabelRow[]>([]);
   const [name, setName] = useState('');
-  const [color, setColor] = useState('#6366F1');
+  const [color, setColor] = useState('#06B6D4');
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -26,7 +26,7 @@ export default function LabelsSettingsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [editColor, setEditColor] = useState('#6366F1');
+  const [editColor, setEditColor] = useState('#06B6D4');
 
   const load = async () => {
     if (!token || !accountId) return;
@@ -56,7 +56,7 @@ export default function LabelsSettingsPage() {
   const cancelEdit = () => {
     setEditingId(null);
     setEditName('');
-    setEditColor('#6366F1');
+    setEditColor('#06B6D4');
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -72,7 +72,7 @@ export default function LabelsSettingsPage() {
         token
       );
       setName('');
-      setColor('#6366F1');
+      setColor('#06B6D4');
       setShowCreate(false);
       setMessage(`Label "${name.trim()}" created.`);
       await load();

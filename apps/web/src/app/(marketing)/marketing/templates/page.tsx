@@ -12,7 +12,7 @@ import { MarketingListFooter } from '@/components/marketing/ui/marketing-list-fo
 import { MarketingPageHeader } from '@/components/marketing/ui/marketing-page-header';
 
 const CATEGORIES: { id: string; label: string; badgeClass: string; gradient: string }[] = [
-  { id: 'welcome', label: 'Welcome', badgeClass: 'bg-blue-100 text-blue-800', gradient: 'from-[#6366F1] to-[#4F46E5]' },
+  { id: 'welcome', label: 'Welcome', badgeClass: 'bg-cyan-100 text-cyan-800', gradient: 'from-[#2DD4BF] to-[#06B6D4]' },
   { id: 'promotional', label: 'Promotional', badgeClass: 'bg-orange-100 text-orange-800', gradient: 'from-[#F59E0B] to-[#D97706]' },
   { id: 'nurture', label: 'Nurture', badgeClass: 'bg-teal-100 text-teal-800', gradient: 'from-[#14B8A6] to-[#0D9488]' },
   { id: 'transactional', label: 'Transactional', badgeClass: 'bg-purple-100 text-purple-800', gradient: 'from-[#8B5CF6] to-[#7C3AED]' },

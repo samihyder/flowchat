@@ -54,7 +54,7 @@ export function LabelColorPicker({ value, onChange, id }: Props) {
           value={hexInput}
           onChange={(e) => applyHex(e.target.value)}
           onBlur={() => setHexInput(normalizeLabelColor(hexInput))}
-          placeholder="#6366F1"
+          placeholder="#06B6D4"
           className="w-28 px-2 py-1.5 text-xs font-mono border border-gray-200 rounded-lg"
           maxLength={7}
           spellCheck={false}

@@ -40,12 +40,12 @@ export function buildCampaignEmailAppendix(
   const portfolio = mergeExtras.portfolio_link?.trim();
   if (meeting && !parts.some((p) => p.includes(meeting))) {
     parts.push(
-      `<p style="margin-top:12px"><a href="${meeting}" style="color:#4648d4">Schedule a meeting</a></p>`
+      `<p style="margin-top:12px"><a href="${meeting}" style="color:#06B6D4">Schedule a meeting</a></p>`
     );
   }
   if (portfolio && !parts.some((p) => p.includes(portfolio))) {
     parts.push(
-      `<p style="margin-top:8px"><a href="${portfolio}" style="color:#4648d4">View our portfolio</a></p>`
+      `<p style="margin-top:8px"><a href="${portfolio}" style="color:#06B6D4">View our portfolio</a></p>`
     );
   }
 

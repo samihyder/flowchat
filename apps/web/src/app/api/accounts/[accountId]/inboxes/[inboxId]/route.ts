@@ -61,7 +61,7 @@ export async function PATCH(req: Request, { params }: Params) {
   `;
   if (!existing[0]) return Response.json({ error: 'Inbox not found' }, { status: 404 });
 
-  const primary = body.widgetColor ?? (existing[0] as { widgetColor: string }).widgetColor ?? '#6366F1';
+  const primary = body.widgetColor ?? (existing[0] as { widgetColor: string }).widgetColor ?? '#06B6D4';
   const theme = body.widgetTheme
     ? mergeWidgetTheme(body.widgetTheme, primary)
     : (existing[0] as { widgetTheme: Record<string, string> | null }).widgetTheme;

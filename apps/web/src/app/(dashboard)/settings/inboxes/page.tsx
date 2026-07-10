@@ -99,7 +99,7 @@ export default function InboxesPage() {
                   <div className="flex items-center gap-3 min-w-0">
                     <span
                       className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm shrink-0"
-                      style={{ background: inbox.widgetColor ?? '#6366F1' }}
+                      style={{ background: inbox.widgetColor ?? '#06B6D4' }}
                     >
                       {channelIcon[inbox.channelType] ?? '💬'}
                     </span>

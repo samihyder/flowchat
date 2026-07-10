@@ -1,7 +1,8 @@
 /** Preset swatches + helpers for label colors. */
 export const LABEL_COLOR_PRESETS = [
-  '#6366F1', // indigo (brand)
-  '#4F46E5', // indigo dark
+  '#06B6D4', // aqua (brand)
+  '#2DD4BF', // turquoise (brand)
+  '#0891B2', // cyan dark
   '#EF4444', // red
   '#F97316', // orange
   '#F59E0B', // amber
@@ -21,7 +22,7 @@ export const LABEL_COLOR_PRESETS = [
 const HEX6 = /^#[0-9A-Fa-f]{6}$/;
 const HEX3 = /^#[0-9A-Fa-f]{3}$/;
 
-export function normalizeLabelColor(color?: string | null, fallback = '#6366F1'): string {
+export function normalizeLabelColor(color?: string | null, fallback = '#06B6D4'): string {
   const raw = color?.trim();
   if (!raw) return fallback;
   if (HEX6.test(raw)) return raw.toUpperCase();

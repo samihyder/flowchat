@@ -31,7 +31,7 @@ export function VolumeBarChart({
                 width={40}
                 height={barH}
                 rx={4}
-                fill={isLast ? '#4F46E5' : '#6366F1'}
+                fill={isLast ? '#0891B2' : '#06B6D4'}
                 opacity={d.value === 0 ? 0.25 : 1}
               />
               <text x={x + 20} y={132} fontSize={10} fill="#9CA3AF" textAnchor="middle">

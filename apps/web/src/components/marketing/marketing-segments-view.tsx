@@ -8,7 +8,7 @@ import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import { MarketingListFooter } from '@/components/marketing/ui/marketing-list-footer';
 import { MarketingPageHeader } from '@/components/marketing/ui/marketing-page-header';
 
-const BORDER_COLORS = ['#6366F1', '#EF4444', '#F59E0B', '#14B8A6', '#8B5CF6', '#0EA5E9', '#EC4899'];
+const BORDER_COLORS = ['#06B6D4', '#EF4444', '#F59E0B', '#2DD4BF', '#8B5CF6', '#0EA5E9', '#EC4899'];
 
 type FieldKey = 'marketingStatus' | 'labelId' | 'country' | 'type' | 'inactiveDays' | 'hasConversation';
 

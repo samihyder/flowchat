@@ -6,6 +6,7 @@ import {
   MUTEX_DEFAULT_WELCOME_TAGLINE,
   MUTEX_DEFAULT_WELCOME_TITLE,
 } from '@/lib/welcome-message-defaults';
+import { MUTEX_PRIMARY_DEFAULT } from '@/lib/mutex-brand';
 
 export type WidgetIconId = 'chat' | 'bubble' | 'headset' | 'message' | 'help' | 'wave';
 
@@ -66,7 +67,7 @@ export const THEME_FIELDS: { key: keyof WidgetTheme; label: string; group: strin
   { key: 'buttonText', label: 'Button text', group: 'Buttons' },
 ];
 
-export function defaultWidgetTheme(primary = '#6366F1'): WidgetTheme {
+export function defaultWidgetTheme(primary: string = MUTEX_PRIMARY_DEFAULT): WidgetTheme {
   return {
     launcherBg: primary,
     launcherIcon: '#ffffff',
@@ -94,7 +95,7 @@ export function defaultWidgetTheme(primary = '#6366F1'): WidgetTheme {
 
 export function mergeWidgetTheme(
   partial?: Partial<WidgetTheme> | string | null,
-  primary = '#6366F1'
+  primary: string = MUTEX_PRIMARY_DEFAULT
 ): WidgetTheme {
   let theme: Partial<WidgetTheme> = {};
   if (typeof partial === 'string') {
@@ -142,7 +143,7 @@ export const emptyWidgetSettings = (): WidgetSettingsInput => ({
   welcomeTagline: MUTEX_DEFAULT_WELCOME_TAGLINE,
   websiteUrl: '',
   defaultAssigneeId: '',
-  widgetColor: '#6366F1',
+  widgetColor: MUTEX_PRIMARY_DEFAULT,
   widgetIcon: 'chat',
   widgetTheme: defaultWidgetTheme(),
   allowedDomainsText: '',
@@ -187,7 +188,7 @@ export function settingsFromInbox(inbox: {
   csatEnabled?: boolean;
   preChatFields?: PreChatField[] | null;
 }): WidgetSettingsInput {
-  const primary = inbox.widgetColor ?? '#6366F1';
+  const primary = inbox.widgetColor ?? MUTEX_PRIMARY_DEFAULT;
   const greetingMessages =
     inbox.greetingMessages && inbox.greetingMessages.length > 0
       ? inbox.greetingMessages
