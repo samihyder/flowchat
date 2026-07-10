@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { useAuthStore } from '@/store/auth';
+import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
 import { api, type ApiCatalogEndpoint } from '@/lib/api';
 import { AuthLogo } from '@/components/layout/auth-shell';
 import { AdminRichTextEditor } from '@/components/admin/admin-rich-text-editor';
@@ -30,7 +30,7 @@ function rowKey(e: { path: string; method: string }) {
 
 export default function ApiCatalogPage() {
   const router = useRouter();
-  const { token, isSuperAdmin } = useAuthStore();
+  const { ready, token, isSuperAdmin } = useAuthBootstrap();
   const [endpoints, setEndpoints] = useState<ApiCatalogEndpoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -40,6 +40,7 @@ export default function ApiCatalogPage() {
   const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!ready) return;
     if (!token) {
       router.push('/sign-in');
       return;
@@ -52,7 +53,7 @@ export default function ApiCatalogPage() {
       .list(token)
       .then((r) => setEndpoints(r.endpoints))
       .finally(() => setLoading(false));
-  }, [token, isSuperAdmin, router]);
+  }, [ready, token, isSuperAdmin, router]);
 
   const groups = useMemo(() => {
     const map = new Map<string, ApiCatalogEndpoint[]>();

@@ -67,7 +67,7 @@ async function recoverFromCookie(cookieToken: string): Promise<'valid' | 'expire
 
 /** Wait for persisted auth, recover from session cookie, and backfill workspace. */
 export function useAuthBootstrap() {
-  const { user, token, accountId } = useAuthStore();
+  const { user, token, accountId, isSuperAdmin } = useAuthStore();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -125,5 +125,5 @@ export function useAuthBootstrap() {
     };
   }, []);
 
-  return { ready, user, token, accountId };
+  return { ready, user, token, accountId, isSuperAdmin };
 }

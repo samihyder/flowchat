@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { useAuthStore } from '@/store/auth';
+import { useAuthBootstrap } from '@/lib/useAuthBootstrap';
 import { api, type AdminWorkspace } from '@/lib/api';
 import { AuthLogo } from '@/components/layout/auth-shell';
 
@@ -24,7 +25,8 @@ function initials(name: string) {
 
 export default function SelectWorkspacePage() {
   const router = useRouter();
-  const { token, user, isSuperAdmin, setAccount, clearAuth } = useAuthStore();
+  const { user, setAccount, clearAuth } = useAuthStore();
+  const { ready, token, isSuperAdmin } = useAuthBootstrap();
   const [workspaces, setWorkspaces] = useState<AdminWorkspace[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -32,6 +34,7 @@ export default function SelectWorkspacePage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!ready) return;
     if (!token) {
       router.push('/sign-in');
       return;
@@ -45,7 +48,7 @@ export default function SelectWorkspacePage() {
       .then((r) => setWorkspaces(r.workspaces))
       .catch(() => setError('Failed to load workspaces'))
       .finally(() => setLoading(false));
-  }, [token, isSuperAdmin, router]);
+  }, [ready, token, isSuperAdmin, router]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
