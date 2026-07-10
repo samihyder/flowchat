@@ -17,6 +17,7 @@ export default function NewTemplatePage() {
     subject: string;
     htmlBody: string;
     textBody: string;
+    category: string;
   }) => {
     if (!token || !accountId) return;
     setSaving(true);
@@ -28,6 +29,7 @@ export default function NewTemplatePage() {
           subject: data.subject,
           htmlBody: data.htmlBody,
           textBody: data.textBody,
+          category: data.category || undefined,
         },
         token
       );
@@ -41,6 +43,7 @@ export default function NewTemplatePage() {
       <EmailComposer
         title="New template"
         showSaveAsTemplate={false}
+        showCategory
         saving={saving}
         onSave={handleSave}
         onClose={() => router.push('/marketing/templates' as Route)}

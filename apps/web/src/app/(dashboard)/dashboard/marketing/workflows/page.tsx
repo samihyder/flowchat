@@ -3,5 +3,5 @@ import { redirect } from 'next/navigation';
 import { marketingRoutes } from '@/lib/marketing/routes';
 
 export default function DashboardMarketingWorkflowsRedirect() {
-  redirect(marketingRoutes.campaigns as Route);
+  redirect(marketingRoutes.workflows as Route);
 }

@@ -12,6 +12,7 @@ export type ConversationFilters = {
   to?: string | null;
   agentUserId?: string | null;
   agentRole?: string;
+  teamId?: string | null;
 };
 
 export async function unsnoozeExpired(sql: AppSql, accountId: string) {
@@ -37,6 +38,7 @@ export async function listConversations(sql: AppSql, filters: ConversationFilter
     to = null,
     agentUserId = null,
     agentRole = 'administrator',
+    teamId = null,
   } = filters;
 
   await unsnoozeExpired(sql, accountId);
@@ -67,6 +69,7 @@ export async function listConversations(sql: AppSql, filters: ConversationFilter
     WHERE c.account_id = ${accountId}::uuid
       AND c.status = ${status}
       AND (${inboxId}::uuid IS NULL OR c.inbox_id = ${inboxId}::uuid)
+      AND (${teamId}::uuid IS NULL OR c.team_id = ${teamId}::uuid)
       AND (${assigneeId}::uuid IS NULL OR c.assignee_id = ${assigneeId}::uuid)
       AND (${unassigned}::boolean = false OR c.assignee_id IS NULL)
       AND (${priority}::text IS NULL OR c.priority::text = ${priority})

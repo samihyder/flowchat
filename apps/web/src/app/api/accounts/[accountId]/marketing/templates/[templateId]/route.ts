@@ -5,6 +5,7 @@ import { htmlToPlainText } from '@/lib/marketing/merge-tags';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string; templateId: string }> };
+const VALID_CATEGORIES = ['welcome', 'promotional', 'nurture', 'transactional'];
 
 function rejectAttachments(body: Record<string, unknown>) {
   if ('attachments' in body && body.attachments != null) {
@@ -21,7 +22,7 @@ export async function GET(req: Request, { params }: Params) {
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
   const rows = await sql`
-    SELECT id, name, subject, html_body as "htmlBody", text_body as "textBody", archived,
+    SELECT id, name, subject, html_body as "htmlBody", text_body as "textBody", archived, category,
            created_at as "createdAt", updated_at as "updatedAt"
     FROM email_templates
     WHERE id = ${templateId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
@@ -44,9 +45,14 @@ export async function PATCH(req: Request, { params }: Params) {
       htmlBody?: string;
       subject?: string;
       name?: string;
+      category?: string | null;
       attachments?: unknown;
     };
     rejectAttachments(body);
+
+    if (body.category && !VALID_CATEGORIES.includes(body.category)) {
+      return Response.json({ error: 'Invalid category' }, { status: 400 });
+    }
 
     const textBody =
       body.textBody !== undefined
@@ -63,9 +69,10 @@ export async function PATCH(req: Request, { params }: Params) {
         html_body = COALESCE(${body.htmlBody ?? null}, html_body),
         subject = COALESCE(${body.subject?.trim() ?? null}, subject),
         name = COALESCE(${body.name?.trim() ?? null}, name),
+        category = CASE WHEN ${body.category !== undefined} THEN ${body.category ?? null} ELSE category END,
         updated_at = NOW()
       WHERE id = ${templateId}::uuid AND account_id = ${accountId}::uuid
-      RETURNING id, name, subject, html_body as "htmlBody", text_body as "textBody", archived,
+      RETURNING id, name, subject, html_body as "htmlBody", text_body as "textBody", archived, category,
                 updated_at as "updatedAt"
     `;
     if (!rows[0]) return Response.json({ error: 'Not found' }, { status: 404 });

@@ -116,9 +116,33 @@ export async function processS6mCampaignBatch(
 
   const settingsCache = new Map<string, AccountSettings>();
   const brandingCache = new Map<string, { name: string; logoUrl: string | null }>();
+  const rateLimitCache = new Map<string, { enabled: boolean; remaining: number }>();
   let sent = 0;
   let failed = 0;
   const touchedCampaigns = new Set<string>();
+
+  async function getRateAllowance(campaignId: string) {
+    const cached = rateLimitCache.get(campaignId);
+    if (cached) return cached;
+    const campaignRows = await sql`
+      SELECT send_rate_enabled as "enabled", send_rate_per_hour as "perHour"
+      FROM marketing_campaigns WHERE id = ${campaignId}::uuid LIMIT 1
+    `;
+    const campaignRow = campaignRows[0] as { enabled: boolean; perHour: number } | undefined;
+    if (!campaignRow?.enabled) {
+      const allowance = { enabled: false, remaining: Infinity };
+      rateLimitCache.set(campaignId, allowance);
+      return allowance;
+    }
+    const sentRows = await sql`
+      SELECT COUNT(*)::int as n FROM marketing_campaign_recipient_steps
+      WHERE campaign_id = ${campaignId}::uuid AND sent_at >= NOW() - INTERVAL '1 hour'
+    `;
+    const sentLastHour = Number((sentRows[0] as { n: number }).n);
+    const allowance = { enabled: true, remaining: Math.max(0, campaignRow.perHour - sentLastHour) };
+    rateLimitCache.set(campaignId, allowance);
+    return allowance;
+  }
 
   for (const row of rows) {
     touchedCampaigns.add(row.campaignId);
@@ -132,6 +156,10 @@ export async function processS6mCampaignBatch(
         AND rs.status NOT IN ('sent', 'delivered', 'opened', 'clicked', 'skipped')
     `;
     if ((priorPending[0] as { n: number }).n > 0) continue;
+
+    const rateAllowance = await getRateAllowance(row.campaignId);
+    if (rateAllowance.enabled && rateAllowance.remaining <= 0) continue;
+    if (rateAllowance.enabled) rateAllowance.remaining -= 1;
 
     let settings = settingsCache.get(row.accountId);
     if (!settings) {

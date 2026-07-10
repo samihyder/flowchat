@@ -4,6 +4,7 @@ import { MarketingError, MarketingErrorCode, marketingErrorResponse } from '@/li
 import { htmlToPlainText } from '@/lib/marketing/merge-tags';
 
 type Params = { params: Promise<{ accountId: string }> };
+const VALID_CATEGORIES = ['welcome', 'promotional', 'nurture', 'transactional'];
 
 function rejectAttachments(body: Record<string, unknown>) {
   if ('attachments' in body && body.attachments != null) {
@@ -20,10 +21,14 @@ export async function GET(req: Request, { params }: Params) {
 
   const sql = neon(process.env.DATABASE_URL!);
   const rows = await sql`
-    SELECT id, name, subject, html_body as "htmlBody", text_body as "textBody",
-           created_at as "createdAt", updated_at as "updatedAt"
-    FROM email_templates WHERE account_id = ${accountId}::uuid AND archived = false
-    ORDER BY updated_at DESC
+    SELECT t.id, t.name, t.subject, t.html_body as "htmlBody", t.text_body as "textBody",
+           t.category,
+           t.created_at as "createdAt", t.updated_at as "updatedAt",
+           (SELECT COUNT(DISTINCT cs.campaign_id)::int
+            FROM marketing_campaign_steps cs
+            WHERE cs.source_template_id = t.id) as "campaignCount"
+    FROM email_templates t WHERE t.account_id = ${accountId}::uuid AND t.archived = false
+    ORDER BY t.updated_at DESC
   `;
   return Response.json({ templates: rows });
 }
@@ -41,6 +46,7 @@ export async function POST(req: Request, { params }: Params) {
       subject?: string;
       htmlBody?: string;
       textBody?: string;
+      category?: string;
       attachments?: unknown;
     };
     rejectAttachments(body);
@@ -48,20 +54,24 @@ export async function POST(req: Request, { params }: Params) {
     if (!body.name?.trim() || !body.subject?.trim() || !body.htmlBody?.trim()) {
       return Response.json({ error: 'Name, subject, and HTML body are required' }, { status: 400 });
     }
+    if (body.category && !VALID_CATEGORIES.includes(body.category)) {
+      return Response.json({ error: 'Invalid category' }, { status: 400 });
+    }
 
     const textBody = body.textBody?.trim() || htmlToPlainText(body.htmlBody);
 
     const sql = neon(process.env.DATABASE_URL!);
     const rows = await sql`
-      INSERT INTO email_templates (account_id, name, subject, html_body, text_body)
+      INSERT INTO email_templates (account_id, name, subject, html_body, text_body, category)
       VALUES (
         ${accountId}::uuid,
         ${body.name.trim()},
         ${body.subject.trim()},
         ${body.htmlBody},
-        ${textBody}
+        ${textBody},
+        ${body.category ?? null}
       )
-      RETURNING id, name, subject, html_body as "htmlBody", text_body as "textBody",
+      RETURNING id, name, subject, html_body as "htmlBody", text_body as "textBody", category,
                 created_at as "createdAt", updated_at as "updatedAt"
     `;
     return Response.json({ template: rows[0] }, { status: 201 });

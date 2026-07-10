@@ -19,6 +19,7 @@ export default function EditTemplatePage() {
     subject: string;
     htmlBody: string;
     textBody: string;
+    category: string;
   } | null>(null);
 
   const load = useCallback(() => {
@@ -31,6 +32,7 @@ export default function EditTemplatePage() {
           subject: r.template.subject,
           htmlBody: r.template.htmlBody ?? '<p></p>',
           textBody: r.template.textBody ?? '',
+          category: r.template.category ?? '',
         });
       })
       .catch(() => router.push('/marketing/templates' as Route))
@@ -44,6 +46,7 @@ export default function EditTemplatePage() {
     subject: string;
     htmlBody: string;
     textBody: string;
+    category: string;
   }) => {
     if (!token || !accountId) return;
     setSaving(true);
@@ -56,6 +59,7 @@ export default function EditTemplatePage() {
           subject: data.subject,
           htmlBody: data.htmlBody,
           textBody: data.textBody,
+          category: data.category || null,
         },
         token
       );
@@ -79,10 +83,17 @@ export default function EditTemplatePage() {
       initialSubject={initial.subject}
       initialHtmlBody={initial.htmlBody}
       initialTextBody={initial.textBody}
+      initialCategory={initial.category}
       showSaveAsTemplate={false}
+      showCategory
       saving={saving}
       onSave={handleSave}
       onClose={() => router.push('/marketing/templates' as Route)}
+      onSendTest={
+        token && accountId
+          ? (to) => api.marketing.templates.testSend(accountId, templateId, { to: to || undefined }, token)
+          : undefined
+      }
     />
   );
 }

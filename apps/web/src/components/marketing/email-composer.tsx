@@ -19,9 +19,18 @@ export type EmailComposerSaveData = {
   textBody: string;
   saveAsTemplate: boolean;
   templateName: string;
+  category: string;
 };
 
 type FocusField = 'subject' | 'body';
+
+const CATEGORY_OPTIONS = [
+  { id: '', label: 'No category' },
+  { id: 'welcome', label: 'Welcome' },
+  { id: 'promotional', label: 'Promotional' },
+  { id: 'nurture', label: 'Nurture' },
+  { id: 'transactional', label: 'Transactional' },
+];
 
 type Props = {
   title: string;
@@ -29,11 +38,14 @@ type Props = {
   initialSubject?: string;
   initialHtmlBody?: string;
   initialTextBody?: string;
+  initialCategory?: string;
   showTemplateName?: boolean;
   showSaveAsTemplate?: boolean;
+  showCategory?: boolean;
   saving?: boolean;
   onSave: (data: EmailComposerSaveData) => Promise<void> | void;
   onClose: () => void;
+  onSendTest?: (to: string) => Promise<{ sentTo: string }>;
 };
 
 function insertIntoInput(
@@ -67,17 +79,21 @@ export function EmailComposer({
   initialSubject = '',
   initialHtmlBody = '<p>Hi {{first_name}},</p><p></p>',
   initialTextBody = '',
+  initialCategory = '',
   showTemplateName = true,
   showSaveAsTemplate = false,
+  showCategory = false,
   saving = false,
   onSave,
   onClose,
+  onSendTest,
 }: Props) {
   const insertRef = useRef<InsertMergeTagFn>(() => {});
   const subjectInputRef = useRef<HTMLInputElement | null>(null);
   const mobileSubjectInputRef = useRef<HTMLInputElement | null>(null);
 
   const [name, setName] = useState(initialName);
+  const [category, setCategory] = useState(initialCategory);
   const [subject, setSubject] = useState(initialSubject);
   const [htmlBody, setHtmlBody] = useState(initialHtmlBody);
   const [textBody, setTextBody] = useState(initialTextBody || htmlToPlainText(initialHtmlBody));
@@ -92,6 +108,10 @@ export function EmailComposer({
   const [focusField, setFocusField] = useState<FocusField>('body');
   const [lastAutosaveAt, setLastAutosaveAt] = useState<Date | null>(null);
   const [autosaveLabel, setAutosaveLabel] = useState<string | null>(null);
+  const [showTestInput, setShowTestInput] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
+  const [testBusy, setTestBusy] = useState(false);
+  const [testMsg, setTestMsg] = useState('');
 
   const charCount = htmlToPlainText(htmlBody).length + subject.length;
 
@@ -158,6 +178,7 @@ export function EmailComposer({
         textBody: textBody.trim() || htmlToPlainText(htmlBody),
         saveAsTemplate,
         templateName: templateName.trim(),
+        category,
       });
       setSaveToast(
         showTemplateName ? 'Template saved successfully' : 'Campaign saved successfully'
@@ -187,6 +208,27 @@ export function EmailComposer({
   const previewSubject = previewWithSampleMergeTags(subject);
   const previewHtml = previewWithSampleMergeTags(htmlBody);
 
+  const sendTest = async () => {
+    if (!onSendTest) return;
+    setTestBusy(true);
+    setTestMsg('');
+    try {
+      const res = await onSendTest(testEmail.trim());
+      setTestMsg(`Test sent to ${res.sentTo}`);
+    } catch (err) {
+      setTestMsg(err instanceof Error ? err.message : 'Test send failed.');
+    } finally {
+      setTestBusy(false);
+    }
+  };
+
+  const openHtmlPreview = () => {
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(previewHtml);
+    win.document.close();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white shadow-xl animate-marketing-slide-up">
       <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 bg-white shrink-0 gap-4">
@@ -215,6 +257,19 @@ export function EmailComposer({
             </>
           )}
         </div>
+        {showCategory && showTemplateName && (
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="hidden sm:block shrink-0 text-xs border border-gray-200 rounded-lg px-2 py-1.5"
+          >
+            {CATEGORY_OPTIONS.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        )}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             type="button"
@@ -364,6 +419,56 @@ export function EmailComposer({
 
       <footer className="h-16 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-8 bg-white shrink-0">
         <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+          {onSendTest && (
+            <div className="flex items-center gap-2">
+              {showTestInput ? (
+                <>
+                  <input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 w-40 focus:ring-2 focus:ring-primary-border"
+                  />
+                  <button
+                    type="button"
+                    disabled={testBusy}
+                    onClick={() => void sendTest()}
+                    className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
+                  >
+                    {testBusy ? 'Sending…' : 'Send'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowTestInput(true)}
+                  className="text-sm font-medium text-gray-700 hover:text-primary flex items-center gap-1.5"
+                >
+                  <MarketingIcon name="send" className="text-[16px]" />
+                  Send test email
+                </button>
+              )}
+              {testMsg && (
+                <span
+                  className={`text-xs ${
+                    testMsg.startsWith('Test sent') ? 'text-status-success-text' : 'text-status-danger-text'
+                  }`}
+                >
+                  {testMsg}
+                </span>
+              )}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={openHtmlPreview}
+            className="text-sm font-medium text-gray-700 hover:text-primary flex items-center gap-1.5"
+          >
+            <MarketingIcon name="code" className="text-[16px]" />
+            Preview HTML
+          </button>
+          <div className="hidden sm:block h-4 w-px bg-gray-200" />
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-700">Mobile Preview</span>
             <button

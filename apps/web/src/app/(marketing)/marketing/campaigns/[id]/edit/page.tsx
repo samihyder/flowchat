@@ -86,6 +86,10 @@ export default function CampaignWizardPage() {
   const [preflight, setPreflight] = useState<PreflightResult | null>(null);
   const [scheduleTimezone, setScheduleTimezone] = useState('UTC');
   const [scheduleMode, setScheduleMode] = useState<'campaign' | 'recipient_local'>('recipient_local');
+  const [sendRateEnabled, setSendRateEnabled] = useState(false);
+  const [sendRatePerHour, setSendRatePerHour] = useState(500);
+  const [autoMarkBounced, setAutoMarkBounced] = useState(true);
+  const [processUnsubscribes, setProcessUnsubscribes] = useState(true);
   const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedFadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -107,6 +111,10 @@ export default function CampaignWizardPage() {
           campaignRes.campaign.scheduleTimezone || resolveScheduleTimezone()
         );
         setScheduleMode(campaignRes.campaign.scheduleMode || 'recipient_local');
+        setSendRateEnabled(campaignRes.campaign.sendRateEnabled);
+        setSendRatePerHour(campaignRes.campaign.sendRatePerHour || 500);
+        setAutoMarkBounced(campaignRes.campaign.autoMarkBounced);
+        setProcessUnsubscribes(campaignRes.campaign.processUnsubscribes);
         setIsAdmin(accessRes.isAdmin);
         if (recipientsRes) {
           setSelectedIds(new Set(recipientsRes.contactIds));
@@ -155,7 +163,14 @@ export default function CampaignWizardPage() {
     const res = await api.marketing.campaigns.patch(
       accountId,
       campaignId,
-      { scheduleTimezone, scheduleMode },
+      {
+        scheduleTimezone,
+        scheduleMode,
+        sendRateEnabled,
+        sendRatePerHour,
+        autoMarkBounced,
+        processUnsubscribes,
+      },
       token
     );
     setCampaign(res.campaign);
@@ -520,9 +535,18 @@ export default function CampaignWizardPage() {
           fieldErrors={stepFieldErrors}
           scheduleTimezone={scheduleTimezone}
           scheduleMode={scheduleMode}
+          sendRateEnabled={sendRateEnabled}
+          sendRatePerHour={sendRatePerHour}
+          autoMarkBounced={autoMarkBounced}
+          processUnsubscribes={processUnsubscribes}
           onScheduleSettingsChange={(patch) => {
             if (patch.scheduleTimezone) setScheduleTimezone(patch.scheduleTimezone);
             if (patch.scheduleMode) setScheduleMode(patch.scheduleMode);
+            if (patch.sendRateEnabled !== undefined) setSendRateEnabled(patch.sendRateEnabled);
+            if (patch.sendRatePerHour !== undefined) setSendRatePerHour(patch.sendRatePerHour);
+            if (patch.autoMarkBounced !== undefined) setAutoMarkBounced(patch.autoMarkBounced);
+            if (patch.processUnsubscribes !== undefined)
+              setProcessUnsubscribes(patch.processUnsubscribes);
           }}
         />
       )}

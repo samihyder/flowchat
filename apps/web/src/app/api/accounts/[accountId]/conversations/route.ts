@@ -28,6 +28,7 @@ export async function GET(req: Request, { params }: Params) {
   const labelId = url.searchParams.get('labelId');
   const from = url.searchParams.get('from');
   const to = url.searchParams.get('to');
+  const teamId = url.searchParams.get('teamId');
 
   const validStatuses = ['open', 'pending', 'resolved', 'snoozed'];
   const statusFilter = validStatuses.includes(status) ? status : 'open';
@@ -55,6 +56,7 @@ export async function GET(req: Request, { params }: Params) {
     to,
     agentUserId: auth.userId,
     agentRole: auth.role,
+    teamId,
   });
 
   return Response.json({ conversations: normalizeConversations(rows as Record<string, unknown>[]) });

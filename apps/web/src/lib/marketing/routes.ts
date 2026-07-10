@@ -10,4 +10,8 @@ export const marketingRoutes = {
   templateNew: '/marketing/templates/new',
   templateEdit: (id: string) => `/marketing/templates/${id}/edit`,
   segments: '/marketing/segments',
+  workflows: '/marketing/workflows',
+  workflowNew: '/marketing/workflows/new',
+  workflow: (id: string) => `/marketing/workflows/${id}`,
+  workflowEdit: (id: string) => `/marketing/workflows/${id}/edit`,
 } as const;

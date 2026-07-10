@@ -183,30 +183,37 @@ export function CampaignStatsView({
   const [tab, setTab] = useState<Tab>('overview');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [recipientFilter, setRecipientFilter] = useState('all');
+  const [recipientSearch, setRecipientSearch] = useState('');
 
   const filteredRecipients = useMemo(() => {
     if (!stats) return [];
     const { recipients } = stats;
-    if (recipientFilter === 'all') return recipients;
+    let out = recipients;
     if (recipientFilter === 'stopped') {
-      return recipients.filter((r) => r.stoppedReason || r.steps.some((s) => s.status.startsWith('stopped_')));
-    }
-    if (recipientFilter === 'not_opened') {
-      return recipients.filter(
+      out = out.filter((r) => r.stoppedReason || r.steps.some((s) => s.status.startsWith('stopped_')));
+    } else if (recipientFilter === 'not_opened') {
+      out = out.filter(
         (r) =>
           r.steps.some((s) => s.status === 'delivered' || s.status === 'sent') &&
           !r.steps.some((s) => s.status === 'opened' || s.status === 'clicked')
       );
-    }
-    if (recipientFilter.startsWith('stopped_')) {
-      return recipients.filter(
+    } else if (recipientFilter.startsWith('stopped_')) {
+      out = out.filter(
         (r) =>
           r.stoppedReason === recipientFilter.replace('stopped_', '') ||
           r.steps.some((s) => s.status === recipientFilter)
       );
+    } else if (recipientFilter !== 'all') {
+      out = out.filter((r) => r.steps.some((s) => s.status === recipientFilter));
     }
-    return recipients.filter((r) => r.steps.some((s) => s.status === recipientFilter));
-  }, [recipientFilter, stats]);
+    const query = recipientSearch.trim().toLowerCase();
+    if (query) {
+      out = out.filter(
+        (r) => r.email.toLowerCase().includes(query) || r.name.toLowerCase().includes(query)
+      );
+    }
+    return out;
+  }, [recipientFilter, recipientSearch, stats]);
 
   if (loading || !stats) {
     return <CampaignStatsSkeleton activeTab={tab} />;
@@ -512,21 +519,30 @@ export function CampaignStatsView({
 
       {tab === 'recipients' && (
         <div className="space-y-4">
-          <div className="flex gap-2 flex-wrap">
-            {RECIPIENT_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setRecipientFilter(f.id)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                  recipientFilter === f.id
-                    ? 'bg-primary-surface border-primary-border text-primary'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="flex gap-2 flex-wrap items-center justify-between">
+            <div className="flex gap-2 flex-wrap">
+              {RECIPIENT_FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setRecipientFilter(f.id)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                    recipientFilter === f.id
+                      ? 'bg-primary-surface border-primary-border text-primary'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={recipientSearch}
+              onChange={(e) => setRecipientSearch(e.target.value)}
+              placeholder="Filter by email or name…"
+              className="border border-gray-200 rounded-lg text-sm px-3 py-1.5 w-56 focus:ring-2 focus:ring-primary-border outline-none"
+            />
           </div>
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <table className="w-full text-left border-collapse">

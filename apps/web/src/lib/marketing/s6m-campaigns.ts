@@ -26,6 +26,10 @@ export type MarketingCampaignRow = {
   scheduleMode: 'campaign' | 'recipient_local';
   nextScheduledAt: string | null;
   firstSendAt: string | null;
+  sendRateEnabled: boolean;
+  sendRatePerHour: number;
+  autoMarkBounced: boolean;
+  processUnsubscribes: boolean;
 };
 
 export type ListCampaignsOptions = {
@@ -75,6 +79,10 @@ function serializeCampaign(
     firstSendAt: row.firstSendAt
       ? new Date(row.firstSendAt as Date).toISOString()
       : null,
+    sendRateEnabled: Boolean(row.sendRateEnabled),
+    sendRatePerHour: Number(row.sendRatePerHour ?? 500),
+    autoMarkBounced: row.autoMarkBounced !== false,
+    processUnsubscribes: row.processUnsubscribes !== false,
   };
 }
 
@@ -130,6 +138,8 @@ export async function listMarketingCampaigns(
            c.created_by as "createdBy", c.created_at as "createdAt", c.updated_at as "updatedAt",
            c.launched_by as "launchedBy", c.launched_at as "launchedAt",
            c.schedule_timezone as "scheduleTimezone", c.schedule_mode as "scheduleMode",
+           c.send_rate_enabled as "sendRateEnabled", c.send_rate_per_hour as "sendRatePerHour",
+           c.auto_mark_bounced as "autoMarkBounced", c.process_unsubscribes as "processUnsubscribes",
            COALESCE(r.cnt, 0)::int as "recipientCount",
            COALESCE(s.cnt, 0)::int as "stepCount",
            next_send."nextScheduledAt",
@@ -215,7 +225,9 @@ export async function createMarketingCampaignDraft(
     RETURNING id, name, status, current_step as "currentStep",
               created_by as "createdBy", created_at as "createdAt", updated_at as "updatedAt",
               launched_by as "launchedBy", launched_at as "launchedAt",
-              schedule_timezone as "scheduleTimezone", schedule_mode as "scheduleMode"
+              schedule_timezone as "scheduleTimezone", schedule_mode as "scheduleMode",
+              send_rate_enabled as "sendRateEnabled", send_rate_per_hour as "sendRatePerHour",
+              auto_mark_bounced as "autoMarkBounced", process_unsubscribes as "processUnsubscribes"
   `;
   return serializeCampaign(rows[0] as Record<string, unknown>, 0);
 }
@@ -230,6 +242,8 @@ export async function getMarketingCampaign(
            c.created_by as "createdBy", c.created_at as "createdAt", c.updated_at as "updatedAt",
            c.launched_by as "launchedBy", c.launched_at as "launchedAt",
            c.schedule_timezone as "scheduleTimezone", c.schedule_mode as "scheduleMode",
+           c.send_rate_enabled as "sendRateEnabled", c.send_rate_per_hour as "sendRatePerHour",
+           c.auto_mark_bounced as "autoMarkBounced", c.process_unsubscribes as "processUnsubscribes",
            COALESCE(r.cnt, 0)::int as "recipientCount",
            next_send."nextScheduledAt",
            first_step."firstSendAt"
@@ -267,6 +281,10 @@ export type PatchMarketingCampaignInput = {
   currentStep?: number;
   scheduleTimezone?: string;
   scheduleMode?: 'campaign' | 'recipient_local';
+  sendRateEnabled?: boolean;
+  sendRatePerHour?: number;
+  autoMarkBounced?: boolean;
+  processUnsubscribes?: boolean;
 };
 
 export async function patchMarketingCampaign(
@@ -292,6 +310,13 @@ export async function patchMarketingCampaign(
       : existing.currentStep;
   const scheduleTimezone = patch.scheduleTimezone?.trim() || existing.scheduleTimezone;
   const scheduleMode = patch.scheduleMode ?? existing.scheduleMode;
+  const sendRateEnabled = patch.sendRateEnabled ?? existing.sendRateEnabled;
+  const sendRatePerHour =
+    patch.sendRatePerHour !== undefined
+      ? Math.max(1, Math.round(patch.sendRatePerHour))
+      : existing.sendRatePerHour;
+  const autoMarkBounced = patch.autoMarkBounced ?? existing.autoMarkBounced;
+  const processUnsubscribes = patch.processUnsubscribes ?? existing.processUnsubscribes;
 
   const rows = await sql`
     UPDATE marketing_campaigns
@@ -299,12 +324,18 @@ export async function patchMarketingCampaign(
         current_step = ${currentStep},
         schedule_timezone = ${scheduleTimezone},
         schedule_mode = ${scheduleMode},
+        send_rate_enabled = ${sendRateEnabled},
+        send_rate_per_hour = ${sendRatePerHour},
+        auto_mark_bounced = ${autoMarkBounced},
+        process_unsubscribes = ${processUnsubscribes},
         updated_at = now()
     WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, status, current_step as "currentStep",
               created_by as "createdBy", created_at as "createdAt", updated_at as "updatedAt",
               launched_by as "launchedBy", launched_at as "launchedAt",
-              schedule_timezone as "scheduleTimezone", schedule_mode as "scheduleMode"
+              schedule_timezone as "scheduleTimezone", schedule_mode as "scheduleMode",
+              send_rate_enabled as "sendRateEnabled", send_rate_per_hour as "sendRatePerHour",
+              auto_mark_bounced as "autoMarkBounced", process_unsubscribes as "processUnsubscribes"
   `;
   return serializeCampaign(rows[0] as Record<string, unknown>, existing.recipientCount);
 }

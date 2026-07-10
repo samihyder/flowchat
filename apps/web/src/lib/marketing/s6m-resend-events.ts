@@ -29,6 +29,18 @@ async function logS6mActivity(
   `;
 }
 
+async function getCampaignHandlingFlags(sql: AppSql, campaignId: string) {
+  const rows = await sql`
+    SELECT auto_mark_bounced as "autoMarkBounced", process_unsubscribes as "processUnsubscribes"
+    FROM marketing_campaigns WHERE id = ${campaignId}::uuid LIMIT 1
+  `;
+  const row = rows[0] as { autoMarkBounced: boolean; processUnsubscribes: boolean } | undefined;
+  return {
+    autoMarkBounced: row?.autoMarkBounced !== false,
+    processUnsubscribes: row?.processUnsubscribes !== false,
+  };
+}
+
 async function findS6mStepByMessageId(sql: AppSql, messageId: string) {
   const rows = await sql`
     SELECT
@@ -132,9 +144,14 @@ export async function handleS6mResendWebhookEvent(sql: AppSql, event: ResendEven
       SET status = 'stopped_bounce', updated_at = NOW()
       WHERE id = ${stepRowId}::uuid
     `;
-    await skipPendingStepsForRecipient(sql, recipientId, 'bounce');
-    await suppressEmail(sql, accountId, email, 'bounced');
-    await logS6mActivity(sql, campaignId, 'recipient_stop', { reason: 'bounce', messageId }, recipientId);
+    const bounceFlags = await getCampaignHandlingFlags(sql, campaignId);
+    if (bounceFlags.autoMarkBounced) {
+      await skipPendingStepsForRecipient(sql, recipientId, 'bounce');
+      await suppressEmail(sql, accountId, email, 'bounced');
+      await logS6mActivity(sql, campaignId, 'recipient_stop', { reason: 'bounce', messageId }, recipientId);
+    } else {
+      await logS6mActivity(sql, campaignId, 'bounce_ignored', { messageId }, recipientId);
+    }
     return true;
   }
 
@@ -157,6 +174,11 @@ export async function handleS6mResendWebhookEvent(sql: AppSql, event: ResendEven
   }
 
   if (type === 'email.unsubscribed') {
+    const unsubFlags = await getCampaignHandlingFlags(sql, campaignId);
+    if (!unsubFlags.processUnsubscribes) {
+      await logS6mActivity(sql, campaignId, 'unsubscribe_ignored', { messageId }, recipientId);
+      return true;
+    }
     await skipPendingStepsForRecipient(sql, recipientId, 'unsubscribe');
     await sql`
       UPDATE marketing_campaign_recipient_steps

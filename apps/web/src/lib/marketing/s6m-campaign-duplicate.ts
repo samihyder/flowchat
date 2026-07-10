@@ -29,7 +29,8 @@ export async function duplicateMarketingCampaign(
       account_id, name, status, current_step, created_by,
       from_name, from_email, reply_to, signature_html, use_workspace_signature,
       meeting_link, portfolio_link, credential_id,
-      schedule_timezone, schedule_mode
+      schedule_timezone, schedule_mode,
+      send_rate_enabled, send_rate_per_hour, auto_mark_bounced, process_unsubscribes
     )
     SELECT
       account_id,
@@ -39,7 +40,8 @@ export async function duplicateMarketingCampaign(
       ${userId}::uuid,
       from_name, from_email, reply_to, signature_html, use_workspace_signature,
       meeting_link, portfolio_link, credential_id,
-      schedule_timezone, schedule_mode
+      schedule_timezone, schedule_mode,
+      send_rate_enabled, send_rate_per_hour, auto_mark_bounced, process_unsubscribes
     FROM marketing_campaigns
     WHERE id = ${campaignId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, status, current_step as "currentStep",
@@ -97,5 +99,9 @@ export async function duplicateMarketingCampaign(
     scheduleMode: source.scheduleMode,
     nextScheduledAt: null,
     firstSendAt: null,
+    sendRateEnabled: source.sendRateEnabled,
+    sendRatePerHour: source.sendRatePerHour,
+    autoMarkBounced: source.autoMarkBounced,
+    processUnsubscribes: source.processUnsubscribes,
   };
 }

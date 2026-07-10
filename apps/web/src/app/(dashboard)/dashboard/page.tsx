@@ -19,6 +19,7 @@ function DashboardPageContent() {
   const searchParams = useSearchParams();
   const inboxFilter = searchParams.get('inbox');
   const queueFilter = searchParams.get('filter');
+  const teamFilter = searchParams.get('team');
   const conversationParam = searchParams.get('conversation');
   const { token, accountId } = useAuthStore();
   const { lastMessageEvent, messageEventSeq, connected } = useWsStore();
@@ -53,6 +54,7 @@ function DashboardPageContent() {
         labelId: filters.labelId || undefined,
         from: filters.from ? `${filters.from}T00:00:00.000Z` : undefined,
         to: filters.to ? `${filters.to}T23:59:59.999Z` : undefined,
+        teamId: teamFilter ?? undefined,
       });
       setConversations(normalizeConversations(res.conversations as unknown as Record<string, unknown>[]));
     } catch {
@@ -60,7 +62,7 @@ function DashboardPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [token, accountId, inboxFilter, queueFilter, filters]);
+  }, [token, accountId, inboxFilter, queueFilter, teamFilter, filters]);
 
   useEffect(() => {
     fetchConversations();
@@ -122,9 +124,11 @@ function DashboardPageContent() {
               ? 'Assigned to you'
               : queueFilter === 'unassigned'
                 ? 'Unassigned queue'
-                : inboxFilter
-                  ? 'Filtered by inbox'
-                  : 'Manage live chats'
+                : teamFilter
+                  ? 'Filtered by team'
+                  : inboxFilter
+                    ? 'Filtered by inbox'
+                    : 'Manage live chats'
           }
         />
       )}

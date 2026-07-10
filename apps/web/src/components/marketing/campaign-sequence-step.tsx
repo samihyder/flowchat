@@ -29,9 +29,17 @@ type Props = {
   fieldErrors?: StepFieldError[];
   scheduleTimezone: string;
   scheduleMode: 'campaign' | 'recipient_local';
+  sendRateEnabled: boolean;
+  sendRatePerHour: number;
+  autoMarkBounced: boolean;
+  processUnsubscribes: boolean;
   onScheduleSettingsChange: (patch: {
     scheduleTimezone?: string;
     scheduleMode?: 'campaign' | 'recipient_local';
+    sendRateEnabled?: boolean;
+    sendRatePerHour?: number;
+    autoMarkBounced?: boolean;
+    processUnsubscribes?: boolean;
   }) => void;
 };
 
@@ -57,6 +65,10 @@ export function CampaignSequenceStep({
   fieldErrors = [],
   scheduleTimezone,
   scheduleMode,
+  sendRateEnabled,
+  sendRatePerHour,
+  autoMarkBounced,
+  processUnsubscribes,
   onScheduleSettingsChange,
 }: Props) {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -311,6 +323,76 @@ export function CampaignSequenceStep({
           Mode: {scheduleModeLabel(scheduleMode)} · Times shown in {timezoneShortLabel(scheduleTimezone)}
         </p>
       </section>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <MarketingIcon name="speed" className="text-primary" />
+            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Rate limiting</h3>
+          </div>
+          <div className="bg-primary-surface rounded-lg p-3 space-y-2">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sendRateEnabled}
+                onChange={(e) => onScheduleSettingsChange({ sendRateEnabled: e.target.checked })}
+                className="accent-primary"
+              />
+              Enable send-rate throttling
+            </label>
+            <div className="flex items-center gap-2 text-sm text-gray-700">
+              <span>Max</span>
+              <input
+                type="number"
+                min={1}
+                disabled={!sendRateEnabled}
+                value={sendRatePerHour}
+                onChange={(e) =>
+                  onScheduleSettingsChange({ sendRatePerHour: Number(e.target.value) || 1 })
+                }
+                className="w-20 border border-gray-200 rounded-lg text-sm px-2 py-1 disabled:opacity-50 disabled:bg-gray-100"
+              />
+              <span>emails per hour</span>
+            </div>
+            {sendRateEnabled && recipients.length > 0 && (
+              <p className="text-[11px] text-gray-500">
+                Estimated send window: ~
+                {Math.max(1, Math.ceil((recipients.length / Math.max(1, sendRatePerHour)) * 60))}{' '}
+                min for {recipients.length} recipients
+              </p>
+            )}
+          </div>
+        </section>
+
+        <section className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <MarketingIcon name="shield" className="text-primary" />
+            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+              Bounce &amp; unsubscribe handling
+            </h3>
+          </div>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoMarkBounced}
+                onChange={(e) => onScheduleSettingsChange({ autoMarkBounced: e.target.checked })}
+                className="accent-primary"
+              />
+              Auto-mark bounced addresses
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={processUnsubscribes}
+                onChange={(e) => onScheduleSettingsChange({ processUnsubscribes: e.target.checked })}
+                className="accent-primary"
+              />
+              Process unsubscribes via Resend webhook
+            </label>
+          </div>
+        </section>
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <button

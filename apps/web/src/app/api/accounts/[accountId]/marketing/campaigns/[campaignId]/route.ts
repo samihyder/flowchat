@@ -39,6 +39,10 @@ export async function PATCH(req: Request, { params }: Params) {
       scheduleTimezone?: string;
       schedule_mode?: 'campaign' | 'recipient_local';
       scheduleMode?: 'campaign' | 'recipient_local';
+      sendRateEnabled?: boolean;
+      sendRatePerHour?: number;
+      autoMarkBounced?: boolean;
+      processUnsubscribes?: boolean;
     };
     const sql = neon(process.env.DATABASE_URL!);
     const campaign = await patchMarketingCampaign(sql, accountId, campaignId, {
@@ -46,6 +50,10 @@ export async function PATCH(req: Request, { params }: Params) {
       currentStep: body.current_step ?? body.currentStep,
       scheduleTimezone: body.schedule_timezone ?? body.scheduleTimezone,
       scheduleMode: body.schedule_mode ?? body.scheduleMode,
+      sendRateEnabled: body.sendRateEnabled,
+      sendRatePerHour: body.sendRatePerHour,
+      autoMarkBounced: body.autoMarkBounced,
+      processUnsubscribes: body.processUnsubscribes,
     });
 
     return Response.json({ campaign });

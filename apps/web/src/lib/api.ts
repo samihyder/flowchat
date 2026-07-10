@@ -396,6 +396,8 @@ export type EmailTemplate = {
   subject: string;
   htmlBody?: string;
   textBody?: string | null;
+  category?: string | null;
+  campaignCount?: number;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -451,6 +453,10 @@ export type MarketingCampaign = {
   scheduleMode: 'campaign' | 'recipient_local';
   nextScheduledAt?: string | null;
   firstSendAt?: string | null;
+  sendRateEnabled: boolean;
+  sendRatePerHour: number;
+  autoMarkBounced: boolean;
+  processUnsubscribes: boolean;
 };
 
 export type CampaignRecipientDetail = {
@@ -1042,6 +1048,7 @@ export const api = {
         labelId?: string;
         from?: string;
         to?: string;
+        teamId?: string;
       }
     ) => {
       const qs = new URLSearchParams();
@@ -1052,6 +1059,7 @@ export const api = {
       if (params?.labelId) qs.set('labelId', params.labelId);
       if (params?.from) qs.set('from', params.from);
       if (params?.to) qs.set('to', params.to);
+      if (params?.teamId) qs.set('teamId', params.teamId);
       const query = qs.toString();
       return request<{ conversations: Conversation[] }>(
         `/accounts/${accountId}/conversations${query ? `?${query}` : ''}`,
@@ -1588,9 +1596,29 @@ export const api = {
           token,
         }),
       preview: (accountId: string, segmentId: string, token: string) =>
-        request<{ preview: { id: string; name: string; email: string }[] }>(
+        request<{ segment: MarketingSegment; preview: { id: string; name: string; email: string }[] }>(
           `/accounts/${accountId}/marketing/segments/${segmentId}`,
           { token }
+        ),
+      update: (
+        accountId: string,
+        segmentId: string,
+        body: { name?: string; segmentType?: string; filters?: Record<string, unknown> },
+        token: string
+      ) =>
+        request<{ segment: MarketingSegment }>(`/accounts/${accountId}/marketing/segments/${segmentId}`, {
+          method: 'PATCH',
+          body,
+          token,
+        }),
+      previewFilters: (
+        accountId: string,
+        body: { segmentType: string; filters: Record<string, unknown> },
+        token: string
+      ) =>
+        request<{ count: number; preview: { id: string; name: string; email: string }[] }>(
+          `/accounts/${accountId}/marketing/segments/preview`,
+          { method: 'POST', body, token }
         ),
       delete: (accountId: string, segmentId: string, token: string) =>
         request<{ ok: boolean }>(`/accounts/${accountId}/marketing/segments/${segmentId}`, {
@@ -1624,7 +1652,7 @@ export const api = {
         request<{ templates: EmailTemplate[] }>(`/accounts/${accountId}/marketing/templates`, { token }),
       create: (
         accountId: string,
-        body: { name: string; subject: string; htmlBody: string; textBody?: string },
+        body: { name: string; subject: string; htmlBody: string; textBody?: string; category?: string },
         token: string
       ) =>
         request<{ template: EmailTemplate }>(`/accounts/${accountId}/marketing/templates`, {
@@ -1649,7 +1677,13 @@ export const api = {
       update: (
         accountId: string,
         templateId: string,
-        body: { name?: string; subject?: string; htmlBody?: string; textBody?: string },
+        body: {
+          name?: string;
+          subject?: string;
+          htmlBody?: string;
+          textBody?: string;
+          category?: string | null;
+        },
         token: string
       ) =>
         request<{ template: EmailTemplate }>(`/accounts/${accountId}/marketing/templates/${templateId}`, {
@@ -1725,6 +1759,10 @@ export const api = {
           currentStep?: number;
           scheduleTimezone?: string;
           scheduleMode?: 'campaign' | 'recipient_local';
+          sendRateEnabled?: boolean;
+          sendRatePerHour?: number;
+          autoMarkBounced?: boolean;
+          processUnsubscribes?: boolean;
         },
         token: string
       ) =>
