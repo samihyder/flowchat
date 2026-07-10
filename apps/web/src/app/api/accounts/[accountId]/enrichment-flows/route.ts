@@ -71,6 +71,7 @@ export async function POST(req: Request, { params }: Params) {
   const steps = body.steps ?? [];
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
+    if (!step) continue;
     await sql`
       INSERT INTO enrichment_flow_steps (flow_id, step_order, step_type, config)
       VALUES (

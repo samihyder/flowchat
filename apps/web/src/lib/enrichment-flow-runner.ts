@@ -80,7 +80,11 @@ export async function runEnrichmentFlowForContact(
     }
     if (step.step_type === 'provider') {
       const credentialId = step.config.credentialId as string | undefined;
-      const scope = (step.config.scope as 'company' | 'person' | 'both') ?? 'both';
+      const rawScope = String(step.config.scope ?? 'auto');
+      const scope =
+        rawScope === 'both' || rawScope === 'auto'
+          ? ('auto' as const)
+          : (rawScope as 'company' | 'person');
       if (!credentialId) continue;
       await runContactEnrichment(sql, {
         accountId,

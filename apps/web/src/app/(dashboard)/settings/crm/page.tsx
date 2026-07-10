@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { checkboxClass, labelClass } from '@/components/ui/form-field';
 import { getApiUrl } from '@/lib/config';
 

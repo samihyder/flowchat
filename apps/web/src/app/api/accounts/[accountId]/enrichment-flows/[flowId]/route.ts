@@ -36,6 +36,7 @@ export async function PATCH(req: Request, { params }: Params) {
     await sql`DELETE FROM enrichment_flow_steps WHERE flow_id = ${flowId}::uuid`;
     for (let i = 0; i < body.steps.length; i++) {
       const step = body.steps[i];
+      if (!step) continue;
       await sql`
         INSERT INTO enrichment_flow_steps (flow_id, step_order, step_type, config)
         VALUES (

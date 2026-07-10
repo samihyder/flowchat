@@ -111,6 +111,7 @@ export default function EnrichmentFlowsPage() {
     setSteps((prev) => {
       const next = [...prev];
       const [moved] = next.splice(dragIdx, 1);
+      if (!moved) return prev;
       next.splice(targetIdx, 0, moved);
       return next;
     });
