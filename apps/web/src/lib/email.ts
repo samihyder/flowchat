@@ -6,7 +6,10 @@ export async function sendEmail(opts: {
 }): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL ?? 'FlowChat <onboarding@resend.dev>';
-  if (!apiKey) return false;
+  if (!apiKey) {
+    console.error('sendEmail: RESEND_API_KEY not configured, skipping send to', opts.to);
+    return false;
+  }
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -22,8 +25,13 @@ export async function sendEmail(opts: {
         html: opts.html,
       }),
     });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      console.error('sendEmail: Resend API rejected send', { to: opts.to, status: res.status, body });
+    }
     return res.ok;
-  } catch {
+  } catch (err) {
+    console.error('sendEmail: request failed', { to: opts.to, err });
     return false;
   }
 }
