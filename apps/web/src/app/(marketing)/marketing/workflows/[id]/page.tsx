@@ -167,23 +167,25 @@ export default function WorkflowDetailPage() {
 
       <div className="flex-1 overflow-auto p-4 md:p-8 max-w-container-max-list mx-auto w-full space-y-6">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={workflow.enabled}
-            disabled={busy}
-            onClick={() => void toggleEnabled()}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 ${
-              workflow.enabled ? 'bg-primary' : 'bg-gray-200'
+          <span
+            className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full ${
+              workflow.enabled ? 'bg-status-success-bg text-status-success-text' : 'bg-gray-100 text-gray-500'
             }`}
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                workflow.enabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
+            {workflow.enabled ? 'Active' : 'Draft'}
+          </span>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void toggleEnabled()}
+            className={
+              workflow.enabled
+                ? 'px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                : 'marketing-btn-primary px-4 py-1.5 rounded-lg text-sm font-semibold disabled:opacity-50'
+            }
+          >
+            {workflow.enabled ? 'Deactivate' : 'Activate'}
           </button>
-          <span className="text-sm text-gray-600">{workflow.enabled ? 'Active' : 'Paused'}</span>
           <button
             type="button"
             disabled={busy}
