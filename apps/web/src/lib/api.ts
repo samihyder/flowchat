@@ -101,6 +101,18 @@ export type InboxAnalytics = {
 
 export type Label = { id: string; name: string; color: string };
 
+export type AdminWorkspace = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+  logoUrl: string | null;
+  createdAt: string;
+  userCount: number;
+  contactCount: number;
+  inboxCount: number;
+};
+
 export type AnalyticsException = {
   id: string;
   type: 'ip' | 'machine';
@@ -695,6 +707,7 @@ export const api = {
         | {
             user: { id: string; name: string; email: string };
             account: { id: string; name: string; slug: string } | null;
+            isSuperAdmin?: boolean;
             token: string;
             expiresAt: string;
           }
@@ -710,6 +723,16 @@ export const api = {
 
     resetPassword: (token: string, password: string) =>
       request<{ ok: boolean }>('/auth/reset-password', { method: 'POST', body: { token, password } }),
+
+    workspaces: (token: string) =>
+      request<{ workspaces: AdminWorkspace[] }>('/auth/workspaces', { token }),
+
+    selectWorkspace: (accountId: string, token: string) =>
+      request<{ account: { id: string; name: string; slug: string } }>('/auth/workspaces/select', {
+        method: 'POST',
+        body: { accountId },
+        token,
+      }),
 
     sessions: {
       list: (token: string) =>
@@ -742,6 +765,7 @@ export const api = {
           totpEnabled: boolean;
         };
         account: { id: string; name: string; slug: string } | null;
+        isSuperAdmin?: boolean;
       }>('/auth/me', { token }),
   },
 

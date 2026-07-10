@@ -69,6 +69,11 @@ function SignInPage() {
         return;
       }
       if (!('token' in res)) return;
+      if (res.isSuperAdmin) {
+        setAuth(res.user, res.token, null, null, true);
+        router.push('/select-workspace' as import('next').Route);
+        return;
+      }
       const workspace = await resolveWorkspace(res.token, res.account);
       if (workspace && 'pendingApproval' in workspace) {
         router.push('/pending-approval' as import('next').Route);
@@ -77,8 +82,8 @@ function SignInPage() {
       setAuth(
         res.user,
         res.token,
-        workspace && 'accountId' in workspace ? workspace.accountId : '',
-        workspace && 'accountId' in workspace ? workspace.accountName : ''
+        workspace && 'accountId' in workspace ? workspace.accountId : null,
+        workspace && 'accountId' in workspace ? workspace.accountName : null
       );
       router.push('/dashboard');
     } catch (err: unknown) {

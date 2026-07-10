@@ -19,7 +19,8 @@ export async function POST(req: Request) {
 
   const sql = neon(databaseUrl);
   const users = await sql`
-    SELECT id, name, email, password_hash as "passwordHash", totp_enabled_at as "totpEnabledAt"
+    SELECT id, name, email, password_hash as "passwordHash", totp_enabled_at as "totpEnabledAt",
+           is_super_admin as "isSuperAdmin"
     FROM users WHERE LOWER(email) = ${email} LIMIT 1
   `;
   const user = users[0] as {
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
     email: string;
     passwordHash: string | null;
     totpEnabledAt: string | null;
+    isSuperAdmin: boolean;
   } | undefined;
 
   if (!user?.passwordHash) {
@@ -41,6 +43,20 @@ export async function POST(req: Request) {
 
   if (user.totpEnabledAt) {
     return Response.json({ requiresTwoFactor: true, userId: user.id });
+  }
+
+  if (user.isSuperAdmin) {
+    const { token, expiresAt } = await createSession(user.id, rememberMe, {
+      userAgent: req.headers.get('user-agent'),
+      ipAddress: getClientIp(req),
+    });
+    return Response.json({
+      user: { id: user.id, name: user.name, email: user.email },
+      account: null,
+      isSuperAdmin: true,
+      token,
+      expiresAt,
+    });
   }
 
   const memberships = await sql`
@@ -78,6 +94,7 @@ export async function POST(req: Request) {
       name: (active as { accountName: string }).accountName,
       slug: (active as { slug: string }).slug,
     },
+    isSuperAdmin: false,
     token,
     expiresAt,
   });

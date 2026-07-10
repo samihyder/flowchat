@@ -4,7 +4,8 @@ import { api } from '@/lib/api';
 
 export type Workspace =
   | { accountId: string; accountName: string }
-  | { pendingApproval: true };
+  | { pendingApproval: true }
+  | { superAdmin: true };
 
 /** Load workspace from Vercel API first, then Railway fallback. */
 export async function fetchWorkspace(token: string): Promise<Workspace | null> {
@@ -21,7 +22,11 @@ export async function fetchWorkspace(token: string): Promise<Workspace | null> {
       const data = (await res.json()) as {
         account?: { id: string; name: string } | null;
         pendingApproval?: boolean;
+        isSuperAdmin?: boolean;
       };
+      if (data.isSuperAdmin) {
+        return { superAdmin: true as const };
+      }
       if (data.pendingApproval) {
         return { pendingApproval: true as const };
       }
@@ -38,6 +43,9 @@ export async function fetchWorkspace(token: string): Promise<Workspace | null> {
 
   try {
     const me = await api.auth.me(token);
+    if (me.isSuperAdmin) {
+      return { superAdmin: true as const };
+    }
     if (me.account?.id) {
       return { accountId: me.account.id, accountName: me.account.name };
     }
@@ -53,9 +61,10 @@ export async function ensureWorkspace(): Promise<string | null> {
   const state = useAuthStore.getState();
   if (!state.token) return null;
   if (state.accountId) return state.accountId;
+  if (state.isSuperAdmin) return null;
 
   const workspace = await fetchWorkspace(state.token);
-  if (workspace && 'pendingApproval' in workspace) {
+  if (workspace && ('pendingApproval' in workspace || 'superAdmin' in workspace)) {
     return null;
   }
   if (workspace && 'accountId' in workspace) {

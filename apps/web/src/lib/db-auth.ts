@@ -7,26 +7,41 @@ function getSql() {
   return neon(url);
 }
 
-/** Verify bearer token and account membership. */
+/** Verify bearer token and account membership. Super admins bypass membership for any real account. */
 export async function authorizeAccount(
   token: string,
   accountId: string
-): Promise<{ userId: string; role: string; status: string } | null> {
+): Promise<{ userId: string; role: string; status: string; isSuperAdmin: boolean } | null> {
   const sql = getSql();
-  const rows = await sql`
-    SELECT au.role, au.status, s.user_id
+
+  const sessionRows = await sql`
+    SELECT s.user_id as "userId", u.is_super_admin as "isSuperAdmin"
     FROM sessions s
-    JOIN account_users au ON au.user_id = s.user_id
-    WHERE s.token = ${token}
-      AND s.expires_at > NOW()
-      AND au.account_id = ${accountId}::uuid
+    JOIN users u ON u.id = s.user_id
+    WHERE s.token = ${token} AND s.expires_at > NOW()
     LIMIT 1
   `;
-  const row = rows[0] as { user_id: string; role: string; status: string } | undefined;
+  const session = sessionRows[0] as { userId: string; isSuperAdmin: boolean } | undefined;
+  if (!session) return null;
+
+  if (session.isSuperAdmin) {
+    const accountRows = await sql`SELECT id FROM accounts WHERE id = ${accountId}::uuid LIMIT 1`;
+    if (!accountRows[0]) return null;
+    await touchSession(token);
+    return { userId: session.userId, role: 'administrator', status: 'active', isSuperAdmin: true };
+  }
+
+  const rows = await sql`
+    SELECT au.role, au.status
+    FROM account_users au
+    WHERE au.user_id = ${session.userId}::uuid AND au.account_id = ${accountId}::uuid
+    LIMIT 1
+  `;
+  const row = rows[0] as { role: string; status: string } | undefined;
   if (!row) return null;
   if (row.status !== 'active') return null;
   await touchSession(token);
-  return { userId: row.user_id, role: row.role, status: row.status };
+  return { userId: session.userId, role: row.role, status: row.status, isSuperAdmin: false };
 }
 
 export function getBearerToken(req: Request) {

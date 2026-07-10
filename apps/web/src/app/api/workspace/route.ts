@@ -20,6 +20,12 @@ export async function GET(req: Request) {
   }
 
   const sql = neon(databaseUrl);
+
+  const superAdminRows = await sql`SELECT is_super_admin as "isSuperAdmin" FROM users WHERE id = ${userId}::uuid LIMIT 1`;
+  if ((superAdminRows[0] as { isSuperAdmin: boolean } | undefined)?.isSuperAdmin) {
+    return Response.json({ account: null, isSuperAdmin: true });
+  }
+
   const active = await sql`
     SELECT a.id, a.name, a.slug, au.role, au.status
     FROM sessions s

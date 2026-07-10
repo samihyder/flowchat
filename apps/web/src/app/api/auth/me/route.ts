@@ -20,7 +20,8 @@ export async function GET(req: Request) {
 
   const sql = neon(databaseUrl);
   const users = await sql`
-    SELECT id, name, email, avatar_url as "avatarUrl", totp_enabled_at as "totpEnabledAt"
+    SELECT id, name, email, avatar_url as "avatarUrl", totp_enabled_at as "totpEnabledAt",
+           is_super_admin as "isSuperAdmin"
     FROM users WHERE id = ${userId}::uuid LIMIT 1
   `;
   const user = users[0] as
@@ -30,11 +31,26 @@ export async function GET(req: Request) {
         email: string;
         avatarUrl: string | null;
         totpEnabledAt: string | null;
+        isSuperAdmin: boolean;
       }
     | undefined;
 
   if (!user) {
     return Response.json({ error: 'User not found' }, { status: 404 });
+  }
+
+  if (user.isSuperAdmin) {
+    return Response.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        totpEnabled: !!user.totpEnabledAt,
+      },
+      account: null,
+      isSuperAdmin: true,
+    });
   }
 
   const memberships = await sql`
@@ -61,5 +77,6 @@ export async function GET(req: Request) {
     account: active
       ? { id: active.accountId, name: active.accountName, slug: active.slug }
       : null,
+    isSuperAdmin: false,
   });
 }

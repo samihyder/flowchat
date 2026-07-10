@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import type { Availability } from '@/store/ws';
 import { initials } from '@/components/conversations/conversation-badges';
+import { useAuthStore } from '@/store/auth';
 
 type Inbox = { id: string; name: string; channelType: string; widgetColor: string | null };
 type Team = { id: string; name: string };
@@ -99,6 +100,8 @@ export function DashboardSidebar({
   onToggleMessageMute: () => void;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin);
   const isDashboard = pathname === '/dashboard';
   const isMarketing =
     pathname.startsWith('/marketing') || pathname.startsWith('/settings/email-marketing');
@@ -236,6 +239,18 @@ export function DashboardSidebar({
           >
             {messageMuted ? '🔕' : '🔔'}
           </button>
+          {isSuperAdmin && (
+            <button
+              type="button"
+              onClick={() => router.push('/select-workspace' as Route)}
+              className="text-sidebar-muted hover:text-white p-1"
+              title="Switch workspace"
+            >
+              <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>
+                <path d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
           <button
             type="button"
             onClick={onSignOut}

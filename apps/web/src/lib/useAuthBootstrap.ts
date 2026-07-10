@@ -33,9 +33,16 @@ async function recoverFromCookie(cookieToken: string): Promise<'valid' | 'expire
     const me = (await res.json()) as {
       user: { id: string; name?: string | null; email: string; avatarUrl?: string | null };
       account: { id: string; name: string } | null;
+      isSuperAdmin?: boolean;
     };
 
     if (!isValidUser(me.user)) return 'unknown';
+
+    if (me.isSuperAdmin) {
+      useAuthStore.getState().setAuth(normalizeUser(me.user), cookieToken, null, null, true);
+      refreshSessionCookie(cookieToken);
+      return 'valid';
+    }
 
     let accountId = me.account?.id ?? null;
     let accountName = me.account?.name ?? '';

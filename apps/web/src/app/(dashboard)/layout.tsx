@@ -85,8 +85,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     if (!accountId) {
       fetch('/api/workspace', { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.json())
-        .then((data: { pendingApproval?: boolean }) => {
+        .then((data: { pendingApproval?: boolean; isSuperAdmin?: boolean }) => {
           if (data.pendingApproval) router.push('/pending-approval' as Route);
+          else if (data.isSuperAdmin) router.push('/select-workspace' as Route);
         })
         .catch(() => {});
       return;
