@@ -109,7 +109,7 @@ export function DashboardSidebar({
   return (
     <>
       <div className="px-4 py-4 border-b border-sidebar-hover flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2DD4BF] to-[#06B6D4] flex items-center justify-center text-white font-bold text-sm shrink-0">
           F
         </div>
         <div className="min-w-0">
@@ -218,7 +218,7 @@ export function DashboardSidebar({
             className="relative shrink-0"
             title="Change availability"
           >
-            <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#2DD4BF] to-[#06B6D4] flex items-center justify-center text-white text-xs font-bold">
               {initials(userName)}
             </div>
             <span
@@ -240,16 +240,28 @@ export function DashboardSidebar({
             {messageMuted ? '🔕' : '🔔'}
           </button>
           {isSuperAdmin && (
-            <button
-              type="button"
-              onClick={() => router.push('/select-workspace' as Route)}
-              className="text-sidebar-muted hover:text-white p-1"
-              title="Switch workspace"
-            >
-              <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>
-                <path d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => router.push('/select-workspace' as Route)}
+                className="text-sidebar-muted hover:text-white p-1"
+                title="Switch workspace"
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>
+                  <path d="M8 7h12m0 0-4-4m4 4-4 4M16 17H4m0 0 4 4m-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/admin/api-catalog' as Route)}
+                className="text-sidebar-muted hover:text-white p-1"
+                title="API Catalog"
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>
+                  <path d="M4 6h16M4 12h16M4 18h7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </>
           )}
           <button
             type="button"

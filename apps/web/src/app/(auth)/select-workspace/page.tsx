@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 import { useAuthStore } from '@/store/auth';
 import { api, type AdminWorkspace } from '@/lib/api';
 import { AuthLogo } from '@/components/layout/auth-shell';
@@ -69,12 +70,19 @@ export default function SelectWorkspacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-[#F0FDF4] to-white px-4 py-10">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-cyan-50 to-white px-4 py-10">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <AuthLogo centered={false} />
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">{user?.email}</span>
+            <button
+              type="button"
+              onClick={() => router.push('/admin/api-catalog' as Route)}
+              className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+            >
+              API Catalog
+            </button>
             <button
               type="button"
               onClick={() => {

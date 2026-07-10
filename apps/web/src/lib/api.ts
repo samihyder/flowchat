@@ -113,6 +113,14 @@ export type AdminWorkspace = {
   inboxCount: number;
 };
 
+export type ApiCatalogEndpoint = {
+  path: string;
+  method: string;
+  filePath: string;
+  descriptionHtml: string;
+  updatedAt: string | null;
+};
+
 export type AnalyticsException = {
   id: string;
   type: 'ip' | 'machine';
@@ -767,6 +775,19 @@ export const api = {
         account: { id: string; name: string; slug: string } | null;
         isSuperAdmin?: boolean;
       }>('/auth/me', { token }),
+  },
+
+  admin: {
+    apiCatalog: {
+      list: (token: string) =>
+        request<{ endpoints: ApiCatalogEndpoint[]; total: number }>('/admin/api-catalog', { token }),
+      update: (path: string, method: string, descriptionHtml: string, token: string) =>
+        request<{ entry: ApiCatalogEndpoint }>('/admin/api-catalog', {
+          method: 'PATCH',
+          body: { path, method, descriptionHtml },
+          token,
+        }),
+    },
   },
 
   agents: {

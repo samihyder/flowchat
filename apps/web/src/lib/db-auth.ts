@@ -44,6 +44,22 @@ export async function authorizeAccount(
   return { userId: session.userId, role: row.role, status: row.status, isSuperAdmin: false };
 }
 
+/** Verify bearer token belongs to a platform super admin. Returns userId or null. */
+export async function authorizeSuperAdmin(token: string): Promise<string | null> {
+  const sql = getSql();
+  const rows = await sql`
+    SELECT s.user_id as "userId", u.is_super_admin as "isSuperAdmin"
+    FROM sessions s
+    JOIN users u ON u.id = s.user_id
+    WHERE s.token = ${token} AND s.expires_at > NOW()
+    LIMIT 1
+  `;
+  const row = rows[0] as { userId: string; isSuperAdmin: boolean } | undefined;
+  if (!row?.isSuperAdmin) return null;
+  await touchSession(token);
+  return row.userId;
+}
+
 export function getBearerToken(req: Request) {
   return req.headers.get('Authorization')?.replace('Bearer ', '') ?? '';
 }

@@ -206,7 +206,7 @@ export default function SignInPageWrapper() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-accent-50">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-cyan-50 to-teal-50">
           <p className="text-sm text-gray-500">Loading…</p>
         </div>
       }

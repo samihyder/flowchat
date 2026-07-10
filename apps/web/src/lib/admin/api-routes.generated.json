@@ -1,0 +1,991 @@
+[
+  {
+    "path": "/api/accounts/[accountId]",
+    "methods": [
+      "GET",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/agents",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/agents/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/agents/[userId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/agents/[userId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/agents/invite",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/agents/invite/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/ai/chat",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/ai/chat/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/api-keys",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/api-keys/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/api-keys/[keyId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/api-keys/[keyId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/audit-logs",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/audit-logs/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/blocked-visitors",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/blocked-visitors/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/blocked-visitors/[entryId]",
+    "methods": [
+      "DELETE"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/blocked-visitors/[entryId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/canned-responses",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/canned-responses/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/canned-responses/[responseId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/canned-responses/[responseId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/canned-responses/seed",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/canned-responses/seed/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/[contactId]",
+    "methods": [
+      "DELETE",
+      "GET",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/[contactId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/[contactId]/email-events",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/[contactId]/email-events/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/[contactId]/enrich",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/[contactId]/enrich/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/[contactId]/enrichment-suggestions",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/[contactId]/enrichment-suggestions/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/[contactId]/enrichment-suggestions/[suggestionId]",
+    "methods": [
+      "DELETE",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/[contactId]/enrichment-suggestions/[suggestionId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/[contactId]/marketing-timeline",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/[contactId]/marketing-timeline/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/[contactId]/notes",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/[contactId]/notes/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/[contactId]/notes/[noteId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/[contactId]/notes/[noteId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/[contactId]/tasks",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/[contactId]/tasks/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/[contactId]/tasks/[taskId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/[contactId]/tasks/[taskId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/access",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/access/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/bulk-assign",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/bulk-assign/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/duplicates",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/duplicates/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/export",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/export/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/import",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/import/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/import/jobs",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/import/jobs/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/import/jobs/[jobId]",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/import/jobs/[jobId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/merge",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/merge/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/contacts/stats",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/contacts/stats/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/conversations",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/conversations/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/conversations/[conversationId]",
+    "methods": [
+      "GET",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/conversations/[conversationId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/conversations/[conversationId]/attachments/upload-url",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/conversations/[conversationId]/attachments/upload-url/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/conversations/[conversationId]/messages",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/conversations/[conversationId]/messages/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/conversations/[conversationId]/messages/[messageId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/conversations/[conversationId]/messages/[messageId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/conversations/[conversationId]/visitor-context",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/conversations/[conversationId]/visitor-context/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/crm/leadsnapper/provision",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/crm/leadsnapper/provision/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/custom-attributes",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/custom-attributes/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/custom-attributes/[definitionId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/custom-attributes/[definitionId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/inboxes",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/inboxes/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/inboxes/[inboxId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/inboxes/[inboxId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/inboxes/[inboxId]/analytics",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/inboxes/[inboxId]/analytics/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/inboxes/[inboxId]/analytics/exceptions",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/inboxes/[inboxId]/analytics/exceptions/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/inboxes/[inboxId]/analytics/exceptions/[exceptionId]",
+    "methods": [
+      "DELETE"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/inboxes/[inboxId]/analytics/exceptions/[exceptionId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/labels",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/labels/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/labels/[labelId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/labels/[labelId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/labels/seed",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/labels/seed/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/logo",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/logo/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/logo-upload-url",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/logo-upload-url/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/automations",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/automations/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/automations/[automationId]",
+    "methods": [
+      "DELETE",
+      "GET",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/automations/[automationId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/automations/[automationId]/bulk-enroll",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/automations/[automationId]/bulk-enroll/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/automations/[automationId]/enroll",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/automations/[automationId]/enroll/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/automations/[automationId]/process",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/automations/[automationId]/process/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/automations/[automationId]/restart",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/automations/[automationId]/restart/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]",
+    "methods": [
+      "GET",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/control",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/control/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/duplicate",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/duplicate/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/export",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/export/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/launch",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/launch/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/preflight",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/preflight/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/process",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/process/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/recipients",
+    "methods": [
+      "GET",
+      "PUT"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/recipients/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/recipients/add-contact",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/recipients/add-contact/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/recipients/import-segment",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/recipients/import-segment/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/schedule",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/schedule/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/send",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/send/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/sender",
+    "methods": [
+      "GET",
+      "PUT"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/sender/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/stats",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/stats/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/steps",
+    "methods": [
+      "GET",
+      "PUT"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/steps/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/campaigns/[campaignId]/test-send",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/campaigns/[campaignId]/test-send/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/contact-message-preview",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/contact-message-preview/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/health",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/health/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/process-due",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/process-due/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/segments",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/segments/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/segments/[segmentId]",
+    "methods": [
+      "DELETE",
+      "GET",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/segments/[segmentId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/segments/[segmentId]/members",
+    "methods": [
+      "DELETE",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/segments/[segmentId]/members/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/segments/preview",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/segments/preview/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/senders",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/senders/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/senders/[senderId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/senders/[senderId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/suppressions",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/suppressions/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/templates",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/templates/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/templates/[templateId]",
+    "methods": [
+      "GET",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/templates/[templateId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/templates/[templateId]/duplicate",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/templates/[templateId]/duplicate/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/templates/[templateId]/test-send",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/templates/[templateId]/test-send/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/workflows",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/workflows/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/workflows/[workflowId]",
+    "methods": [
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/workflows/[workflowId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/workflows/[workflowId]/enroll",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/workflows/[workflowId]/enroll/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/marketing/workflows/process",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/marketing/workflows/process/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/missed-chats",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/missed-chats/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/search",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/search/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/service-credentials",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/service-credentials/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/service-credentials/[credentialId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/service-credentials/[credentialId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/service-credentials/[credentialId]/test",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/service-credentials/[credentialId]/test/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/teams",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/teams/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/teams/[teamId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/teams/[teamId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/teams/[teamId]/members",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/teams/[teamId]/members/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/teams/[teamId]/members/[userId]",
+    "methods": [
+      "DELETE"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/teams/[teamId]/members/[userId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/webhooks",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/webhooks/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/webhooks/[webhookId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/webhooks/[webhookId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/webhooks/[webhookId]/deliveries",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/webhooks/[webhookId]/deliveries/route.ts"
+  },
+  {
+    "path": "/api/auth/accept-invite",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/auth/accept-invite/route.ts"
+  },
+  {
+    "path": "/api/auth/forgot-password",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/auth/forgot-password/route.ts"
+  },
+  {
+    "path": "/api/auth/invite/[token]",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/auth/invite/[token]/route.ts"
+  },
+  {
+    "path": "/api/auth/me",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/auth/me/route.ts"
+  },
+  {
+    "path": "/api/auth/reset-password",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/auth/reset-password/route.ts"
+  },
+  {
+    "path": "/api/auth/sessions",
+    "methods": [
+      "DELETE",
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/auth/sessions/route.ts"
+  },
+  {
+    "path": "/api/auth/sign-in",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/auth/sign-in/route.ts"
+  },
+  {
+    "path": "/api/auth/sign-up",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/auth/sign-up/route.ts"
+  },
+  {
+    "path": "/api/auth/workspaces",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/auth/workspaces/route.ts"
+  },
+  {
+    "path": "/api/auth/workspaces/select",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/auth/workspaces/select/route.ts"
+  },
+  {
+    "path": "/api/cron/marketing",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/cron/marketing/route.ts"
+  },
+  {
+    "path": "/api/integrations/v1/contacts",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/integrations/v1/contacts/route.ts"
+  },
+  {
+    "path": "/api/integrations/v1/contacts/[contactId]",
+    "methods": [
+      "DELETE",
+      "GET",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/integrations/v1/contacts/[contactId]/route.ts"
+  },
+  {
+    "path": "/api/integrations/v1/contacts/inbound",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/integrations/v1/contacts/inbound/route.ts"
+  },
+  {
+    "path": "/api/integrations/v1/leadsnapper/leads",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/integrations/v1/leadsnapper/leads/route.ts"
+  },
+  {
+    "path": "/api/public/confirm-subscribe/[token]",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/public/confirm-subscribe/[token]/route.ts"
+  },
+  {
+    "path": "/api/public/conversations/[conversationId]/csat",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/public/conversations/[conversationId]/csat/route.ts"
+  },
+  {
+    "path": "/api/public/conversations/[conversationId]/messages",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/public/conversations/[conversationId]/messages/route.ts"
+  },
+  {
+    "path": "/api/public/conversations/[conversationId]/status",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/public/conversations/[conversationId]/status/route.ts"
+  },
+  {
+    "path": "/api/public/inboxes/[inboxId]/availability",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/public/inboxes/[inboxId]/availability/route.ts"
+  },
+  {
+    "path": "/api/public/inboxes/[inboxId]/sessions",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/public/inboxes/[inboxId]/sessions/route.ts"
+  },
+  {
+    "path": "/api/public/inboxes/[inboxId]/visit",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/public/inboxes/[inboxId]/visit/route.ts"
+  },
+  {
+    "path": "/api/public/inboxes/[inboxId]/widget-config",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/public/inboxes/[inboxId]/widget-config/route.ts"
+  },
+  {
+    "path": "/api/public/unsubscribe/[token]",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/public/unsubscribe/[token]/route.ts"
+  },
+  {
+    "path": "/api/public/visitor-data",
+    "methods": [
+      "DELETE",
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/public/visitor-data/route.ts"
+  },
+  {
+    "path": "/api/webhooks/email/[credentialId]",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/webhooks/email/[credentialId]/route.ts"
+  },
+  {
+    "path": "/api/webhooks/resend",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/webhooks/resend/route.ts"
+  },
+  {
+    "path": "/api/workspace",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/workspace/route.ts"
+  }
+]
