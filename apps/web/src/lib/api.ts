@@ -2237,6 +2237,98 @@ export const api = {
           attributes: { created: number; updated: number } | null;
         }>(`/accounts/${accountId}/crm/leadsnapper/provision`, { method: 'POST', body, token }),
     },
+
+    ecosystem: {
+      get: (accountId: string, token: string) =>
+        request<{
+          leadmonitorSyncEnabled: boolean;
+          leadmonitorMinScore: number;
+          whatsappCrmSyncEnabled: boolean;
+          integrations: {
+            integration_type: string;
+            external_id: string;
+            sync_enabled: boolean;
+            settings: Record<string, unknown>;
+          }[];
+        }>(`/accounts/${accountId}/crm/ecosystem/provision`, { token }),
+
+      provision: (
+        accountId: string,
+        body: {
+          leadmonitorSyncEnabled?: boolean;
+          leadmonitorMinScore?: number;
+          whatsappCrmSyncEnabled?: boolean;
+          leadmonitorOrgId?: string;
+          whatsappAccountId?: string;
+          whatsappApiKey?: string;
+          whatsappBaseUrl?: string;
+          provisionAttributes?: boolean;
+        },
+        token: string
+      ) =>
+        request<{
+          settings: {
+            leadmonitorSyncEnabled: boolean;
+            leadmonitorMinScore: number;
+            whatsappCrmSyncEnabled: boolean;
+          };
+        }>(`/accounts/${accountId}/crm/ecosystem/provision`, { method: 'POST', body, token }),
+    },
+  },
+
+  enrichmentFlows: {
+    list: (accountId: string, token: string) =>
+      request<{ flows: unknown[]; mappings: unknown[] }>(
+        `/accounts/${accountId}/enrichment-flows`,
+        { token }
+      ),
+
+    create: (
+      accountId: string,
+      body: {
+        name: string;
+        triggerOn?: string;
+        steps?: { stepType: string; config: Record<string, unknown> }[];
+      },
+      token: string
+    ) =>
+      request<{ flow: unknown }>(`/accounts/${accountId}/enrichment-flows`, {
+        method: 'POST',
+        body,
+        token,
+      }),
+
+    update: (
+      accountId: string,
+      flowId: string,
+      body: {
+        name?: string;
+        enabled?: boolean;
+        triggerOn?: string;
+        steps?: { stepType: string; config: Record<string, unknown> }[];
+      },
+      token: string
+    ) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/enrichment-flows/${flowId}`, {
+        method: 'PATCH',
+        body,
+        token,
+      }),
+
+    saveMapping: (
+      accountId: string,
+      body: {
+        provider: string;
+        credentialId?: string | null;
+        fieldMappings?: Record<string, { label: string; attrType?: string; enabled?: boolean }>;
+        provisionAttributes?: boolean;
+      },
+      token: string
+    ) =>
+      request<{ ok: boolean; attributes: { created: number } | null }>(
+        `/accounts/${accountId}/enrichment-flows/mappings`,
+        { method: 'PUT', body, token }
+      ),
   },
 
   search: {

@@ -9,6 +9,12 @@ export type AccountSettings = {
   leadsnapperSyncEnabled?: boolean;
   /** Minimum priority to accept: Hot, Warm, or all (default all — no restriction). */
   leadsnapperMinPriority?: 'Hot' | 'Warm' | 'all';
+  /** When true, LeadMonitor may push verified leads via integration API. */
+  leadmonitorSyncEnabled?: boolean;
+  /** Minimum numeric score to accept from LeadMonitor (0 = all). */
+  leadmonitorMinScore?: number;
+  /** When true, new/updated contacts with phone sync to WhatsApp CRM. */
+  whatsappCrmSyncEnabled?: boolean;
   /** When true, CSV import is allowed for admins + crmImportAllowedUserIds */
   crmImportEnabled?: boolean;
   /** When true, CSV export is allowed for admins + crmExportAllowedUserIds */
@@ -93,6 +99,12 @@ export function parseAccountSettings(raw: unknown): AccountSettings {
       s.leadsnapperMinPriority === 'Hot' || s.leadsnapperMinPriority === 'Warm' || s.leadsnapperMinPriority === 'all'
         ? s.leadsnapperMinPriority
         : undefined,
+    leadmonitorSyncEnabled:
+      typeof s.leadmonitorSyncEnabled === 'boolean' ? s.leadmonitorSyncEnabled : undefined,
+    leadmonitorMinScore:
+      typeof s.leadmonitorMinScore === 'number' ? s.leadmonitorMinScore : undefined,
+    whatsappCrmSyncEnabled:
+      typeof s.whatsappCrmSyncEnabled === 'boolean' ? s.whatsappCrmSyncEnabled : undefined,
   };
 }
 

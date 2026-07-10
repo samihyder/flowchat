@@ -1,6 +1,7 @@
 import type { AppSql } from '@/lib/db-sql';
 import { linkContactToGlobalCompany } from '@/lib/companies/resolve';
 import { dispatchWebhooks } from '@/lib/webhooks';
+import { dispatchEcosystemContactSync } from '@/lib/ecosystem-dispatch';
 
 export type ContactRecord = {
   id: string;
@@ -141,6 +142,7 @@ export async function upsertIntegrationContact(
     const contact = serializeContactRow(rows[0] as Record<string, unknown>);
     await linkContactToGlobalCompany(sql, contact.id, contact.email, accountId);
     await emitContactEvent(sql, accountId, 'contact.updated', contact);
+    void dispatchEcosystemContactSync(sql, accountId, contact, false);
     return { contact, created: false };
   }
 
@@ -165,5 +167,6 @@ export async function upsertIntegrationContact(
   const contact = serializeContactRow(rows[0] as Record<string, unknown>);
   await linkContactToGlobalCompany(sql, contact.id, contact.email, accountId);
   await emitContactEvent(sql, accountId, 'contact.created', contact);
+  void dispatchEcosystemContactSync(sql, accountId, contact, true);
   return { contact, created: true };
 }

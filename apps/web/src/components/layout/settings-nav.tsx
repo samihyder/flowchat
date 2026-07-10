@@ -40,6 +40,7 @@ const sections: NavSection[] = [
     title: 'CRM',
     items: [
       { label: 'CRM settings', href: '/settings/crm' as Route, icon: '📇' },
+      { label: 'Enrichment flows', href: '/settings/enrichment-flows' as Route, icon: '✨' },
       { label: 'Email marketing', href: '/settings/email-marketing' as Route, icon: '📧' },
     ],
   },

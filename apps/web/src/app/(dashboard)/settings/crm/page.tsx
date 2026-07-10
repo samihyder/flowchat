@@ -198,6 +198,121 @@ export default function CrmSettingsPage() {
       <CustomAttributesSection />
 
       <LeadSnapperProvisioningSection />
+
+      <EcosystemProvisioningSection />
+    </div>
+  );
+}
+
+function EcosystemProvisioningSection() {
+  const { token, accountId } = useAuthStore();
+  const [lmEnabled, setLmEnabled] = useState(false);
+  const [lmMinScore, setLmMinScore] = useState(0);
+  const [waEnabled, setWaEnabled] = useState(false);
+  const [lmOrgId, setLmOrgId] = useState('');
+  const [waAccountId, setWaAccountId] = useState('');
+  const [waApiKey, setWaApiKey] = useState('');
+  const [waBaseUrl, setWaBaseUrl] = useState('https://www.digitalbrandcast.com/wa-automation');
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+  const baseUrl = typeof window !== 'undefined' ? getApiUrl() : 'https://your-app.vercel.app/api';
+
+  useEffect(() => {
+    if (!token || !accountId) return;
+    api.crm.ecosystem.get(accountId, token).then((r) => {
+      setLmEnabled(r.leadmonitorSyncEnabled);
+      setLmMinScore(r.leadmonitorMinScore);
+      setWaEnabled(r.whatsappCrmSyncEnabled);
+      const lm = r.integrations?.find((i) => i.integration_type === 'leadmonitor');
+      const wa = r.integrations?.find((i) => i.integration_type === 'whatsapp_crm');
+      if (lm?.external_id) setLmOrgId(lm.external_id);
+      if (wa?.external_id) setWaAccountId(wa.external_id);
+      const waSettings = (wa?.settings ?? {}) as Record<string, string>;
+      if (waSettings.baseUrl) setWaBaseUrl(waSettings.baseUrl);
+    }).catch(() => {});
+  }, [token, accountId]);
+
+  const save = async () => {
+    if (!token || !accountId) return;
+    setSaving(true);
+    setMsg('');
+    setErr('');
+    try {
+      await api.crm.ecosystem.provision(
+        accountId,
+        {
+          leadmonitorSyncEnabled: lmEnabled,
+          leadmonitorMinScore: lmMinScore,
+          whatsappCrmSyncEnabled: waEnabled,
+          leadmonitorOrgId: lmOrgId.trim() || undefined,
+          whatsappAccountId: waAccountId.trim() || undefined,
+          whatsappApiKey: waApiKey.trim() || undefined,
+          whatsappBaseUrl: waBaseUrl.trim() || undefined,
+          provisionAttributes: true,
+        },
+        token
+      );
+      setMsg('Mutex ecosystem integration saved.');
+      setWaApiKey('');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
+      <div>
+        <h2 className="text-base font-semibold text-gray-900">Mutex ecosystem</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Connect Lead Monitor and WhatsApp CRM to FlowChat. Use sidebar links for SSO into child apps.
+        </p>
+      </div>
+
+      <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
+        <input type="checkbox" className={checkboxClass} checked={lmEnabled} onChange={(e) => setLmEnabled(e.target.checked)} />
+        Enable Lead Monitor → FlowChat sync
+      </label>
+      <div>
+        <label className={labelClass}>Minimum lead score</label>
+        <Input type="number" min={0} max={100} value={lmMinScore} onChange={(e) => setLmMinScore(Number(e.target.value))} className="mt-1 max-w-xs" />
+      </div>
+      <div>
+        <label className={labelClass}>Lead Monitor organization ID</label>
+        <Input value={lmOrgId} onChange={(e) => setLmOrgId(e.target.value)} className="mt-1" placeholder="UUID from Lead Monitor settings" />
+      </div>
+
+      <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer">
+        <input type="checkbox" className={checkboxClass} checked={waEnabled} onChange={(e) => setWaEnabled(e.target.checked)} />
+        Enable FlowChat → WhatsApp CRM contact sync
+      </label>
+      <div>
+        <label className={labelClass}>WhatsApp CRM account ID</label>
+        <Input value={waAccountId} onChange={(e) => setWaAccountId(e.target.value)} className="mt-1" />
+      </div>
+      <div>
+        <label className={labelClass}>WhatsApp API key (contacts:write)</label>
+        <Input type="password" value={waApiKey} onChange={(e) => setWaApiKey(e.target.value)} className="mt-1" placeholder="Leave blank to keep existing" />
+      </div>
+      <div>
+        <label className={labelClass}>WhatsApp base URL</label>
+        <Input value={waBaseUrl} onChange={(e) => setWaBaseUrl(e.target.value)} className="mt-1" />
+      </div>
+
+      <div className="text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 font-mono space-y-1">
+        <p className="font-sans text-gray-600 font-medium">Inbound Lead Monitor endpoint</p>
+        <p>POST {baseUrl}/integrations/v1/leadmonitor/leads</p>
+        <p className="font-sans text-gray-600 font-medium mt-2">WhatsApp webhook (register in Integrations)</p>
+        <p>{waBaseUrl.replace(/\/$/, '')}/api/integrations/flowchat/webhook</p>
+      </div>
+
+      <Button type="button" disabled={saving} onClick={() => void save()}>
+        {saving ? 'Saving…' : 'Save ecosystem settings'}
+      </Button>
+      {msg && <p className="text-sm text-green-600">{msg}</p>}
+      {err && <p className="text-sm text-red-600">{err}</p>}
     </div>
   );
 }

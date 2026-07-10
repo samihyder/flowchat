@@ -45,6 +45,10 @@ export const SETTINGS_META: Record<string, SettingsMeta> = {
     title: 'CRM settings',
     description: 'Custom contact attributes and import governance',
   },
+  '/settings/enrichment-flows': {
+    title: 'Enrichment flows',
+    description: 'Drag-and-drop contact enrichment pipelines per tenant',
+  },
   '/settings/email-marketing': {
     title: 'Email marketing',
     description: 'Subscription defaults, sender identity, and compliance',

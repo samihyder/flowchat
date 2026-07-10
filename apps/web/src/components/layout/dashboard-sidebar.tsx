@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { Availability } from '@/store/ws';
 import { initials } from '@/components/conversations/conversation-badges';
 import { useAuthStore } from '@/store/auth';
+import { EcosystemNavItem } from '@/components/layout/ecosystem-nav-item';
 
 type Inbox = { id: string; name: string; channelType: string; widgetColor: string | null };
 type Team = { id: string; name: string };
@@ -188,6 +189,21 @@ export function DashboardSidebar({
             active={isMarketing}
             icon="📧"
             label="Marketing"
+          />
+        </NavSection>
+
+        <NavSection label="Ecosystem">
+          <EcosystemNavItem
+            target="wa-automation"
+            icon="💬"
+            label="WhatsApp CRM"
+            path="/wa-automation/inbox"
+          />
+          <EcosystemNavItem
+            target="lead-monitor"
+            icon="📡"
+            label="Lead Monitor"
+            path="/lead-monitor/leads"
           />
         </NavSection>
 
