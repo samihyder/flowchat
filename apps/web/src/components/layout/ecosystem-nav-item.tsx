@@ -30,12 +30,12 @@ export function EcosystemNavItem({
       );
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
-        window.location.assign(path);
+        window.open(path, '_blank', 'noopener,noreferrer');
         return;
       }
-      window.location.assign(data.url);
+      window.open(data.url, '_blank', 'noopener,noreferrer');
     } catch {
-      window.location.assign(path);
+      window.open(path, '_blank', 'noopener,noreferrer');
     } finally {
       setLoading(false);
     }
