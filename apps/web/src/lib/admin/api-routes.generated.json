@@ -290,6 +290,14 @@
     "filePath": "apps/web/src/app/api/accounts/[accountId]/conversations/[conversationId]/visitor-context/route.ts"
   },
   {
+    "path": "/api/accounts/[accountId]/crm/ecosystem/provision",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/crm/ecosystem/provision/route.ts"
+  },
+  {
     "path": "/api/accounts/[accountId]/crm/leadsnapper/provision",
     "methods": [
       "GET",
@@ -312,6 +320,29 @@
       "PATCH"
     ],
     "filePath": "apps/web/src/app/api/accounts/[accountId]/custom-attributes/[definitionId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/enrichment-flows",
+    "methods": [
+      "GET",
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/enrichment-flows/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/enrichment-flows/[flowId]",
+    "methods": [
+      "DELETE",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/enrichment-flows/[flowId]/route.ts"
+  },
+  {
+    "path": "/api/accounts/[accountId]/enrichment-flows/mappings",
+    "methods": [
+      "PUT"
+    ],
+    "filePath": "apps/web/src/app/api/accounts/[accountId]/enrichment-flows/mappings/route.ts"
   },
   {
     "path": "/api/accounts/[accountId]/inboxes",
@@ -786,11 +817,26 @@
     "filePath": "apps/web/src/app/api/accounts/[accountId]/webhooks/[webhookId]/deliveries/route.ts"
   },
   {
+    "path": "/api/admin/api-catalog",
+    "methods": [
+      "GET",
+      "PATCH"
+    ],
+    "filePath": "apps/web/src/app/api/admin/api-catalog/route.ts"
+  },
+  {
     "path": "/api/auth/accept-invite",
     "methods": [
       "POST"
     ],
     "filePath": "apps/web/src/app/api/auth/accept-invite/route.ts"
+  },
+  {
+    "path": "/api/auth/ecosystem-handoff",
+    "methods": [
+      "GET"
+    ],
+    "filePath": "apps/web/src/app/api/auth/ecosystem-handoff/route.ts"
   },
   {
     "path": "/api/auth/forgot-password",
@@ -887,6 +933,13 @@
       "POST"
     ],
     "filePath": "apps/web/src/app/api/integrations/v1/contacts/inbound/route.ts"
+  },
+  {
+    "path": "/api/integrations/v1/leadmonitor/leads",
+    "methods": [
+      "POST"
+    ],
+    "filePath": "apps/web/src/app/api/integrations/v1/leadmonitor/leads/route.ts"
   },
   {
     "path": "/api/integrations/v1/leadsnapper/leads",

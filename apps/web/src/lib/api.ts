@@ -1358,13 +1358,21 @@ export const api = {
     enrich: (
       accountId: string,
       contactId: string,
-      body: { credentialId: string; scope?: 'company' | 'person' | 'auto' },
+      body: {
+        credentialId?: string;
+        scope?: 'company' | 'person' | 'auto';
+        useFlow?: boolean;
+        requestedFields?: string[];
+      },
       token: string
     ) =>
       request<{
         ok: boolean;
         error?: string;
         code?: string;
+        flow?: boolean;
+        flowId?: string;
+        suggestions?: { provider: string; fieldCount: number; suggestionId: string }[];
         scope?: string;
         fieldCount?: number;
         suggestion?: EnrichmentSuggestion;
@@ -2278,10 +2286,11 @@ export const api = {
 
   enrichmentFlows: {
     list: (accountId: string, token: string) =>
-      request<{ flows: unknown[]; mappings: unknown[] }>(
-        `/accounts/${accountId}/enrichment-flows`,
-        { token }
-      ),
+      request<{
+        flows: unknown[];
+        mappings: unknown[];
+        manualTargets: { key: string; label: string; group: string }[];
+      }>(`/accounts/${accountId}/enrichment-flows`, { token }),
 
     create: (
       accountId: string,
@@ -2320,7 +2329,10 @@ export const api = {
       body: {
         provider: string;
         credentialId?: string | null;
-        fieldMappings?: Record<string, { label: string; attrType?: string; enabled?: boolean }>;
+        fieldMappings?: Record<
+          string,
+          { label: string; targetKey?: string; attrType?: string; enabled?: boolean; sortOrder?: number }
+        >;
         provisionAttributes?: boolean;
       },
       token: string

@@ -30,6 +30,10 @@ export type EnrichmentSuggestion = {
 
 const FIELD_LABELS: Record<string, string> = {
   'contact.phone': 'Phone',
+  'contact.email': 'Corporate email',
+  'contact.personalEmail': 'Personal email',
+  'contact.firstName': 'First name',
+  'contact.lastName': 'Last name',
   'person.jobTitle': 'Job title',
   'person.linkedinUrl': 'LinkedIn',
   'person.companyName': 'Company name',
@@ -75,7 +79,7 @@ function addField(
 
 export function buildSuggestionFields(input: {
   provider: EnrichmentProviderId;
-  contact: { phone: string | null };
+  contact: { phone: string | null; email?: string | null; name?: string };
   company: GlobalCompany | null;
   companyFields?: EnrichmentCompanyFields | null;
   personFields?: EnrichmentPersonFields | null;
@@ -86,6 +90,10 @@ export function buildSuggestionFields(input: {
   if (input.personFields) {
     const p = input.personFields;
     addField(fields, 'contact.phone', 'contact', input.contact.phone, p.phone, source);
+    addField(fields, 'contact.email', 'contact', null, p.workEmail, source);
+    addField(fields, 'contact.personalEmail', 'contact', null, p.personalEmail, source);
+    addField(fields, 'contact.firstName', 'contact', null, p.firstName, source);
+    addField(fields, 'contact.lastName', 'contact', null, p.lastName, source);
     addField(fields, 'person.jobTitle', 'person', null, p.jobTitle, source);
     addField(fields, 'person.linkedinUrl', 'person', null, p.linkedinUrl, source);
     addField(fields, 'person.companyName', 'person', null, p.companyName, source);
@@ -265,7 +273,7 @@ export async function applySuggestionFields(
   }
 
   const contactRows = await sql`
-    SELECT id, phone, custom_attributes as "customAttributes", company_id as "companyId"
+    SELECT id, phone, email, name, custom_attributes as "customAttributes", company_id as "companyId"
     FROM contacts
     WHERE id = ${input.contactId}::uuid AND account_id = ${input.accountId}::uuid
     LIMIT 1
@@ -274,6 +282,8 @@ export async function applySuggestionFields(
     | {
         id: string;
         phone: string | null;
+        email: string | null;
+        name: string;
         customAttributes: Record<string, unknown>;
         companyId: string | null;
       }
@@ -282,10 +292,16 @@ export async function applySuggestionFields(
 
   const companyPatch: Record<string, string | null> = {};
   let phoneUpdate: string | null = null;
+  let emailUpdate: string | null = null;
+  let nameUpdate: string | null = null;
   const personAttrs: Record<string, string> = {};
 
   for (const field of toApply) {
     if (field.key === 'contact.phone') phoneUpdate = field.proposed;
+    else if (field.key === 'contact.email') emailUpdate = field.proposed;
+    else if (field.key === 'contact.firstName' || field.key === 'contact.lastName') {
+      personAttrs[field.key.replace('contact.', '')] = field.proposed;
+    } else if (field.key === 'contact.personalEmail') personAttrs.personal_email = field.proposed;
     else if (field.key === 'person.jobTitle') personAttrs.job_title = field.proposed;
     else if (field.key === 'person.linkedinUrl') personAttrs.linkedin_url = field.proposed;
     else if (field.key === 'person.companyName') personAttrs.enriched_company_name = field.proposed;
@@ -308,9 +324,21 @@ export async function applySuggestionFields(
     }
   }
 
-  if (phoneUpdate) {
+  if (personAttrs.firstName || personAttrs.lastName) {
+    const first = personAttrs.firstName ?? contact.name.split(/\s+/)[0] ?? '';
+    const last = personAttrs.lastName ?? contact.name.split(/\s+/).slice(1).join(' ');
+    nameUpdate = `${first} ${last}`.trim();
+    delete personAttrs.firstName;
+    delete personAttrs.lastName;
+  }
+
+  if (phoneUpdate || emailUpdate || nameUpdate) {
     await sql`
-      UPDATE contacts SET phone = ${phoneUpdate}, updated_at = NOW()
+      UPDATE contacts SET
+        phone = COALESCE(${phoneUpdate}, phone),
+        email = COALESCE(${emailUpdate}, email),
+        name = COALESCE(${nameUpdate}, name),
+        updated_at = NOW()
       WHERE id = ${contact.id}::uuid
     `;
   }
@@ -334,7 +362,7 @@ export async function applySuggestionFields(
         updated_at = NOW()
       WHERE id = ${contact.id}::uuid
     `;
-  } else if (phoneUpdate) {
+  } else if (phoneUpdate || emailUpdate || nameUpdate) {
     await sql`
       UPDATE contacts SET
         enrichment_status = 'enriched',

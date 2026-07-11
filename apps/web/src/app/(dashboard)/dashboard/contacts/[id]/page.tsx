@@ -121,6 +121,10 @@ export default function ContactProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>('conversations');
   const [editOpen, setEditOpen] = useState(false);
   const [enrichOpen, setEnrichOpen] = useState(false);
+  const [enrichTargets, setEnrichTargets] = useState<{ key: string; label: string; group: string }[]>(
+    []
+  );
+  const [requestedEnrichFields, setRequestedEnrichFields] = useState<Set<string>>(new Set());
   const [moreActionsOpen, setMoreActionsOpen] = useState(false);
 
   const load = async () => {
@@ -186,7 +190,12 @@ export default function ContactProfilePage() {
   };
 
   const runEnrichment = async () => {
-    if (!token || !accountId || !enrichCredentialId) return;
+    if (!token || !accountId) return;
+    if (requestedEnrichFields.size === 0) {
+      setEnrichError(true);
+      setEnrichMsg('Select at least one field to enrich.');
+      return;
+    }
     setEnrichBusy(true);
     setEnrichMsg('');
     setEnrichError(false);
@@ -194,7 +203,10 @@ export default function ContactProfilePage() {
       const res = await api.contacts.enrich(
         accountId,
         contactId,
-        { credentialId: enrichCredentialId, scope: enrichScope },
+        {
+          useFlow: true,
+          requestedFields: [...requestedEnrichFields],
+        },
         token
       );
       if (!res.ok) {
@@ -202,7 +214,15 @@ export default function ContactProfilePage() {
         setEnrichMsg(res.error ?? 'Enrichment failed.');
         return;
       }
-      setEnrichMsg(`Found ${res.fieldCount ?? 0} field(s) to review below.`);
+      const count =
+        res.suggestions?.reduce((n, s) => n + s.fieldCount, 0) ??
+        res.fieldCount ??
+        0;
+      setEnrichMsg(
+        res.flow
+          ? `Ran enrichment sequence — ${count} field(s) to review below.`
+          : `Found ${count} field(s) to review below.`
+      );
       await load();
     } catch (err) {
       setEnrichError(true);
@@ -210,6 +230,40 @@ export default function ContactProfilePage() {
     } finally {
       setEnrichBusy(false);
     }
+  };
+
+  const openEnrichModal = async () => {
+    setEnrichOpen(true);
+    if (!token || !accountId) return;
+    try {
+      const { manualTargets } = await api.enrichmentFlows.list(accountId, token);
+      setEnrichTargets(manualTargets);
+      setRequestedEnrichFields(
+        new Set(
+          manualTargets
+            .filter((t) =>
+              ['contact.email', 'contact.personalEmail', 'contact.phone'].includes(t.key)
+            )
+            .map((t) => t.key)
+        )
+      );
+    } catch {
+      setEnrichTargets([
+        { key: 'contact.email', label: 'Corporate email', group: 'email' },
+        { key: 'contact.personalEmail', label: 'Personal email', group: 'email' },
+        { key: 'contact.phone', label: 'Mobile / WhatsApp', group: 'phone' },
+      ]);
+      setRequestedEnrichFields(new Set(['contact.email', 'contact.phone']));
+    }
+  };
+
+  const toggleRequestedField = (key: string) => {
+    setRequestedEnrichFields((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   };
 
   const toggleField = (suggestionId: string, fieldKey: string) => {
@@ -834,7 +888,7 @@ export default function ContactProfilePage() {
           </button>
         ))}
         <span className="w-px h-5 bg-gray-200" />
-        <button type="button" className={actionChip} onClick={() => setEnrichOpen(true)}>
+        <button type="button" className={actionChip} onClick={() => void openEnrichModal()}>
           ✨ Enrich contact
         </button>
         <button type="button" className={actionChip} onClick={() => setMoreActionsOpen(true)}>
@@ -929,42 +983,57 @@ export default function ContactProfilePage() {
               </div>
             ) : (
               <p className="text-sm text-gray-500">
-                No company linked. Use a corporate email domain to auto-link, or run enrichment.
+                {contact.email
+                  ? 'No company linked yet — enrichment can still find phone and additional emails.'
+                  : 'Lead Monitor contacts often have name + link only. Pick the fields you need below.'}
               </p>
             )}
 
             {enrichmentCreds.length === 0 ? (
               <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                Connect an enrichment provider in Settings → Connected services.
+                Connect an enrichment provider in Settings → Connected services, then configure
+                your sequence in Settings → Enrichment flows.
               </p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                <select
-                  value={enrichCredentialId}
-                  onChange={(e) => setEnrichCredentialId(e.target.value)}
-                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
-                >
-                  {enrichmentCreds.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={enrichScope}
-                  onChange={(e) => setEnrichScope(e.target.value as 'auto' | 'company' | 'person')}
-                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg"
-                >
-                  <option value="auto">Auto</option>
-                  <option value="company">Company</option>
-                  <option value="person">Person</option>
-                </select>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-800 mb-2">
+                    Which fields do you want from the enrichment sequence?
+                  </p>
+                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="grid grid-cols-[28px_1fr_100px] gap-2 items-center bg-gray-50 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-gray-500 border-b border-gray-200">
+                      <span />
+                      <span>Field</span>
+                      <span>Group</span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {enrichTargets.map((target) => (
+                        <label
+                          key={target.key}
+                          className="grid grid-cols-[28px_1fr_100px] gap-2 items-center px-3 py-2.5 hover:bg-gray-50 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={requestedEnrichFields.has(target.key)}
+                            onChange={() => toggleRequestedField(target.key)}
+                            className="size-4 rounded border-gray-300 text-primary-600"
+                          />
+                          <span className="text-sm text-gray-800">{target.label}</span>
+                          <span className="text-xs text-gray-400 capitalize">{target.group}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Providers run in order from Settings → Enrichment flows (e.g. Lusha, then PDL).
+                  </p>
+                </div>
                 <Button
                   type="button"
-                  disabled={enrichBusy || !enrichCredentialId || !contact.email}
+                  disabled={enrichBusy || requestedEnrichFields.size === 0}
                   onClick={() => void runEnrichment()}
                 >
-                  {enrichBusy ? 'Enriching…' : '✨ Enrich'}
+                  {enrichBusy ? 'Running sequence…' : '✨ Run enrichment sequence'}
                 </Button>
               </div>
             )}

@@ -47,6 +47,10 @@ export const lushaProvider: EnrichmentProviderAdapter = {
           linkedinUrl: pickString(record.linkedinUrl, record.socialLinks),
           phone: pickString(record.phone, record.phoneNumber),
           companyName: pickString(record.companyName, record.company),
+          workEmail: pickString(record.email, record.workEmail),
+          personalEmail: pickString(record.personalEmail),
+          firstName: pickString(record.firstName),
+          lastName: pickString(record.lastName),
         },
         raw: { person: person.json },
       };

@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
+import { getManualEnrichmentTargets } from '@/lib/enrichment-flow-runner';
 
 type Params = { params: Promise<{ accountId: string }> };
 
@@ -38,7 +39,9 @@ export async function GET(req: Request, { params }: Params) {
     ORDER BY provider ASC
   `;
 
-  return Response.json({ flows, mappings });
+  const manualTargets = await getManualEnrichmentTargets(sql, accountId);
+
+  return Response.json({ flows, mappings, manualTargets });
 }
 
 export async function POST(req: Request, { params }: Params) {

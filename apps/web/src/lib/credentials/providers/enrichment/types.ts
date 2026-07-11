@@ -28,6 +28,10 @@ export type EnrichmentPersonFields = {
   linkedinUrl?: string | null;
   phone?: string | null;
   companyName?: string | null;
+  workEmail?: string | null;
+  personalEmail?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
 };
 
 export type EnrichmentAdapterResult =

@@ -47,6 +47,10 @@ export const cognismProvider: EnrichmentProviderAdapter = {
           linkedinUrl: pickString(record.linkedinUrl),
           phone: pickString(record.phone, record.mobile),
           companyName: pickString(record.companyName, record.accountName),
+          workEmail: pickString(record.email, record.workEmail),
+          personalEmail: pickString(record.personalEmail),
+          firstName: pickString(record.firstName),
+          lastName: pickString(record.lastName),
         },
         raw: { person: person.json },
       };

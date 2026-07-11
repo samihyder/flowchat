@@ -6,6 +6,7 @@ import {
   type EnrichmentError,
 } from '@/lib/credentials/providers/enrichment/errors';
 import { runContactEnrichment } from '@/lib/companies/enrichment-run';
+import { runEnrichmentFlowForContact } from '@/lib/enrichment-flow-runner';
 import type { EnrichmentScope } from '@/lib/credentials/providers/enrichment/types';
 import type { AppSql } from '@/lib/db-sql';
 
@@ -22,21 +23,61 @@ export async function POST(req: Request, { params }: Params) {
   const body = (await req.json()) as {
     credentialId?: string;
     scope?: EnrichmentScope | 'auto';
+    useFlow?: boolean;
+    requestedFields?: string[];
   };
+
+  const sql = neon(process.env.DATABASE_URL!) as AppSql;
+
+  if (body.useFlow !== false) {
+    const flowResult = await runEnrichmentFlowForContact(
+      sql,
+      accountId,
+      contactId,
+      'manual',
+      { requestedFields: body.requestedFields }
+    );
+
+    if (flowResult.ran) {
+      await writeAuditLog(sql, {
+        accountId,
+        actorId: auth.userId,
+        action: 'contact.enrichment_flow_ran',
+        resourceType: 'contact',
+        resourceId: contactId,
+        metadata: {
+          flowId: flowResult.flowId,
+          suggestionCount: flowResult.suggestions?.length ?? 0,
+          requestedFields: body.requestedFields ?? [],
+        },
+      });
+
+      return Response.json({
+        ok: true,
+        flow: true,
+        flowId: flowResult.flowId,
+        suggestions: flowResult.suggestions ?? [],
+      });
+    }
+  }
 
   if (!body.credentialId?.trim()) {
     return Response.json(
-      { ok: false, error: 'Select an enrichment connection.', code: 'credential_not_found' },
+      {
+        ok: false,
+        error: 'No enrichment flow configured. Set up Settings → Enrichment flows first.',
+        code: 'no_flow',
+      },
       { status: 400 }
     );
   }
 
-  const sql = neon(process.env.DATABASE_URL!) as AppSql;
   const result = await runContactEnrichment(sql, {
     accountId,
     contactId,
     credentialId: body.credentialId.trim(),
     scope: body.scope ?? 'auto',
+    allowedFieldKeys: body.requestedFields,
   });
 
   if (!('ok' in result) || result.ok !== true) {

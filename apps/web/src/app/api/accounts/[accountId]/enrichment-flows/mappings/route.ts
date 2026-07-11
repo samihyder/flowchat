@@ -2,8 +2,8 @@ import { neon } from '@neondatabase/serverless';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import {
   provisionEnrichmentFieldMappings,
-  type FieldMappingEntry,
 } from '@/lib/enrichment-mapping-provision';
+import type { FieldMappingEntry } from '@/lib/enrichment-field-schemas';
 
 type Params = { params: Promise<{ accountId: string }> };
 

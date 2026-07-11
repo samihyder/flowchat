@@ -26,6 +26,8 @@ export type EnrichmentRunInput = {
   contactId: string;
   credentialId: string;
   scope?: EnrichmentScope | 'auto';
+  /** When set, only include these suggestion field keys (post-build filter). */
+  allowedFieldKeys?: string[];
 };
 
 export type EnrichmentRunSuccess = {
@@ -56,35 +58,23 @@ export async function runContactEnrichment(
   getEnrichmentAdapter(provider);
 
   const contactRows = await sql`
-    SELECT id, name, email, phone, company_id as "companyId"
+    SELECT id, name, email, phone, company_id as "companyId", custom_attributes as "customAttributes"
     FROM contacts
     WHERE id = ${input.contactId}::uuid AND account_id = ${input.accountId}::uuid
     LIMIT 1
   `;
   const contact = contactRows[0] as
-    | { id: string; name: string; email: string | null; phone: string | null; companyId: string | null }
+    | {
+        id: string;
+        name: string;
+        email: string | null;
+        phone: string | null;
+        companyId: string | null;
+        customAttributes: Record<string, unknown>;
+      }
     | undefined;
   if (!contact) {
     return enrichmentError('invalid_request', { detail: 'Contact not found' });
-  }
-
-  const domain = extractCorporateDomain(contact.email);
-  if (!domain) {
-    return enrichmentError('no_corporate_domain');
-  }
-
-  let companyId = contact.companyId;
-  if (!companyId) {
-    const linked = await linkContactToGlobalCompany(sql, contact.id, contact.email, input.accountId);
-    companyId = linked.companyId;
-  }
-  if (!companyId) {
-    return enrichmentError('company_not_linked');
-  }
-
-  const company = await getGlobalCompanyById(sql, companyId);
-  if (!company) {
-    return enrichmentError('company_not_linked');
   }
 
   let scope: EnrichmentScope =
@@ -99,11 +89,32 @@ export async function runContactEnrichment(
     scope = 'person';
   }
 
+  const domain = contact.email ? extractCorporateDomain(contact.email) : null;
+  const personOnly = scope === 'person' && !domain;
+
+  if (!personOnly && !domain) {
+    return enrichmentError('no_corporate_domain');
+  }
+
+  let companyId = contact.companyId;
+  if (!companyId && domain && contact.email) {
+    const linked = await linkContactToGlobalCompany(sql, contact.id, contact.email, input.accountId);
+    companyId = linked.companyId;
+  }
+  if (!personOnly && !companyId) {
+    return enrichmentError('company_not_linked');
+  }
+
+  const company = companyId ? await getGlobalCompanyById(sql, companyId) : null;
+  if (!personOnly && !company) {
+    return enrichmentError('company_not_linked');
+  }
+
   let adapterResult;
   try {
     adapterResult = await enrichViaProvider(provider, cred.secret, cred.row.config, {
-      domain,
-      companyName: company.name,
+      domain: domain ?? 'example.com',
+      companyName: company?.name ?? contact.name,
       email: contact.email,
       contactName: contact.name,
       scope,
@@ -128,9 +139,9 @@ export async function runContactEnrichment(
 
   await markCredentialUsed(sql, input.credentialId);
 
-  const fields = buildSuggestionFields({
+  let fields = buildSuggestionFields({
     provider,
-    contact: { phone: contact.phone },
+    contact: { phone: contact.phone, email: contact.email, name: contact.name },
     company,
     companyFields:
       adapterResult.company && enrichmentProviderSupports(provider, 'company')
@@ -138,6 +149,11 @@ export async function runContactEnrichment(
         : null,
     personFields: adapterResult.person ?? null,
   });
+
+  if (input.allowedFieldKeys && input.allowedFieldKeys.length > 0) {
+    const allowed = new Set(input.allowedFieldKeys);
+    fields = fields.filter((f) => allowed.has(f.key));
+  }
 
   if (fields.length === 0) {
     return enrichmentError('not_found', { provider });

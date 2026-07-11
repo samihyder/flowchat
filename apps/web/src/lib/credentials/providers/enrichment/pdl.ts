@@ -30,6 +30,7 @@ export const peopleDataLabsProvider: EnrichmentProviderAdapter = {
       }
       const data = (person.json as { data?: Record<string, unknown> })?.data ?? {};
       const job = data.job_title ?? data.job_title_role;
+      const nameParts = pickString(data.full_name)?.split(/\s+/) ?? [];
       return {
         ok: true,
         scope: 'person',
@@ -38,6 +39,10 @@ export const peopleDataLabsProvider: EnrichmentProviderAdapter = {
           linkedinUrl: pickString(data.linkedin_url),
           phone: pickString(data.phone_numbers),
           companyName: pickString(data.job_company_name),
+          workEmail: pickString(data.work_email, data.emails),
+          personalEmail: pickString(data.personal_email),
+          firstName: pickString(data.first_name, nameParts[0]),
+          lastName: pickString(data.last_name, nameParts.slice(1).join(' ')),
         },
         raw: { person: person.json },
       };
