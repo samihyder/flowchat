@@ -22,9 +22,9 @@ export async function provisionEnrichmentFieldMappings(
     const attrType = mapping.attrType ?? 'text';
 
     const rows = await sql`
-      INSERT INTO custom_attribute_definitions (account_id, label, key, attr_type, sort_order)
-      VALUES (${accountId}::uuid, ${label}, ${key}, ${attrType}, ${sortOrder})
-      ON CONFLICT (account_id, key) DO UPDATE SET
+      INSERT INTO custom_attribute_definitions (account_id, entity_type, label, key, attr_type, sort_order)
+      VALUES (${accountId}::uuid, 'contact', ${label}, ${key}, ${attrType}, ${sortOrder})
+      ON CONFLICT (account_id, entity_type, key) DO UPDATE SET
         label = EXCLUDED.label,
         attr_type = EXCLUDED.attr_type
       RETURNING (xmax = 0) AS inserted

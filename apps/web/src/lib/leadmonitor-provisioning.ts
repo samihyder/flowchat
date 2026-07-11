@@ -15,15 +15,19 @@ export async function provisionLeadMonitorAttributes(sql: AppSql, accountId: str
   for (const attr of LEADMONITOR_CONTACT_ATTRIBUTES) {
     const key = slugifyAttributeKey(attr.key);
     await sql`
-      INSERT INTO custom_attribute_definitions (account_id, label, key, attr_type, sort_order)
+      INSERT INTO custom_attribute_definitions (account_id, entity_type, key, label, attr_type, sort_order)
       VALUES (
         ${accountId}::uuid,
-        ${attr.label},
+        'contact',
         ${key},
+        ${attr.label},
         ${attr.attrType},
         ${attr.sortOrder}
       )
-      ON CONFLICT (account_id, key) DO NOTHING
+      ON CONFLICT (account_id, entity_type, key) DO UPDATE SET
+        label = EXCLUDED.label,
+        attr_type = EXCLUDED.attr_type,
+        sort_order = EXCLUDED.sort_order
     `;
   }
 }
