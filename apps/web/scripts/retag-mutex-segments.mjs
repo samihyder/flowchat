@@ -85,8 +85,26 @@ async function resolveFlowChatAccountId(sql) {
   return fallback[0]?.id;
 }
 
-async function resolveWaAccount(supabase) {
+async function resolveWaAccount(supabase, sql, flowchatAccountId) {
   if (process.env.WA_ACCOUNT_ID) return process.env.WA_ACCOUNT_ID;
+
+  const slugRow = flowchatAccountId
+    ? await sql`
+        SELECT slug FROM accounts WHERE id = ${flowchatAccountId}::uuid LIMIT 1
+      `
+    : [];
+  const slug = slugRow[0]?.slug;
+  if (slug) {
+    const { data: accounts } = await supabase
+      .from('accounts')
+      .select('id, integration_settings');
+    const match = (accounts ?? []).find((row) => {
+      const settings = row.integration_settings ?? {};
+      return settings.flowchat_account_id === slug;
+    });
+    if (match?.id) return match.id;
+  }
+
   const { data } = await supabase.from('accounts').select('id').limit(1).maybeSingle();
   return data?.id;
 }
@@ -323,7 +341,7 @@ async function main() {
   });
 
   const flowchatAccountId = await resolveFlowChatAccountId(sql);
-  const waAccountId = await resolveWaAccount(supabase);
+  const waAccountId = await resolveWaAccount(supabase, sql, flowchatAccountId);
   const waUserId = await resolveWaOwnerUserId(supabase, waAccountId);
 
   if (!flowchatAccountId || !waAccountId || !waUserId) {

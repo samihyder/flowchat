@@ -59,6 +59,7 @@ const FILE_TAG = {
 };
 
 const DRY_RUN = process.argv.includes('--dry-run');
+const WA_ONLY = process.argv.includes('--wa-only');
 const OUT_DIR = join(__dirname, 'import-output');
 
 // ─── Env loading ────────────────────────────────────────────────────────────
@@ -554,8 +555,26 @@ async function resolveFlowChatAccountId(sql) {
   return fallback[0]?.id;
 }
 
-async function resolveWaAccount(supabase) {
+async function resolveWaAccount(supabase, sql, flowchatAccountId) {
   if (process.env.WA_ACCOUNT_ID) return process.env.WA_ACCOUNT_ID;
+
+  const slugRow = flowchatAccountId
+    ? await sql`
+        SELECT slug FROM accounts WHERE id = ${flowchatAccountId}::uuid LIMIT 1
+      `
+    : [];
+  const slug = slugRow[0]?.slug;
+  if (slug) {
+    const { data: accounts } = await supabase
+      .from('accounts')
+      .select('id, integration_settings');
+    const match = (accounts ?? []).find((row) => {
+      const settings = row.integration_settings ?? {};
+      return settings.flowchat_account_id === slug;
+    });
+    if (match?.id) return match.id;
+  }
+
   const { data } = await supabase.from('accounts').select('id').limit(1).maybeSingle();
   return data?.id;
 }
@@ -724,17 +743,22 @@ async function upsertWaContact(supabase, accountId, userId, person, phone, flowc
   const normalized = phone.replace(/\D/g, '');
   const { data: existing } = await supabase
     .from('contacts')
-    .select('id')
+    .select('id, name')
     .eq('account_id', accountId)
     .eq('phone_normalized', normalized)
     .maybeSingle();
+
+  const resolvedName =
+    existing?.name && existing.name.trim().length > person.name.trim().length
+      ? existing.name
+      : person.name;
 
   let contactId;
   if (existing) {
     const { data: updated, error } = await supabase
       .from('contacts')
       .update({
-        name: person.name,
+        name: resolvedName,
         email: person.primaryEmail,
         company: person.company,
         flowchat_contact_id: flowchatContactId,
@@ -844,13 +868,13 @@ async function main() {
   });
 
   const flowchatAccountId = await resolveFlowChatAccountId(sql);
-  const waAccountId = await resolveWaAccount(supabase);
+  const waAccountId = await resolveWaAccount(supabase, sql, flowchatAccountId);
   const waUserId = await resolveWaOwnerUserId(supabase, waAccountId);
 
   if (!flowchatAccountId) throw new Error('Could not resolve FlowChat account_id');
   if (!waAccountId || !waUserId) throw new Error('Could not resolve WA account/user');
 
-  console.log('Accounts:', { flowchatAccountId, waAccountId });
+  console.log('Accounts:', { flowchatAccountId, waAccountId, waOnly: WA_ONLY });
 
   // Tags / labels
   const allTagNames = new Set();
@@ -889,22 +913,34 @@ async function main() {
 
   const flowchatIdByExternal = new Map();
 
-  await runPool(uniquePeople, 20, async (person) => {
-    try {
-      const { id, created } = await upsertFlowChatContact(sql, flowchatAccountId, person);
-      flowchatIdByExternal.set(person.externalId, id);
-      if (created) stats.flowchatCreated++;
-      else stats.flowchatUpdated++;
+  if (!WA_ONLY) {
+    await runPool(uniquePeople, 20, async (person) => {
+      try {
+        const { id, created } = await upsertFlowChatContact(sql, flowchatAccountId, person);
+        flowchatIdByExternal.set(person.externalId, id);
+        if (created) stats.flowchatCreated++;
+        else stats.flowchatUpdated++;
 
-      const labelIds = [...new Set(person.tags.map((t) => labelIdByName.get(t)).filter(Boolean))];
-      await assignContactLabels(sql, id, labelIds);
-      await addSegmentMember(sql, segmentIdByFile[person.segmentFile], id);
-      stats.segmentMembers++;
-    } catch (err) {
-      stats.errors.push({ stage: 'flowchat', person: person.name, error: String(err) });
-    }
-  });
-  console.log(`FlowChat done: ${uniquePeople.length} contacts`);
+        const labelIds = [...new Set(person.tags.map((t) => labelIdByName.get(t)).filter(Boolean))];
+        await assignContactLabels(sql, id, labelIds);
+        await addSegmentMember(sql, segmentIdByFile[person.segmentFile], id);
+        stats.segmentMembers++;
+      } catch (err) {
+        stats.errors.push({ stage: 'flowchat', person: person.name, error: String(err) });
+      }
+    });
+    console.log(`FlowChat done: ${uniquePeople.length} contacts`);
+  } else {
+    const externalIds = uniquePeople.map((p) => p.externalId);
+    const rows = await sql`
+      SELECT id, external_id as "externalId"
+      FROM contacts
+      WHERE account_id = ${flowchatAccountId}::uuid
+        AND external_id = ANY(${externalIds})
+    `;
+    for (const row of rows) flowchatIdByExternal.set(row.externalId, row.id);
+    console.log(`WA-only mode: resolved ${flowchatIdByExternal.size} FlowChat contact ids`);
+  }
 
   await runPool(waRows, 25, async ({ person, phone }) => {
     try {
