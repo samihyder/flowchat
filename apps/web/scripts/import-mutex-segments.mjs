@@ -53,9 +53,9 @@ const SEGMENT_NAMES = {
 };
 
 const FILE_TAG = {
-  pta: 'Segment:PTA',
-  pakistani: 'Segment:Pakistani',
-  international: 'Segment:International',
+  pta: 'PTA',
+  pakistani: 'Pakistan Client',
+  international: 'International',
 };
 
 const DRY_RUN = process.argv.includes('--dry-run');

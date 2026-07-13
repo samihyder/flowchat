@@ -1,6 +1,19 @@
 import type { AppSql } from '@/lib/db-sql';
 import type { ContactRecord } from '@/lib/contact-sync';
 
+const FLOWCHAT_SYNC_TAG = 'flowchat-sync';
+
+async function getContactLabelNames(sql: AppSql, contactId: string): Promise<string[]> {
+  const rows = await sql`
+    SELECT l.name
+    FROM contact_labels cl
+    INNER JOIN labels l ON l.id = cl.label_id
+    WHERE cl.contact_id = ${contactId}::uuid
+    ORDER BY l.name
+  `;
+  return rows.map((row) => (row as { name: string }).name);
+}
+
 type IntegrationRow = {
   external_id: string;
   settings: Record<string, unknown>;
@@ -41,6 +54,9 @@ export async function pushContactToWhatsAppCrm(
 
   if (!contact.phone) return { skipped: true as const };
 
+  const labelNames = await getContactLabelNames(sql, contact.id);
+  const tags = [...new Set([...labelNames, FLOWCHAT_SYNC_TAG])];
+
   const res = await fetch(`${baseUrl}/api/v1/contacts`, {
     method: 'POST',
     headers: {
@@ -52,7 +68,7 @@ export async function pushContactToWhatsAppCrm(
       phone: contact.phone,
       email: contact.email,
       flowchat_contact_id: contact.id,
-      tags: ['flowchat-sync'],
+      tags,
     }),
   });
 
