@@ -21,6 +21,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { FILE_TAG, buildImportTags } from './lib/wa-tag-normalize.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -50,12 +51,6 @@ const SEGMENT_NAMES = {
   pta: 'PTA Operators',
   pakistani: 'Pakistani Customers',
   international: 'International Customers',
-};
-
-const FILE_TAG = {
-  pta: 'PTA',
-  pakistani: 'Pakistan Client',
-  international: 'International',
 };
 
 const DRY_RUN = process.argv.includes('--dry-run');
@@ -261,11 +256,8 @@ function sanitizeTagName(name) {
   return `${trimmed.slice(0, 97)}...`;
 }
 
-function buildTags(fileKey, row, extra = []) {
-  const tags = new Set([FILE_TAG[fileKey], ...extra.map(sanitizeTagName)]);
-  const country = row.country || row.Country;
-  if (country?.trim()) tags.add(sanitizeTagName(`Country:${country.trim()}`));
-  return [...tags];
+function buildTags(fileKey, row, extra = [], opts = {}) {
+  return buildImportTags(fileKey, row, extra, opts);
 }
 
 function hasUsefulData(fields) {
@@ -301,12 +293,7 @@ function normalizePta(rows) {
     const sourceFiles = r['Source Files']?.trim() || '';
 
     const extraTags = [];
-    if (sourceFiles) {
-      for (const s of sourceFiles.split(',').map((x) => x.trim()).filter(Boolean)) {
-        extraTags.push(sanitizeTagName(`Source:${s}`));
-      }
-    }
-    if (company) extraTags.push(sanitizeTagName(`Operator:${company}`));
+    if (company) extraTags.push(`Operator:${company}`);
 
     if (
       !hasUsefulData({
@@ -332,7 +319,9 @@ function normalizePta(rows) {
       }
     }
 
-    const tags = buildTags('pta', { country: r.Country || 'Pakistan' }, extraTags);
+    const tags = buildTags('pta', { country: r.Country || 'Pakistan' }, extraTags, {
+      ctdisrHint: company,
+    });
     const primaryEmail = pickPrimaryEmail(emails);
     const primaryPhone = pickPrimaryPhone(phones, r.Country);
 
@@ -402,9 +391,9 @@ function normalizePakistani(rows) {
           .split(',')
           .map((k) => k.trim())
           .filter(Boolean)
-          .map((k) => sanitizeTagName(`Category:${k}`))
+          .map((k) => `Category:${k}`)
       : [];
-    if (ctx.complimentaryApp) keywordTags.push(sanitizeTagName(`App:${ctx.complimentaryApp}`));
+    if (ctx.complimentaryApp) keywordTags.push(`App:${ctx.complimentaryApp}`);
 
     if (
       !hasUsefulData({
@@ -482,8 +471,7 @@ function normalizeInternational(rows) {
     const playStore = r['Play Store/Apple Store']?.trim() || '';
 
     const extraTags = [];
-    if (vertical) extraTags.push(sanitizeTagName(`Vertical:${vertical}`));
-    if (confidence) extraTags.push(sanitizeTagName(`Confidence:${confidence}`));
+    if (vertical) extraTags.push(`Vertical:${vertical}`);
 
     if (
       !hasUsefulData({
