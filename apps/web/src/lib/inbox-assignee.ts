@@ -1,7 +1,7 @@
-import type { NeonQueryFunction } from '@/lib/neon';
+import type { AppSql } from '@/lib/db-sql';
 
 export async function isAccountAgent(
-  sql: NeonQueryFunction<false, false>,
+  sql: AppSql,
   accountId: string,
   userId: string
 ): Promise<boolean> {

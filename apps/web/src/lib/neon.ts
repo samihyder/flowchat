@@ -31,3 +31,6 @@ export function neon(url: string): AppSql {
   return ((strings: TemplateStringsArray, ...params: unknown[]) =>
     sql(strings, ...(params as never[]))) as AppSql;
 }
+
+/** Compatibility alias for older Neon typings still referenced in a few helpers. */
+export type NeonQueryFunction<_Full extends boolean = false, _ArrayMode extends boolean = false> = AppSql;
