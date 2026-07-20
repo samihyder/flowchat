@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { marketingErrorResponse } from '@/lib/marketing/errors';
 import { getCampaignSender, putCampaignSender } from '@/lib/marketing/s6m-campaign-sender';

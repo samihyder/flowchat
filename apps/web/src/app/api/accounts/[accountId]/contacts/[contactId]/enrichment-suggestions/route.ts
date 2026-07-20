@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { listPendingSuggestions } from '@/lib/companies/enrichment-suggestions';
 import type { AppSql } from '@/lib/db-sql';

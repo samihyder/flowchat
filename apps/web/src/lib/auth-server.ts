@@ -1,6 +1,6 @@
 import { createId } from '@paralleldrive/cuid2';
 import { hash, verify } from '@node-rs/argon2';
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { SESSION_IDLE_MS, SESSION_REMEMBER_ME_MS } from '@/lib/session-policy';
 
 const ARGON2_OPTIONS = {

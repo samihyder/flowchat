@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { hashPassword, createSession } from '@/lib/auth-server';
 import { isWorkEmail, WORK_EMAIL_MESSAGE } from '@/lib/email-domain';
 

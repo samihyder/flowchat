@@ -1,11 +1,17 @@
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
 import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core';
 import { eq, and } from 'drizzle-orm';
 import { env } from './env.js';
 
-const sql = neon(env.DATABASE_URL);
-const db = drizzle(sql);
+const client = postgres(env.DATABASE_URL, {
+  prepare: false,
+  max: 5,
+  idle_timeout: 20,
+  connect_timeout: 15,
+  ssl: 'require',
+});
+const db = drizzle(client);
 
 const accountUsers = pgTable('account_users', {
   accountId: uuid('account_id').notNull(),

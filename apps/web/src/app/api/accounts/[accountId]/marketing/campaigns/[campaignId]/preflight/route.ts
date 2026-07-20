@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { getAccountSettings } from '@/lib/account-settings-db';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { marketingErrorResponse } from '@/lib/marketing/errors';

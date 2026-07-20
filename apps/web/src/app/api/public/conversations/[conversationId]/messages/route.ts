@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { corsHeaders, optionsResponse } from '@/lib/cors';
 import {
   insertMessage,

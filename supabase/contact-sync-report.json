@@ -1,0 +1,19 @@
+{
+  "finishedAt": "2026-07-20T12:56:30.481Z",
+  "report": [
+    {
+      "slug": "mutex-systems",
+      "contacts": 976,
+      "labels": 81,
+      "label_links": 4176,
+      "wa_backfill": 976
+    },
+    {
+      "slug": "nexus-corp",
+      "contacts": 22249,
+      "labels": 18,
+      "label_links": 794,
+      "wa_backfill": 22249
+    }
+  ]
+}

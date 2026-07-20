@@ -1,0 +1,25 @@
+{
+  "createdAt": "2026-07-20T11:56:09.497Z",
+  "tenants": [
+    {
+      "key": "mutex",
+      "flowchat_account_id": "19e20bc2-c84a-429d-a374-b4bebc3a147c",
+      "flowchat_slug": "mutex-systems",
+      "flowchat_user_id": "1bbc1e1d-612c-4dec-997f-250b94512e38",
+      "owner_email": "samihaider@mutexsystemsltd.com",
+      "wa_account_id": "6cb4a28e-46f6-48f4-9cb6-a54d4b901682",
+      "wa_contacts": 976,
+      "whatsapp_connected": true
+    },
+    {
+      "key": "nexus",
+      "flowchat_account_id": "f404a8f4-fbfa-4b9e-b3bb-aa8c3e6348af",
+      "flowchat_slug": "nexus-corp",
+      "flowchat_user_id": "a37243d7-6ee9-4beb-a994-9a4a01073d30",
+      "owner_email": "hyder@nexuscorp-ltd.com",
+      "wa_account_id": "5e9bb984-de38-4411-bcb7-e7587d41a2fa",
+      "wa_contacts": 22249,
+      "whatsapp_connected": false
+    }
+  ]
+}

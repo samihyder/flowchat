@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { getWebAppOrigin } from '@/lib/marketing/origin';
 import { sendPasswordResetEmail } from '@/lib/email';
 

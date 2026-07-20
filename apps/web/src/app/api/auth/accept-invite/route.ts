@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { hashPassword } from '@/lib/auth-server';
 
 export async function POST(req: Request) {

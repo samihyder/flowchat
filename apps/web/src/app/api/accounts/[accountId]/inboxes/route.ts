@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { isAccountAgent } from '@/lib/inbox-assignee';
 import { mergeWidgetTheme } from '@/lib/widget-theme';

@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { getCredentialSecret } from '@/lib/credentials/store';
 import { verifySvixWebhook } from '@/lib/credentials/webhook-signature';
 import { handleResendWebhookEvent } from '@/lib/marketing/resend-events';

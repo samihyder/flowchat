@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { setContactPreference } from '@/lib/marketing/preferences';
 import { unsubscribeByToken } from '@/lib/marketing/unsubscribe';
 import type { AppSql } from '@/lib/db-sql';

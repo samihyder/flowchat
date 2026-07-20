@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeApiKey, getIntegrationApiKey, hasScope, type ApiKeyAuth } from '@/lib/api-keys';
 import type { AppSql } from '@/lib/db-sql';
 

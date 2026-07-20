@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeSuperAdmin, getBearerToken } from '@/lib/db-auth';
 import type { AppSql } from '@/lib/db-sql';
 import apiRoutes from '@/lib/admin/api-routes.generated.json';

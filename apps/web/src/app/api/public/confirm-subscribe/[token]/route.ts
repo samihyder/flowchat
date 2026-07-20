@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { confirmSubscription } from '@/lib/marketing/double-opt-in';
 import type { AppSql } from '@/lib/db-sql';
 

@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { parseAccountSettings } from '@/lib/account-settings';
 import { chatAnthropic } from '@/lib/credentials/providers/ai/anthropic';

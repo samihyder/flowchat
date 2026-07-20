@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { resolveContactMessageDetail } from '@/lib/marketing/contact-message';
 import type { ContactMessageMode } from '@/lib/marketing/campaign-step-draft';

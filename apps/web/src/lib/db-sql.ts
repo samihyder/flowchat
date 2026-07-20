@@ -1,4 +1,4 @@
-/** Shared Neon SQL client type (avoids generic variance across route handlers). */
+/** Shared SQL client type (tagged-template queries via postgres.js). */
 export type AppSql = (
   strings: TemplateStringsArray,
   ...params: unknown[]

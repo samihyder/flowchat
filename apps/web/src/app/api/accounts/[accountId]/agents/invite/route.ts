@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { createId } from '@paralleldrive/cuid2';
 import { sendAgentInviteEmail } from '@/lib/email';

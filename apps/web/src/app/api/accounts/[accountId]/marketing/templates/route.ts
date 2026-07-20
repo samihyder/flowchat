@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { MarketingError, MarketingErrorCode, marketingErrorResponse } from '@/lib/marketing/errors';
 import { htmlToPlainText } from '@/lib/marketing/merge-tags';

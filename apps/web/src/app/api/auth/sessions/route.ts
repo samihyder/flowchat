@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { touchSession } from '@/lib/auth-server';
 import { getBearerToken } from '@/lib/db-auth';
 

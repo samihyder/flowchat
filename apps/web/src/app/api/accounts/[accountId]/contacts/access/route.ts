@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { getAccountSettings } from '@/lib/account-settings-db';
 import { canExportContacts, canImportContacts } from '@/lib/crm-permissions';

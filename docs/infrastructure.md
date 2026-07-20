@@ -32,7 +32,7 @@
 | **Web app** | [Vercel](https://vercel.com) | `apps/web` | Dashboard UI, auth pages, settings |
 | **API** | [Railway](https://railway.com) | `services/api` | REST API — auth, accounts, inboxes, teams |
 | **WebSocket** | [Railway](https://railway.com) | `services/ws` | Real-time presence, future message delivery |
-| **PostgreSQL** | [Neon](https://neon.tech) | — | Primary database (API + WS read sessions) |
+| **PostgreSQL** | [Supabase](https://supabase.com) | — | Primary database (API + WS + web routes) |
 | **Redis** | Railway (Redis plugin) | — | WS pub/sub backbone, agent presence TTL |
 
 ### Production URLs (fill in after deploy)
@@ -66,7 +66,7 @@ Create a Railway service linked to `services/api` as root directory.
 
 | Variable | Source | Required |
 |---|---|---|
-| `DATABASE_URL` | Neon **pooler** connection string | Yes |
+| `DATABASE_URL` | Supabase **pooler** connection string (`aws-1-…pooler.supabase.com:6543`) | Yes |
 | `JWT_SECRET` | Generate 32+ random chars | Yes |
 | `NODE_ENV` | `production` | Yes |
 | `CORS_ORIGIN` | Vercel URL (comma-separate preview URLs if needed) | Yes |
@@ -98,51 +98,55 @@ Create a separate Railway service linked to `services/ws` as root directory.
 
 **Link Redis to WS:** In Railway, add a Redis database to the project and reference its `REDIS_URL` in the WS service variables.
 
-### Neon PostgreSQL
+### Supabase PostgreSQL
 
-Use the **pooler** connection string on Railway (serverless-friendly):
+Use the **transaction pooler** on Vercel/Railway (serverless-friendly, `prepare: false` in postgres.js):
 
 ```
-postgresql://neondb_owner:<password>@ep-damp-flower-aky5elgr-pooler.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require
+postgresql://postgres.ozetivcvfszayotcimbw:<password>@aws-1-us-west-2.pooler.supabase.com:6543/postgres?sslmode=require
 ```
 
-Both API and WS services connect to the same Neon database.
+Web, API, and WS all connect to the same Supabase database.
 
 ---
 
-## Neon PostgreSQL (Database)
+## Supabase PostgreSQL (Database)
 
 | Property | Value |
 |---|---|
-| Provider | [Neon](https://neon.tech) (Serverless PostgreSQL) |
-| Project name | `flowchat` |
-| Project ID | `billowing-lake-84120582` |
-| Region | `aws-us-west-2` (US West — Oregon) |
-| PostgreSQL version | 17 |
-| Organisation | `@mutexsystemsltd` (`org-weathered-water-71329950`) |
-| Host | `ep-damp-flower-aky5elgr.c-3.us-west-2.aws.neon.tech` |
-| Pooler host | `ep-damp-flower-aky5elgr-pooler.c-3.us-west-2.aws.neon.tech` |
-| Database | `neondb` |
-| Role | `neondb_owner` |
-| Dashboard | https://console.neon.tech/app/projects/billowing-lake-84120582 |
+| Provider | [Supabase](https://supabase.com) |
+| Project ref | `ozetivcvfszayotcimbw` |
+| Region | `us-west-2` |
+| Project URL | `https://ozetivcvfszayotcimbw.supabase.co` |
+| Pooler host | `aws-1-us-west-2.pooler.supabase.com` |
+| Database | `postgres` |
+| Dashboard | https://supabase.com/dashboard/project/ozetivcvfszayotcimbw |
+| Schema apply | `supabase/APPLY_000_flowchat_baseline.sql` (62 tables) |
 
-### Connection string (store in `.env` as `DATABASE_URL`)
+### Connection strings (store in `.env`, gitignored)
+
 ```
-postgresql://neondb_owner:<password>@ep-damp-flower-aky5elgr.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require
+# App runtime (transaction pooler :6543)
+DATABASE_URL=postgresql://postgres.ozetivcvfszayotcimbw:<password>@aws-1-us-west-2.pooler.supabase.com:6543/postgres?sslmode=require
+
+# Migrations / psql (session pooler :5432)
+DIRECT_URL=postgresql://postgres.ozetivcvfszayotcimbw:<password>@aws-1-us-west-2.pooler.supabase.com:5432/postgres?sslmode=require
 ```
 
-> Password is stored only in `.env` (gitignored). Retrieve from Neon dashboard → Connection Details if needed.
+Also set:
 
-### Pooler connection string (use in production / serverless deployments)
-```
-postgresql://neondb_owner:<password>@ep-damp-flower-aky5elgr-pooler.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require
-```
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon/public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side admin key |
+| `SUPABASE_DB_PASSWORD` | Database password |
 
 ---
 
 ## Database Schema
 
-Tables created by migration `drizzle/0000_concerned_speedball.sql`:
+Tables from `supabase/APPLY_000_flowchat_baseline.sql` (Drizzle `0000`…`0039`):
 
 | Table | Columns | Purpose |
 |---|---|---|

@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { runMarketingJobs } from '@/lib/marketing/job-runner';
 import { recordMarketingCronRun } from '@/lib/marketing/marketing-cron-state';
 import type { AppSql } from '@/lib/db-sql';

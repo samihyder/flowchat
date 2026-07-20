@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { RECOMMENDED_CANNED_RESPONSES } from '@/lib/canned-responses/defaults';
 

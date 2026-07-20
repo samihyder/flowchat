@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { handleResendWebhookEvent } from '@/lib/marketing/resend-events';
 import type { AppSql } from '@/lib/db-sql';
 

@@ -27,3 +27,8 @@ packages/db/drizzle/*.sql.bak
 .vscode/settings.json
 .idea/
 .vercel
+
+# Local tenant bootstrap secrets
+supabase/TENANT_BOOTSTRAP.local.json
+
+supabase/TENANT_SECRETS.local.json

@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { publishEvent } from '@/lib/redis';
 import { updateReplyTracking } from '@/lib/missed-chats';
 import { writeAuditLog } from '@/lib/audit-log';

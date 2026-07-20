@@ -1,4 +1,4 @@
-import type { NeonQueryFunction } from '@neondatabase/serverless';
+import type { NeonQueryFunction } from '@/lib/neon';
 
 export async function isAccountAgent(
   sql: NeonQueryFunction<false, false>,

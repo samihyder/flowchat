@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { checkSenderDomainStatus } from '@/lib/marketing/senders';
 import type { AppSql } from '@/lib/db-sql';

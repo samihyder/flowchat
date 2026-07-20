@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { RECOMMENDED_LABELS } from '@/lib/labels/defaults';
 import { normalizeLabelColor } from '@/lib/labels/colors';
