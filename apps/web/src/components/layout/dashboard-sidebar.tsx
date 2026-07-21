@@ -185,6 +185,12 @@ export function DashboardSidebar({
             label="Contacts"
           />
           <NavItem
+            href="/dashboard/documents"
+            active={pathname.startsWith('/dashboard/documents')}
+            icon="📄"
+            label="Documents"
+          />
+          <NavItem
             href="/marketing/campaigns"
             active={isMarketing}
             icon="📧"

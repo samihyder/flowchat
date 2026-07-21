@@ -309,6 +309,30 @@ export type Contact = {
   updatedAt: string;
 };
 
+export type DasDocument = {
+  id: string;
+  accountId: string;
+  contactId: string | null;
+  clientId: string | null;
+  templateId: string | null;
+  type: 'quotation' | 'invoice' | 'proposal' | 'sla' | 'nda' | 'other';
+  title: string;
+  status:
+    | 'draft'
+    | 'pending_approval'
+    | 'approved'
+    | 'rejected'
+    | 'finalized'
+    | 'archived';
+  structuredData: Record<string, unknown>;
+  htmlSnapshot: string | null;
+  createdBy: string | null;
+  finalizedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  contactName?: string | null;
+};
+
 export type ContactNote = {
   id: string;
   content: string;
@@ -2616,5 +2640,50 @@ export const api = {
         method: 'DELETE',
         token,
       }),
+  },
+
+  das: {
+    documents: {
+      list: (
+        accountId: string,
+        token: string,
+        query?: { q?: string; status?: string; type?: string; limit?: number; offset?: number }
+      ) => {
+        const params = new URLSearchParams();
+        if (query?.q) params.set('q', query.q);
+        if (query?.status) params.set('status', query.status);
+        if (query?.type) params.set('type', query.type);
+        if (query?.limit != null) params.set('limit', String(query.limit));
+        if (query?.offset != null) params.set('offset', String(query.offset));
+        const qs = params.toString();
+        return request<{ documents: DasDocument[]; total: number }>(
+          `/accounts/${accountId}/das/documents${qs ? `?${qs}` : ''}`,
+          { token }
+        );
+      },
+
+      get: (accountId: string, documentId: string, token: string) =>
+        request<{ document: DasDocument }>(
+          `/accounts/${accountId}/das/documents/${documentId}`,
+          { token }
+        ),
+
+      create: (
+        accountId: string,
+        body: {
+          type: DasDocument['type'];
+          title: string;
+          contactId?: string | null;
+          templateId?: string | null;
+          structuredData?: Record<string, unknown>;
+        },
+        token: string
+      ) =>
+        request<{ document: DasDocument }>(`/accounts/${accountId}/das/documents`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+    },
   },
 };

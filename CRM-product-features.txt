@@ -69,7 +69,18 @@ Major Product Modules
 - Public widget API.
 - Mobile/PWA experience.
 - Super admin configuration.
-- Ecosystem integrations with Flow CRM, LeadSnapper, DAS, and future FlowAuth.
+- Ecosystem integrations with Flow CRM (Contacts, Marketing, Documents), LeadSnapper, WhatsApp CRM, Lead Monitor, and FlowAuth.
+
+Flow CRM Documents Module (former DAS)
+- Documents are an in-repo Flow CRM module at /dashboard/documents (not a sibling deploy).
+- Schema: packages/db/drizzle/0040_das_documents.sql (das_* tables, account_id tenancy).
+- Document types: quotation, invoice, proposal, sla, nda, other.
+- Document statuses: draft, pending_approval, approved, rejected, finalized, archived.
+- Account-scoped APIs under /api/accounts/[accountId]/das/documents.
+- Optional link from documents to Flow CRM contacts (contact_id).
+- Brand profile, assets, catalog (products/services), templates, document security (hash/verify token), and audit logs in das_* tables.
+- Auth and tenancy shared with FlowChat (no separate Documents login).
+- Canonical reference: docs/crm-documents-module.md.
 
 Implemented Multi-Tenant Account Features
 - Account records with name, slug, domain, logo URL, timezone, locale, status, settings, and limits.

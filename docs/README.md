@@ -1,6 +1,6 @@
 # FlowChat — Development Reference
 
-> Product design documents for building FlowChat, a modern customer conversation platform derived from the Chatwoot feature set.
+> Product design documents for FlowChat / Flow CRM — the Flow platform monorepo.
 
 ---
 
@@ -8,6 +8,8 @@
 
 | File | Description |
 |---|---|
+| [crm-documents-module.md](crm-documents-module.md) | **Flow CRM Documents** (former DAS) — schema, API, UI, tenancy |
+| [ecosystem-plan.md](ecosystem-plan.md) | Flow modules + sibling products (WhatsApp CRM, Lead Monitor) |
 | [sprints.md](sprints.md) | Sprint plan — Phases 1–8, story points, definitions of done |
 | [chat-module-standard.md](chat-module-standard.md) | Industry-standard web chat checklist — **gate before CRM (Sprint 6)** |
 | [email-marketing-standard.md](email-marketing-standard.md) | Email marketing checklist — **S6M campaign model** |
@@ -44,6 +46,13 @@
 | AI | Vercel AI SDK (OpenAI / Anthropic / Gemini) |
 | Search | Typesense |
 
+### Flow CRM modules (in this repo)
+| Module | Path |
+|--------|------|
+| Contacts | `/dashboard/contacts` |
+| Documents | `/dashboard/documents` |
+| Marketing | `/marketing/campaigns` |
+
 ---
 
-*Generated: 2026-06-13*
+*Updated: 2026-07-21*
