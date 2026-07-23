@@ -45,6 +45,10 @@ export const SETTINGS_META: Record<string, SettingsMeta> = {
     title: 'CRM settings',
     description: 'Custom contact attributes and import governance',
   },
+  '/settings/leadsnapper': {
+    title: 'LeadSnapper',
+    description: 'Download the Chrome scraper and connect local / corporate leads to FlowChat',
+  },
   '/settings/enrichment-flows': {
     title: 'Enrichment flows',
     description: 'Drag-and-drop contact enrichment pipelines per tenant',

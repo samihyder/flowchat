@@ -366,8 +366,12 @@ function LeadSnapperProvisioningSection() {
       <div>
         <h2 className="text-base font-semibold text-gray-900">LeadSnapper integration</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Provision Flow CRM to receive qualified leads from the LeadSnapper Chrome extension.
-          Create an API key under Settings → Integrations, then configure the extension to POST leads here.
+          Provision Flow CRM to receive scraped leads from the LeadSnapper Chrome extension.
+          Download the package from{' '}
+          <Link href={'/settings/leadsnapper' as Route} className="text-primary-600 hover:underline">
+            Settings → LeadSnapper
+          </Link>
+          . Create an API key under Settings → Integrations, then configure the extension Sync tab.
         </p>
       </div>
 

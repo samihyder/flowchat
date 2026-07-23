@@ -199,6 +199,12 @@ export function DashboardSidebar({
         </NavSection>
 
         <NavSection label="Ecosystem">
+          <NavItem
+            href="/settings/leadsnapper"
+            active={pathname.startsWith('/settings/leadsnapper')}
+            icon="🧲"
+            label="LeadSnapper"
+          />
           <EcosystemNavItem
             target="wa-automation"
             icon="💬"
