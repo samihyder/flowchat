@@ -70,8 +70,14 @@ function Modal({
   );
 }
 
-const actionChip =
-  'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:border-primary-200 hover:bg-primary-50/40 transition-colors disabled:opacity-40 disabled:pointer-events-none whitespace-nowrap';
+const roundAction =
+  'group relative inline-flex items-center justify-center size-9 rounded-full border border-primary-200/80 bg-white text-primary-700 shadow-sm transition-all hover:bg-primary-600 hover:text-white hover:border-primary-600 hover:shadow-md disabled:opacity-40 disabled:pointer-events-none disabled:hover:bg-white disabled:hover:text-primary-700';
+
+const TYPE_META: Record<(typeof TYPES)[number], { short: string; tone: string }> = {
+  visitor: { short: 'V', tone: 'from-slate-400 to-slate-600' },
+  lead: { short: 'L', tone: 'from-amber-400 to-orange-500' },
+  customer: { short: 'C', tone: 'from-emerald-400 to-teal-600' },
+};
 
 export default function ContactProfilePage() {
   const params = useParams();
@@ -938,42 +944,113 @@ export default function ContactProfilePage() {
         </div>
       </div>
 
-      {/* thin bottom action bar replaces the old persistent side dock */}
-      <div className="shrink-0 flex flex-wrap items-center gap-2 px-6 py-3 border-t border-gray-200 bg-white overflow-x-auto">
-        <span className="text-[10px] uppercase tracking-wide text-gray-400 mr-1">Quick actions</span>
-        {conversations[0] && (
-          <Link href={`/dashboard?conversation=${conversations[0].id}` as Route} className={actionChip}>
-            💬 Open chat
-          </Link>
-        )}
-        <a href={contact.email ? `mailto:${contact.email}` : undefined} className={actionChip} aria-disabled={!contact.email}>
-          ✉️ Email
-        </a>
-        <a href={contact.phone ? `tel:${contact.phone}` : undefined} className={actionChip} aria-disabled={!contact.phone}>
-          📞 Call
-        </a>
-        <button type="button" className={actionChip} onClick={() => setDocCreateOpen(true)}>
-          📄 New document
-        </button>
-        <span className="w-px h-5 bg-gray-200" />
-        {TYPES.map((t) => (
-          <button
-            key={t}
-            type="button"
-            disabled={typeBusy || contact.type === t}
-            onClick={() => void handleQuickTypeChange(t)}
-            className={`${actionChip} capitalize ${contact.type === t ? 'bg-primary-600 text-white border-primary-600 hover:bg-primary-600' : ''}`}
+      {/* Quick actions — branded round controls, right-aligned */}
+      <div className="shrink-0 flex items-center justify-end gap-3 px-4 sm:px-6 py-2.5 border-t border-primary-200/70 bg-gradient-to-r from-slate-50 via-primary-50/50 to-cyan-50/70">
+        <div className="flex items-center gap-2 sm:gap-2.5 ml-auto overflow-x-auto max-w-full py-0.5">
+          <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-[0.12em] text-primary-700/70 shrink-0 pr-1">
+            Quick actions
+          </span>
+
+          {conversations[0] && (
+            <Link
+              href={`/dashboard?conversation=${conversations[0].id}` as Route}
+              className={roundAction}
+              title="Open chat"
+            >
+              <span className="material-symbols-outlined text-[18px]" aria-hidden>
+                forum
+              </span>
+              <span className="sr-only">Open chat</span>
+            </Link>
+          )}
+          <a
+            href={contact.email ? `mailto:${contact.email}` : undefined}
+            className={`${roundAction} ${!contact.email ? 'opacity-40 pointer-events-none' : ''}`}
+            title={contact.email ? `Email ${contact.email}` : 'No email'}
+            aria-disabled={!contact.email}
           >
-            {t}
+            <span className="material-symbols-outlined text-[18px]" aria-hidden>
+              mail
+            </span>
+            <span className="sr-only">Email</span>
+          </a>
+          <a
+            href={contact.phone ? `tel:${contact.phone}` : undefined}
+            className={`${roundAction} ${!contact.phone ? 'opacity-40 pointer-events-none' : ''}`}
+            title={contact.phone ? `Call ${contact.phone}` : 'No phone'}
+            aria-disabled={!contact.phone}
+          >
+            <span className="material-symbols-outlined text-[18px]" aria-hidden>
+              call
+            </span>
+            <span className="sr-only">Call</span>
+          </a>
+          <button
+            type="button"
+            className={roundAction}
+            title="New document"
+            onClick={() => setDocCreateOpen(true)}
+          >
+            <span className="material-symbols-outlined text-[18px]" aria-hidden>
+              description
+            </span>
+            <span className="sr-only">New document</span>
           </button>
-        ))}
-        <span className="w-px h-5 bg-gray-200" />
-        <button type="button" className={actionChip} onClick={() => void openEnrichModal()}>
-          ✨ Enrich contact
-        </button>
-        <button type="button" className={actionChip} onClick={() => setMoreActionsOpen(true)}>
-          ⚡ More actions
-        </button>
+
+          <span className="w-px h-6 bg-primary-200/80 shrink-0 mx-0.5" aria-hidden />
+
+          <div
+            className="inline-flex items-center gap-1 rounded-full border border-primary-200/80 bg-white/90 p-0.5 shadow-sm"
+            role="group"
+            aria-label="Contact type"
+          >
+            {TYPES.map((t) => {
+              const active = contact.type === t;
+              const meta = TYPE_META[t];
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  disabled={typeBusy || active}
+                  onClick={() => void handleQuickTypeChange(t)}
+                  title={t.charAt(0).toUpperCase() + t.slice(1)}
+                  className={`size-8 rounded-full text-[11px] font-bold uppercase transition-all ${
+                    active
+                      ? `bg-gradient-to-br ${meta.tone} text-white shadow-sm ring-2 ring-white`
+                      : 'text-primary-700/80 hover:bg-primary-50'
+                  }`}
+                >
+                  {meta.short}
+                </button>
+              );
+            })}
+          </div>
+
+          <span className="w-px h-6 bg-primary-200/80 shrink-0 mx-0.5" aria-hidden />
+
+          <button
+            type="button"
+            className={`${roundAction} border-amber-200 text-amber-700 hover:bg-amber-500 hover:border-amber-500 hover:text-white`}
+            title="Enrich contact"
+            onClick={() => void openEnrichModal()}
+          >
+            <span className="material-symbols-outlined text-[18px]" aria-hidden>
+              auto_awesome
+            </span>
+            <span className="sr-only">Enrich contact</span>
+          </button>
+          <button
+            type="button"
+            className={`${roundAction} bg-gradient-to-br from-primary-500 to-teal-600 text-white border-transparent hover:from-primary-600 hover:to-teal-700`}
+            title="More actions"
+            onClick={() => setMoreActionsOpen(true)}
+          >
+            <span className="material-symbols-outlined text-[18px]" aria-hidden>
+              bolt
+            </span>
+            <span className="sr-only">More actions</span>
+          </button>
+        </div>
       </div>
 
       {editOpen && (
