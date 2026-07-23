@@ -8,6 +8,8 @@ import { useAuthStore } from '@/store/auth';
 import {
   api,
   type Contact,
+  type ContactDetail,
+  type DasCatalogItem,
   type DasDocument,
   type DasDocumentSecurity,
   type DasTemplate,
@@ -82,6 +84,15 @@ export default function DocumentDetailPage() {
   const [templates, setTemplates] = useState<DasTemplate[]>([]);
   const [templateId, setTemplateId] = useState('');
   const [security, setSecurity] = useState<DasDocumentSecurity | null>(null);
+  const [linkedContact, setLinkedContact] = useState<ContactDetail | null>(null);
+  const [shareMsg, setShareMsg] = useState('');
+  const [chatBusy, setChatBusy] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catalogItems, setCatalogItems] = useState<
+    { kind: 'product' | 'service'; item: DasCatalogItem }[]
+  >([]);
+  const [catalogSelected, setCatalogSelected] = useState<Set<string>>(new Set());
+  const [catalogLoading, setCatalogLoading] = useState(false);
 
   const load = useCallback(async () => {
     if (!token || !accountId || !documentId) return;
@@ -114,6 +125,30 @@ export default function DocumentDetailPage() {
       .then((r) => setTemplates(r.templates))
       .catch(() => setTemplates([]));
   }, [token, accountId, document?.type, document]);
+
+  useEffect(() => {
+    if (!token || !accountId || !document?.contactId) {
+      setLinkedContact(null);
+      return;
+    }
+    api.contacts
+      .get(accountId, document.contactId, token)
+      .then((r) =>
+        setLinkedContact({
+          ...r.contact,
+          labels: r.labels,
+          conversations: r.conversations,
+          notes: r.notes,
+        } as ContactDetail)
+      )
+      .catch(() => setLinkedContact(null));
+  }, [token, accountId, document?.contactId]);
+
+  useEffect(() => {
+    if (!shareMsg) return;
+    const handle = window.setTimeout(() => setShareMsg(''), 2800);
+    return () => window.clearTimeout(handle);
+  }, [shareMsg]);
 
   useEffect(() => {
     if (!saveMsg) return;
@@ -317,6 +352,80 @@ export default function DocumentDetailPage() {
     } finally {
       setActionBusy(false);
     }
+  };
+
+  const copyVerifyLink = async () => {
+    if (!security?.verifyUrl) return;
+    try {
+      await navigator.clipboard.writeText(security.verifyUrl);
+      setShareMsg('Verify link copied');
+    } catch {
+      setShareMsg('Could not copy link');
+    }
+  };
+
+  const phoneDigits = (linkedContact?.phone ?? '').replace(/\D/g, '');
+
+  const handleSendInChat = async () => {
+    if (!token || !accountId || !document || !security?.verifyUrl) return;
+    const conversationId = linkedContact?.conversations?.[0]?.id;
+    if (!conversationId) return;
+    setChatBusy(true);
+    setShareMsg('');
+    try {
+      await api.conversations.sendMessage(
+        accountId,
+        conversationId,
+        {
+          content: `Document ready: ${document.title}\n${security.verifyUrl}`,
+        },
+        token
+      );
+      setShareMsg('Sent in chat');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send in chat');
+    } finally {
+      setChatBusy(false);
+    }
+  };
+
+  const openCatalogPanel = async () => {
+    if (!token || !accountId) return;
+    setCatalogOpen(true);
+    setCatalogLoading(true);
+    setCatalogSelected(new Set());
+    try {
+      const [productsRes, servicesRes] = await Promise.all([
+        api.das.products.list(accountId, token),
+        api.das.services.list(accountId, token),
+      ]);
+      setCatalogItems([
+        ...productsRes.products.map((item) => ({ kind: 'product' as const, item })),
+        ...servicesRes.services.map((item) => ({ kind: 'service' as const, item })),
+      ]);
+    } catch {
+      setCatalogItems([]);
+    } finally {
+      setCatalogLoading(false);
+    }
+  };
+
+  const addSelectedFromCatalog = () => {
+    const selected = catalogItems.filter(
+      ({ kind, item }) => catalogSelected.has(`${kind}:${item.id}`)
+    );
+    if (selected.length === 0) return;
+    setLineItems((prev) => [
+      ...prev,
+      ...selected.map(({ item }) => ({
+        name: item.name,
+        qty: 1,
+        unitPrice: Number(item.unitPrice) || 0,
+        currency: (item.currency || 'USD').toUpperCase(),
+      })),
+    ]);
+    setCatalogOpen(false);
+    setSaveMsg(`Added ${selected.length} item${selected.length === 1 ? '' : 's'} from catalog`);
   };
 
   const updateLineItem = (index: number, patch: Partial<LineItem>) => {
@@ -561,6 +670,68 @@ export default function DocumentDetailPage() {
         </div>
       )}
 
+      {verifyHref && (
+        <section className="mx-6 mt-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm shrink-0">
+          <h2 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Share
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={actionChip} onClick={() => void copyVerifyLink()}>
+              Copy verify link
+            </button>
+            {linkedContact?.email && (
+              <a
+                className={actionChip}
+                href={`mailto:${encodeURIComponent(linkedContact.email)}?subject=${encodeURIComponent(
+                  `Document ready: ${document.title}`
+                )}&body=${encodeURIComponent(
+                  `Your document "${document.title}" is ready.\n\nVerify: ${verifyHref}${
+                    security?.artifactUrl ? `\nPDF: ${security.artifactUrl}` : ''
+                  }`
+                )}`}
+              >
+                Email contact
+              </a>
+            )}
+            {phoneDigits && (
+              <a
+                className={actionChip}
+                href={`https://wa.me/${phoneDigits}?text=${encodeURIComponent(
+                  `${document.title}\n${verifyHref}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                WhatsApp
+              </a>
+            )}
+            {linkedContact?.conversations?.[0] && (
+              <button
+                type="button"
+                className={actionChip}
+                disabled={chatBusy}
+                onClick={() => void handleSendInChat()}
+              >
+                {chatBusy ? 'Sending…' : 'Send in chat'}
+              </button>
+            )}
+          </div>
+          {(shareMsg || linkedContact?.conversations?.[0]) && (
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+              {shareMsg && <span className="text-primary-700">{shareMsg}</span>}
+              {linkedContact?.conversations?.[0] && shareMsg === 'Sent in chat' && (
+                <Link
+                  href={`/dashboard?conversation=${linkedContact.conversations[0].id}` as Route}
+                  className="text-primary-600 hover:underline"
+                >
+                  Open chat →
+                </Link>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="p-6 max-w-4xl space-y-6">
           <section>
@@ -589,20 +760,92 @@ export default function DocumentDetailPage() {
                   Stored in structured data as {'{{#each lineItems}}'}.
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() =>
-                  setLineItems((prev) => [
-                    ...prev,
-                    { name: '', qty: 1, unitPrice: 0, currency: 'USD' },
-                  ])
-                }
-              >
-                + Add row
-              </Button>
+              <div className="flex flex-wrap gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => void openCatalogPanel()}
+                >
+                  Add from catalog
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    setLineItems((prev) => [
+                      ...prev,
+                      { name: '', qty: 1, unitPrice: 0, currency: 'USD' },
+                    ])
+                  }
+                >
+                  + Add row
+                </Button>
+              </div>
             </div>
+
+            {catalogOpen && (
+              <div className="rounded-lg border border-gray-200 bg-slate-50/80 p-3 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-gray-800">Catalog items</p>
+                  <button
+                    type="button"
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                    onClick={() => setCatalogOpen(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+                {catalogLoading ? (
+                  <p className="text-sm text-gray-400">Loading catalog…</p>
+                ) : catalogItems.length === 0 ? (
+                  <p className="text-sm text-gray-400">No products or services in catalog.</p>
+                ) : (
+                  <ul className="max-h-48 overflow-y-auto space-y-1.5">
+                    {catalogItems.map(({ kind, item }) => {
+                      const key = `${kind}:${item.id}`;
+                      const checked = catalogSelected.has(key);
+                      return (
+                        <li key={key}>
+                          <label className="flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-2.5 py-2 text-sm cursor-pointer hover:border-primary-200">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => {
+                                setCatalogSelected((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(key)) next.delete(key);
+                                  else next.add(key);
+                                  return next;
+                                });
+                              }}
+                            />
+                            <span className="flex-1 min-w-0 truncate">{item.name}</span>
+                            <span className="text-[10px] uppercase text-gray-400 shrink-0">
+                              {kind}
+                            </span>
+                            <span className="text-xs text-gray-500 shrink-0">
+                              {item.unitPrice} {item.currency}
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={catalogSelected.size === 0}
+                    onClick={addSelectedFromCatalog}
+                  >
+                    Add selected ({catalogSelected.size})
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {lineItems.length === 0 ? (
               <p className="text-sm text-gray-400">No line items yet.</p>

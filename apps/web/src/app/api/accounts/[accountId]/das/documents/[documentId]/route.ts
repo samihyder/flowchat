@@ -1,5 +1,6 @@
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { isAllowedDocumentTransition } from '@/lib/das/labels';
+import { notifyAccountAdmins, notifyUser } from '@/lib/das/notify';
 import { verifyUrlForToken } from '@/lib/das/security';
 import {
   isDasDocumentStatus,
@@ -287,6 +288,54 @@ export async function PATCH(req: Request, { params }: Params) {
       })}::jsonb
     )
   `;
+
+  if (nextStatus !== current.status) {
+    const entity = {
+      entityType: 'document' as const,
+      entityId: documentId,
+      excludeUserId: auth.userId,
+    };
+    if (nextStatus === 'pending_approval') {
+      await notifyAccountAdmins(sql, accountId, {
+        type: 'document_pending_approval',
+        title: 'Document pending approval',
+        body: `"${nextTitle}" was submitted for approval.`,
+        ...entity,
+      });
+    } else if (nextStatus === 'approved') {
+      await notifyAccountAdmins(sql, accountId, {
+        type: 'document_approved',
+        title: 'Document approved',
+        body: `"${nextTitle}" was approved.`,
+        ...entity,
+      });
+      if (current.createdBy && current.createdBy !== auth.userId) {
+        await notifyUser(sql, accountId, current.createdBy, {
+          type: 'document_approved',
+          title: 'Your document was approved',
+          body: `"${nextTitle}" was approved.`,
+          entityType: 'document',
+          entityId: documentId,
+        });
+      }
+    } else if (nextStatus === 'rejected') {
+      await notifyAccountAdmins(sql, accountId, {
+        type: 'document_rejected',
+        title: 'Document rejected',
+        body: `"${nextTitle}" was rejected.`,
+        ...entity,
+      });
+      if (current.createdBy && current.createdBy !== auth.userId) {
+        await notifyUser(sql, accountId, current.createdBy, {
+          type: 'document_rejected',
+          title: 'Your document was rejected',
+          body: `"${nextTitle}" was rejected.`,
+          entityType: 'document',
+          entityId: documentId,
+        });
+      }
+    }
+  }
 
   const row = await fetchDocument(sql, accountId, documentId);
   return Response.json({

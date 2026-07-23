@@ -17,6 +17,7 @@ import {
   type EnrichmentSuggestion,
   type EmailAutomation,
   type ContactTask,
+  type DasDocument,
 } from '@/lib/api';
 import { ContactMarketingTimeline } from '@/components/marketing/contact-marketing-timeline';
 import { Button } from '@/components/ui/button';
@@ -24,11 +25,14 @@ import { Input } from '@/components/ui/input';
 import { CustomAttributeFields } from '@/components/contacts/custom-attribute-fields';
 import { ContactQuickActionsPanel } from '@/components/contacts/contact-quick-actions-panel';
 import { MarketingStatusBadge } from '@/components/contacts/marketing-status-badge';
+import { DocumentCreateModal } from '@/components/documents/document-create-modal';
+import { DocumentListItem } from '@/components/documents/document-list-item';
 import { contactTypeBadgeClass, formatRelativeTime, initialsFromName } from '@/lib/format';
 import { countryLabel, COUNTRY_OPTIONS } from '@/lib/country';
+import type { DasDocumentType } from '@/lib/das/types';
 
 const TYPES = ['visitor', 'lead', 'customer'] as const;
-const TABS = ['conversations', 'notes', 'activity', 'automation'] as const;
+const TABS = ['conversations', 'notes', 'documents', 'activity', 'automation'] as const;
 type Tab = (typeof TABS)[number];
 
 function Fact({ label, value }: { label: string; value: React.ReactNode }) {
@@ -126,6 +130,9 @@ export default function ContactProfilePage() {
   );
   const [requestedEnrichFields, setRequestedEnrichFields] = useState<Set<string>>(new Set());
   const [moreActionsOpen, setMoreActionsOpen] = useState(false);
+  const [contactDocs, setContactDocs] = useState<DasDocument[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [docCreateOpen, setDocCreateOpen] = useState(false);
 
   const load = async () => {
     if (!token || !accountId) return;
@@ -187,6 +194,22 @@ export default function ContactProfilePage() {
     setTasks(tasksRes.tasks);
     setAssigneeSelect(res.contact.assigneeId ?? '');
     setTeamSelect(res.contact.teamId ?? '');
+  };
+
+  const loadContactDocs = async () => {
+    if (!token || !accountId) return;
+    setDocsLoading(true);
+    try {
+      const res = await api.das.documents.list(accountId, token, {
+        contactId,
+        limit: 50,
+      });
+      setContactDocs(res.documents);
+    } catch {
+      setContactDocs([]);
+    } finally {
+      setDocsLoading(false);
+    }
   };
 
   const runEnrichment = async () => {
@@ -309,6 +332,12 @@ export default function ContactProfilePage() {
   useEffect(() => {
     load().catch(() => {});
   }, [token, accountId, contactId]);
+
+  useEffect(() => {
+    if (activeTab === 'documents') {
+      void loadContactDocs();
+    }
+  }, [activeTab, token, accountId, contactId]);
 
   const handleSave = async () => {
     if (!token || !accountId) return;
@@ -497,6 +526,9 @@ export default function ContactProfilePage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <Button type="button" size="sm" onClick={() => setDocCreateOpen(true)}>
+              New quotation
+            </Button>
             <Button type="button" variant="secondary" size="sm" onClick={() => setEditOpen(true)}>
               ✏ Edit
             </Button>
@@ -579,6 +611,7 @@ export default function ContactProfilePage() {
           >
             {t === 'conversations' && `Conversations${conversations.length > 0 ? ` (${conversations.length})` : ''}`}
             {t === 'notes' && `Notes${notes.length > 0 ? ` (${notes.length})` : ''}`}
+            {t === 'documents' && `Documents${contactDocs.length > 0 ? ` (${contactDocs.length})` : ''}`}
             {t === 'activity' && 'Activity'}
             {t === 'automation' && 'Automation'}
           </button>
@@ -678,6 +711,39 @@ export default function ContactProfilePage() {
                 ))}
                 {notes.length === 0 && <p className="text-sm text-gray-400">No notes yet.</p>}
               </ul>
+            </section>
+          )}
+
+          {activeTab === 'documents' && (
+            <section>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <p className="text-sm text-gray-500">
+                  Documents linked to this contact.
+                </p>
+                <Button type="button" size="sm" onClick={() => setDocCreateOpen(true)}>
+                  + New quotation
+                </Button>
+              </div>
+              {docsLoading ? (
+                <p className="text-sm text-gray-400">Loading documents…</p>
+              ) : contactDocs.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-gray-200 bg-white px-4 py-10 text-center">
+                  <p className="text-sm text-gray-400">No documents yet for this contact.</p>
+                  <Button
+                    type="button"
+                    className="mt-4"
+                    onClick={() => setDocCreateOpen(true)}
+                  >
+                    + New quotation
+                  </Button>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                  {contactDocs.map((doc) => (
+                    <DocumentListItem key={doc.id} document={doc} />
+                  ))}
+                </div>
+              )}
             </section>
           )}
 
@@ -875,6 +941,9 @@ export default function ContactProfilePage() {
         <a href={contact.phone ? `tel:${contact.phone}` : undefined} className={actionChip} aria-disabled={!contact.phone}>
           📞 Call
         </a>
+        <button type="button" className={actionChip} onClick={() => setDocCreateOpen(true)}>
+          📄 New document
+        </button>
         <span className="w-px h-5 bg-gray-200" />
         {TYPES.map((t) => (
           <button
@@ -1096,6 +1165,34 @@ export default function ContactProfilePage() {
             onContactUpdated={() => void load()}
           />
         </div>
+      )}
+
+      {token && accountId && (
+        <DocumentCreateModal
+          open={docCreateOpen}
+          token={token}
+          accountId={accountId}
+          onClose={() => setDocCreateOpen(false)}
+          initialContactId={contactId}
+          initialContactName={contact.name}
+          lockContact
+          defaultType="quotation"
+          defaultTitle={`${contact.name} — Quotation`}
+          onCreate={async (input) => {
+            const res = await api.das.documents.create(
+              accountId,
+              {
+                type: input.type as DasDocumentType,
+                title: input.title,
+                contactId: input.contactId ?? contactId,
+                templateId: input.templateId,
+              },
+              token
+            );
+            setDocCreateOpen(false);
+            router.push(`/dashboard/documents/${res.document.id}` as Route);
+          }}
+        />
       )}
     </div>
   );

@@ -20,6 +20,7 @@ export async function GET(req: Request, { params }: Params) {
   const url = new URL(req.url);
   const status = url.searchParams.get('status');
   const type = url.searchParams.get('type');
+  const contactId = url.searchParams.get('contactId');
   const q = url.searchParams.get('q')?.trim();
   const limit = Math.min(Number(url.searchParams.get('limit') ?? 50), 200);
   const offset = Math.max(Number(url.searchParams.get('offset') ?? 0), 0);
@@ -48,6 +49,7 @@ export async function GET(req: Request, { params }: Params) {
     WHERE d.account_id = ${accountId}::uuid
       AND (${status}::text IS NULL OR d.status = ${status})
       AND (${type}::text IS NULL OR d.type = ${type})
+      AND (${contactId}::uuid IS NULL OR d.contact_id = ${contactId}::uuid)
       AND (
         ${q ?? null}::text IS NULL
         OR d.title ILIKE '%' || ${q ?? ''} || '%'
@@ -111,6 +113,28 @@ export async function POST(req: Request, { params }: Params) {
     }
   }
 
+  let templateId = body.templateId ?? null;
+  if (templateId) {
+    const templates = await sql`
+      SELECT id FROM das_templates
+      WHERE id = ${templateId}::uuid AND account_id = ${accountId}::uuid
+      LIMIT 1
+    `;
+    if (!templates[0]) {
+      return Response.json({ error: 'Template not found' }, { status: 404 });
+    }
+  } else {
+    const autoTemplates = await sql`
+      SELECT id FROM das_templates
+      WHERE account_id = ${accountId}::uuid
+        AND type = ${type}
+        AND is_active = true
+      ORDER BY created_at ASC
+      LIMIT 1
+    `;
+    templateId = (autoTemplates[0] as { id: string } | undefined)?.id ?? null;
+  }
+
   const rows = await sql`
     INSERT INTO das_documents (
       account_id,
@@ -125,7 +149,7 @@ export async function POST(req: Request, { params }: Params) {
     VALUES (
       ${accountId}::uuid,
       ${body.contactId ?? null}::uuid,
-      ${body.templateId ?? null}::uuid,
+      ${templateId}::uuid,
       ${type as DasDocumentType},
       ${title},
       'draft',

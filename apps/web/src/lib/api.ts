@@ -368,6 +368,19 @@ export type DasDocumentSecurity = {
   artifactUrl: string | null;
 };
 
+export type DasNotification = {
+  id: string;
+  accountId: string;
+  userId: string;
+  type: string;
+  title: string;
+  body: string | null;
+  entityType: string | null;
+  entityId: string | null;
+  readAt: string | null;
+  createdAt: string;
+};
+
 export type DasVerifyResult = {
   valid: boolean;
   hashMatches: boolean;
@@ -3081,16 +3094,56 @@ export const api = {
       },
     },
 
+    notifications: {
+      list: (
+        accountId: string,
+        token: string,
+        query?: { unreadOnly?: boolean; limit?: number; offset?: number }
+      ) => {
+        const params = new URLSearchParams();
+        if (query?.unreadOnly) params.set('unreadOnly', 'true');
+        if (query?.limit != null) params.set('limit', String(query.limit));
+        if (query?.offset != null) params.set('offset', String(query.offset));
+        const qs = params.toString();
+        return request<{
+          notifications: DasNotification[];
+          total: number;
+          unreadCount: number;
+        }>(`/accounts/${accountId}/das/notifications${qs ? `?${qs}` : ''}`, {
+          token,
+        });
+      },
+
+      markRead: (
+        accountId: string,
+        body: { ids?: string[]; markAllRead?: boolean },
+        token: string
+      ) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/das/notifications`, {
+          method: 'PATCH',
+          body,
+          token,
+        }),
+    },
+
     documents: {
       list: (
         accountId: string,
         token: string,
-        query?: { q?: string; status?: string; type?: string; limit?: number; offset?: number }
+        query?: {
+          q?: string;
+          status?: string;
+          type?: string;
+          contactId?: string;
+          limit?: number;
+          offset?: number;
+        }
       ) => {
         const params = new URLSearchParams();
         if (query?.q) params.set('q', query.q);
         if (query?.status) params.set('status', query.status);
         if (query?.type) params.set('type', query.type);
+        if (query?.contactId) params.set('contactId', query.contactId);
         if (query?.limit != null) params.set('limit', String(query.limit));
         if (query?.offset != null) params.set('offset', String(query.offset));
         const qs = params.toString();

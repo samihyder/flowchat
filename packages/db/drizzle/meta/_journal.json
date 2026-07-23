@@ -288,6 +288,13 @@
       "when": 1780334228280,
       "tag": "0040_das_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1780334229280,
+      "tag": "0041_das_notifications",
+      "breakpoints": true
     }
   ]
 }

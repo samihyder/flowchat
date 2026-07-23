@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { Route } from 'next';
 import { useAuthStore } from '@/store/auth';
 import { api, type DasDocument } from '@/lib/api';
@@ -51,6 +51,8 @@ function countStatuses(docs: DasDocument[]): StatusCounts {
 
 export default function DocumentsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const contactIdFilter = searchParams.get('contactId')?.trim() || '';
   const { token, accountId } = useAuthStore();
   const [documents, setDocuments] = useState<DasDocument[]>([]);
   const [total, setTotal] = useState(0);
@@ -63,6 +65,7 @@ export default function DocumentsPage() {
   const [type, setType] = useState('');
   const [page, setPage] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [contactName, setContactName] = useState('');
   const [stats, setStats] = useState<StatusCounts>({
     draft: 0,
     pending_approval: 0,
@@ -78,7 +81,18 @@ export default function DocumentsPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [debouncedQ, status, type]);
+  }, [debouncedQ, status, type, contactIdFilter]);
+
+  useEffect(() => {
+    if (!token || !accountId || !contactIdFilter) {
+      setContactName('');
+      return;
+    }
+    api.contacts
+      .get(accountId, contactIdFilter, token)
+      .then((r) => setContactName(r.contact.name))
+      .catch(() => setContactName(''));
+  }, [token, accountId, contactIdFilter]);
 
   const loadOverview = useCallback(async () => {
     if (!token || !accountId) return;
@@ -100,6 +114,7 @@ export default function DocumentsPage() {
         q: debouncedQ || undefined,
         status: status || undefined,
         type: type || undefined,
+        contactId: contactIdFilter || undefined,
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
       });
@@ -111,7 +126,7 @@ export default function DocumentsPage() {
       setLoading(false);
       hasLoadedOnce.current = true;
     }
-  }, [token, accountId, debouncedQ, status, type, page]);
+  }, [token, accountId, debouncedQ, status, type, page, contactIdFilter]);
 
   useEffect(() => {
     void loadOverview();
@@ -121,10 +136,14 @@ export default function DocumentsPage() {
     void load();
   }, [load]);
 
+  const clearContactFilter = () => {
+    router.push('/dashboard/documents' as Route);
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rangeStart = total === 0 ? 0 : page * PAGE_SIZE + 1;
   const rangeEnd = Math.min(total, (page + 1) * PAGE_SIZE);
-  const filtersActive = Boolean(debouncedQ || status || type);
+  const filtersActive = Boolean(debouncedQ || status || type || contactIdFilter);
   const showInitialLoad = loading && !hasLoadedOnce.current;
 
   return (
@@ -196,6 +215,16 @@ export default function DocumentsPage() {
                   </option>
                 ))}
               </select>
+              {contactIdFilter && (
+                <button
+                  type="button"
+                  onClick={clearContactFilter}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-primary-200 bg-primary-50 text-xs text-primary-800 hover:bg-primary-100"
+                >
+                  Contact: {contactName || '…'}
+                  <span aria-hidden>×</span>
+                </button>
+              )}
               {filtersActive && (
                 <button
                   type="button"
@@ -204,6 +233,7 @@ export default function DocumentsPage() {
                     setDebouncedQ('');
                     setType('');
                     setStatus('');
+                    if (contactIdFilter) clearContactFilter();
                   }}
                   className="text-xs text-primary-600 hover:underline px-1"
                 >
@@ -290,6 +320,9 @@ export default function DocumentsPage() {
           token={token}
           accountId={accountId}
           onClose={() => setCreateOpen(false)}
+          initialContactId={contactIdFilter || undefined}
+          initialContactName={contactName || undefined}
+          lockContact={Boolean(contactIdFilter)}
           onCreate={async (input) => {
             const res = await api.das.documents.create(
               accountId,
@@ -297,6 +330,7 @@ export default function DocumentsPage() {
                 type: input.type as DasDocumentType,
                 title: input.title,
                 contactId: input.contactId,
+                templateId: input.templateId,
               },
               token
             );

@@ -17,7 +17,13 @@ type Props = {
     type: DasDocumentType;
     title: string;
     contactId?: string | null;
+    templateId?: string | null;
   }) => Promise<void>;
+  initialContactId?: string;
+  initialContactName?: string;
+  lockContact?: boolean;
+  defaultType?: DasDocumentType;
+  defaultTitle?: string;
 };
 
 export function DocumentCreateModal({
@@ -26,6 +32,11 @@ export function DocumentCreateModal({
   accountId,
   onClose,
   onCreate,
+  initialContactId,
+  initialContactName,
+  lockContact,
+  defaultType,
+  defaultTitle,
 }: Props) {
   const [type, setType] = useState<DasDocumentType>('quotation');
   const [title, setTitle] = useState('');
@@ -37,13 +48,13 @@ export function DocumentCreateModal({
 
   useEffect(() => {
     if (!open) return;
-    setType('quotation');
-    setTitle('');
+    setType(defaultType ?? 'quotation');
+    setTitle(defaultTitle ?? '');
     setContactQ('');
-    setContactId('');
+    setContactId(initialContactId ?? '');
     setError('');
     setSaving(false);
-  }, [open]);
+  }, [open, defaultType, defaultTitle, initialContactId]);
 
   useEffect(() => {
     if (!open) return;
@@ -55,7 +66,7 @@ export function DocumentCreateModal({
   }, [open, saving, onClose]);
 
   useEffect(() => {
-    if (!open || !token || !accountId) return;
+    if (!open || !token || !accountId || lockContact) return;
     const handle = window.setTimeout(() => {
       api.contacts
         .list(accountId, token, { q: contactQ.trim() || undefined, limit: 8 })
@@ -63,7 +74,7 @@ export function DocumentCreateModal({
         .catch(() => setContacts([]));
     }, 200);
     return () => window.clearTimeout(handle);
-  }, [open, token, accountId, contactQ]);
+  }, [open, token, accountId, contactQ, lockContact]);
 
   if (!open) return null;
 
@@ -73,10 +84,22 @@ export function DocumentCreateModal({
     setSaving(true);
     setError('');
     try {
+      let templateId: string | null = null;
+      try {
+        const tplRes = await api.das.templates.list(accountId, token, {
+          type,
+          active: true,
+        });
+        templateId = tplRes.templates[0]?.id ?? null;
+      } catch {
+        templateId = null;
+      }
+
       await onCreate({
         type,
         title: title.trim(),
         contactId: contactId || null,
+        templateId,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create document');
@@ -135,29 +158,40 @@ export function DocumentCreateModal({
 
           <div>
             <label htmlFor="doc-contact-q" className="text-xs text-gray-500 block mb-1">
-              Link contact (optional)
+              {lockContact ? 'Contact' : 'Link contact (optional)'}
             </label>
-            <Input
-              id="doc-contact-q"
-              value={contactQ}
-              onChange={(e) => setContactQ(e.target.value)}
-              placeholder="Search contacts…"
-              disabled={saving}
-            />
-            <select
-              className={`${fieldClass} mt-2`}
-              value={contactId}
-              onChange={(e) => setContactId(e.target.value)}
-              disabled={saving}
-            >
-              <option value="">No contact</option>
-              {contacts.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                  {c.email ? ` · ${c.email}` : ''}
-                </option>
-              ))}
-            </select>
+            {lockContact ? (
+              <div className="rounded-lg border border-primary-100 bg-primary-50/40 px-3 py-2.5">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {initialContactName || 'Linked contact'}
+                </p>
+                <p className="text-[10px] text-gray-500 mt-0.5">Contact is locked for this document</p>
+              </div>
+            ) : (
+              <>
+                <Input
+                  id="doc-contact-q"
+                  value={contactQ}
+                  onChange={(e) => setContactQ(e.target.value)}
+                  placeholder="Search contacts…"
+                  disabled={saving}
+                />
+                <select
+                  className={`${fieldClass} mt-2`}
+                  value={contactId}
+                  onChange={(e) => setContactId(e.target.value)}
+                  disabled={saving}
+                >
+                  <option value="">No contact</option>
+                  {contacts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                      {c.email ? ` · ${c.email}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
           </div>
         </div>
 
