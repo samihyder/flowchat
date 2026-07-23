@@ -717,9 +717,20 @@ export default function ContactProfilePage() {
           {activeTab === 'documents' && (
             <section>
               <div className="flex items-center justify-between gap-3 mb-4">
-                <p className="text-sm text-gray-500">
-                  Documents linked to this contact.
-                </p>
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Documents linked to this contact.
+                  </p>
+                  <Link
+                    href={`/dashboard/documents?contactId=${encodeURIComponent(contactId)}` as Route}
+                    className="inline-flex items-center gap-1 mt-1 text-xs font-medium text-primary-600 hover:underline"
+                  >
+                    Open in Documents module
+                    <span className="material-symbols-outlined text-[14px]" aria-hidden>
+                      open_in_new
+                    </span>
+                  </Link>
+                </div>
                 <Button type="button" size="sm" onClick={() => setDocCreateOpen(true)}>
                   + New quotation
                 </Button>

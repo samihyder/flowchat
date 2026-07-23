@@ -474,16 +474,16 @@ export default function DocumentDetailPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col animate-fade-in">
-      <header className="shrink-0 bg-gradient-to-r from-slate-50 to-white border-b border-gray-200 px-6 py-5">
+      <header className="shrink-0 bg-gradient-to-r from-primary-50 via-cyan-50 to-white border-b border-primary-200/70 px-6 py-5">
         <Link
           href={'/dashboard/documents' as Route}
-          className="text-xs font-medium text-primary-600 hover:underline"
+          className="text-xs font-medium text-primary-700 hover:underline"
         >
           ← All documents
         </Link>
         <div className="mt-3 flex items-start justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 text-white flex items-center justify-center text-lg font-bold shadow-md shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-teal-700 text-white flex items-center justify-center text-lg font-bold shadow-md shrink-0 ring-2 ring-primary-200/80">
               {initialsFromName(document.title)}
             </div>
             <div className="min-w-0">
@@ -587,7 +587,7 @@ export default function DocumentDetailPage() {
         </div>
       </header>
 
-      <div className="shrink-0 flex items-stretch bg-white border-b border-gray-200 overflow-x-auto">
+      <div className="shrink-0 flex items-stretch bg-white/90 border-b border-primary-100 overflow-x-auto">
         <Fact label="Type" value={<DocumentTypeBadge type={document.type} />} />
         <Fact label="Status" value={<DocumentStatusBadge status={document.status} />} />
         <Fact
@@ -596,7 +596,7 @@ export default function DocumentDetailPage() {
             document.contactId && document.contactName ? (
               <Link
                 href={`/dashboard/contacts/${document.contactId}` as Route}
-                className="text-primary-600 hover:underline font-medium"
+                className="text-primary-700 hover:underline font-semibold"
               >
                 {document.contactName}
               </Link>
@@ -605,6 +605,19 @@ export default function DocumentDetailPage() {
             )
           }
         />
+        {linkedContact?.conversations?.[0] ? (
+          <Fact
+            label="Inbox"
+            value={
+              <Link
+                href={`/dashboard?conversation=${linkedContact.conversations[0].id}` as Route}
+                className="text-primary-700 hover:underline font-semibold"
+              >
+                Open chat
+              </Link>
+            }
+          />
+        ) : null}
         <Fact
           label="Created"
           value={

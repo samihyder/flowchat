@@ -430,7 +430,10 @@ export default function EmailMarketingSettingsPage() {
           Require double opt-in before first marketing send
         </label>
         <p className="text-xs text-gray-400">
-          Resend webhook: <code className="font-mono">/api/webhooks/resend</code>
+          Inbound ESP webhooks require a signing secret. Prefer the credential URL from Marketing
+          health / Connected Services (<code className="font-mono">/api/webhooks/email/…</code>).
+          Platform fallback <code className="font-mono">/api/webhooks/resend</code> only works when{' '}
+          <code className="font-mono">RESEND_WEBHOOK_SECRET</code> is set.
         </p>
       </section>
     </div>

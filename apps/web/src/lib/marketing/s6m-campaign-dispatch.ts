@@ -52,7 +52,7 @@ async function logActivity(
 async function maybeCompleteCampaign(sql: AppSql, campaignId: string) {
   const pending = await sql`
     SELECT COUNT(*)::int as n FROM marketing_campaign_recipient_steps
-    WHERE campaign_id = ${campaignId}::uuid AND status = 'pending'
+    WHERE campaign_id = ${campaignId}::uuid AND status IN ('pending', 'queued')
   `;
   if ((pending[0] as { n: number }).n > 0) return;
 
@@ -62,6 +62,17 @@ async function maybeCompleteCampaign(sql: AppSql, campaignId: string) {
     WHERE id = ${campaignId}::uuid AND status IN ('running', 'scheduled', 'paused')
   `;
   await logActivity(sql, campaignId, 'campaign_completed', {});
+}
+
+/** Atomically claim a pending step before send (S6M-9 / TOCTOU-safe). */
+async function claimPendingStep(sql: AppSql, stepRowId: string): Promise<boolean> {
+  const claimed = await sql`
+    UPDATE marketing_campaign_recipient_steps
+    SET status = 'queued', updated_at = NOW()
+    WHERE id = ${stepRowId}::uuid AND status = 'pending'
+    RETURNING id
+  `;
+  return claimed.length > 0;
 }
 
 export async function processS6mCampaignBatch(
@@ -159,6 +170,10 @@ export async function processS6mCampaignBatch(
 
     const rateAllowance = await getRateAllowance(row.campaignId);
     if (rateAllowance.enabled && rateAllowance.remaining <= 0) continue;
+
+    // Claim before send so concurrent cron workers cannot double-send.
+    const claimed = await claimPendingStep(sql, row.stepRowId);
+    if (!claimed) continue;
     if (rateAllowance.enabled) rateAllowance.remaining -= 1;
 
     let settings = settingsCache.get(row.accountId);
@@ -258,7 +273,7 @@ export async function processS6mCampaignBatch(
         UPDATE marketing_campaign_recipient_steps
         SET status = 'sent', sent_at = NOW(), provider_message_id = ${result.messageId},
             updated_at = NOW()
-        WHERE id = ${row.stepRowId}::uuid AND status = 'pending'
+        WHERE id = ${row.stepRowId}::uuid AND status = 'queued'
       `;
       await logActivity(
         sql,
@@ -272,7 +287,7 @@ export async function processS6mCampaignBatch(
       await sql`
         UPDATE marketing_campaign_recipient_steps
         SET status = 'failed', last_error_code = ${result.error.slice(0, 200)}, updated_at = NOW()
-        WHERE id = ${row.stepRowId}::uuid AND status = 'pending'
+        WHERE id = ${row.stepRowId}::uuid AND status = 'queued'
       `;
       await logActivity(
         sql,
@@ -300,7 +315,7 @@ export async function skipPendingStepsForRecipient(
   await sql`
     UPDATE marketing_campaign_recipient_steps
     SET status = 'skipped', updated_at = NOW()
-    WHERE recipient_id = ${recipientId}::uuid AND status = 'pending'
+    WHERE recipient_id = ${recipientId}::uuid AND status IN ('pending', 'queued')
   `;
   await sql`
     UPDATE marketing_campaign_recipients

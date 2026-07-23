@@ -1,6 +1,6 @@
 import { neon } from '@/lib/neon';
 import { getCredentialSecret } from '@/lib/credentials/store';
-import { verifySvixWebhook } from '@/lib/credentials/webhook-signature';
+import { verifyEmailWebhook } from '@/lib/credentials/webhook-signature';
 import { handleResendWebhookEvent } from '@/lib/marketing/resend-events';
 import type { AppSql } from '@/lib/db-sql';
 
@@ -23,14 +23,24 @@ export async function POST(req: Request, { params }: Params) {
 
   const webhookSecret =
     typeof cred.row.config.webhookSigningSecret === 'string'
-      ? cred.row.config.webhookSigningSecret
+      ? cred.row.config.webhookSigningSecret.trim()
       : '';
 
-  if (webhookSecret) {
-    const verified = verifySvixWebhook(rawBody, req.headers, webhookSecret);
-    if (!verified) {
-      return Response.json({ error: 'Invalid webhook signature — check the whsec_ signing secret from Resend' }, { status: 401 });
-    }
+  if (!webhookSecret) {
+    return Response.json(
+      {
+        error:
+          'Webhook signing secret not configured — add the ESP signing secret on Connected Services',
+      },
+      { status: 401 }
+    );
+  }
+
+  if (!verifyEmailWebhook(cred.row.provider, rawBody, req.headers, webhookSecret)) {
+    return Response.json(
+      { error: 'Invalid webhook signature — check the signing secret from your ESP' },
+      { status: 401 }
+    );
   }
 
   const body = JSON.parse(rawBody) as { type: string; data?: Record<string, unknown> };
@@ -69,7 +79,15 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   if (cred.row.provider === 'mailgun') {
-    const eventData = (body as { 'event-data'?: { event?: string; message?: { headers?: { 'message-id'?: string } }; recipient?: string } })['event-data'];
+    const eventData = (
+      body as {
+        'event-data'?: {
+          event?: string;
+          message?: { headers?: { 'message-id'?: string } };
+          recipient?: string;
+        };
+      }
+    )['event-data'];
     if (eventData?.message?.headers?.['message-id']) {
       const map: Record<string, string> = {
         delivered: 'email.delivered',

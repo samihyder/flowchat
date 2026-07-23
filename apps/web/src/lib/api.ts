@@ -1680,7 +1680,8 @@ export const api = {
         cronLastAt: string | null;
         cronLastProcessed: number;
         cronError: string | null;
-        webhookUrl: string;
+        webhookUrl: string | null;
+        webhookSigningConfigured?: boolean;
         fromEmail: string;
       }>(`/accounts/${accountId}/marketing/health`, { token }),
     processDue: (accountId: string, token: string) =>

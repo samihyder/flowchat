@@ -400,6 +400,25 @@ export function ContactQuickActionsPanel({
             </div>
           </section>
 
+          <section className="p-4 border-b border-primary-100 bg-gradient-to-r from-primary-50/70 to-cyan-50/40">
+            <h3 className={sectionTitle}>Documents</h3>
+            <div className="grid grid-cols-1 gap-2">
+              {contactId ? (
+                <QuickLink
+                  href={`/dashboard/documents?contactId=${encodeURIComponent(contactId)}`}
+                  onClick={onClose}
+                >
+                  <span className="text-base">📄</span>
+                  <span className="font-medium">View linked documents</span>
+                </QuickLink>
+              ) : null}
+              <QuickLink href="/dashboard/documents" onClick={onClose}>
+                <span className="text-base">🗂️</span>
+                <span className="font-medium">Open Documents module</span>
+              </QuickLink>
+            </div>
+          </section>
+
           <section className="p-4 border-b border-gray-100">
             <h3 className={sectionTitle}>Progress this contact</h3>
             <div className="flex flex-wrap gap-2 mb-3">

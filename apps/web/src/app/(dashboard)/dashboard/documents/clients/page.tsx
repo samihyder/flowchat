@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import type { Route } from 'next';
 import { useAuthStore } from '@/store/auth';
 import { api, type Contact, type DasClient } from '@/lib/api';
 import { PageHeader } from '@/components/ui/page-header';
@@ -333,13 +335,30 @@ export default function DocumentsClientsPage() {
           ) : (
             <ul className="divide-y divide-gray-100">
               {clients.map((c) => (
-                <li key={c.id} className="px-5 py-3 flex items-center gap-3">
+                <li
+                  key={c.id}
+                  className="px-5 py-3 flex items-center gap-3 hover:bg-primary-50/40 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-teal-700 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                    {(c.name || '?').slice(0, 1).toUpperCase()}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-gray-900 truncate">{c.name}</p>
                     <p className="text-xs text-gray-500 mt-0.5 truncate">
                       {[c.company, c.email, c.phone].filter(Boolean).join(' · ') ||
                         'No details'}
                     </p>
+                    {c.contactId ? (
+                      <Link
+                        href={`/dashboard/contacts/${c.contactId}` as Route}
+                        className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium text-primary-600 hover:underline"
+                      >
+                        <span className="material-symbols-outlined text-[13px]" aria-hidden>
+                          person
+                        </span>
+                        Open CRM contact
+                      </Link>
+                    ) : null}
                   </div>
                   <Button
                     type="button"

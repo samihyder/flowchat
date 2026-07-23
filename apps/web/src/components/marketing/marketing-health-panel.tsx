@@ -11,7 +11,8 @@ export type MarketingHealthData = {
   cronLastAt: string | null;
   cronLastProcessed: number;
   cronError: string | null;
-  webhookUrl: string;
+  webhookUrl: string | null;
+  webhookSigningConfigured?: boolean;
   fromEmail: string;
 };
 
@@ -154,12 +155,25 @@ export function MarketingHealthPanel({
 
         <div className="rounded-xl border border-gray-200 p-4">
           <p className="text-label-caps text-gray-400 uppercase text-xs mb-2">Inbound webhook URL</p>
-          <p className="text-xs font-data-mono text-gray-600 break-all bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
-            {health.webhookUrl}
-          </p>
-          <p className="text-xs text-gray-500 mt-2">
-            Configure this URL in your ESP for delivery, bounce, and complaint events.
-          </p>
+          {health.webhookUrl ? (
+            <>
+              <p className="text-xs font-data-mono text-gray-600 break-all bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+                {health.webhookUrl}
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Paste this URL in your ESP. Events are rejected unless a signing secret is configured
+                {health.webhookSigningConfigured === false
+                  ? ' — add the ESP signing secret under Connected Services before enabling the webhook.'
+                  : ' (Svix / whsec_ for Resend).'}
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-status-danger-text bg-status-danger-surface rounded-lg px-3 py-2 border border-status-danger-border">
+              No signed webhook endpoint available. Connect an email credential under Connected
+              Services and add the ESP signing secret, or set RESEND_WEBHOOK_SECRET for platform
+              Resend.
+            </p>
+          )}
         </div>
       </div>
     </section>

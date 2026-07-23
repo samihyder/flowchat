@@ -7,9 +7,58 @@ type ResendEvent = {
   data?: {
     email_id?: string;
     to?: string[];
-    bounce?: { message?: string };
+    bounce?: {
+      message?: string;
+      type?: string;
+      subType?: string;
+    };
   };
 };
+
+/**
+ * Classify Resend bounce / delay events (S6M-10 / S6M-36).
+ * Prefer `bounce.type` (Permanent | Transient | Temporary); fall back to message text.
+ * `email.delivery_delayed` is always soft; bare `email.bounced` defaults to hard.
+ */
+export function classifyBounce(
+  eventType: string,
+  bounce?: { message?: string; type?: string; subType?: string } | null
+): 'hard' | 'soft' {
+  if (eventType === 'email.delivery_delayed') return 'soft';
+
+  const bounceType = (bounce?.type ?? '').toLowerCase().trim();
+  if (bounceType === 'permanent' || bounceType === 'hard') return 'hard';
+  if (
+    bounceType === 'transient' ||
+    bounceType === 'temporary' ||
+    bounceType === 'soft'
+  ) {
+    return 'soft';
+  }
+
+  const message = (bounce?.message ?? '').toLowerCase();
+  if (
+    message.includes('soft bounce') ||
+    message.includes('mailbox full') ||
+    message.includes('temporary') ||
+    message.includes('try again later') ||
+    /\b4\d{2}\b/.test(message)
+  ) {
+    return 'soft';
+  }
+  if (
+    message.includes('hard bounce') ||
+    message.includes('does not exist') ||
+    message.includes('user unknown') ||
+    message.includes('mailbox unavailable') ||
+    /\b5\d{2}\b/.test(message)
+  ) {
+    return 'hard';
+  }
+
+  // Resend documents email.bounced as permanent rejection.
+  return 'hard';
+}
 
 async function logS6mActivity(
   sql: AppSql,
@@ -73,6 +122,7 @@ async function findS6mStepByMessageId(sql: AppSql, messageId: string) {
 function statusRank(status: string): number {
   const ranks: Record<string, number> = {
     pending: 0,
+    queued: 0,
     sent: 1,
     delivered: 2,
     opened: 3,
@@ -118,24 +168,39 @@ export async function handleS6mResendWebhookEvent(sql: AppSql, event: ResendEven
     return true;
   }
 
-  if (type === 'email.bounced') {
+  if (type === 'email.bounced' || type === 'email.delivery_delayed') {
     const retryRows = await sql`
-      SELECT retry_count as "retryCount" FROM marketing_campaign_recipient_steps
+      SELECT retry_count as "retryCount"
+      FROM marketing_campaign_recipient_steps
       WHERE id = ${stepRowId}::uuid
     `;
-    const retryCount = Number((retryRows[0] as { retryCount?: number })?.retryCount ?? 0);
-    const isHard = (event.data?.bounce?.message ?? '').toLowerCase().includes('hard');
+    const retryCount = Number((retryRows[0] as { retryCount?: number } | undefined)?.retryCount ?? 0);
+    const kind = classifyBounce(type, event.data?.bounce);
 
-    if (!isHard && retryCount < 1) {
+    // Soft: retry once (S6M-36). Hard or exhausted soft: stop + suppress.
+    if (kind === 'soft' && retryCount < 1) {
       await sql`
         UPDATE marketing_campaign_recipient_steps
         SET
+          status = 'pending',
           retry_count = retry_count + 1,
           scheduled_at = NOW() + INTERVAL '4 hours',
           updated_at = NOW()
         WHERE id = ${stepRowId}::uuid
       `;
-      await logS6mActivity(sql, campaignId, 'soft_bounce', { messageId, retryCount: retryCount + 1 }, recipientId);
+      await logS6mActivity(
+        sql,
+        campaignId,
+        'soft_bounce',
+        {
+          messageId,
+          retryCount: retryCount + 1,
+          bounceType: event.data?.bounce?.type ?? null,
+          bounceSubType: event.data?.bounce?.subType ?? null,
+          eventType: type,
+        },
+        recipientId
+      );
       return true;
     }
 
@@ -148,9 +213,20 @@ export async function handleS6mResendWebhookEvent(sql: AppSql, event: ResendEven
     if (bounceFlags.autoMarkBounced) {
       await skipPendingStepsForRecipient(sql, recipientId, 'bounce');
       await suppressEmail(sql, accountId, email, 'bounced');
-      await logS6mActivity(sql, campaignId, 'recipient_stop', { reason: 'bounce', messageId }, recipientId);
+      await logS6mActivity(
+        sql,
+        campaignId,
+        'recipient_stop',
+        {
+          reason: 'bounce',
+          messageId,
+          bounceKind: kind,
+          bounceType: event.data?.bounce?.type ?? null,
+        },
+        recipientId
+      );
     } else {
-      await logS6mActivity(sql, campaignId, 'bounce_ignored', { messageId }, recipientId);
+      await logS6mActivity(sql, campaignId, 'bounce_ignored', { messageId, bounceKind: kind }, recipientId);
     }
     return true;
   }

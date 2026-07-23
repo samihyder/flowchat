@@ -18,11 +18,35 @@ import type { DasDocumentType } from '@/lib/das/types';
 
 const PAGE_SIZE = 50;
 
-function Fact({ label, value }: { label: string; value: React.ReactNode }) {
+function Fact({
+  label,
+  value,
+  tone = 'slate',
+}: {
+  label: string;
+  value: React.ReactNode;
+  tone?: 'slate' | 'amber' | 'cyan' | 'emerald' | 'primary';
+}) {
+  const tones = {
+    slate: 'border-slate-200 bg-white',
+    amber: 'border-amber-200 bg-amber-50/80',
+    cyan: 'border-cyan-200 bg-cyan-50/80',
+    emerald: 'border-emerald-200 bg-emerald-50/80',
+    primary: 'border-primary-200 bg-primary-50/80',
+  } as const;
+  const labelTone = {
+    slate: 'text-slate-400',
+    amber: 'text-amber-700/70',
+    cyan: 'text-cyan-700/70',
+    emerald: 'text-emerald-700/70',
+    primary: 'text-primary-700/70',
+  } as const;
   return (
-    <div className="px-4 py-2.5 border-r border-gray-100 last:border-r-0 shrink-0">
-      <p className="text-[10px] uppercase tracking-wide text-gray-400">{label}</p>
-      <p className="text-sm font-semibold text-gray-900 mt-0.5">{value}</p>
+    <div className={`px-4 py-3 border-r last:border-r-0 shrink-0 ${tones[tone]}`}>
+      <p className={`text-[10px] uppercase tracking-wide font-semibold ${labelTone[tone]}`}>
+        {label}
+      </p>
+      <p className="text-sm font-bold text-slate-900 mt-0.5">{value}</p>
     </div>
   );
 }
@@ -149,13 +173,13 @@ export default function DocumentsPage() {
   return (
     <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <PageHeader
-        title="Documents"
+        title="Document library"
         description={
           showInitialLoad
             ? 'Quotations, invoices, proposals, and agreements'
             : filtersActive
               ? `${total} match${total === 1 ? '' : 'es'} · ${overviewTotal} total`
-              : `${overviewTotal} document${overviewTotal === 1 ? '' : 's'}`
+              : `${overviewTotal} document${overviewTotal === 1 ? '' : 's'} across your CRM`
         }
         action={
           <Button type="button" onClick={() => setCreateOpen(true)}>
@@ -164,15 +188,16 @@ export default function DocumentsPage() {
         }
       />
 
-      <div className="mx-6 mt-4 mb-3 flex items-stretch bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto shrink-0">
-        <Fact label="Total documents" value={showInitialLoad ? '—' : overviewTotal} />
-        <Fact label="Drafts" value={showInitialLoad ? '—' : stats.draft} />
+      <div className="mx-6 mt-4 mb-3 flex items-stretch rounded-xl border border-primary-200/70 shadow-sm overflow-x-auto shrink-0 divide-x divide-primary-100/80">
+        <Fact label="Total documents" value={showInitialLoad ? '—' : overviewTotal} tone="cyan" />
+        <Fact label="Drafts" value={showInitialLoad ? '—' : stats.draft} tone="slate" />
         <Fact
           label="Pending approval"
           value={showInitialLoad ? '—' : stats.pending_approval}
+          tone="amber"
         />
-        <Fact label="Approved" value={showInitialLoad ? '—' : stats.approved} />
-        <Fact label="Finalized" value={showInitialLoad ? '—' : stats.finalized} />
+        <Fact label="Approved" value={showInitialLoad ? '—' : stats.approved} tone="primary" />
+        <Fact label="Finalized" value={showInitialLoad ? '—' : stats.finalized} tone="emerald" />
       </div>
 
       {error && (
@@ -181,9 +206,9 @@ export default function DocumentsPage() {
         </div>
       )}
 
-      <div className="flex-1 flex min-h-0 mx-6 mb-6 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="flex-1 flex min-h-0 mx-6 mb-6 rounded-xl border border-primary-200/70 bg-white/90 shadow-sm overflow-hidden ring-1 ring-primary-100/50">
         <div className="flex-1 min-w-0 flex flex-col min-h-0">
-          <div className="shrink-0 p-3 border-b border-gray-100 bg-slate-50/80">
+          <div className="shrink-0 p-3 border-b border-primary-100 bg-gradient-to-r from-primary-50/90 to-cyan-50/50">
             <div className="flex flex-wrap gap-2 items-center">
               <Input
                 value={q}
@@ -194,7 +219,7 @@ export default function DocumentsPage() {
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                className="px-2 py-2 text-xs border border-primary-200 rounded-lg bg-white"
               >
                 <option value="">All types</option>
                 {documentTypeOptions().map((opt) => (
@@ -206,7 +231,7 @@ export default function DocumentsPage() {
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                className="px-2 py-2 text-xs border border-primary-200 rounded-lg bg-white"
               >
                 <option value="">All statuses</option>
                 {documentStatusOptions().map((opt) => (

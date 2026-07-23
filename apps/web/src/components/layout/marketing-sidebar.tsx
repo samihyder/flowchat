@@ -15,8 +15,6 @@ const CRM_HOME = '/dashboard/contacts' as const;
 const navItems = [
   { label: 'Campaigns', href: marketingRoutes.campaigns, icon: 'mail' },
   { label: 'Templates', href: marketingRoutes.templates, icon: 'description' },
-  { label: 'Segments', href: marketingRoutes.segments, icon: 'groups' },
-  { label: 'Workflows', href: marketingRoutes.workflows, icon: 'bolt' },
 ] as const;
 
 type MarketingSidebarProps = {

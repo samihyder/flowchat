@@ -57,9 +57,19 @@ export async function GET(_req: Request, { params }: Params) {
     process.env.NEXT_PUBLIC_WEB_APP_URL ??
     process.env.WEB_APP_URL ??
     'https://app.flowchat.io';
-  const webhookHint = cred
+
+  // Prefer credential-scoped URL. Platform fallback only when RESEND_WEBHOOK_SECRET is set
+  // (unsigned /api/webhooks/resend is no longer advertised).
+  const platformWebhookConfigured = Boolean((process.env.RESEND_WEBHOOK_SECRET ?? '').trim());
+  const webhookUrl = cred
     ? `${origin}/api/webhooks/email/${cred.row.id}`
-    : `${origin}/api/webhooks/resend`;
+    : platformWebhookConfigured
+      ? `${origin}/api/webhooks/resend`
+      : null;
+  const webhookSigningConfigured = cred
+    ? typeof cred.row.config?.webhookSigningSecret === 'string' &&
+      Boolean(cred.row.config.webhookSigningSecret.trim())
+    : platformWebhookConfigured;
 
   return Response.json({
     providerOk,
@@ -72,7 +82,8 @@ export async function GET(_req: Request, { params }: Params) {
     cronLastAt: cronState.lastRunAt,
     cronLastProcessed: cronState.lastProcessed,
     cronError: cronState.lastError,
-    webhookUrl: webhookHint,
+    webhookUrl,
+    webhookSigningConfigured,
     fromEmail,
   });
 }
