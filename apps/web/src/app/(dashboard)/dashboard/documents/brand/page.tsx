@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import {
   api,
@@ -13,7 +13,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { fieldClass } from '@/components/ui/form-field';
+import { ImageUploadWithCrop } from '@/components/media/image-upload-with-crop';
+import { InfoHint } from '@/components/media/info-hint';
 import { DAS_ASSET_KINDS } from '@/lib/das/types';
+import {
+  defaultPresetForKind,
+  presetsForFeature,
+  type ImagePresetId,
+} from '@/lib/media/image-presets';
 
 const UPLOAD_KINDS: DasAssetKind[] = ['stamp', 'seal', 'signature', 'initials', 'logo'];
 
@@ -45,7 +52,12 @@ export default function DocumentsBrandPage() {
   const [uploadKind, setUploadKind] = useState<DasAssetKind>('logo');
   const [uploadLabel, setUploadLabel] = useState('');
   const [kindFilter, setKindFilter] = useState<string>('');
-  const fileRef = useRef<HTMLInputElement>(null);
+
+  const assetPresetIds = presetsForFeature('das-asset');
+  const assetDefaultPreset = useMemo(
+    (): ImagePresetId => defaultPresetForKind(uploadKind),
+    [uploadKind]
+  );
 
   const load = useCallback(async () => {
     if (!token || !accountId) return;
@@ -113,8 +125,9 @@ export default function DocumentsBrandPage() {
     }
   };
 
-  const handleUpload = async (file: File) => {
-    if (!token || !accountId) return;
+  const handleUpload = async (file: File, kindOverride?: DasAssetKind) => {
+    if (!token || !accountId) return null;
+    const kind = kindOverride ?? uploadKind;
     setUploading(true);
     setError('');
     try {
@@ -122,7 +135,7 @@ export default function DocumentsBrandPage() {
         accountId,
         {
           contentType: file.type || 'application/octet-stream',
-          kind: uploadKind,
+          kind,
           fileName: file.name,
         },
         token
@@ -140,7 +153,7 @@ export default function DocumentsBrandPage() {
       const created = await api.das.assets.create(
         accountId,
         {
-          kind: uploadKind,
+          kind,
           label: uploadLabel.trim() || file.name,
           fileName: file.name,
           mimeType: file.type || 'application/octet-stream',
@@ -151,10 +164,11 @@ export default function DocumentsBrandPage() {
       );
       setAssets((prev) => [created.asset, ...prev]);
       setUploadLabel('');
-      if (fileRef.current) fileRef.current.value = '';
       setMsg('Asset uploaded');
+      return created.asset;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload asset');
+      return null;
     } finally {
       setUploading(false);
     }
@@ -220,7 +234,14 @@ export default function DocumentsBrandPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Logo URL</label>
+              <div className="flex items-center gap-1.5 mb-1">
+                <label className="text-xs text-gray-500">Logo URL</label>
+                <InfoHint label="Logo URL help">
+                  Paste a URL or upload via Assets below (kind: Logo), then paste the public URL
+                  here. For a cropped square mark, use Upload asset with the Workspace logo or
+                  Square preset.
+                </InfoHint>
+              </div>
               <Input
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
@@ -229,7 +250,14 @@ export default function DocumentsBrandPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Letterhead URL</label>
+              <div className="flex items-center gap-1.5 mb-1">
+                <label className="text-xs text-gray-500">Letterhead URL</label>
+                <InfoHint label="Letterhead size help">
+                  Prefer US Letter (1275×1650) or A4 (1240×1754) at 150 DPI so full-page documents
+                  print sharply. Use Upload asset with Letterhead · US Letter / A4 presets, then
+                  paste the resulting public URL here.
+                </InfoHint>
+              </div>
               <Input
                 value={letterheadUrl}
                 onChange={(e) => setLetterheadUrl(e.target.value)}
@@ -253,11 +281,19 @@ export default function DocumentsBrandPage() {
 
         <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
           <div>
-            <h2 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Upload asset
-            </h2>
+            <div className="flex items-center gap-1.5 mb-1">
+              <h2 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                Upload asset
+              </h2>
+              <InfoHint label="Asset upload help">
+                Images open a crop &amp; resize dialog with size presets for logos, signatures,
+                stamps, and letter/document formats (US Letter or A4). PDFs skip cropping and
+                upload as-is.
+              </InfoHint>
+            </div>
             <p className="text-xs text-gray-500">
-              Images or PDF. Upload requests a signed URL, stores the file, then registers the asset.
+              Images are cropped and resized to the selected preset before upload. PDFs pass through
+              unchanged.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -285,15 +321,49 @@ export default function DocumentsBrandPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <input
-              ref={fileRef}
-              type="file"
+            <ImageUploadWithCrop
+              buttonLabel={uploading ? 'Uploading…' : 'Choose image & crop'}
+              disabled={uploading || loading}
               accept="image/*,application/pdf"
-              className="text-sm text-gray-600"
-              disabled={uploading}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void handleUpload(file);
+              passThroughNonImages
+              defaultPresetId={assetDefaultPreset}
+              allowedPresetIds={assetPresetIds}
+              title={`Crop ${kindLabel(uploadKind)}`}
+              info={
+                <>
+                  Default size follows the asset kind (e.g. signature strip, stamp square, or letter
+                  page). Switch to Letterhead · US Letter / A4 when preparing a full-page document
+                  background.
+                </>
+              }
+              onReady={async (file) => {
+                const asset = await handleUpload(file);
+                if (!asset?.publicUrl) return;
+                if (uploadKind === 'logo' && !logoUrl.trim()) {
+                  setLogoUrl(asset.publicUrl);
+                }
+              }}
+            />
+            <ImageUploadWithCrop
+              buttonLabel={uploading ? 'Uploading…' : 'Letterhead (page size)'}
+              disabled={uploading || loading}
+              accept="image/*"
+              defaultPresetId="letterhead-us-letter"
+              allowedPresetIds={presetsForFeature('letterhead')}
+              title="Crop letterhead / document page"
+              variant="ghost"
+              info={
+                <>
+                  Choose US Letter or A4 to match your document paper size, crop the artwork, then
+                  we save it as a logo asset and fill Letterhead URL when empty.
+                </>
+              }
+              onReady={async (file) => {
+                const asset = await handleUpload(file, 'logo');
+                if (asset?.publicUrl) {
+                  setLetterheadUrl(asset.publicUrl);
+                  setMsg('Letterhead uploaded — remember to Save brand');
+                }
               }}
             />
             {uploading && <span className="text-xs text-gray-500">Uploading…</span>}

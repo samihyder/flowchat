@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { parseInviteDomainsText } from '@/lib/invite-domain';
@@ -9,8 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { labelClass, selectClass } from '@/components/ui/form-field';
 import { AnnotationBox, SettingsCard } from '@/components/ui/settings-page';
 import { Button } from '@/components/ui/button';
+import { ImageUploadWithCrop } from '@/components/media/image-upload-with-crop';
+import { InfoHint } from '@/components/media/info-hint';
 import { getBrowserTimezone } from '@/lib/timezone';
 import { ACCOUNT_LOGO_MAX_BYTES, ACCOUNT_LOGO_SERVER_MAX_BYTES, ACCOUNT_LOGO_SIZE_PX } from '@/lib/branding/logo';
+import { presetsForFeature } from '@/lib/media/image-presets';
 
 const TIMEZONES = [
   'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -48,7 +51,6 @@ export default function AccountSettingsPage() {
   const [inviteDomainsText, setInviteDomainsText] = useState('');
   const [dataRetentionDays, setDataRetentionDays] = useState(365);
   const [slug, setSlug] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
   const timezoneOptions = useMemo(() => {
     const browser = getBrowserTimezone();
     return TIMEZONES.includes(browser) ? TIMEZONES : [browser, ...TIMEZONES];
@@ -97,9 +99,8 @@ export default function AccountSettingsPage() {
     }
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !token || !accountId) return;
+  const handleLogoUpload = async (file: File) => {
+    if (!token || !accountId) return;
     if (file.size > ACCOUNT_LOGO_MAX_BYTES) {
       setError(`Logo must be ${ACCOUNT_LOGO_MAX_BYTES / (1024 * 1024)} MB or smaller.`);
       return;
@@ -143,7 +144,6 @@ export default function AccountSettingsPage() {
       );
     } finally {
       setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
     }
   };
 
@@ -162,13 +162,26 @@ export default function AccountSettingsPage() {
           </div>
         </div>
         <div>
-          <label className={labelClass}>Logo</label>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <label className={labelClass}>Logo</label>
+            <InfoHint label="Logo size guidance">
+              Upload opens a crop &amp; resize tool. Prefer the Workspace logo preset
+              ({ACCOUNT_LOGO_SIZE_PX}×{ACCOUNT_LOGO_SIZE_PX} px) so the mark stays sharp in the
+              sidebar and email signatures. Max {ACCOUNT_LOGO_MAX_BYTES / (1024 * 1024)} MB after
+              export.
+            </InfoHint>
+          </div>
           <div className="flex items-center gap-4">
             <div
-              className="rounded-xl border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center shrink-0"
-              style={{ width: ACCOUNT_LOGO_SIZE_PX, height: ACCOUNT_LOGO_SIZE_PX, maxWidth: '100%' }}
+              className="rounded-xl border-2 border-dashed border-primary-200 overflow-hidden bg-primary-50/30 flex items-center justify-center shrink-0"
+              style={{
+                width: Math.min(ACCOUNT_LOGO_SIZE_PX, 128),
+                height: Math.min(ACCOUNT_LOGO_SIZE_PX, 128),
+                maxWidth: '100%',
+              }}
             >
               {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={logoUrl}
                   alt="Logo"
@@ -181,13 +194,23 @@ export default function AccountSettingsPage() {
               )}
             </div>
             <div>
-              <input ref={fileRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-              <Button type="button" variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-                {uploading ? 'Uploading…' : 'Upload logo'}
-              </Button>
+              <ImageUploadWithCrop
+                buttonLabel={uploading ? 'Uploading…' : 'Upload & crop logo'}
+                disabled={uploading}
+                defaultPresetId="logo"
+                allowedPresetIds={presetsForFeature('account-logo')}
+                title="Crop workspace logo"
+                info={
+                  <>
+                    Crop to a square, then export at {ACCOUNT_LOGO_SIZE_PX}×{ACCOUNT_LOGO_SIZE_PX} for
+                    best results. You can also pick Free crop or Custom size if needed.
+                  </>
+                }
+                onReady={(file) => void handleLogoUpload(file)}
+              />
               <p className="text-[11px] text-gray-400 mt-1.5">
-                PNG or JPG, max {ACCOUNT_LOGO_MAX_BYTES / (1024 * 1024)} MB. Recommended {ACCOUNT_LOGO_SIZE_PX}×
-                {ACCOUNT_LOGO_SIZE_PX}px.
+                PNG recommended · max {ACCOUNT_LOGO_MAX_BYTES / (1024 * 1024)} MB · default{' '}
+                {ACCOUNT_LOGO_SIZE_PX}×{ACCOUNT_LOGO_SIZE_PX}px
               </p>
             </div>
           </div>
