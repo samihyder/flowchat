@@ -309,6 +309,34 @@ export type Contact = {
   updatedAt: string;
 };
 
+export type {
+  DasAsset,
+  DasAssetKind,
+  DasAuditLog,
+  DasBrandProfile,
+  DasCatalogComponent,
+  DasCatalogItem,
+  DasCatalogItemType,
+  DasCatalogPrice,
+  DasClient,
+  DasDocumentType,
+  DasDocumentStatus,
+  DasPriceMode,
+  DasTemplate,
+} from '@/lib/das/types';
+
+import type {
+  DasAsset,
+  DasAuditLog,
+  DasBrandProfile,
+  DasCatalogComponent,
+  DasCatalogItem,
+  DasCatalogItemType,
+  DasCatalogPrice,
+  DasClient,
+  DasTemplate,
+} from '@/lib/das/types';
+
 export type DasDocument = {
   id: string;
   accountId: string;
@@ -331,6 +359,42 @@ export type DasDocument = {
   createdAt: string;
   updatedAt: string;
   contactName?: string | null;
+};
+
+export type DasDocumentSecurity = {
+  verificationToken: string;
+  sha256Hash: string;
+  verifyUrl: string;
+  artifactUrl: string | null;
+};
+
+export type DasVerifyResult = {
+  valid: boolean;
+  hashMatches: boolean;
+  verificationToken: string;
+  sha256Hash: string;
+  document: {
+    id: string;
+    title: string;
+    type: string;
+    status: string;
+    finalizedAt: string | null;
+    htmlSnapshot: string | null;
+  };
+  brand: { legalName: string | null };
+  artifactUrl: string | null;
+  verifiedAt: string;
+};
+
+export type DasCatalogInput = {
+  sku?: string;
+  skuAuto?: boolean;
+  name: string;
+  description?: string | null;
+  baseUnit?: string | null;
+  unitPrice?: number;
+  currency?: string;
+  priceMode?: 'fixed' | 'rollup';
 };
 
 export type ContactNote = {
@@ -2643,6 +2707,380 @@ export const api = {
   },
 
   das: {
+    brand: {
+      get: (accountId: string, token: string) =>
+        request<{ brand: DasBrandProfile }>(
+          `/accounts/${accountId}/das/brand`,
+          { token }
+        ),
+
+      update: (
+        accountId: string,
+        body: {
+          legalName?: string | null;
+          logoUrl?: string | null;
+          letterheadUrl?: string | null;
+          settings?: Record<string, unknown>;
+        },
+        token: string
+      ) =>
+        request<{ brand: DasBrandProfile }>(
+          `/accounts/${accountId}/das/brand`,
+          { method: 'PUT', body, token }
+        ),
+    },
+
+    assets: {
+      list: (accountId: string, token: string) =>
+        request<{ assets: DasAsset[] }>(
+          `/accounts/${accountId}/das/assets`,
+          { token }
+        ),
+
+      uploadUrl: (
+        accountId: string,
+        body: { contentType: string; kind: string; fileName: string },
+        token: string
+      ) =>
+        request<{ uploadUrl: string; publicUrl: string; storageKey: string }>(
+          `/accounts/${accountId}/das/assets/upload-url`,
+          { method: 'POST', body, token }
+        ),
+
+      create: (
+        accountId: string,
+        body: {
+          kind: string;
+          label: string;
+          fileName: string;
+          mimeType: string;
+          storageKey?: string;
+          publicUrl?: string;
+          signerName?: string | null;
+          signerTitle?: string | null;
+          tags?: unknown[];
+        },
+        token: string
+      ) =>
+        request<{ asset: DasAsset }>(
+          `/accounts/${accountId}/das/assets`,
+          { method: 'POST', body, token }
+        ),
+
+      delete: (accountId: string, assetId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/das/assets/${assetId}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+
+    products: {
+      list: (accountId: string, token: string, query?: { q?: string }) => {
+        const params = new URLSearchParams();
+        if (query?.q) params.set('q', query.q);
+        const qs = params.toString();
+        return request<{ products: DasCatalogItem[] }>(
+          `/accounts/${accountId}/das/products${qs ? `?${qs}` : ''}`,
+          { token }
+        );
+      },
+
+      create: (accountId: string, body: DasCatalogInput, token: string) =>
+        request<{ product: DasCatalogItem }>(
+          `/accounts/${accountId}/das/products`,
+          { method: 'POST', body, token }
+        ),
+
+      update: (
+        accountId: string,
+        productId: string,
+        body: Partial<DasCatalogInput>,
+        token: string
+      ) =>
+        request<{ product: DasCatalogItem }>(
+          `/accounts/${accountId}/das/products/${productId}`,
+          { method: 'PATCH', body, token }
+        ),
+
+      delete: (accountId: string, productId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/das/products/${productId}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+
+    services: {
+      list: (accountId: string, token: string, query?: { q?: string }) => {
+        const params = new URLSearchParams();
+        if (query?.q) params.set('q', query.q);
+        const qs = params.toString();
+        return request<{ services: DasCatalogItem[] }>(
+          `/accounts/${accountId}/das/services${qs ? `?${qs}` : ''}`,
+          { token }
+        );
+      },
+
+      create: (accountId: string, body: DasCatalogInput, token: string) =>
+        request<{ service: DasCatalogItem }>(
+          `/accounts/${accountId}/das/services`,
+          { method: 'POST', body, token }
+        ),
+
+      update: (
+        accountId: string,
+        serviceId: string,
+        body: Partial<DasCatalogInput>,
+        token: string
+      ) =>
+        request<{ service: DasCatalogItem }>(
+          `/accounts/${accountId}/das/services/${serviceId}`,
+          { method: 'PATCH', body, token }
+        ),
+
+      delete: (accountId: string, serviceId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/das/services/${serviceId}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+
+    catalog: {
+      prices: {
+        list: (
+          accountId: string,
+          token: string,
+          query: { itemType: DasCatalogItemType; itemId: string }
+        ) => {
+          const params = new URLSearchParams({
+            itemType: query.itemType,
+            itemId: query.itemId,
+          });
+          return request<{ prices: DasCatalogPrice[] }>(
+            `/accounts/${accountId}/das/catalog/prices?${params}`,
+            { token }
+          );
+        },
+
+        create: (
+          accountId: string,
+          body: {
+            itemType: DasCatalogItemType;
+            itemId: string;
+            currency: string;
+            unitPrice: number;
+          },
+          token: string
+        ) =>
+          request<{ price: DasCatalogPrice }>(
+            `/accounts/${accountId}/das/catalog/prices`,
+            { method: 'POST', body, token }
+          ),
+
+        update: (
+          accountId: string,
+          priceId: string,
+          body: { currency?: string; unitPrice?: number },
+          token: string
+        ) =>
+          request<{ price: DasCatalogPrice }>(
+            `/accounts/${accountId}/das/catalog/prices/${priceId}`,
+            { method: 'PATCH', body, token }
+          ),
+
+        delete: (accountId: string, priceId: string, token: string) =>
+          request<{ ok: boolean }>(
+            `/accounts/${accountId}/das/catalog/prices/${priceId}`,
+            { method: 'DELETE', token }
+          ),
+      },
+
+      components: {
+        list: (
+          accountId: string,
+          token: string,
+          query: { parentType: DasCatalogItemType; parentId: string }
+        ) => {
+          const params = new URLSearchParams({
+            parentType: query.parentType,
+            parentId: query.parentId,
+          });
+          return request<{ components: DasCatalogComponent[] }>(
+            `/accounts/${accountId}/das/catalog/components?${params}`,
+            { token }
+          );
+        },
+
+        create: (
+          accountId: string,
+          body: {
+            parentType: DasCatalogItemType;
+            parentId: string;
+            childType: DasCatalogItemType;
+            childId: string;
+            quantity?: number;
+            label?: string | null;
+            sortOrder?: number;
+          },
+          token: string
+        ) =>
+          request<{ component: DasCatalogComponent }>(
+            `/accounts/${accountId}/das/catalog/components`,
+            { method: 'POST', body, token }
+          ),
+
+        update: (
+          accountId: string,
+          componentId: string,
+          body: {
+            quantity?: number;
+            label?: string | null;
+            sortOrder?: number;
+          },
+          token: string
+        ) =>
+          request<{ component: DasCatalogComponent }>(
+            `/accounts/${accountId}/das/catalog/components/${componentId}`,
+            { method: 'PATCH', body, token }
+          ),
+
+        delete: (accountId: string, componentId: string, token: string) =>
+          request<{ ok: boolean }>(
+            `/accounts/${accountId}/das/catalog/components/${componentId}`,
+            { method: 'DELETE', token }
+          ),
+      },
+    },
+
+    templates: {
+      list: (
+        accountId: string,
+        token: string,
+        query?: { type?: string; active?: boolean }
+      ) => {
+        const params = new URLSearchParams();
+        if (query?.type) params.set('type', query.type);
+        if (query?.active != null) params.set('active', String(query.active));
+        const qs = params.toString();
+        return request<{ templates: DasTemplate[] }>(
+          `/accounts/${accountId}/das/templates${qs ? `?${qs}` : ''}`,
+          { token }
+        );
+      },
+
+      create: (
+        accountId: string,
+        body: {
+          name: string;
+          type: DasDocument['type'];
+          version?: number;
+          body?: Record<string, unknown>;
+          handlebarsHtml?: string | null;
+          isActive?: boolean;
+        },
+        token: string
+      ) =>
+        request<{ template: DasTemplate }>(
+          `/accounts/${accountId}/das/templates`,
+          { method: 'POST', body, token }
+        ),
+
+      update: (
+        accountId: string,
+        templateId: string,
+        body: {
+          name?: string;
+          type?: DasDocument['type'];
+          version?: number;
+          body?: Record<string, unknown>;
+          handlebarsHtml?: string | null;
+          isActive?: boolean;
+        },
+        token: string
+      ) =>
+        request<{ template: DasTemplate }>(
+          `/accounts/${accountId}/das/templates/${templateId}`,
+          { method: 'PATCH', body, token }
+        ),
+
+      delete: (accountId: string, templateId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/das/templates/${templateId}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+
+    clients: {
+      list: (accountId: string, token: string, query?: { q?: string }) => {
+        const params = new URLSearchParams();
+        if (query?.q) params.set('q', query.q);
+        const qs = params.toString();
+        return request<{ clients: DasClient[] }>(
+          `/accounts/${accountId}/das/clients${qs ? `?${qs}` : ''}`,
+          { token }
+        );
+      },
+
+      create: (
+        accountId: string,
+        body: {
+          name: string;
+          email?: string | null;
+          phone?: string | null;
+          company?: string | null;
+          address?: string | null;
+          notes?: string | null;
+          contactId?: string | null;
+        },
+        token: string
+      ) =>
+        request<{ client: DasClient }>(
+          `/accounts/${accountId}/das/clients`,
+          { method: 'POST', body, token }
+        ),
+
+      update: (
+        accountId: string,
+        clientId: string,
+        body: {
+          name?: string;
+          email?: string | null;
+          phone?: string | null;
+          company?: string | null;
+          address?: string | null;
+          notes?: string | null;
+          contactId?: string | null;
+        },
+        token: string
+      ) =>
+        request<{ client: DasClient }>(
+          `/accounts/${accountId}/das/clients/${clientId}`,
+          { method: 'PATCH', body, token }
+        ),
+
+      delete: (accountId: string, clientId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/das/clients/${clientId}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+
+    audit: {
+      list: (
+        accountId: string,
+        token: string,
+        query?: { limit?: number; offset?: number }
+      ) => {
+        const params = new URLSearchParams();
+        if (query?.limit != null) params.set('limit', String(query.limit));
+        if (query?.offset != null) params.set('offset', String(query.offset));
+        const qs = params.toString();
+        return request<{ logs: DasAuditLog[]; total: number }>(
+          `/accounts/${accountId}/das/audit${qs ? `?${qs}` : ''}`,
+          { token }
+        );
+      },
+    },
+
     documents: {
       list: (
         accountId: string,
@@ -2663,7 +3101,7 @@ export const api = {
       },
 
       get: (accountId: string, documentId: string, token: string) =>
-        request<{ document: DasDocument }>(
+        request<{ document: DasDocument; security: DasDocumentSecurity | null }>(
           `/accounts/${accountId}/das/documents/${documentId}`,
           { token }
         ),
@@ -2684,6 +3122,47 @@ export const api = {
           body,
           token,
         }),
+
+      update: (
+        accountId: string,
+        documentId: string,
+        body: {
+          title?: string;
+          status?: DasDocument['status'];
+          contactId?: string | null;
+          clientId?: string | null;
+          templateId?: string | null;
+          structuredData?: Record<string, unknown>;
+        },
+        token: string
+      ) =>
+        request<{ document: DasDocument }>(
+          `/accounts/${accountId}/das/documents/${documentId}`,
+          { method: 'PATCH', body, token }
+        ),
+
+      render: (accountId: string, documentId: string, token: string) =>
+        request<{ document: DasDocument; html: string }>(
+          `/accounts/${accountId}/das/documents/${documentId}/render`,
+          { method: 'POST', token }
+        ),
+
+      finalize: (accountId: string, documentId: string, token: string) =>
+        request<{ document: DasDocument; security: DasDocumentSecurity }>(
+          `/accounts/${accountId}/das/documents/${documentId}/finalize`,
+          { method: 'POST', token }
+        ),
+
+      pdf: (accountId: string, documentId: string, token: string) =>
+        request<{ pdfUrl: string; publicUrl: string }>(
+          `/accounts/${accountId}/das/documents/${documentId}/pdf`,
+          { method: 'POST', token }
+        ),
+    },
+
+    verify: {
+      get: (token: string) =>
+        request<DasVerifyResult>(`/das/verify/${encodeURIComponent(token)}`),
     },
   },
 };

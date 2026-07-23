@@ -2,7 +2,7 @@
 
 > Document automation inside Flow CRM: quotations, invoices, proposals, SLAs, NDAs.  
 > Former standalone **DAS / Signum** app is merged into this monorepo.  
-> **Last updated:** 2026-07-21
+> **Last updated:** 2026-07-23
 
 ---
 
@@ -26,8 +26,10 @@
 
 ```
 apps/web
-├── src/app/(dashboard)/dashboard/documents/     # list + detail UI
+├── src/app/(dashboard)/dashboard/documents/     # list, detail, brand, catalog, templates, clients, activity
+├── src/app/verify/[token]/                      # public document verification
 ├── src/app/api/accounts/[accountId]/das/       # account-scoped APIs
+├── src/app/api/das/verify/[token]/             # public verify API
 └── src/lib/das/                                 # types and domain helpers
 
 packages/db/drizzle/0040_das_documents.sql       # Postgres schema (das_*)
@@ -38,9 +40,12 @@ packages/db/drizzle/0040_das_documents.sql       # Postgres schema (das_*)
 | Schema migration | `packages/db/drizzle/0040_das_documents.sql` |
 | Drizzle journal | `packages/db/drizzle/meta/_journal.json` (`0040_das_documents`) |
 | List / create API | `GET/POST …/api/accounts/[accountId]/das/documents` |
-| Detail API | `GET …/api/accounts/[accountId]/das/documents/[documentId]` |
-| Client SDK | `api.das.documents.*` in `apps/web/src/lib/api.ts` |
-| Types | `apps/web/src/lib/das/types.ts`, `DasDocument` in `api.ts` |
+| Detail API | `GET/PATCH …/api/accounts/[accountId]/das/documents/[documentId]` |
+| Render / finalize / PDF | `POST …/documents/[documentId]/{render,finalize,pdf}` |
+| Brand, assets, catalog, templates, clients, audit | `…/das/{brand,assets,products,services,templates,clients,audit}` |
+| Public verify | `GET …/api/das/verify/[token]` |
+| Client SDK | `api.das.*` in `apps/web/src/lib/api.ts` |
+| Types | `apps/web/src/lib/das/types.ts`, re-exported from `api.ts` |
 
 **Do not** run a nested Next.js app for Documents. All UI and APIs live in `apps/web` and share FlowChat Postgres.
 
@@ -106,12 +111,17 @@ ORDER BY 1;
 
 ### Implemented
 
-- Account-scoped document list (search by title)
+- Account-scoped document list (search by title / type / status)
 - Create draft document (type + title)
-- Document detail view
+- Document detail: workflow, contact link, line items, template assign, render / finalize / PDF
+- Vertical module nav: Documents · Templates · Catalog · Brand & assets · Clients · Activity
+- Brand profile + asset upload (R2 signed URL)
+- Products / services catalog
+- Handlebars templates CRUD
+- DAS clients with optional Flow contact link
+- Activity (audit log) table
+- Public verification page at `/verify/[token]`
 - CRM sidebar entry **Documents**
-- Audit log row on create
-- Optional `contact_id` validation against account contacts
 
 ### Module capability set (full Documents feature surface)
 
@@ -179,6 +189,29 @@ Response: `{ document: DasDocument }` (201)
 
 Response: `{ document: DasDocument }`
 
+### `PATCH /documents/:documentId`
+
+Body (all optional): `title`, `status`, `contactId`, `clientId`, `templateId`, `structuredData`, `htmlSnapshot`
+
+### Other account-scoped routes
+
+| Method | Path | Notes |
+|--------|------|--------|
+| GET/PUT | `/brand` | Brand profile |
+| GET/POST | `/assets`, POST `/assets/upload-url`, DELETE `/assets/:id` | Assets |
+| GET/POST | `/products`, PATCH/DELETE `/products/:id` | Catalog products |
+| GET/POST | `/services`, PATCH/DELETE `/services/:id` | Catalog services |
+| GET/POST | `/templates`, PATCH/DELETE `/templates/:id` | Templates |
+| GET/POST | `/clients`, PATCH/DELETE `/clients/:id` | Clients |
+| GET | `/audit` | Audit logs |
+| POST | `/documents/:id/render` | Render HTML snapshot |
+| POST | `/documents/:id/finalize` | Finalize + verification token |
+| POST | `/documents/:id/pdf` | PDF/HTML artifact URL |
+
+### Public
+
+`GET /api/das/verify/:token` → verification payload (no auth)
+
 ---
 
 ## UI
@@ -186,9 +219,15 @@ Response: `{ document: DasDocument }`
 | Route | Purpose |
 |-------|---------|
 | `/dashboard/documents` | List, search, create draft |
-| `/dashboard/documents/[documentId]` | Detail |
+| `/dashboard/documents/[documentId]` | Detail (line items, template, render/finalize) |
+| `/dashboard/documents/templates` | Template list + editor |
+| `/dashboard/documents/catalog` | Products / services tabs |
+| `/dashboard/documents/brand` | Brand profile + assets |
+| `/dashboard/documents/clients` | DAS clients |
+| `/dashboard/documents/activity` | Audit log |
+| `/verify/[token]` | Public verification (no login) |
 
-Middleware already protects `/dashboard/*` via FlowChat session.
+Middleware already protects `/dashboard/*` via FlowChat session. `/verify/*` is public.
 
 ---
 
