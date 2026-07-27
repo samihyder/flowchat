@@ -1,7 +1,6 @@
 import type { AppSql } from '@/lib/db-sql';
 import { linkContactToGlobalCompany } from '@/lib/companies/resolve';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
-import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
 import { validateCustomAttributes, type CustomAttributeDefinition } from '@/lib/custom-attributes';
 import {
   parseCsvRaw,
@@ -255,11 +254,10 @@ export async function processImportJobBatch(
             sql,
             accountId,
             'contact.created',
-            serializeContactRow(inserted[0] as Record<string, unknown>)
+            serializeContactRow(inserted[0] as Record<string, unknown>),
+            { source: 'import' }
           );
-          if (row.email) {
-            await triggerMarketingWorkflows(sql, accountId, 'contact_created', contactId);
-          }
+          // S6M-9: no CRM-triggered marketing — LeadSnapper/import contacts stay campaign-only
         }
         importedCount++;
       }

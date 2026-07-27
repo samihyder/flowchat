@@ -4,7 +4,7 @@
 **Workbook:** `FlowChat_User_Stories_S1_S6.xlsx`  
 **Index:** `index.html` (28 screens)  
 **Assessed against:** FlowChat app (`apps/web`) + `docs/sprints.md`  
-**Date:** 23 June 2026
+**Date:** 23 June 2026 · **Status refresh:** 25 July 2026
 
 ---
 
@@ -13,12 +13,13 @@
 | Metric | Value |
 |--------|-------|
 | Wireframe screens | **30** |
-| Sprints covered | **6** (S1–S6) + **S7B** stories in workbook |
-| User stories (workbook) | **148** (S1–S6 + S6M + S7B) |
-| Story points (workbook) | **676** |
+| Sprints covered | **6** (S1–S6) + **S6M** + **S7B** stories in workbook |
+| User stories (workbook) | **149** (S1–S6 + S6M + S7B) |
+| Story points (workbook) | **681** |
+| **S6M workbook status** | **43 Completed · 2 Partial** (S6M-9, S6M-38) · Sprint Summary: Implemented — pending QA / closeout |
 | **Wireframe coverage of UI-facing stories** | **✅ Complete** — every developed product module has a wireframe |
-| **Blocking wireframe gaps** | **None for shipped S1–S6** · S6M spec has no HTML mocks (by design) |
-| **Recommended new wireframes** | **S6M campaign wizard** — see [marketing-module-screens.md](../docs/marketing-module-screens.md) (spec only; HTML mocks not started) |
+| **Blocking wireframe gaps** | **None for shipped S1–S6** · S6M live UI exists; legacy HTML mocks still stale |
+| **Recommended new wireframes** | **S6M campaign wizard** — see [marketing-module-screens.md](../docs/marketing-module-screens.md) (optional HTML mocks; app routes live) |
 | **Built routes without wireframes** | **5** (acceptable: OAuth callback, public compliance pages) |
 
 ### Verdict
@@ -28,6 +29,7 @@
 1. One **admin settings page** built but not wireframed (`/settings/email-marketing`)
 2. **Public/token pages** built without mockups (unsubscribe, confirm subscribe — acceptable)
 3. **UI fidelity** — app shell partially aligned; individual pages still use light settings layout vs wireframe dark sidebar + topbar patterns
+4. **S6M** — campaign wizard is **implemented in the app**; HTML wireframes were deferred — use screen/design specs, not screens 26–28
 
 ---
 
@@ -178,12 +180,13 @@ No dedicated screens. Stories S1-1–S1-3, S1-7–S1-9 are backend/CI/deploy. UI
 | S6-18 Resend webhooks | ✅ API `/api/webhooks/resend` | ❌ | Backend — no screen needed |
 | S6-21 Double opt-in | ✅ `/confirm-subscribe/[token]` | ❌ | Public page — optional wireframe |
 
-**S6M (planned) — wireframes not started:**
+**S6M (implemented — pending QA / closeout) — HTML wireframes not started:**
 
 | Spec | Doc | Wireframe status |
 |------|-----|------------------|
-| 4-step campaign wizard, composer, stats | `docs/marketing-module-design.md` + `docs/marketing-module-screens.md` | ❌ Spec complete; HTML mocks deferred |
-| Screens 26–27 | Pre-S6M broadcast model | ⚠️ Stale vs S6M; replace when mocking S6M |
+| 4-step campaign wizard, composer, stats | `docs/marketing-module-design.md` + `docs/marketing-module-screens.md` | App routes live under `/marketing/campaigns`; HTML mocks deferred |
+| Screens 26–27 | Pre-S6M broadcast model | ⚠️ Stale vs S6M live UI |
+| Closeout | S6M-9 (CRM triggers), S6M-38 (reply-stop → S7) | Partial in workbook |
 
 Legacy screens `26-marketing-campaigns.html`, `27-marketing-campaign-analytics.html`, and `28-marketing-workflows.html` reflect **shipped S6** UI, not the locked S6M redesign. `29-settings-email-marketing.html` aligns with S6M pre-flight (S6M-24).
 
@@ -420,12 +423,12 @@ Legend: **●** dedicated wireframe · **◐** composite / embedded · **○** b
 
 **The wireframe set covers all developed S1–S6 product modules** as originally shipped. Thirty screens map to UI-facing user stories via dedicated or composite layouts.
 
-**S6M Marketing Campaign Redesign** is fully specified in `docs/marketing-module-screens.md` but **has no HTML wireframes yet** (intentionally deferred). Screens 26–28 are **stale** relative to S6M; screen 28 (workflows) is **deprecated**.
+**S6M Marketing Campaign Redesign** is **implemented in the app** (campaign APIs/UI/cron) with workbook status **Implemented — pending QA / closeout** (43 Completed, 2 Partial: S6M-9, S6M-38). HTML wireframes were deferred; screens 26–28 are **stale** relative to live S6M UI; screen 28 (workflows) is **deprecated**.
 
 Minor gaps: enrichment review UI on contact profile (S6-28), public unsubscribe/confirm pages.
 
-**For S6M implementation:** use [marketing-module-design.md](../docs/marketing-module-design.md) (visual) and [marketing-module-screens.md](../docs/marketing-module-screens.md) (behaviour) — not the legacy marketing wireframes.
+**For S6M reference:** use [marketing-module-design.md](../docs/marketing-module-design.md) (visual) and [marketing-module-screens.md](../docs/marketing-module-screens.md) (behaviour) — not the legacy marketing wireframes. See [sprints.md](../docs/sprints.md) for reconciled roadmap status.
 
 ---
 
-*Generated for Mutex Systems / FlowChat · See also `docs/sprints.md`, `docs/MUTEX_SYSTEMS_SETUP.md`, `docs/marketing-module-screens.md`*
+*Generated for Mutex Systems / FlowChat · Status refresh 2026-07-25 · See also `docs/sprints.md`, `docs/MUTEX_SYSTEMS_SETUP.md`, `docs/marketing-module-screens.md`*

@@ -1,16 +1,16 @@
-# FlowChat — S6M Marketing Campaign Database Migration (Planned)
+# FlowChat — S6M Marketing Campaign Database Migration
 
 **Epic:** S6M — Marketing Campaign Redesign  
-**Status:** Specification only — apply when backend implementation starts  
+**Status:** **Applied** — `packages/db/drizzle/0022_s6m_campaigns.sql` (+ `0023_marketing_system_state.sql`, `0024_marketing_campaign_timezone.sql`, `0034_email_templates_category.sql`, `0035_campaign_rate_limit_bounce_toggle.sql`)  
 **Related:** [marketing-module-screens.md](marketing-module-screens.md) §1.2, §1.3, §7.1
 
 ---
 
 ## Overview
 
-S6M introduces a **campaign-centric** model alongside (or replacing) legacy broadcast/workflow tables from migrations `0013`–`0016`. This document defines the target schema for new campaign wizard flows.
+S6M introduces a **campaign-centric** model alongside (or replacing) legacy broadcast/workflow tables from migrations `0013`–`0016`. This document defines the schema for campaign wizard flows (now live in code).
 
-Legacy tables (`marketing_workflows`, workflow enrollments, etc.) remain until S6M-9 removes triggers and S6M-35 retires the UI; new code should write to the tables below.
+Legacy tables (`marketing_workflows`, workflow enrollments, etc.) remain until **S6M-9 closeout** removes triggers and S6M-35 retires the UI; new code writes to the tables below.
 
 ---
 

@@ -12,6 +12,7 @@
     "db:migrate": "turbo db:migrate",
     "db:studio": "pnpm --filter @flowchat/db studio",
     "docs:pdf": "node scripts/generate-user-guide-pdfs.mjs",
+    "docs:product-guide": "node scripts/generate-product-guide-pdf.mjs",
     "docs:user-stories": "node scripts/update-flowchat-user-stories.mjs"
   },
   "devDependencies": {

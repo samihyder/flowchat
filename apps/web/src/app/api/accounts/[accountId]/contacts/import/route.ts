@@ -91,7 +91,8 @@ export async function POST(req: Request, { params }: Params) {
           sql,
           accountId,
           'contact.created',
-          serializeContactRow(inserted[0] as Record<string, unknown>)
+          serializeContactRow(inserted[0] as Record<string, unknown>),
+          { source: 'import' }
         );
       }
       imported++;

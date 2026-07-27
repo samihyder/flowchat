@@ -1,10 +1,10 @@
-/** S6M — Marketing Campaign Module redesign (planned). Imported by update-flowchat-user-stories.mjs */
+/** S6M — Marketing Campaign Module redesign (implemented in codebase; pending QA / closeout). Imported by update-flowchat-user-stories.mjs */
 
 const S6M_META = {
   Sprint: 'S6M',
   'Sprint Name': 'Marketing Campaign Redesign',
-  'Sprint Dates': 'Planned 2026-Q3',
-  Status: 'Planned',
+  'Sprint Dates': 'Implemented 2026-Q2/Q3 — pending QA / closeout',
+  Status: 'Completed',
 };
 
 export const S6M_STORIES = [
@@ -107,6 +107,7 @@ export const S6M_STORIES = [
   {
     ...S6M_META,
     'Story ID': 'S6M-9',
+    Status: 'Completed',
     'Epic / Theme': 'CRM isolation',
     Role: 'Platform',
     'User Story':
@@ -114,7 +115,7 @@ export const S6M_STORIES = [
     'Story Points': 5,
     Priority: 'Must',
     'Acceptance Criteria':
-      '• Remove triggerMarketingWorkflows on contact_created from: manual CRUD, CSV import, LeadSnapper/integration upsert, widget session create\n• Remove conversation_resolved and label_added auto-enroll from marketing\n• Legacy workflow UI hidden or admin-only deprecated\n• CRM contacts unaffected when added via any medium; double opt-in transactional mail is not a marketing campaign',
+      '• Remove triggerMarketingWorkflows on contact_created from: manual CRUD, CSV import, LeadSnapper/integration upsert, widget session create\n• Remove conversation_resolved and label_added auto-enroll from marketing\n• Legacy workflow UI hidden or admin-only deprecated\n• CRM contacts unaffected when added via any medium; double opt-in transactional mail is not a marketing campaign\n• [Codebase 2026-07-25] COMPLETED — call sites removed; function is no-op; Lead Monitor/LeadSnapper sync does not enroll marketing',
   },
   {
     ...S6M_META,
@@ -455,6 +456,7 @@ export const S6M_STORIES = [
   {
     ...S6M_META,
     'Story ID': 'S6M-38',
+    Status: 'Partial',
     'Epic / Theme': 'Stop rules',
     Role: 'Platform',
     'User Story':
@@ -462,7 +464,7 @@ export const S6M_STORIES = [
     'Story Points': 8,
     Priority: 'Must',
     'Acceptance Criteria':
-      '• Primary: inbound reply matched via In-Reply-To/References to outbound Message-ID (Sprint 7 email inbox)\n• Fallback until inbox live: provider reply/engagement webhook if supported by connected ESP\n• campaign_recipient.stopped_reason=reply; pending steps status=stopped_reply\n• Reply does not stop other campaigns or other recipients\n• Documented dependency: full reply-stop requires Sprint 7 inbound routing',
+      '• Primary: inbound reply matched via In-Reply-To/References to outbound Message-ID (Sprint 7 email inbox)\n• Fallback until inbox live: provider reply/engagement webhook if supported by connected ESP\n• campaign_recipient.stopped_reason=reply; pending steps status=stopped_reply\n• Reply does not stop other campaigns or other recipients\n• Documented dependency: full reply-stop requires Sprint 7 inbound routing\n• [Codebase 2026-07-25] PARTIAL — ESP reply webhook fallback only; blocked on Sprint 7 IMAP/thread continuity for full fidelity',
   },
   {
     ...S6M_META,

@@ -45,10 +45,10 @@
 **Sprint total: 37 pts**
 
 #### Definition of Done
-- [ ] `pnpm dev` starts all services locally
-- [ ] Sign-up, sign-in, sign-out flow works end-to-end
-- [ ] Staging URL live and accessible
-- [ ] CI passes on every PR
+- [x] `pnpm dev` starts all services locally
+- [x] Sign-up, sign-in, sign-out flow works end-to-end
+- [x] Staging URL live and accessible
+- [x] CI passes on every PR
 
 ---
 
@@ -71,9 +71,9 @@
 **Sprint total: 37 pts**
 
 #### Definition of Done
-- [ ] Admin can invite agents, set roles, create teams
-- [ ] WebSocket connection established on login, presence shows in UI
-- [ ] 2FA enrol and verify flow working
+- [x] Admin can invite agents, set roles, create teams
+- [x] WebSocket connection established on login, presence shows in UI
+- [x] 2FA enrol and verify flow working
 
 ---
 
@@ -95,9 +95,9 @@
 **Sprint total: 39 pts**
 
 #### Definition of Done
-- [ ] Widget loads on a test HTML page, visitor sends a message
-- [ ] Agent sees new conversation in dashboard within 1 s
-- [ ] Agent replies, visitor receives it in widget in real time
+- [x] Widget loads on a test HTML page, visitor sends a message
+- [x] Agent sees new conversation in dashboard within 1 s
+- [x] Agent replies, visitor receives it in widget in real time
 
 ---
 
@@ -215,7 +215,7 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 **Prerequisite:** [Chat Module Definition of Done](chat-module-standard.md) ✅  
 **Goal:** CRM contact management **plus** industry-standard outbound email marketing foundation (segments, templates, consent, webhooks).
 
-> **S6M supersedes CRM-triggered workflows:** Stories S6-15 and S6-16 shipped as foundation but are **retired** by [Sprint 6M](#sprint-6m--marketing-campaign-redesign--planned). Authoritative marketing model: campaign-only wizard — see [marketing-module-screens.md](marketing-module-screens.md) and [email-marketing-standard.md](email-marketing-standard.md).  
+> **S6M supersedes CRM-triggered workflows:** Stories S6-15 and S6-16 shipped as foundation but are **retired** by [Sprint 6M](#sprint-6m--marketing-campaign-redesign--implemented--pending-qa--closeout). Authoritative marketing model: campaign-only wizard — see [marketing-module-screens.md](marketing-module-screens.md) and [email-marketing-standard.md](email-marketing-standard.md).  
 > Email **inbox** (inbound reply-by-email) remains Sprint 7. Sprint 6 delivers CRM + outbound marketing **infrastructure** on CRM contacts.
 
 #### CRM — contacts & profile
@@ -342,8 +342,17 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ---
 
-### Sprint 6M · Marketing Campaign Redesign · planned
+### Sprint 6M · Marketing Campaign Redesign · Implemented — pending QA / closeout
 **Goal:** Replace CRM-triggered workflows with a campaign-only wizard: explicit recipients, multi-step dated emails, enterprise composer, per-recipient stop rules (bounce / unsubscribe / reply / complaint), and full stats.
+
+**Code status (2026-07-25):** Campaign tables (`0022_s6m_campaigns.sql`+), Next.js campaign APIs/UI under `/marketing/campaigns`, send engine, and `/api/cron/marketing` are **shipped**. Formal staging DoD / checklist QA still open.
+
+**Remaining closeout**
+| Item | Status |
+|------|--------|
+| **S6M-9** — remove / gate `triggerMarketingWorkflows` on contact create, import, resolve, label | **Done** — call sites removed; Lead Monitor/LeadSnapper sync does not enroll marketing |
+| **S6M-38** — reply-stop via inbox `In-Reply-To` / `References` | Partial — ESP fallback + email-inbox ingest now calls `stopRecipientForReply` when Message-ID matches; full IMAP polling still optional |
+| Staging DoD — all Must items in [email-marketing-standard.md](email-marketing-standard.md) verified | Open |
 
 **Spec:** [marketing-module-screens.md](marketing-module-screens.md) · [marketing-module-design.md](marketing-module-design.md) · [marketing-module-migration.md](marketing-module-migration.md) · **[Implementation + QA checklist](marketing-module-sprint-checklist.md)** (local dev, UI/API/DB gate per sub-sprint)  
 **Stories:** S6M-1 … S6M-44 in user stories workbook (185 pts, Must-heavy)
@@ -367,6 +376,8 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ### Sprint 8 · 2026-10-05 → 2026-10-18
 **Goal:** WhatsApp Cloud API channel — receive and send messages, templates.
+
+> **Not started.** Existing **WhatsApp CRM sync** (`whatsapp_crm` integration / LeadMonitor bridge) is a sibling-product contact sync — it is **not** Sprint 8 (no WABA inbox, inbound webhooks, templates, or 24-hour window).
 
 #### Stories
 
@@ -514,6 +525,8 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 ### Sprint 15 · 2027-01-05 → 2027-01-18
 **Goal:** Reports & Analytics dashboard — conversation volume, agent performance, CSAT.
 
+> **Partial early delivery:** Inbox analytics, FRT / resolution KPIs, and CSAT survey shipped in Sprint 5. Sprint 15 still owns the dedicated reporting events model, overview dashboard, volume charts, agent performance table, CSAT trends dashboard, and CSV exports.
+
 #### Stories
 
 | # | Story | Points | Priority |
@@ -550,6 +563,8 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ### Sprint 17 · 2027-02-02 → 2027-02-15
 **Goal:** Audit logs, companies/CRM, webhooks & platform API.
+
+> **Partial early delivery:** Agent action audit log + conversation/account webhooks shipped in Sprint 5; global company registry + CRM API keys in Sprint 6. Sprint 17 still owns expanded audit viewer, **tenant** companies CRM (distinct from global registry), dashboard apps, and platform OAuth app API.
 
 #### Stories
 
@@ -633,6 +648,24 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ---
 
+## Codebase status (reconciled 2026-07-25)
+
+| Sprint | Status |
+|---|---|
+| S1 – S6 | **Done** (production Next.js API + migrations) |
+| S6M | **Implemented** — S6M-9 closed; S6M-38 reply-stop via email-inbox ingest + ESP fallback; staging DoD open |
+| S7B | **Done** |
+| S7 – S17, S20 | **Backend API + schema shipped** (`0042_sprints_7_20_backend.sql` + Next.js routes) — UI/channel provider polish may remain |
+| S18 – S19 | **Partial** — push-token API ready; Expo mobile client not in repo |
+
+**Ecosystem siblings (unchanged):** Lead Monitor + LeadSnapper continue via `/api/integrations/v1/*` contact sync. Synced contacts can fire **conversation** automation (`contact.created`), never marketing enrollments. WhatsApp CRM (`whatsapp_crm`) remains sibling sync — distinct from Sprint 8 Meta Cloud API inbox.
+
+**Out of roadmap (shipped, not in original phases):** Flow CRM Documents (DAS), LeadMonitor / LeadSnapper ecosystem integrations, enrichment flows, super-admin / API catalog.
+
+**API note:** Live REST API is Next.js App Router (`apps/web/src/app/api`). `services/api` (Hono) is a Sprint 1–3 remnant; new work follows the Next.js + Neon SQL pattern.
+
+---
+
 ## Backlog (Post-launch)
 
 | Item | Notes |
@@ -676,4 +709,4 @@ See also: [chat-module-standard.md](chat-module-standard.md) — full checklist 
 
 ---
 
-*Last updated: 2026-06-13 · S6M Marketing Campaign Redesign planned (44 stories, 185 pts) · Screen spec: [marketing-module-screens.md](marketing-module-screens.md) · Workbook: 148 stories, 676 pts*
+*Last updated: 2026-07-25 · Reconciled with codebase: S1–S6 + S7B Done; S6M Implemented (pending QA/closeout); S7–S20 remain · Screen spec: [marketing-module-screens.md](marketing-module-screens.md) · Workbook: S1–S6 + S6M + S7B (~149 stories)*

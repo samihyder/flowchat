@@ -1,12 +1,12 @@
 # FlowChat — Marketing Campaign Module (Screen Design)
 
 **Epic:** S6M — Marketing Campaign Redesign  
-**Status:** Locked for UI development  
+**Status:** Locked for UI development · **Code implemented** (pending QA / closeout — see [sprints.md](sprints.md) Sprint 6M)  
 **Design (visual):** [marketing-module-design.md](marketing-module-design.md)  
 **Related:** User stories `S6M-1` … `S6M-44` in `FlowChat_User_Stories_S1_S6.xlsx`  
-**Database (planned):** [marketing-module-migration.md](marketing-module-migration.md)  
-**Last updated:** 2026-06-13  
-**Completeness:** Story traceability 44/44 · Design spec locked · Stories ↔ design aligned (§0.1, §1.2)
+**Database (applied):** [marketing-module-migration.md](marketing-module-migration.md) — `0022_s6m_campaigns.sql`+  
+**Last updated:** 2026-07-25  
+**Completeness:** Story traceability 44/44 · Design spec locked · Stories ↔ design aligned (§0.1, §1.2) · Workbook: 43 Completed + 2 Partial (S6M-9, S6M-38)
 
 ---
 

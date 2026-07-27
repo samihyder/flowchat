@@ -489,7 +489,7 @@ See **Part 3** for LeadSnapper extension setup and full API payload.
 
 #### S6 — Email marketing (S6-10 – S6-23) · foundation shipped
 
-> **S6M is the target model** ([marketing-module-screens.md](marketing-module-screens.md)). CRM-triggered workflows (S6-15/16) are **retired** — use the campaign wizard with explicit recipients. Remove workflow triggers when S6M-9 ships.
+> **S6M is the target model** ([marketing-module-screens.md](marketing-module-screens.md)). CRM-triggered workflows (S6-15/16) are **retired** — use the campaign wizard with explicit recipients. Remove workflow triggers at **S6M-9 closeout** (still Partial — `triggerMarketingWorkflows` wired as of 2026-07-25).
 
 | Pillar | Path | Mutex setup |
 |---|---|---|

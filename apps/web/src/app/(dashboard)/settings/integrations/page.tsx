@@ -24,6 +24,27 @@ const TABS = [
   { id: 'audit', label: 'Audit Log' },
 ];
 
+function asStringList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+  if (typeof value === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (Array.isArray(parsed)) return parsed.filter((v): v is string => typeof v === 'string');
+    } catch {
+      return value
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+}
+
+function formatList(value: unknown): string {
+  const list = asStringList(value);
+  return list.length ? list.join(', ') : '—';
+}
+
 type Webhook = { id: string; url: string; events: string[]; enabled: boolean };
 type Delivery = {
   id: string;
@@ -88,8 +109,28 @@ export default function IntegrationsPage() {
 
   const load = () => {
     if (!token || !accountId) return;
-    api.webhooks.list(accountId, token).then((r) => setWebhooks(r.webhooks)).catch(() => {});
-    api.apiKeys.list(accountId, token).then((r) => setApiKeys(r.apiKeys)).catch(() => {});
+    api.webhooks
+      .list(accountId, token)
+      .then((r) =>
+        setWebhooks(
+          r.webhooks.map((w) => ({
+            ...w,
+            events: asStringList(w.events),
+          }))
+        )
+      )
+      .catch(() => {});
+    api.apiKeys
+      .list(accountId, token)
+      .then((r) =>
+        setApiKeys(
+          r.apiKeys.map((k) => ({
+            ...k,
+            scopes: asStringList(k.scopes),
+          }))
+        )
+      )
+      .catch(() => {});
     loadLogs();
   };
 
@@ -111,7 +152,7 @@ export default function IntegrationsPage() {
   const startEditWebhook = (w: Webhook) => {
     setEditingWebhookId(w.id);
     setEditingWebhookUrl(w.url);
-    setEditingWebhookEvents(w.events);
+    setEditingWebhookEvents(asStringList(w.events));
   };
 
   const saveWebhook = async (id: string) => {
@@ -213,7 +254,7 @@ export default function IntegrationsPage() {
                     <span>
                       <span className="font-medium">{k.name}</span>{' '}
                       <code className="text-gray-400">{k.keyPrefix}…</code>
-                      <span className="text-gray-400 ml-2">({k.scopes.join(', ')})</span>
+                      <span className="text-gray-400 ml-2">({formatList(k.scopes)})</span>
                       {!k.enabled && <span className="text-amber-600 ml-2">disabled</span>}
                     </span>
                     <div className="flex gap-1 shrink-0">
@@ -301,7 +342,7 @@ export default function IntegrationsPage() {
                           {w.url}
                           {!w.enabled && <span className="ml-2 text-xs text-amber-600">disabled</span>}
                         </p>
-                        <p className="text-xs text-gray-400 mt-0.5">{w.events.join(', ')}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{formatList(w.events)}</p>
                       </div>
                       <div className="flex gap-1 shrink-0">
                         <Button type="button" variant="secondary" size="sm" onClick={() => void toggleWebhookEnabled(w)}>

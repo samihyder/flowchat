@@ -57,4 +57,28 @@ export const SETTINGS_META: Record<string, SettingsMeta> = {
     title: 'Email marketing',
     description: 'Subscription defaults, sender identity, and compliance',
   },
+  '/settings/automation-rules': {
+    title: 'Automation rules',
+    description: 'Trigger actions on conversation and contact events',
+  },
+  '/settings/macros': {
+    title: 'Macros',
+    description: 'One-click agent actions for common workflows',
+  },
+  '/settings/sla': {
+    title: 'SLA policies',
+    description: 'First response, next response, and resolution targets',
+  },
+  '/settings/roles': {
+    title: 'Roles & SAML',
+    description: 'Custom roles and single sign-on configuration',
+  },
+  '/settings/ai-assistants': {
+    title: 'AI assistants',
+    description: 'Copilot assistants and knowledge documents',
+  },
+  '/settings/help-center': {
+    title: 'Help Center',
+    description: 'Public portals, categories, and articles',
+  },
 };

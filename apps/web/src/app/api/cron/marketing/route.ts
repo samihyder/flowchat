@@ -2,15 +2,11 @@ import { neon } from '@/lib/neon';
 import { runMarketingJobs } from '@/lib/marketing/job-runner';
 import { recordMarketingCronRun } from '@/lib/marketing/marketing-cron-state';
 import type { AppSql } from '@/lib/db-sql';
+import { requireCronAuth } from '@/lib/cron-auth';
 
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get('authorization');
-    if (auth !== `Bearer ${secret}`) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
+  const denied = requireCronAuth(req);
+  if (denied) return denied;
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
   try {

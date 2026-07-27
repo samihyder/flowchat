@@ -31,6 +31,7 @@ export type Inbox = {
   channelType: string;
   widgetColor: string | null;
   widgetIcon?: string | null;
+  widgetMode?: 'hosted' | 'headless' | null;
   widgetTheme?: WidgetTheme | null;
   greetingMessage?: string | null;
   greetingMessages?: string[] | null;
@@ -100,6 +101,147 @@ export type InboxAnalytics = {
 };
 
 export type Label = { id: string; name: string; color: string };
+
+export type AutomationConditionInput = {
+  groupIndex: number;
+  field: string;
+  operator: string;
+  value: unknown;
+};
+export type AutomationActionInput = {
+  sortOrder: number;
+  actionType: string;
+  config: Record<string, unknown>;
+};
+export type AutomationRuleSummary = {
+  id: string;
+  name: string;
+  description: string | null;
+  triggerEvent: string;
+  isEnabled: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+export type AutomationRule = AutomationRuleSummary & {
+  conditions: (AutomationConditionInput & { id?: string })[];
+  actions: (AutomationActionInput & { id?: string })[];
+};
+export type MacroRecord = {
+  id: string;
+  accountId: string;
+  name: string;
+  visibility: string;
+  ownerUserId: string | null;
+  actions: { actionType: string; config: Record<string, unknown> }[];
+  createdAt: string;
+  updatedAt: string;
+};
+export type AiAssistant = {
+  id: string;
+  name: string;
+  model: string;
+  temperature: number;
+  guidelines: string | null;
+  credentialId: string | null;
+  inboxId: string | null;
+  isEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+export type AiDocument = {
+  id: string;
+  title: string;
+  sourceType: string;
+  sourceUrl: string | null;
+  status: string;
+  chunkCount: number;
+  errorMessage: string | null;
+  createdAt: string;
+};
+export type HelpPortal = {
+  id: string;
+  name: string;
+  slug: string;
+  customDomain: string | null;
+  color: string | null;
+  logoUrl: string | null;
+  headerText: string | null;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+export type HelpCategory = {
+  id: string;
+  portalId: string;
+  name: string;
+  parentId: string | null;
+  sortOrder: number;
+};
+export type HelpArticle = {
+  id: string;
+  portalId: string;
+  categoryId: string | null;
+  title: string;
+  slug: string;
+  bodyHtml: string;
+  status: string;
+  locale: string;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+export type ChannelCampaign = {
+  id: string;
+  name: string;
+  channelType: string;
+  inboxId: string | null;
+  segmentId: string | null;
+  templateName: string | null;
+  templateBody: string | null;
+  status: string;
+  scheduledAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+};
+export type ReportOverviewMetrics = Record<string, number | string | null>;
+export type ReportAgentRow = {
+  agentId: string;
+  agentName?: string;
+  resolvedCount?: number;
+  avgFrtMs?: number | null;
+  csatAvg?: number | null;
+  [key: string]: unknown;
+};
+export type SlaPolicy = {
+  id: string;
+  name: string;
+  firstResponseMinutes: number | null;
+  nextResponseMinutes: number | null;
+  resolutionMinutes: number | null;
+  useBusinessHours: boolean;
+  isEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+export type CustomRole = {
+  id: string;
+  name: string;
+  description: string | null;
+  permissions: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+};
+export type SamlConfig = {
+  accountId: string;
+  idpEntityId: string | null;
+  idpSsoUrl: string | null;
+  idpCertificate: string | null;
+  spEntityId: string | null;
+  roleAttribute: string | null;
+  isEnabled: boolean;
+};
 
 export type AdminWorkspace = {
   id: string;
@@ -1070,6 +1212,7 @@ export const api = {
         welcomeTagline?: string;
         widgetColor?: string;
         widgetIcon?: string;
+        widgetMode?: 'hosted' | 'headless';
         widgetTheme?: WidgetTheme;
         websiteUrl?: string;
         defaultAssigneeId: string;
@@ -1088,6 +1231,7 @@ export const api = {
         welcomeTagline?: string | null;
         widgetColor?: string;
         widgetIcon?: string;
+        widgetMode?: 'hosted' | 'headless';
         widgetTheme?: WidgetTheme;
         websiteUrl?: string | null;
         defaultAssigneeId?: string;
@@ -1147,6 +1291,346 @@ export const api = {
         `/accounts/${accountId}/inboxes/${inboxId}/analytics/exceptions/${exceptionId}`,
         { method: 'DELETE', token }
       ),
+    email: {
+      get: (accountId: string, inboxId: string, token: string) =>
+        request<{ config: Record<string, unknown> }>(
+          `/accounts/${accountId}/inboxes/${inboxId}/email`,
+          { token }
+        ),
+      upsert: (accountId: string, inboxId: string, body: Record<string, unknown>, token: string) =>
+        request<{ config: Record<string, unknown> }>(
+          `/accounts/${accountId}/inboxes/${inboxId}/email`,
+          { method: 'PUT', body, token }
+        ),
+    },
+    whatsapp: {
+      get: (accountId: string, inboxId: string, token: string) =>
+        request<{ config: Record<string, unknown> }>(
+          `/accounts/${accountId}/inboxes/${inboxId}/whatsapp`,
+          { token }
+        ),
+      upsert: (accountId: string, inboxId: string, body: Record<string, unknown>, token: string) =>
+        request<{ config: Record<string, unknown> }>(
+          `/accounts/${accountId}/inboxes/${inboxId}/whatsapp`,
+          { method: 'PUT', body, token }
+        ),
+    },
+    channel: {
+      get: (accountId: string, inboxId: string, token: string) =>
+        request<{ config: Record<string, unknown> }>(
+          `/accounts/${accountId}/inboxes/${inboxId}/channel`,
+          { token }
+        ),
+      upsert: (accountId: string, inboxId: string, body: Record<string, unknown>, token: string) =>
+        request<{ config: Record<string, unknown> }>(
+          `/accounts/${accountId}/inboxes/${inboxId}/channel`,
+          { method: 'PUT', body, token }
+        ),
+    },
+    sla: {
+      get: (accountId: string, inboxId: string, token: string) =>
+        request<{ policy: SlaPolicy | null }>(
+          `/accounts/${accountId}/inboxes/${inboxId}/sla`,
+          { token }
+        ),
+      attach: (accountId: string, inboxId: string, policyId: string, token: string) =>
+        request<{ policy: SlaPolicy | null }>(`/accounts/${accountId}/inboxes/${inboxId}/sla`, {
+          method: 'PUT',
+          body: { policyId },
+          token,
+        }),
+    },
+  },
+
+  automation: {
+    rules: {
+      list: (accountId: string, token: string) =>
+        request<{ rules: AutomationRuleSummary[] }>(
+          `/accounts/${accountId}/automation/rules`,
+          { token }
+        ),
+      get: (accountId: string, ruleId: string, token: string) =>
+        request<{ rule: AutomationRule }>(
+          `/accounts/${accountId}/automation/rules/${ruleId}`,
+          { token }
+        ),
+      create: (
+        accountId: string,
+        body: {
+          name: string;
+          description?: string | null;
+          triggerEvent: string;
+          isEnabled?: boolean;
+          sortOrder?: number;
+          conditions?: AutomationConditionInput[];
+          actions?: AutomationActionInput[];
+        },
+        token: string
+      ) =>
+        request<{ rule: AutomationRule }>(`/accounts/${accountId}/automation/rules`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+      update: (
+        accountId: string,
+        ruleId: string,
+        body: Record<string, unknown>,
+        token: string
+      ) =>
+        request<{ rule: AutomationRule }>(
+          `/accounts/${accountId}/automation/rules/${ruleId}`,
+          { method: 'PATCH', body, token }
+        ),
+      remove: (accountId: string, ruleId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/automation/rules/${ruleId}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+    macros: {
+      list: (accountId: string, token: string) =>
+        request<{ macros: MacroRecord[] }>(`/accounts/${accountId}/automation/macros`, { token }),
+      get: (accountId: string, macroId: string, token: string) =>
+        request<{ macro: MacroRecord }>(
+          `/accounts/${accountId}/automation/macros/${macroId}`,
+          { token }
+        ),
+      create: (
+        accountId: string,
+        body: {
+          name: string;
+          visibility?: string;
+          ownerUserId?: string | null;
+          actions?: { actionType: string; config: Record<string, unknown> }[];
+        },
+        token: string
+      ) =>
+        request<{ macro: MacroRecord }>(`/accounts/${accountId}/automation/macros`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+      update: (accountId: string, macroId: string, body: Record<string, unknown>, token: string) =>
+        request<{ macro: MacroRecord }>(
+          `/accounts/${accountId}/automation/macros/${macroId}`,
+          { method: 'PATCH', body, token }
+        ),
+      remove: (accountId: string, macroId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/automation/macros/${macroId}`, {
+          method: 'DELETE',
+          token,
+        }),
+      run: (accountId: string, macroId: string, conversationId: string, token: string) =>
+        request<{ ok: boolean; executed: number }>(
+          `/accounts/${accountId}/automation/macros/${macroId}/run`,
+          { method: 'POST', body: { conversationId }, token }
+        ),
+    },
+  },
+
+  platformAi: {
+    suggestions: (
+      accountId: string,
+      body: {
+        conversationId?: string;
+        mode?: 'suggest' | 'summarize' | 'rewrite';
+        text?: string;
+        tone?: string;
+      },
+      token: string
+    ) =>
+      request<{ suggestions?: string[]; summary?: string; text?: string }>(
+        `/accounts/${accountId}/ai/suggestions`,
+        { method: 'POST', body, token }
+      ),
+    assistants: {
+      list: (accountId: string, token: string) =>
+        request<{ assistants: AiAssistant[] }>(`/accounts/${accountId}/ai/assistants`, { token }),
+      create: (accountId: string, body: Record<string, unknown>, token: string) =>
+        request<{ assistant: AiAssistant }>(`/accounts/${accountId}/ai/assistants`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+      update: (accountId: string, assistantId: string, body: Record<string, unknown>, token: string) =>
+        request<{ assistant: AiAssistant }>(
+          `/accounts/${accountId}/ai/assistants/${assistantId}`,
+          { method: 'PATCH', body, token }
+        ),
+      remove: (accountId: string, assistantId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/ai/assistants/${assistantId}`, {
+          method: 'DELETE',
+          token,
+        }),
+      listDocuments: (accountId: string, assistantId: string, token: string) =>
+        request<{ documents: AiDocument[] }>(
+          `/accounts/${accountId}/ai/assistants/${assistantId}/documents`,
+          { token }
+        ),
+      addDocument: (
+        accountId: string,
+        assistantId: string,
+        body: { title: string; sourceType: string; sourceUrl?: string | null },
+        token: string
+      ) =>
+        request<{ document: AiDocument }>(
+          `/accounts/${accountId}/ai/assistants/${assistantId}/documents`,
+          { method: 'POST', body, token }
+        ),
+    },
+  },
+
+  helpCenter: {
+    portals: {
+      list: (accountId: string, token: string) =>
+        request<{ portals: HelpPortal[] }>(`/accounts/${accountId}/help-center/portals`, { token }),
+      create: (accountId: string, body: Record<string, unknown>, token: string) =>
+        request<{ portal: HelpPortal }>(`/accounts/${accountId}/help-center/portals`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+      update: (accountId: string, portalId: string, body: Record<string, unknown>, token: string) =>
+        request<{ portal: HelpPortal }>(
+          `/accounts/${accountId}/help-center/portals/${portalId}`,
+          { method: 'PATCH', body, token }
+        ),
+      remove: (accountId: string, portalId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/help-center/portals/${portalId}`, {
+          method: 'DELETE',
+          token,
+        }),
+      listCategories: (accountId: string, portalId: string, token: string) =>
+        request<{ categories: HelpCategory[] }>(
+          `/accounts/${accountId}/help-center/portals/${portalId}/categories`,
+          { token }
+        ),
+      createCategory: (
+        accountId: string,
+        portalId: string,
+        body: { name: string; parentId?: string | null; sortOrder?: number },
+        token: string
+      ) =>
+        request<{ category: HelpCategory }>(
+          `/accounts/${accountId}/help-center/portals/${portalId}/categories`,
+          { method: 'POST', body, token }
+        ),
+      listArticles: (accountId: string, portalId: string, token: string) =>
+        request<{ articles: HelpArticle[] }>(
+          `/accounts/${accountId}/help-center/portals/${portalId}/articles`,
+          { token }
+        ),
+      createArticle: (accountId: string, portalId: string, body: Record<string, unknown>, token: string) =>
+        request<{ article: HelpArticle }>(
+          `/accounts/${accountId}/help-center/portals/${portalId}/articles`,
+          { method: 'POST', body, token }
+        ),
+    },
+  },
+
+  channelCampaigns: {
+    list: (accountId: string, token: string) =>
+      request<{ campaigns: ChannelCampaign[] }>(
+        `/accounts/${accountId}/channel-campaigns`,
+        { token }
+      ),
+    create: (accountId: string, body: Record<string, unknown>, token: string) =>
+      request<{ campaign: ChannelCampaign }>(`/accounts/${accountId}/channel-campaigns`, {
+        method: 'POST',
+        body,
+        token,
+      }),
+    get: (accountId: string, campaignId: string, token: string) =>
+      request<{ campaign: ChannelCampaign }>(
+        `/accounts/${accountId}/channel-campaigns/${campaignId}`,
+        { token }
+      ),
+    launch: (accountId: string, campaignId: string, token: string) =>
+      request<{ campaign: ChannelCampaign | null; dispatched: number; sent: number }>(
+        `/accounts/${accountId}/channel-campaigns/${campaignId}/launch`,
+        { method: 'POST', token }
+      ),
+  },
+
+  reports: {
+    overview: (accountId: string, token: string, params?: { from?: string; to?: string }) => {
+      const qs = new URLSearchParams();
+      if (params?.from) qs.set('from', params.from);
+      if (params?.to) qs.set('to', params.to);
+      const q = qs.toString();
+      return request<{ metrics: ReportOverviewMetrics }>(
+        `/accounts/${accountId}/reports/overview${q ? `?${q}` : ''}`,
+        { token }
+      );
+    },
+    agents: (accountId: string, token: string, params?: { from?: string; to?: string }) => {
+      const qs = new URLSearchParams();
+      if (params?.from) qs.set('from', params.from);
+      if (params?.to) qs.set('to', params.to);
+      const q = qs.toString();
+      return request<{ agents: ReportAgentRow[] }>(
+        `/accounts/${accountId}/reports/agents${q ? `?${q}` : ''}`,
+        { token }
+      );
+    },
+  },
+
+  sla: {
+    policies: {
+      list: (accountId: string, token: string) =>
+        request<{ policies: SlaPolicy[] }>(`/accounts/${accountId}/sla/policies`, { token }),
+      create: (accountId: string, body: Record<string, unknown>, token: string) =>
+        request<{ policy: SlaPolicy }>(`/accounts/${accountId}/sla/policies`, {
+          method: 'POST',
+          body,
+          token,
+        }),
+      update: (accountId: string, policyId: string, body: Record<string, unknown>, token: string) =>
+        request<{ policy: SlaPolicy }>(`/accounts/${accountId}/sla/policies/${policyId}`, {
+          method: 'PATCH',
+          body,
+          token,
+        }),
+      remove: (accountId: string, policyId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/sla/policies/${policyId}`, {
+          method: 'DELETE',
+          token,
+        }),
+    },
+  },
+
+  roles: {
+    list: (accountId: string, token: string) =>
+      request<{ roles: CustomRole[] }>(`/accounts/${accountId}/roles`, { token }),
+    create: (accountId: string, body: Record<string, unknown>, token: string) =>
+      request<{ role: CustomRole }>(`/accounts/${accountId}/roles`, {
+        method: 'POST',
+        body,
+        token,
+      }),
+    update: (accountId: string, roleId: string, body: Record<string, unknown>, token: string) =>
+      request<{ role: CustomRole }>(`/accounts/${accountId}/roles/${roleId}`, {
+        method: 'PATCH',
+        body,
+        token,
+      }),
+    remove: (accountId: string, roleId: string, token: string) =>
+      request<{ ok: boolean }>(`/accounts/${accountId}/roles/${roleId}`, {
+        method: 'DELETE',
+        token,
+      }),
+  },
+
+  saml: {
+    get: (accountId: string, token: string) =>
+      request<{ config: SamlConfig | null }>(`/accounts/${accountId}/saml`, { token }),
+    upsert: (accountId: string, body: Record<string, unknown>, token: string) =>
+      request<{ config: SamlConfig }>(`/accounts/${accountId}/saml`, {
+        method: 'PUT',
+        body,
+        token,
+      }),
   },
 
   labels: {

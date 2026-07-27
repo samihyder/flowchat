@@ -29,6 +29,7 @@ export async function PATCH(req: Request, { params }: Params) {
     welcomeTagline?: string | null;
     widgetColor?: string;
     widgetIcon?: string;
+    widgetMode?: string;
     widgetTheme?: Record<string, string>;
     websiteUrl?: string | null;
     defaultAssigneeId?: string;
@@ -65,6 +66,12 @@ export async function PATCH(req: Request, { params }: Params) {
   const theme = body.widgetTheme
     ? mergeWidgetTheme(body.widgetTheme, primary)
     : (existing[0] as { widgetTheme: Record<string, string> | null }).widgetTheme;
+  const widgetMode =
+    body.widgetMode === undefined
+      ? null
+      : body.widgetMode === 'headless'
+        ? 'headless'
+        : 'hosted';
 
   const greetingMessages =
     body.greetingMessages !== undefined
@@ -85,6 +92,7 @@ export async function PATCH(req: Request, { params }: Params) {
       welcome_tagline = COALESCE(${body.welcomeTagline !== undefined ? body.welcomeTagline : null}, welcome_tagline),
       widget_color = COALESCE(${body.widgetColor ?? null}, widget_color),
       widget_icon = COALESCE(${body.widgetIcon ?? null}, widget_icon),
+      widget_mode = COALESCE(${widgetMode}, widget_mode),
       widget_theme = COALESCE(${body.widgetTheme ? JSON.stringify(theme) : null}::jsonb, widget_theme),
       website_url = COALESCE(${body.websiteUrl !== undefined ? body.websiteUrl : null}, website_url),
       default_assignee_id = COALESCE(${body.defaultAssigneeId !== undefined ? body.defaultAssigneeId : null}::uuid, default_assignee_id),
@@ -101,7 +109,7 @@ export async function PATCH(req: Request, { params }: Params) {
       updated_at = NOW()
     WHERE id = ${inboxId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, channel_type as "channelType", widget_color as "widgetColor",
-              widget_icon as "widgetIcon", widget_theme as "widgetTheme",
+              widget_icon as "widgetIcon", widget_mode as "widgetMode", widget_theme as "widgetTheme",
               greeting_message as "greetingMessage", greeting_messages as "greetingMessages",
               welcome_title as "welcomeTitle",
               welcome_tagline as "welcomeTagline", website_url as "websiteUrl",

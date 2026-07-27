@@ -3,7 +3,7 @@ import { publishEvent } from '@/lib/redis';
 import { updateReplyTracking } from '@/lib/missed-chats';
 import { writeAuditLog } from '@/lib/audit-log';
 import { dispatchWebhooks } from '@/lib/webhooks';
-import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
+import { emitPlatformEvent } from '@/lib/platform-events';
 import type { AppSql } from '@/lib/db-sql';
 
 export type MessageAttachment = {
@@ -91,17 +91,34 @@ export async function loadMessageAttachments(
 
 async function recordFirstResponse(
   sql: AppSql,
+  accountId: string,
   conversationId: string,
   agentId: string | null
 ) {
   if (!agentId) return;
-  await sql`
+  const rows = await sql`
     UPDATE conversations SET
       first_response_at = COALESCE(first_response_at, NOW()),
       first_response_by = COALESCE(first_response_by, ${agentId}::uuid),
       updated_at = NOW()
-    WHERE id = ${conversationId}::uuid AND first_response_at IS NULL
+    WHERE id = ${conversationId}::uuid AND account_id = ${accountId}::uuid AND first_response_at IS NULL
+    RETURNING inbox_id as "inboxId", created_at as "createdAt", first_response_at as "firstResponseAt"
   `;
+  const row = rows[0] as
+    | { inboxId: string; createdAt: Date | string; firstResponseAt: Date | string }
+    | undefined;
+  if (!row) return;
+
+  const valueMs = Math.max(
+    0,
+    new Date(row.firstResponseAt).getTime() - new Date(row.createdAt).getTime()
+  );
+  void emitPlatformEvent(sql, accountId, 'first_response', {
+    conversationId,
+    inboxId: row.inboxId,
+    agentId,
+    valueMs,
+  });
 }
 
 async function processMentions(
@@ -242,7 +259,7 @@ export async function insertMessage(params: {
   }
 
   if (params.senderType === 'agent' && !isPrivate) {
-    await recordFirstResponse(sql, params.conversationId, params.senderId);
+    await recordFirstResponse(sql, params.accountId, params.conversationId, params.senderId);
   }
 
   if (isPrivate && params.senderId) {
@@ -293,6 +310,21 @@ export async function insertMessage(params: {
       conversationId: params.conversationId,
       message: serialized,
     });
+    const convMeta = await sql`
+      SELECT inbox_id as "inboxId", contact_id as "contactId"
+      FROM conversations
+      WHERE id = ${params.conversationId}::uuid AND account_id = ${params.accountId}::uuid
+      LIMIT 1
+    `;
+    const meta = convMeta[0] as { inboxId: string; contactId: string } | undefined;
+    void emitPlatformEvent(sql, params.accountId, 'message.created', {
+      conversationId: params.conversationId,
+      inboxId: meta?.inboxId,
+      contactId: meta?.contactId,
+      agentId: params.senderType === 'agent' ? params.senderId : null,
+      messageId: serialized.id,
+      senderType: params.senderType,
+    });
   }
 
   return serialized;
@@ -339,9 +371,10 @@ export async function logConversationResolved(
   conversationId: string,
   actorId: string
 ) {
-  await sql`
+  const rows = await sql`
     UPDATE conversations SET resolved_at = NOW(), updated_at = NOW()
-    WHERE id = ${conversationId}::uuid AND resolved_at IS NULL
+    WHERE id = ${conversationId}::uuid AND account_id = ${accountId}::uuid AND resolved_at IS NULL
+    RETURNING inbox_id as "inboxId", created_at as "createdAt", resolved_at as "resolvedAt"
   `;
 
   await writeAuditLog(sql, {
@@ -354,12 +387,24 @@ export async function logConversationResolved(
 
   void dispatchWebhooks(sql, accountId, 'conversation.resolved', { conversationId });
 
-  const convRows = await sql`
-    SELECT contact_id as "contactId" FROM conversations
-    WHERE id = ${conversationId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
-  `;
-  const contactId = (convRows[0] as { contactId: string | null } | undefined)?.contactId;
-  if (contactId) {
-    await triggerMarketingWorkflows(sql, accountId, 'conversation_resolved', contactId);
+  const row = rows[0] as
+    | { inboxId: string; createdAt: Date | string; resolvedAt: Date | string }
+    | undefined;
+  const valueMs = row
+    ? Math.max(0, new Date(row.resolvedAt).getTime() - new Date(row.createdAt).getTime())
+    : null;
+
+  void emitPlatformEvent(sql, accountId, 'conversation.resolved', {
+    conversationId,
+    inboxId: row?.inboxId,
+    agentId: actorId,
+  });
+  if (valueMs != null) {
+    void emitPlatformEvent(sql, accountId, 'resolution_time', {
+      conversationId,
+      inboxId: row?.inboxId,
+      agentId: actorId,
+      valueMs,
+    });
   }
 }

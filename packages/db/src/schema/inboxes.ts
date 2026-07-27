@@ -27,6 +27,8 @@ export const inboxes = pgTable('inboxes', {
   welcomeTagline: varchar('welcome_tagline', { length: 255 }),
   widgetColor: varchar('widget_color', { length: 20 }).default('#1F93FF'),
   widgetIcon: varchar('widget_icon', { length: 32 }).default('chat'),
+  /** hosted = FlowChat UI; headless = API/WS only for a custom UI */
+  widgetMode: varchar('widget_mode', { length: 20 }).notNull().default('hosted'),
   widgetTheme: jsonb('widget_theme'),
   websiteUrl: varchar('website_url', { length: 500 }),
   defaultAssigneeId: uuid('default_assignee_id').references(() => users.id, { onDelete: 'set null' }),

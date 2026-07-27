@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="FlowChat icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="60%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2DD4BF"/>
+      <stop offset="100%" stop-color="#0D9488"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Inner shadow on bubble -->
+    <filter id="bubbleShadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#4338CA" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="64" height="64" rx="18" fill="url(#bg)"/>
+
+  <!-- Subtle inner highlight -->
+  <rect x="1" y="1" width="62" height="30" rx="17" fill="white" opacity="0.06"/>
+
+  <!-- Main chat bubble -->
+  <path d="M9 13 Q9 8 14 8 H50 Q55 8 55 13 V37 Q55 42 50 42 H26 L16 54 V42 H14 Q9 42 9 37 Z"
+        fill="white" filter="url(#bubbleShadow)"/>
+
+  <!-- Three dots -->
+  <circle cx="23" cy="25" r="3.5" fill="url(#bg)"/>
+  <circle cx="32" cy="25" r="3.5" fill="url(#bg)"/>
+  <circle cx="41" cy="25" r="3.5" fill="url(#bg)"/>
+
+  <!-- Teal live-indicator dot (bottom-right) -->
+  <circle cx="51" cy="51" r="8" fill="url(#teal)" filter="url(#glow)"/>
+  <!-- Checkmark inside teal dot -->
+  <path d="M47.5 51 L50 53.5 L54.5 48.5"
+        stroke="white" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

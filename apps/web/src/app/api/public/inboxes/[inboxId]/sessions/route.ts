@@ -1,6 +1,7 @@
 import { corsHeaders, optionsResponse } from '@/lib/cors';
 import { newVisitorToken } from '@/lib/conversations';
 import { dispatchWebhooks } from '@/lib/webhooks';
+import { emitPlatformEvent } from '@/lib/platform-events';
 import { getClientIp } from '@/lib/request-ip';
 import { getClientGeo } from '@/lib/request-geo';
 import { sendWelcomeMessages } from '@/lib/welcome-messages';
@@ -135,6 +136,12 @@ export async function POST(req: Request, { params }: Params) {
         inboxId,
         contactId: link.contactId,
       });
+      void emitPlatformEvent(sql, inbox.accountId, 'conversation.created', {
+        conversationId: convRows[0]!.id,
+        inboxId,
+        contactId: link.contactId,
+        assigneeId,
+      });
     }
 
     if (body.preChatData && Object.keys(body.preChatData).length > 0) {
@@ -224,6 +231,12 @@ export async function POST(req: Request, { params }: Params) {
     conversationId: convRows[0]!.id,
     inboxId,
     contactId: contact.id,
+  });
+  void emitPlatformEvent(sql, inbox.accountId, 'conversation.created', {
+    conversationId: convRows[0]!.id,
+    inboxId,
+    contactId: contact.id,
+    assigneeId,
   });
 
   await sendWelcomeMessages(sql, convRows[0]!.id, inbox.accountId, inboxId);

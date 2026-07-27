@@ -1,6 +1,7 @@
 import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { writeAuditLog } from '@/lib/audit-log';
+import { normalizeStringArray } from '@/lib/api-keys';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string; keyId: string }> };
@@ -27,7 +28,10 @@ export async function PATCH(req: Request, { params }: Params) {
   `;
   if (!rows[0]) return Response.json({ error: 'API key not found' }, { status: 404 });
 
-  return Response.json({ apiKey: rows[0] });
+  const row = rows[0] as Record<string, unknown>;
+  return Response.json({
+    apiKey: { ...row, scopes: normalizeStringArray(row.scopes) },
+  });
 }
 
 export async function DELETE(req: Request, { params }: Params) {

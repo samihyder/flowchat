@@ -12,6 +12,52 @@
     return;
   }
 
+  function scriptBase() {
+    var scripts = document.getElementsByTagName('script');
+    for (var i = 0; i < scripts.length; i++) {
+      var src = scripts[i].src || '';
+      if (src.indexOf('/widget.js') !== -1) {
+        return src.replace(/\/widget\.js(\?.*)?$/, '');
+      }
+    }
+    return (cfg.apiUrl || configUrl || '').replace(/\/api\/?$/, '');
+  }
+
+  function bootHeadless() {
+    function start() {
+      if (!window.FlowChat || typeof window.FlowChat.createClient !== 'function') {
+        console.error('[FlowChat] headless.js failed to load');
+        return;
+      }
+      var client = window.FlowChat.createClient({
+        inboxId: inboxId,
+        apiUrl: apiUrl,
+        configUrl: configUrl,
+        wsUrl: wsUrl,
+      });
+      client.restore();
+      client.trackVisit();
+      window.flowchatClient = client;
+      console.info('[FlowChat] Headless mode — use window.flowchatClient (no UI mounted)');
+    }
+    if (window.FlowChat && typeof window.FlowChat.createClient === 'function') {
+      start();
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = scriptBase() + '/headless.js?v=1';
+    s.onload = start;
+    s.onerror = function () {
+      console.error('[FlowChat] Failed to load headless.js');
+    };
+    document.head.appendChild(s);
+  }
+
+  if (cfg.mode === 'headless') {
+    bootHeadless();
+    return;
+  }
+
   const ICON_SVGS = {
     chat: '<path fill="currentColor" d="M8 10h8M8 14h5M20 6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2v3l4-3h6a2 2 0 0 0 2-2V6z"/>',
     bubble: '<path fill="currentColor" d="M12 3C7.03 3 3 6.58 3 11c0 2.03.9 3.87 2.36 5.24L4 21l5.2-1.62C10.5 19.8 11.23 20 12 20c4.97 0 9-3.58 9-8s-4.03-8-9-8z"/>',
@@ -93,12 +139,19 @@
     localStorage.removeItem(SESSION_KEY);
   }
 
-  const root = document.createElement('div');
-  root.id = 'flowchat-widget-root';
-  document.body.appendChild(root);
+  let root = null;
+  let style = null;
+  let uiMounted = false;
 
-  const style = document.createElement('style');
-  style.textContent = `
+  function ensureMounted() {
+    if (uiMounted) return;
+    uiMounted = true;
+    root = document.createElement('div');
+    root.id = 'flowchat-widget-root';
+    document.body.appendChild(root);
+
+    style = document.createElement('style');
+    style.textContent = `
     #flowchat-widget-root {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       z-index: 2147483000;
@@ -241,7 +294,8 @@
       #fc-launcher { bottom: 16px; right: 16px; }
     }
   `;
-  document.head.appendChild(style);
+    document.head.appendChild(style);
+  }
 
   function parseTheme(raw, primary) {
     let partial = raw;
@@ -447,6 +501,7 @@
   }
 
   function render() {
+    if (!uiMounted || !root) return;
     const t = theme();
     applyThemeVars(t);
 
@@ -538,11 +593,17 @@
         if (typeof data.inbox.widgetTheme === 'string') {
           try { data.inbox.widgetTheme = JSON.parse(data.inbox.widgetTheme); } catch { /* keep */ }
         }
+        if ((cfg.mode || data.inbox.widgetMode) === 'headless') {
+          bootHeadless();
+          return 'headless';
+        }
+        ensureMounted();
         state.inbox = data.inbox;
         state.configLoaded = true;
         state.error = '';
         render();
       } else {
+        ensureMounted();
         if (res.status === 404) {
           state.error =
             'Inbox not found. In FlowChat go to Settings → Inboxes → Embed code and copy the latest snippet (inbox ID may have changed).';
@@ -553,6 +614,7 @@
       }
     } catch (e) {
       console.error('[FlowChat] config error', e);
+      ensureMounted();
       state.error = (e && e.message) ? e.message : 'Could not load widget settings';
       render();
     }
@@ -860,7 +922,10 @@
   }
 
   trackVisit();
-  loadConfig().then(function () {
+  loadConfig().then(function (mode) {
+    if (mode === 'headless') return;
     return restoreSession();
-  }).then(render);
+  }).then(function () {
+    if (uiMounted) render();
+  });
 })();

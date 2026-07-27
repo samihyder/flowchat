@@ -191,6 +191,12 @@ export function DashboardSidebar({
             label="Documents"
           />
           <NavItem
+            href="/dashboard/channel-campaigns"
+            active={pathname.startsWith('/dashboard/channel-campaigns')}
+            icon="📣"
+            label="Channel campaigns"
+          />
+          <NavItem
             href="/marketing/campaigns"
             active={isMarketing}
             icon="📧"
@@ -225,6 +231,12 @@ export function DashboardSidebar({
             active={pathname === '/dashboard/analytics'}
             icon="📊"
             label="Analytics"
+          />
+          <NavItem
+            href="/dashboard/reports"
+            active={pathname === '/dashboard/reports'}
+            icon="📈"
+            label="Reports"
           />
         </NavSection>
 

@@ -447,8 +447,26 @@ Adjust path for subpath deployment per [SUBPATH_DEPLOYMENT.md](SUBPATH_DEPLOYMEN
 
 ### Reply-stop (S6M-38)
 
-Inbound reply matching requires Sprint 7 email inbox (`In-Reply-To` / `Message-ID`). Documented in [sprints.md](sprints.md) Sprint 7 note. Store `provider_message_id` on `marketing_campaign_recipient_steps` at send time (see migration doc).
+Inbound reply matching requires Sprint 7 email inbox (`In-Reply-To` / `Message-ID`). Documented in [sprints.md](sprints.md) Sprint 7 note. Store `provider_message_id` on `marketing_campaign_recipient_steps` at send time (see migration doc). ESP reply webhooks are the fallback until Sprint 7.
 
 ---
 
-*Last updated: 2026-06-13*
+## Sprint completion summary (reconciled 2026-07-25)
+
+| Sprint | Status | Notes |
+|---|---|---|
+| S1 – S3 | ✅ Done | See tables above |
+| S4 – S5 | ✅ Done | Chat module shipped; formal [chat-module-standard.md](chat-module-standard.md) staging sign-off still pending |
+| S6 | ✅ Done | CRM + outbound email foundation |
+| S6M | 🟡 Implemented — pending QA / closeout | Campaign wizard live; **S6M-9** triggers still wired; **S6M-38** needs Sprint 7 |
+| S7B | ✅ Done | Connected services BYOK |
+| S7 – S14, S16, S18 – S19 | Not started | |
+| S15, S17, S20 | Partial | Early KPIs/audit/companies from S5/S6; full sprint scope remains |
+
+**API pattern:** Production REST is Next.js App Router (`apps/web/src/app/api`) + Neon SQL. `services/api` (Hono) is a Sprint 1–3 remnant.
+
+**Out of roadmap shipped:** DAS documents, LeadMonitor/LeadSnapper integrations, enrichment flows, super-admin / API catalog.
+
+---
+
+*Last updated: 2026-07-25*

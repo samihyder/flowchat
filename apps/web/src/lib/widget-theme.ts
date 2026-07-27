@@ -10,6 +10,9 @@ import { MUTEX_PRIMARY_DEFAULT } from '@/lib/mutex-brand';
 
 export type WidgetIconId = 'chat' | 'bubble' | 'headset' | 'message' | 'help' | 'wave';
 
+/** hosted = FlowChat launcher UI; headless = API/WS only for a custom UI */
+export type WidgetMode = 'hosted' | 'headless';
+
 export type WidgetTheme = {
   launcherBg: string;
   launcherIcon: string;
@@ -121,6 +124,7 @@ export type WidgetSettingsInput = {
   defaultAssigneeId: string;
   widgetColor: string;
   widgetIcon: WidgetIconId;
+  widgetMode: WidgetMode;
   widgetTheme: WidgetTheme;
   allowedDomainsText: string;
   offlineMessage: string;
@@ -145,6 +149,7 @@ export const emptyWidgetSettings = (): WidgetSettingsInput => ({
   defaultAssigneeId: '',
   widgetColor: MUTEX_PRIMARY_DEFAULT,
   widgetIcon: 'chat',
+  widgetMode: 'hosted',
   widgetTheme: defaultWidgetTheme(),
   allowedDomainsText: '',
   offlineMessage: 'We are currently offline. Leave a message and we will get back to you soon.',
@@ -176,6 +181,7 @@ export function settingsFromInbox(inbox: {
   defaultAssigneeId?: string | null;
   widgetColor?: string | null;
   widgetIcon?: string | null;
+  widgetMode?: WidgetMode | string | null;
   widgetTheme?: Partial<WidgetTheme> | null;
   allowedDomains?: string[] | null;
   offlineMessage?: string | null;
@@ -210,6 +216,7 @@ export function settingsFromInbox(inbox: {
     defaultAssigneeId: inbox.defaultAssigneeId ?? '',
     widgetColor: primary,
     widgetIcon: (inbox.widgetIcon as WidgetIconId) || 'chat',
+    widgetMode: inbox.widgetMode === 'headless' ? 'headless' : 'hosted',
     widgetTheme: mergeWidgetTheme(inbox.widgetTheme, primary),
     allowedDomainsText: (inbox.allowedDomains ?? []).join('\n'),
     offlineMessage:

@@ -20,6 +20,7 @@ export function inboxPayloadFromSettings(s: WidgetSettingsInput) {
     defaultAssigneeId: s.defaultAssigneeId,
     widgetColor: s.widgetColor,
     widgetIcon: s.widgetIcon,
+    widgetMode: s.widgetMode,
     widgetTheme: s.widgetTheme,
     allowedDomains: parseDomainsText(s.allowedDomainsText),
     offlineMessage: s.offlineMessage.trim() || null,

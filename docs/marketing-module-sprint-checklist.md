@@ -2,6 +2,8 @@
 
 **Epic:** S6M · **Approach:** Vertical slices (migration → API → UI per slice)  
 **Environment:** **Local development only** until full epic QA sign-off  
+**Code status (2026-07-25):** Campaign schema, APIs, UI, and cron are **implemented** in the repo. Formal per-sub-sprint QA gates below remain for staging sign-off.  
+**Closeout gaps:** **S6M-9** ✅ closed · **S6M-38** email-inbox ingest + ESP fallback (IMAP poll optional)  
 **Spec:** [marketing-module-screens.md](marketing-module-screens.md) · [marketing-module-migration.md](marketing-module-migration.md)  
 **Stitch root:** `stitch_flow_marketing_module_design_system/`  
 **Design tokens:** `stitch_flow_marketing_module_design_system/flowchat_campaign_system/DESIGN.md`  
@@ -9,6 +11,7 @@
 
 > **Canonical Stitch screens** — prefer `*_refined` / `*_with_stop_metrics` over legacy duplicates.  
 > Rename **SalesHub → FlowChat** in HTML at implementation time.
+
 
 ---
 
@@ -29,8 +32,7 @@ From repo root (`FlowChat/`):
 # One-time (see docs/MUTEX_SYSTEMS_SETUP.md)
 cp .env.example .env.local   # DATABASE_URL, JWT_SECRET, REDIS_URL, provider keys
 pnpm install
-pnpm db:migrate              # apply 0022_s6m_campaigns.sql when added
-
+pnpm db:migrate              # includes 0022_s6m_campaigns.sql (applied)
 # Daily
 pnpm dev                     # turbo: web + api + worker (ports per .env)
 pnpm db:studio               # inspect rows (Drizzle Studio)
@@ -124,20 +126,19 @@ Each sub-sprint is one **shippable vertical slice**. Complete in order:
 |---------|--------------------------------------------------------|
 
 ### Migration
-- [ ] Apply `0022_s6m_campaigns.sql` per [marketing-module-migration.md](marketing-module-migration.md)
-- [ ] Enums: `campaign.status`, `stopped_reason`, `recipient_step.status` (§1.2 screens doc)
-- [ ] Indexes: `(account_id, status)`, cron due query, `provider_message_id`
+- [x] Apply `0022_s6m_campaigns.sql` per [marketing-module-migration.md](marketing-module-migration.md) *(shipped in repo)*
+- [x] Enums: `campaign.status`, `stopped_reason`, `recipient_step.status` (§1.2 screens doc)
+- [x] Indexes: `(account_id, status)`, cron due query, `provider_message_id`
 
 ### API / platform
-- [ ] Shared `MarketingError` codes + safe user messages (S6M-31)
-- [ ] RBAC helper: `canLaunch`, `canControlCampaign` (§8)
-- [ ] Remove / gate `triggerMarketingWorkflows` on contact create, import, chat (S6M-9)
-- [ ] Nav: Marketing → **Campaigns | Templates** only; hide `/marketing/workflows` (S6M-35)
+- [x] Shared `MarketingError` codes + safe user messages (S6M-31)
+- [x] RBAC helper: `canLaunch`, `canControlCampaign` (§8)
+- [x] Remove / gate `triggerMarketingWorkflows` on contact create, import, chat (S6M-9) — **done**
+- [x] Nav: Marketing → **Campaigns | Templates** only; hide `/marketing/workflows` (S6M-35)
 
 ### UI shell (no business logic yet)
-- [ ] Route scaffold: `/dashboard/marketing/campaigns`, `/templates`, wizard `/campaigns/[id]/edit`
-- [ ] Tailwind tokens from `flowchat_campaign_system/DESIGN.md`
-
+- [x] Route scaffold: `/dashboard/marketing/campaigns`, `/templates`, wizard `/campaigns/[id]/edit`
+- [x] Tailwind tokens from `flowchat_campaign_system/DESIGN.md`
 ### Stitch reference
 | Purpose | Folder |
 |---------|--------|
@@ -633,8 +634,8 @@ pnpm typecheck && pnpm lint && pnpm test   # all packages
 | 6M-10 | S6M-34, S6M-36, S6M-37, S6M-38, S6M-44 |
 | 6M-11 | S6M-31, S6M-39, S6M-40 + QA |
 
-**All 44 stories assigned.**
+**All 44 stories assigned.** Codebase: **43 Completed + 2 Partial** (S6M-9, S6M-38) in workbook as of 2026-07-25.
 
 ---
 
-*Last updated: 2026-06-13 · Vertical-slice order for S6M implementation*
+*Last updated: 2026-07-25 · Code implemented; formal QA gates + S6M-9/S6M-38 closeout remain*

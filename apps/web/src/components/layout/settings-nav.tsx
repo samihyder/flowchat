@@ -25,9 +25,30 @@ const sections: NavSection[] = [
   {
     title: 'Automation',
     items: [
+      { label: 'Rules', href: '/settings/automation-rules' as Route, icon: 'rule' },
+      { label: 'Macros', href: '/settings/macros' as Route, icon: 'bolt' },
       { label: 'Labels', href: '/settings/labels' as Route, icon: 'label' },
       { label: 'Canned responses', href: '/settings/canned-responses' as Route, icon: 'chat' },
       { label: 'Auto messages', href: '/settings/auto-messages' as Route, icon: 'smart_toy' },
+    ],
+  },
+  {
+    title: 'Workspace',
+    items: [
+      { label: 'SLA', href: '/settings/sla' as Route, icon: 'timer' },
+      { label: 'Roles', href: '/settings/roles' as Route, icon: 'badge' },
+    ],
+  },
+  {
+    title: 'AI',
+    items: [
+      { label: 'Assistants', href: '/settings/ai-assistants' as Route, icon: 'psychology' },
+    ],
+  },
+  {
+    title: 'Help',
+    items: [
+      { label: 'Help Center', href: '/settings/help-center' as Route, icon: 'menu_book' },
     ],
   },
   {

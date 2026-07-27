@@ -3,7 +3,8 @@
 > **Purpose:** Define what “email marketing complete” means for FlowChat outbound marketing.  
 > **Scope:** Campaign-based marketing on CRM contacts — **not** the email support inbox (Sprint 7).  
 > **Primary stories:** S6M-1 … S6M-44 (Marketing Campaign Redesign). Foundation CRM/consent from S6-10 – S6-13 remains in force.  
-> **Benchmark:** HubSpot Marketing Hub, Mailchimp, Brevo (Sendinblue), ActiveCampaign — SMB tier.
+> **Benchmark:** HubSpot Marketing Hub, Mailchimp, Brevo (Sendinblue), ActiveCampaign — SMB tier.  
+> **Codebase status (2026-07-25):** S6M campaign APIs/UI/schema **implemented**. Formal staging DoD below remains open. Closeout: **S6M-9** (CRM workflow triggers still wired), **S6M-38** (reply-stop full fidelity needs Sprint 7).
 
 ---
 
@@ -106,7 +107,7 @@ Transactional mail (agent invites, missed-chat alerts, double opt-in confirm) us
 
 **Canonical enums, API contract, and full story traceability:** [marketing-module-screens.md](marketing-module-screens.md) §0.1, §1.2, §1.3, §3.1, §7.1.  
 **Visual design, branding, components:** [marketing-module-design.md](marketing-module-design.md).  
-**Database schema (planned):** [marketing-module-migration.md](marketing-module-migration.md).
+**Database schema (applied):** [marketing-module-migration.md](marketing-module-migration.md) — migrations `0022_s6m_campaigns.sql` and follow-ups are in `packages/db/drizzle/`.
 
 ---
 
@@ -119,13 +120,15 @@ The following **S6-15 / S6-16 CRM-triggered workflow** capabilities are **retire
 | Contact created → welcome drip | Manual campaign with explicit recipients |
 | Label added / conversation resolved triggers | Campaign wizard only |
 | Workflow builder in Marketing nav | Campaigns + Templates |
-| `triggerMarketingWorkflows` on CRM paths | Removed (S6M-9) |
+| `triggerMarketingWorkflows` on CRM paths | Remove at S6M-9 closeout *(still Partial — triggers wired as of 2026-07-25)* |
 
 Historical S6-14 broadcast and S6-15/16 workflow stories remain in the workbook as completed foundation work; S6M is the authoritative model going forward.
 
 ---
 
 ## Definition of Done (sign-off checklist)
+
+> Staging verification checklist — **do not treat as signed** until boxes below are checked in a staging environment. Code implementation ≠ DoD sign-off.
 
 ### Marketer journey
 - [ ] Create campaign draft; campaign ID assigned immediately
@@ -136,10 +139,10 @@ Historical S6-14 broadcast and S6-15/16 workflow stories remain in the workbook 
 - [ ] View campaign report with per-step and per-recipient stats
 
 ### Contact journey
-- [ ] New CRM contact receives **no** marketing email automatically
+- [ ] New CRM contact receives **no** marketing email automatically *(blocked on S6M-9 closeout)*
 - [ ] Unsubscribe link suppresses future marketing
 - [ ] Hard bounce and spam complaint suppress address
-- [ ] Reply to campaign email stops follow-ups for that recipient only
+- [ ] Reply to campaign email stops follow-ups for that recipient only *(full fidelity blocked on Sprint 7 / S6M-38)*
 
 ### Administrator journey
 - [ ] Sending domain verified; BYOK or platform provider connected

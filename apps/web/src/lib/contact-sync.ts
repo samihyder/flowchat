@@ -2,6 +2,7 @@ import type { AppSql } from '@/lib/db-sql';
 import { linkContactToGlobalCompany } from '@/lib/companies/resolve';
 import { dispatchWebhooks } from '@/lib/webhooks';
 import { dispatchEcosystemContactSync } from '@/lib/ecosystem-dispatch';
+import { emitPlatformEvent } from '@/lib/platform-events';
 
 export type ContactRecord = {
   id: string;
@@ -39,9 +40,19 @@ export async function emitContactEvent(
   sql: AppSql,
   accountId: string,
   event: 'contact.created' | 'contact.updated' | 'contact.deleted',
-  contact: ContactRecord | { id: string }
+  contact: ContactRecord | { id: string },
+  opts?: { source?: string }
 ) {
   void dispatchWebhooks(sql, accountId, event, { contact });
+  // Conversation automation only — not marketing (S6M-9). Enables Lead Monitor /
+  // LeadSnapper-synced contacts to drive inbox rules (assign, label, etc.).
+  if (event === 'contact.created' && 'id' in contact) {
+    void emitPlatformEvent(sql, accountId, 'contact.created', {
+      contactId: contact.id,
+      contact,
+      source: opts?.source ?? 'manual',
+    });
+  }
 }
 
 function mergeCustomAttributes(
@@ -166,7 +177,7 @@ export async function upsertIntegrationContact(
   `;
   const contact = serializeContactRow(rows[0] as Record<string, unknown>);
   await linkContactToGlobalCompany(sql, contact.id, contact.email, accountId);
-  await emitContactEvent(sql, accountId, 'contact.created', contact);
+  await emitContactEvent(sql, accountId, 'contact.created', contact, { source: 'crm_sync' });
   void dispatchEcosystemContactSync(sql, accountId, contact, true);
   return { contact, created: true };
 }

@@ -3,16 +3,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { api, type Inbox } from '@/lib/api';
-import { buildWidgetEmbedSnippet } from '@/lib/widget-embed';
+import { buildEmbedSnippet } from '@/lib/widget-embed';
 import { ensureWorkspace } from '@/lib/workspace';
 import { CreateInboxForm } from '@/components/inboxes/create-inbox-form';
 import { EditInboxForm } from '@/components/inboxes/edit-inbox-form';
+import { ChannelConfigPanel } from '@/components/inboxes/channel-config-panel';
 
 const channelIcon: Record<string, string> = {
-  web_widget: '💬',
-  email: '✉️',
-  whatsapp: '📱',
-  api: '🔌',
+  web_widget: 'chat',
+  email: 'mail',
+  whatsapp: 'chat',
+  facebook: 'public',
+  instagram: 'photo_camera',
+  telegram: 'send',
+  sms: 'sms',
+  api: 'api',
 };
 
 type AgentOption = { userId: string; name: string; email: string };
@@ -24,6 +29,7 @@ export default function InboxesPage() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [configuringId, setConfiguringId] = useState<string | null>(null);
   const [listMessage, setListMessage] = useState('');
 
   const fetchInboxes = useCallback(async () => {
@@ -62,17 +68,18 @@ export default function InboxesPage() {
       await api.inboxes.remove(accountId, inboxId, token);
       if (expandedId === inboxId) setExpandedId(null);
       if (editingId === inboxId) setEditingId(null);
+      if (configuringId === inboxId) setConfiguringId(null);
       fetchInboxes();
     } catch (err: unknown) {
       setListMessage(err instanceof Error ? err.message : 'Failed to delete inbox');
     }
   };
 
-  const embedSnippet = (inboxId: string) => buildWidgetEmbedSnippet(inboxId);
+  const embedSnippet = (inbox: Inbox) =>
+    buildEmbedSnippet(inbox.id, inbox.widgetMode === 'headless' ? 'headless' : 'hosted');
 
   return (
     <div className="space-y-4">
-
       {!loading && (
         <p className="text-sm text-gray-500">
           {inboxes.length} active inbox{inboxes.length === 1 ? '' : 'es'}
@@ -101,12 +108,15 @@ export default function InboxesPage() {
                       className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm shrink-0"
                       style={{ background: inbox.widgetColor ?? '#06B6D4' }}
                     >
-                      {channelIcon[inbox.channelType] ?? '💬'}
+                      <span className="material-symbols-outlined text-[18px]" aria-hidden>
+                        {channelIcon[inbox.channelType] ?? 'inbox'}
+                      </span>
                     </span>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">{inbox.name}</p>
                       <p className="text-xs text-gray-400 capitalize">
                         {inbox.channelType.replace('_', ' ')}
+                        {inbox.widgetMode === 'headless' ? ' · Headless' : ''}
                         {inbox.widgetIcon ? ` · ${inbox.widgetIcon} icon` : ''}
                         {' · '}
                         {inbox.agentCount ?? 0} agent{(inbox.agentCount ?? 0) === 1 ? '' : 's'}
@@ -120,16 +130,17 @@ export default function InboxesPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {inbox.channelType === 'web_widget' && (
+                    {inbox.channelType === 'web_widget' ? (
                       <>
                         <button
                           type="button"
                           onClick={() => {
                             setEditingId(inbox.id);
                             setExpandedId(null);
+                            setConfiguringId(null);
                             setListMessage('');
                           }}
-                          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                          className="text-xs text-primary-600 hover:text-primary-800 font-medium"
                         >
                           Edit
                         </button>
@@ -137,13 +148,26 @@ export default function InboxesPage() {
                           type="button"
                           onClick={() => {
                             setEditingId(null);
+                            setConfiguringId(null);
                             setExpandedId(expandedId === inbox.id ? null : inbox.id);
                           }}
-                          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                          className="text-xs text-primary-600 hover:text-primary-800 font-medium"
                         >
                           {expandedId === inbox.id ? 'Hide embed' : 'Embed code'}
                         </button>
                       </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingId(null);
+                          setExpandedId(null);
+                          setConfiguringId(configuringId === inbox.id ? null : inbox.id);
+                        }}
+                        className="text-xs text-primary-600 hover:text-primary-800 font-medium"
+                      >
+                        {configuringId === inbox.id ? 'Hide config' : 'Configure channel'}
+                      </button>
                     )}
                     <button
                       type="button"
@@ -170,33 +194,50 @@ export default function InboxesPage() {
                   />
                 )}
 
+                {configuringId === inbox.id && accountId && token && (
+                  <ChannelConfigPanel
+                    inboxId={inbox.id}
+                    channelType={inbox.channelType}
+                    accountId={accountId}
+                    token={token}
+                  />
+                )}
+
                 {expandedId === inbox.id && (
                   <div className="mt-3">
                     <p className="text-xs text-gray-500 mb-2">
-                      Paste this snippet on your website before the closing &lt;/body&gt; tag.
+                      {inbox.widgetMode === 'headless'
+                        ? 'Headless mode — paste this snippet, then wire FlowChat.createClient() to your own UI. No FlowChat launcher is shown.'
+                        : (
+                          <>
+                            Paste this snippet on your website before the closing <code>&lt;/body&gt;</code> tag.
+                          </>
+                        )}
                     </p>
                     <pre className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre-wrap">
-                      {embedSnippet(inbox.id)}
+                      {embedSnippet(inbox)}
                     </pre>
                     <div className="flex gap-2 mt-2">
                       <button
                         type="button"
                         onClick={() => {
-                          navigator.clipboard.writeText(embedSnippet(inbox.id));
+                          navigator.clipboard.writeText(embedSnippet(inbox));
                           setListMessage('Embed code copied to clipboard.');
                         }}
                         className="text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
                       >
-                        📋 Copy code
+                        Copy code
                       </button>
-                      <a
-                        href={`/test-widget.html?inboxId=${inbox.id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
-                      >
-                        🧪 Test widget
-                      </a>
+                      {inbox.widgetMode !== 'headless' && (
+                        <a
+                          href={`/test-widget.html?inboxId=${inbox.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+                        >
+                          Test widget
+                        </a>
+                      )}
                     </div>
                   </div>
                 )}

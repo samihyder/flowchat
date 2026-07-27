@@ -96,6 +96,35 @@ function WidgetCustomizerInner({ settings, onChange, showNameChannel = true }: P
       )}
 
       <div>
+        <label className={labelClass}>Chat embed mode</label>
+        <p className="text-xs text-gray-500 mb-2">
+          Hosted uses FlowChat&apos;s chat UI. Headless is connectivity only — build your own UI with the public
+          chat API.
+        </p>
+        <div className="flex gap-2">
+          {(
+            [
+              { id: 'hosted' as const, label: 'Hosted UI' },
+              { id: 'headless' as const, label: 'Headless' },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onChange({ ...settings, widgetMode: opt.id })}
+              className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                settings.widgetMode === opt.id
+                  ? 'border-primary-500 bg-primary-50 text-primary-700'
+                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
         <div className="flex items-center justify-between gap-2 mb-1">
           <label className={labelClass}>Greeting messages</label>
           <a href="/settings/auto-messages" className="text-xs text-primary-600 hover:underline">

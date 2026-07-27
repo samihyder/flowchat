@@ -3,6 +3,36 @@ import type { AppSql } from '@/lib/db-sql';
 
 export type ApiKeyScope = 'contacts:read' | 'contacts:write';
 
+/** Neon/jsonb may return an array, a JSON string, or null — always normalize to string[]. */
+export function normalizeStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === 'string');
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((v): v is string => typeof v === 'string');
+      }
+    } catch {
+      // Comma-separated fallback
+      return trimmed
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+}
+
+export function normalizeApiKeyScopes(value: unknown): ApiKeyScope[] {
+  return normalizeStringArray(value).filter(
+    (s): s is ApiKeyScope => s === 'contacts:read' || s === 'contacts:write'
+  );
+}
+
 export function hashApiKey(key: string): string {
   return createHash('sha256').update(key).digest('hex');
 }
@@ -34,9 +64,7 @@ export async function authorizeApiKey(sql: AppSql, rawKey: string | null): Promi
 
   void sql`UPDATE account_api_keys SET last_used_at = NOW() WHERE id = ${row.id}::uuid`;
 
-  const scopes = (Array.isArray(row.scopes) ? row.scopes : []).filter(
-    (s): s is ApiKeyScope => s === 'contacts:read' || s === 'contacts:write'
-  );
+  const scopes = normalizeApiKeyScopes(row.scopes);
 
   return { keyId: row.id, accountId: row.accountId, scopes };
 }

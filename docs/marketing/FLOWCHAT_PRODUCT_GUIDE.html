@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>FlowChat Product Guide — Every conversation in flow</title>
+<style>
+@page { size: A4; margin: 0; }
+:root {
+  --aqua:#06B6D4; --aqua-dark:#0891B2; --turq:#2DD4BF;
+  --deep:#134E4A; --head:#0F766E; --ink:#0f172a; --muted:#64748b;
+  --line:rgba(6,182,212,.22); --grad:linear-gradient(135deg,#2DD4BF,#06B6D4 55%,#0891B2);
+  --dark:linear-gradient(145deg,#134E4A 0%,#0F766E 45%,#155E75 100%);
+  --panel:#eef7f7;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:Inter,Segoe UI,system-ui,sans-serif;color:var(--ink);
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff}
+.page{width:100%;max-width:210mm;min-height:297mm;height:297mm;margin:0 auto;padding:11mm 11mm 13mm;
+  page-break-after:always;break-after:page;position:relative;overflow:hidden;background:#fff}
+.page:last-child{page-break-after:auto}
+.page-dark{background:var(--dark);color:#ecfeff}
+.page-tint{background:radial-gradient(ellipse 70% 45% at 100% 0%,rgba(45,212,191,.14),transparent 55%),
+  linear-gradient(180deg,#f0fdfa 0%,#fff 42%,#f8fafc 100%)}
+.eyebrow{font-size:8pt;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--aqua-dark);margin:0 0 3px}
+.page-dark .eyebrow{color:#99f6e4}
+h1{font-size:26pt;letter-spacing:-.03em;margin:0 0 8px;font-weight:800;line-height:1.1}
+h2{font-size:15pt;letter-spacing:-.02em;margin:0 0 5px;color:var(--head);font-weight:800}
+.page-dark h2{color:#fff}
+h3{font-size:10pt;margin:0 0 2px;color:var(--deep);font-weight:700}
+p{margin:0 0 7px;font-size:9pt;line-height:1.4;color:#334155}
+.page-dark p{color:#ccfbf1}
+.lead{font-size:9.5pt;color:#475569}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:5mm;margin-bottom:5mm;
+  padding-bottom:2.5mm;border-bottom:1px solid var(--line)}
+.page-dark .topbar{border-color:rgba(153,246,228,.25)}
+.brand{display:flex;align-items:center;gap:7px}
+.brand img{width:24px;height:24px;border-radius:6px;display:block;background:transparent}
+.brand .wm{font-size:11pt;font-weight:800;letter-spacing:-.03em;color:var(--deep);line-height:1}
+.brand .wm span{color:var(--aqua-dark)}
+.page-dark .brand .wm{color:#fff}.page-dark .brand .wm span{color:#99f6e4}
+.doc-label{font-size:7pt;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:center;flex:1}
+.page-dark .doc-label{color:#99f6e4}
+.powered{display:flex;flex-direction:column;align-items:flex-end;text-align:right;line-height:1.15;min-width:36mm}
+.powered .by{font-size:6pt;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);width:100%;text-align:right}
+.powered .name{font-size:7.5pt;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--head);width:100%;text-align:right;white-space:nowrap}
+.page-dark .powered .by{color:#99f6e4}.page-dark .powered .name{color:#ecfeff}
+.page-num{position:absolute;right:11mm;bottom:7mm;font-size:7.5pt;color:var(--muted);font-weight:600}
+.page-dark .page-num{color:#99f6e4}
+
+.cover{padding:0;display:flex;flex-direction:column;max-width:none}
+.cover-hero{flex:1;background:var(--dark);padding:12mm 11mm 9mm;position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.cover-top{display:flex;align-items:center;justify-content:space-between;gap:8mm;margin-bottom:10mm;z-index:2}
+.cover-brand{display:flex;align-items:center;gap:10px}
+.cover-brand img{width:44px;height:44px;border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.28);background:transparent}
+.cover-brand .wm{font-size:18pt;font-weight:800;color:#fff;letter-spacing:-.03em}
+.cover-brand .wm span{color:#99f6e4}
+.cover-powered{text-align:right;line-height:1.2;min-width:44mm}
+.cover-powered .by{display:block;font-size:7pt;letter-spacing:.18em;text-transform:uppercase;color:#99f6e4;font-weight:600;margin-bottom:3px}
+.cover-powered .name{display:block;font-size:11pt;letter-spacing:.1em;text-transform:uppercase;color:#fff;font-weight:800;white-space:nowrap}
+.cover-body{display:flex;flex-direction:column;gap:5mm;flex:1;min-height:0;z-index:2}
+.cover-title{color:#fff;font-size:30pt;font-weight:800;letter-spacing:-.04em;line-height:1.05;margin:0 0 4mm}
+.cover-tag{font-size:13pt;font-style:italic;color:#a5f3fc;margin:0 0 5mm;font-weight:500}
+.cover-desc{color:#ccfbf1;font-size:9.5pt;line-height:1.45;margin:0;max-width:170mm}
+.cover-mosaic{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:2.5mm;flex:1;min-height:0;width:100%}
+.cover-mosaic .screen-full{background:#ccfbf1;border-color:rgba(153,246,228,.35)}
+.cover-mosaic .screen-full img{object-fit:cover;object-position:top center;background:#f0fdfa}
+.cover-mosaic .screen-full{border-radius:10px;overflow:hidden;border:1px solid rgba(153,246,228,.25);background:#ccfbf1;min-height:0}
+.cover-mosaic .tile img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.cover-footer{background:#fff;padding:6mm 12mm;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pill{display:inline-flex;border-radius:999px;padding:4px 11px;font-size:7pt;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--deep);border:1px solid var(--line);
+  background:linear-gradient(135deg,rgba(45,212,191,.15),rgba(6,182,212,.1))}
+.cover-meta{text-align:right;font-size:7.5pt;color:var(--muted);line-height:1.35}
+.cover-meta strong{display:block;color:var(--ink);font-size:8.5pt}
+
+/* Feature: copy + stacked screens (fills height, no black bars) */
+.feat-layout{display:grid;grid-template-columns:58mm 1fr;gap:4mm;align-items:stretch;height:calc(297mm - 34mm)}
+.feat-copy{display:flex;flex-direction:column;min-height:0}
+.feat-list{list-style:none;padding:0;margin:2mm 0 0;display:flex;flex-direction:column;gap:2mm}
+.feat-list li{background:rgba(6,182,212,.06);border:1px solid var(--line);border-radius:7px;padding:2.2mm 2.5mm}
+.feat-list li strong{display:block;font-size:8pt;color:var(--deep);margin-bottom:1px}
+.feat-list li span{font-size:7.2pt;color:#475569;line-height:1.3}
+
+.screen-stack{display:flex;flex-direction:column;gap:3mm;min-height:0;height:100%}
+.screen-full{border-radius:8px;overflow:hidden;border:1px solid rgba(15,118,110,.18);
+  background:var(--panel);box-shadow:0 8px 18px rgba(15,23,42,.08);flex:1;min-height:0;position:relative}
+.screen-full img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;background:var(--panel)}
+.screen-full.fit{background:#e8f4f4}
+.screen-full.fit img{object-fit:contain;object-position:center center;background:#e8f4f4}
+.screen-cap{position:absolute;left:0;right:0;bottom:0;padding:1.5mm 2.5mm;font-size:6.5pt;font-weight:700;
+  color:#fff;background:linear-gradient(transparent,rgba(15,78,74,.85));letter-spacing:.02em}
+
+.grid-2x2{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3mm;height:calc(297mm - 48mm);margin-top:2mm}
+.grid-2x2 .screen-full{min-height:0}
+.grid-1x2{display:grid;grid-template-columns:1fr 1fr;gap:3mm;height:calc(297mm - 48mm);margin-top:2mm}
+.grid-1x3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2.5mm;height:calc(297mm - 52mm);margin-top:2mm}
+
+.usp-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.8mm;margin-top:3mm}
+.usp-card{border:1px solid var(--line);border-radius:7px;padding:2.8mm 3mm;background:rgba(255,255,255,.92)}
+.usp-card .num{font-size:6.5pt;font-weight:800;color:var(--aqua);letter-spacing:.08em}
+.usp-card h3{font-size:8.5pt;margin:1px 0}
+.usp-card p{font-size:7.2pt;margin:0;line-height:1.3;color:#475569}
+
+.mod-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-top:3mm}
+.mod-card{border:1px solid var(--line);border-radius:7px;padding:3mm;background:#fff}
+.mod-card .tag{font-size:6pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--aqua-dark)}
+.mod-card h3{font-size:9pt}.mod-card p{font-size:7.2pt;margin:0;color:#475569}
+
+.journey{display:grid;grid-template-columns:repeat(5,1fr);gap:2mm;margin:4mm 0}
+.j-step{background:#fff;border:1px solid var(--line);border-radius:7px;padding:2.5mm;text-align:center}
+.j-step .n{width:20px;height:20px;margin:0 auto 1.5mm;border-radius:999px;background:var(--grad);color:#fff;
+  font-size:8pt;font-weight:800;display:flex;align-items:center;justify-content:center}
+.j-step h3{font-size:7.5pt}.j-step p{font-size:6.5pt;margin:0;color:#64748b;line-height:1.25}
+
+.eco-shots{display:grid;grid-template-columns:repeat(4,1fr);gap:2.5mm;margin-top:4mm;height:52mm}
+.eco-shots .screen-full{height:100%}
+
+.audience{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin-top:4mm}
+.aud{padding:3.5mm;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(153,246,228,.25)}
+.aud h3{color:#fff;font-size:9pt}.aud p{margin:0;font-size:7.5pt;color:#a5f3fc;line-height:1.35}
+.cta{margin-top:6mm;padding:6mm;border-radius:11px;background:rgba(255,255,255,.08);border:1px solid rgba(153,246,228,.3);text-align:center}
+.cta-url{display:inline-block;margin-top:3mm;padding:2.2mm 5.5mm;border-radius:999px;background:var(--grad);color:#fff;font-weight:800;font-size:9pt}
+.close-shots{display:grid;grid-template-columns:repeat(3,1fr);gap:2.5mm;margin-top:5mm;height:70mm}
+.close-shots .screen-full{height:100%}
+</style>
+</head>
+<body>
+
+<section class="page cover">
+  <div class="cover-hero">
+    <div class="cover-top">
+      <div class="cover-brand">
+        <img src="./icon.png" alt="FlowChat icon"/>
+        <div class="wm">Flow<span>Chat</span></div>
+      </div>
+      <div class="cover-powered">
+        <span class="by">Powered by</span>
+        <span class="name">Mutex Systems</span>
+      </div>
+    </div>
+    <div class="cover-body">
+      <div>
+        <h1 class="cover-title">FlowChat Product Guide</h1>
+        <p class="cover-tag">Every conversation in flow.</p>
+        <p class="cover-desc">Premium guide to Chat, Contacts, Marketing, Documents, Settings, Analytics, LeadSnapper, WhatsApp Automation, and Lead Monitor — from lead capture to close.</p>
+      </div>
+      <div class="cover-mosaic">
+        <div class="screen-full"><img src="./screens/crm-contact-profile.png" alt="Contacts"/><div class="screen-cap">Contacts</div></div>
+        <div class="screen-full"><img src="./screens/mkt-campaigns.png" alt="Marketing"/><div class="screen-cap">Marketing</div></div>
+        <div class="screen-full"><img src="./screens/mkt-composer.png" alt="Composer"/><div class="screen-cap">Composer</div></div>
+        <div class="screen-full"><img src="./screens/mkt-sequence.png" alt="Sequences"/><div class="screen-cap">Sequences</div></div>
+        <div class="screen-full"><img src="./screens/mkt-templates.png" alt="Templates"/><div class="screen-cap">Templates</div></div>
+        <div class="screen-full"><img src="./screens/mkt-recipients.png" alt="Recipients"/><div class="screen-cap">Recipients</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="cover-footer">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="pill">Full ecosystem guide</span>
+      <span class="pill">Sales &amp; partners</span>
+    </div>
+    <div class="cover-meta"><strong>Confidential · Sales &amp; partners</strong>digitalbrandcast.com/FlowChat · 2026</div>
+  </div>
+</section>
+<section class="page page-tint">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Platform ecosystem</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <p class="eyebrow">Mutex Flow platform</p>
+  <h2>One journey across every module</h2>
+  <p class="lead">Find leads → manage in CRM → converse on chat, WhatsApp &amp; email → close with Documents.</p>
+  <div class="journey">
+    <div class="j-step"><div class="n">1</div><h3>Capture</h3><p>LeadSnapper &amp; Lead Monitor</p></div>
+    <div class="j-step"><div class="n">2</div><h3>Qualify</h3><p>Contacts &amp; enrich</p></div>
+    <div class="j-step"><div class="n">3</div><h3>Engage</h3><p>Chat, WA, email</p></div>
+    <div class="j-step"><div class="n">4</div><h3>Document</h3><p>Quotes &amp; invoices</p></div>
+    <div class="j-step"><div class="n">5</div><h3>Operate</h3><p>Settings &amp; SSO</p></div>
+  </div>
+  <div class="mod-grid">
+    <div class="mod-card"><div class="tag">Core</div><h3>Chat &amp; Inbox</h3><p>Shared live chat, widget, assignment, labels, CSAT.</p></div>
+    <div class="mod-card"><div class="tag">CRM</div><h3>Contacts</h3><p>Profiles, companies, enrichment, timelines.</p></div>
+    <div class="mod-card"><div class="tag">CRM</div><h3>Marketing</h3><p>Campaigns, templates, segments, admin launch.</p></div>
+    <div class="mod-card"><div class="tag">CRM</div><h3>Documents</h3><p>Quotes, invoices, brand assets, verify/QR.</p></div>
+    <div class="mod-card"><div class="tag">Extension</div><h3>LeadSnapper</h3><p>Maps/Search scrape, score, sync to CRM.</p></div>
+    <div class="mod-card"><div class="tag">Sibling</div><h3>WhatsApp Automation</h3><p>WA inbox, pipelines, broadcasts, SSO.</p></div>
+    <div class="mod-card"><div class="tag">Sibling</div><h3>Lead Monitor</h3><p>Intent scan, verify, push into Flow CRM.</p></div>
+    <div class="mod-card"><div class="tag">Platform</div><h3>Settings &amp; Analytics</h3><p>Agents, inboxes, BYOK, performance.</p></div>
+  </div>
+  <div class="eco-shots">
+    <div class="screen-full fit"><img src="./screens/leadsnapper.png" alt="LeadSnapper"/><div class="screen-cap">LeadSnapper</div></div>
+    <div class="screen-full fit"><img src="./screens/whatsapp-automation.png" alt="WhatsApp"/><div class="screen-cap">WhatsApp</div></div>
+    <div class="screen-full fit"><img src="./screens/lead-monitor.png" alt="Lead Monitor"/><div class="screen-cap">Lead Monitor</div></div>
+    <div class="screen-full"><img src="./screens/analytics.png" alt="Analytics"/><div class="screen-cap">Analytics</div></div>
+  </div>
+  <div class="page-num">02</div>
+</section>
+<section class="page page-tint">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Why FlowChat</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <p class="eyebrow">Unique selling points</p>
+  <h2>Built for the full customer journey</h2>
+  <p class="lead">Twelve differentiators across messaging, CRM, marketing, documents, and ecosystem siblings.</p>
+  <div class="usp-grid"><div class="usp-card"><div class="num">USP 01</div><h3>Omnichannel messaging hub</h3><p>One shared inbox for website chat, email, WhatsApp, and social.</p></div><div class="usp-card"><div class="num">USP 02</div><h3>True multi-tenant SaaS</h3><p>Accounts, roles, inboxes, and automation isolated per tenant.</p></div><div class="usp-card"><div class="num">USP 03</div><h3>End-to-end Flow journey</h3><p>LeadSnapper / Lead Monitor → CRM → chat/email/WA → Documents.</p></div><div class="usp-card"><div class="num">USP 04</div><h3>LeadSnapper → CRM sync</h3><p>Maps & Search capture with Hot/Warm/Cold scoring into Flow.</p></div><div class="usp-card"><div class="num">USP 05</div><h3>BYOK enrichment, staged apply</h3><p>Review provider suggestions field-by-field — no blind overwrites.</p></div><div class="usp-card"><div class="num">USP 06</div><h3>Global company registry</h3><p>Auto-link contacts by corporate email domain.</p></div><div class="usp-card"><div class="num">USP 07</div><h3>Campaign-only email marketing</h3><p>No accidental sends; test-send gate; admin launch.</p></div><div class="usp-card"><div class="num">USP 08</div><h3>Marketing compliance built-in</h3><p>Unsubscribe, List-Unsubscribe, bounce & complaint suppression.</p></div><div class="usp-card"><div class="num">USP 09</div><h3>Tenant-owned senders & AI</h3><p>Connected services for ESP and AI keys.</p></div><div class="usp-card"><div class="num">USP 10</div><h3>Documents in the same tenancy</h3><p>Quotes/invoices with brand, verify tokens, and QR.</p></div><div class="usp-card"><div class="num">USP 11</div><h3>WhatsApp CRM sibling</h3><p>Pipelines and broadcasts with SSO and contact sync.</p></div><div class="usp-card"><div class="num">USP 12</div><h3>Lead Monitor intent feed</h3><p>Verified intent leads continuous into CRM.</p></div></div>
+  <div class="page-num">03</div>
+</section>
+<section class="page page-tint">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Module · Chat</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <div class="feat-layout">
+    <div class="feat-copy">
+      <p class="eyebrow">Shared inbox</p>
+      <h2>Live chat inbox for every conversation</h2>
+      <p class="lead">What it’s for: One place to see, assign, prioritize, and resolve website and channel conversations.</p>
+      <ul class="feat-list"><li><strong>Conversation list & filters</strong><span>Open, pending, resolved, snoozed — by assignee, label, priority.</span></li><li><strong>Assignment & teams</strong><span>Route chats to the right agent or team.</span></li><li><strong>Labels & notes</strong><span>Tag conversations; private notes for internal context.</span></li><li><strong>Lifecycle & CSAT</strong><span>Standard chat lifecycle with satisfaction collection.</span></li></ul>
+    </div>
+    <div class="screen-stack"><div class="screen-full"><img src="./screens/chat-inbox.png" alt="Shared inbox"/><div class="screen-cap">Shared inbox</div></div><div class="screen-full"><img src="./screens/chat-conversation.png" alt="Conversation thread"/><div class="screen-cap">Conversation thread</div></div></div>
+  </div>
+  <div class="page-num">04</div>
+</section>
+<section class="page">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Module · Chat</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <p class="eyebrow">Conversation · widget · channel</p>
+  <h2>Chat surfaces your customers actually use</h2>
+  <p class="lead">What it’s for: Agents work the timeline; visitors chat via branded widget; inbox config controls the channel.</p>
+  <div class="grid-2x2"><div class="screen-full"><img src="./screens/chat-conversation.png" alt="Conversation detail"/><div class="screen-cap">Conversation detail</div></div><div class="screen-full"><img src="./screens/chat-widget.png" alt="Website widget"/><div class="screen-cap">Website widget</div></div><div class="screen-full"><img src="./screens/settings-inboxes.png" alt="Inboxes list"/><div class="screen-cap">Inboxes list</div></div><div class="screen-full"><img src="./screens/inbox-config.png" alt="Inbox configuration"/><div class="screen-cap">Inbox configuration</div></div></div>
+  <div class="page-num">05</div>
+</section>
+<section class="page page-tint">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Module · Contacts</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <div class="feat-layout">
+    <div class="feat-copy">
+      <p class="eyebrow">Flow CRM</p>
+      <h2>Contacts — system of record for people</h2>
+      <p class="lead">What it’s for: Store and qualify every lead and customer from LeadSnapper, chat, import, or enrichment.</p>
+      <ul class="feat-list"><li><strong>Unified profiles</strong><span>Email, phone, type, custom attributes.</span></li><li><strong>Company registry</strong><span>Link contacts by domain for B2B clarity.</span></li><li><strong>Enrichment flows</strong><span>BYOK providers with staged field apply.</span></li><li><strong>Quick actions</strong><span>Chat, email, call, documents from the profile.</span></li></ul>
+    </div>
+    <div class="screen-stack"><div class="screen-full"><img src="./screens/contacts-crm.png" alt="Contacts list"/><div class="screen-cap">Contacts list</div></div><div class="screen-full"><img src="./screens/crm-contact-profile.png" alt="Contact timeline"/><div class="screen-cap">Contact timeline</div></div></div>
+  </div>
+  <div class="page-num">06</div>
+</section>
+<section class="page">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Module · Marketing</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <p class="eyebrow">Campaigns workspace</p>
+  <h2>Plan, compose, and launch email safely</h2>
+  <p class="lead">What it’s for: Multi-step campaigns with explicit recipients — never auto-send on import or chat.</p>
+  <div class="grid-2x2"><div class="screen-full"><img src="./screens/mkt-campaigns.png" alt="Campaigns list"/><div class="screen-cap">Campaigns list</div></div><div class="screen-full"><img src="./screens/mkt-composer.png" alt="Composer"/><div class="screen-cap">Composer</div></div><div class="screen-full"><img src="./screens/mkt-recipients.png" alt="Recipients"/><div class="screen-cap">Recipients</div></div><div class="screen-full"><img src="./screens/mkt-admin-launch.png" alt="Admin launch"/><div class="screen-cap">Admin launch</div></div></div>
+  <div class="page-num">07</div>
+</section>
+<section class="page">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Module · Marketing</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <p class="eyebrow">Sequences · stats · templates</p>
+  <h2>Follow-ups, performance, and reusable content</h2>
+  <p class="lead">What it’s for: Orchestrate sequences, measure opens/clicks/stops, and reuse approved templates.</p>
+  <div class="grid-2x2"><div class="screen-full"><img src="./screens/mkt-sequence.png" alt="Sequence builder"/><div class="screen-cap">Sequence builder</div></div><div class="screen-full"><img src="./screens/mkt-stats.png" alt="Campaign stats"/><div class="screen-cap">Campaign stats</div></div><div class="screen-full"><img src="./screens/mkt-templates.png" alt="Template library"/><div class="screen-cap">Template library</div></div><div class="screen-full"><img src="./screens/mkt-segments.png" alt="Segments"/><div class="screen-cap">Segments</div></div></div>
+  <div class="page-num">08</div>
+</section>
+<section class="page page-tint">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Module · Marketing</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <div class="feat-layout">
+    <div class="feat-copy">
+      <p class="eyebrow">Health & compliance</p>
+      <h2>Marketing health and email settings</h2>
+      <p class="lead">What it’s for: Keep ESP connections healthy and compliance defaults on before campaigns go live.</p>
+      <ul class="feat-list"><li><strong>Provider health</strong><span>Surface connection issues early.</span></li><li><strong>Email marketing settings</strong><span>Sender identity and subscription defaults.</span></li><li><strong>Compliance</strong><span>Unsubscribe and suppression built in.</span></li><li><strong>Analytics views</strong><span>Campaign analytics for operators.</span></li></ul>
+    </div>
+    <div class="screen-stack"><div class="screen-full"><img src="./screens/mkt-health.png" alt="Marketing health"/><div class="screen-cap">Marketing health</div></div><div class="screen-full"><img src="./screens/email-marketing-settings.png" alt="Email marketing settings"/><div class="screen-cap">Email marketing settings</div></div><div class="screen-full"><img src="./screens/mkt-analytics-wf.png" alt="Campaign analytics"/><div class="screen-cap">Campaign analytics</div></div></div>
+  </div>
+  <div class="page-num">09</div>
+</section>
+<section class="page page-tint">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Module · Documents</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <div class="feat-layout">
+    <div class="feat-copy">
+      <p class="eyebrow">Flow CRM Documents</p>
+      <h2>Quotations, invoices & agreements</h2>
+      <p class="lead">What it’s for: Close deals with branded documents in the same tenant — PDF, verify tokens, and QR.</p>
+      <ul class="feat-list"><li><strong>Document types</strong><span>Quotation, invoice, proposal, SLA, NDA.</span></li><li><strong>Brand & assets</strong><span>Logo, letterhead, signatures, stamps.</span></li><li><strong>Catalog</strong><span>Products and services for line items.</span></li><li><strong>Verify / QR</strong><span>Public authenticity without extra login.</span></li></ul>
+    </div>
+    <div class="screen-stack"><div class="screen-full fit"><img src="./screens/documents.png" alt="Documents module"/><div class="screen-cap">Documents module</div></div><div class="screen-full"><img src="./screens/mkt-templates.png" alt="Brand-ready content"/><div class="screen-cap">Brand-ready content</div></div></div>
+  </div>
+  <div class="page-num">10</div>
+</section>
+<section class="page">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Module · Settings</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <p class="eyebrow">Workspace configuration</p>
+  <h2>Account, agents, teams, and security</h2>
+  <p class="lead">What it’s for: Configure the tenant — branding, people, routing groups, and security controls.</p>
+  <div class="grid-2x2"><div class="screen-full"><img src="./screens/settings-account.png" alt="Account & logo"/><div class="screen-cap">Account & logo</div></div><div class="screen-full"><img src="./screens/settings-agents.png" alt="Agents"/><div class="screen-cap">Agents</div></div><div class="screen-full"><img src="./screens/teams.png" alt="Teams"/><div class="screen-cap">Teams</div></div><div class="screen-full"><img src="./screens/security.png" alt="Security"/><div class="screen-cap">Security</div></div></div>
+  <div class="page-num">11</div>
+</section>
+<section class="page">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Module · Settings</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <p class="eyebrow">Automation & integrations</p>
+  <h2>Labels, canned replies, auto messages, APIs</h2>
+  <p class="lead">What it’s for: Speed up agents and connect external systems with webhooks, API keys, and Connected services.</p>
+  <div class="grid-2x2"><div class="screen-full"><img src="./screens/labels.png" alt="Labels"/><div class="screen-cap">Labels</div></div><div class="screen-full"><img src="./screens/canned-responses.png" alt="Canned responses"/><div class="screen-cap">Canned responses</div></div><div class="screen-full"><img src="./screens/auto-messages.png" alt="Auto messages"/><div class="screen-cap">Auto messages</div></div><div class="screen-full"><img src="./screens/settings-integrations.png" alt="Integrations"/><div class="screen-cap">Integrations</div></div></div>
+  <div class="page-num">12</div>
+</section>
+<section class="page page-tint">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Module · Analytics</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <div class="feat-layout">
+    <div class="feat-copy">
+      <p class="eyebrow">Reporting</p>
+      <h2>Conversation & agent performance</h2>
+      <p class="lead">What it’s for: Understand volume, response speed, and agent performance to coach teams and improve CX.</p>
+      <ul class="feat-list"><li><strong>Conversation metrics</strong><span>Volume and outcome trends.</span></li><li><strong>Agent performance</strong><span>Workload visibility.</span></li><li><strong>CSAT foundations</strong><span>Satisfaction reporting where enabled.</span></li><li><strong>Ops decisions</strong><span>Staffing and process insight.</span></li></ul>
+    </div>
+    <div class="screen-stack"><div class="screen-full"><img src="./screens/analytics.png" alt="Analytics dashboard"/><div class="screen-cap">Analytics dashboard</div></div><div class="screen-full"><img src="./screens/mkt-stats.png" alt="Campaign performance"/><div class="screen-cap">Campaign performance</div></div></div>
+  </div>
+  <div class="page-num">13</div>
+</section>
+<section class="page page-tint">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Ecosystem · LeadSnapper</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <div class="feat-layout">
+    <div class="feat-copy">
+      <p class="eyebrow">Chrome extension</p>
+      <h2>LeadSnapper — capture & sync leads</h2>
+      <p class="lead">What it’s for: Scan Google Maps/Search, score Hot/Warm/Cold, enrich owners, push into Flow CRM.</p>
+      <ul class="feat-list"><li><strong>Maps / Search scrape</strong><span>Capture local and B2B leads fast.</span></li><li><strong>Scoring</strong><span>0–100 with Hot / Warm / Cold.</span></li><li><strong>Owner enrichment</strong><span>UK/US lookup provider order.</span></li><li><strong>Flow CRM sync</strong><span>Push via Sync tab + API keys.</span></li></ul>
+    </div>
+    <div class="screen-stack"><div class="screen-full fit"><img src="./screens/leadsnapper.png" alt="LeadSnapper"/><div class="screen-cap">LeadSnapper</div></div><div class="screen-full"><img src="./screens/contacts-crm.png" alt="Lands in Contacts"/><div class="screen-cap">Lands in Contacts</div></div></div>
+  </div>
+  <div class="page-num">14</div>
+</section>
+<section class="page page-tint">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Ecosystem · WhatsApp</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <div class="feat-layout">
+    <div class="feat-copy">
+      <p class="eyebrow">WhatsApp Automation</p>
+      <h2>WhatsApp CRM for pipelines & broadcasts</h2>
+      <p class="lead">What it’s for: Shared WA inbox, pipelines, and broadcasts — SSO and contact sync with Flow.</p>
+      <ul class="feat-list"><li><strong>Shared WA inbox</strong><span>Assign and resolve WhatsApp chats.</span></li><li><strong>Pipelines</strong><span>Move opportunities through stages.</span></li><li><strong>Broadcasts & templates</strong><span>Compliant outbound WA campaigns.</span></li><li><strong>SSO + CRM sync</strong><span>One identity; contacts stay aligned.</span></li></ul>
+    </div>
+    <div class="screen-stack"><div class="screen-full fit"><img src="./screens/whatsapp-automation.png" alt="WhatsApp Automation"/><div class="screen-cap">WhatsApp Automation</div></div><div class="screen-full"><img src="./screens/chat-inbox.png" alt="Unified messaging story"/><div class="screen-cap">Unified messaging story</div></div></div>
+  </div>
+  <div class="page-num">15</div>
+</section>
+<section class="page page-tint">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Ecosystem · Lead Monitor</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <div class="feat-layout">
+    <div class="feat-copy">
+      <p class="eyebrow">Intent monitoring</p>
+      <h2>Lead Monitor — find intent, feed CRM</h2>
+      <p class="lead">What it’s for: Scan for buying intent, verify prospects, push qualified leads into Flow Contacts.</p>
+      <ul class="feat-list"><li><strong>Keyword monitoring</strong><span>Track intent across sources.</span></li><li><strong>Lead verification</strong><span>Reduce noise before outreach.</span></li><li><strong>CRM push</strong><span>Verified leads → Flow Contacts.</span></li><li><strong>SSO with Flow</strong><span>Seamless operator handoff.</span></li></ul>
+    </div>
+    <div class="screen-stack"><div class="screen-full fit"><img src="./screens/lead-monitor.png" alt="Lead Monitor"/><div class="screen-cap">Lead Monitor</div></div><div class="screen-full"><img src="./screens/crm-contact-profile.png" alt="CRM follow-through"/><div class="screen-cap">CRM follow-through</div></div></div>
+  </div>
+  <div class="page-num">16</div>
+</section>
+<section class="page page-dark">
+  <div class="topbar">
+  <div class="brand"><img src="./icon.png" alt="FlowChat"/><div class="wm">Flow<span>Chat</span></div></div>
+  <span class="doc-label">Next step</span>
+  <div class="powered"><span class="by">Powered by</span><span class="name">Mutex Systems</span></div>
+</div>
+  <p class="eyebrow">Audiences</p>
+  <h2>Who FlowChat is for</h2>
+  <div class="audience">
+    <div class="aud"><h3>Sales teams</h3><p>LeadSnapper, Lead Monitor, CRM, campaigns, WhatsApp, Documents.</p></div>
+    <div class="aud"><h3>Support &amp; success</h3><p>Shared inbox, widget, CSAT, canned replies, continuity.</p></div>
+    <div class="aud"><h3>Agencies &amp; operators</h3><p>Multi-tenant SaaS with BYOK — messaging as a product.</p></div>
+  </div>
+  <div class="close-shots">
+    <div class="screen-full"><img src="./screens/chat-widget.png" alt="Widget"/><div class="screen-cap">Widget</div></div>
+    <div class="screen-full"><img src="./screens/mkt-composer.png" alt="Composer"/><div class="screen-cap">Composer</div></div>
+    <div class="screen-full fit"><img src="./screens/documents.png" alt="Documents"/><div class="screen-cap">Documents</div></div>
+  </div>
+  <div class="cta">
+    <h2>Bring every conversation into flow</h2>
+    <p>Demo Chat, Contacts, Marketing, Documents, LeadSnapper, WhatsApp Automation, and Lead Monitor together.</p>
+    <div class="cta-url">digitalbrandcast.com/FlowChat</div>
+    <p style="margin-top:3mm;font-size:7.5pt;color:#99f6e4">FlowChat · Mutex Systems · Confidential · 2026</p>
+  </div>
+  <div class="page-num">17</div>
+</section>
+</body>
+</html>

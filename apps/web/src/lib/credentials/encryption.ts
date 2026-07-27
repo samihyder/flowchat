@@ -48,3 +48,33 @@ export function secretPrefix(secret: string): string {
   if (secret.length <= 12) return '••••';
   return `${secret.slice(0, 8)}…${secret.slice(-4)}`;
 }
+
+/** Pack an EncryptedSecret into a single DB text column. */
+export function packEncryptedSecret(plain: string): string {
+  return JSON.stringify(encryptSecret(plain));
+}
+
+/**
+ * Unpack a packed EncryptedSecret JSON string.
+ * Falls back to treating the value as legacy plaintext (pre-encryption rows).
+ */
+export function unpackEncryptedSecret(stored: string | null | undefined): string | null {
+  if (!stored) return null;
+  try {
+    const parsed = JSON.parse(stored) as Partial<EncryptedSecret>;
+    if (
+      typeof parsed.ciphertext === 'string' &&
+      typeof parsed.iv === 'string' &&
+      typeof parsed.tag === 'string'
+    ) {
+      return decryptSecret({
+        ciphertext: parsed.ciphertext,
+        iv: parsed.iv,
+        tag: parsed.tag,
+      });
+    }
+  } catch {
+    // Legacy plaintext token / secret stored before encryption.
+  }
+  return stored;
+}

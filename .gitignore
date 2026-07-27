@@ -32,3 +32,6 @@ packages/db/drizzle/*.sql.bak
 supabase/TENANT_BOOTSTRAP.local.json
 
 supabase/TENANT_SECRETS.local.json
+
+# Local CRM import script artifacts (may contain account IDs / paths)
+apps/web/scripts/import-output/

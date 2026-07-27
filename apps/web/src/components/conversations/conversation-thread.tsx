@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { api, type ChatMessage, type CannedResponse, type Conversation } from '@/lib/api';
+import { api, type ChatMessage, type CannedResponse, type Conversation, type MacroRecord } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useWsStore } from '@/store/ws';
 import { ConversationToolbar } from '@/components/conversations/conversation-toolbar';
@@ -77,6 +77,11 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
   const [composerMode, setComposerMode] = useState<'reply' | 'note'>('reply');
   const [canned, setCanned] = useState<CannedResponse[]>([]);
   const [cannedPick, setCannedPick] = useState<CannedResponse | null>(null);
+  const [macros, setMacros] = useState<MacroRecord[]>([]);
+  const [macroOpen, setMacroOpen] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState('');
   const [agents, setAgents] = useState<{ userId: string; name: string }[]>([]);
@@ -114,6 +119,10 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
       .list(accountId, token)
       .then((r) => setAgents(r.agents.filter((a) => a.membershipStatus === 'active').map((a) => ({ userId: a.userId, name: a.name }))))
       .catch(() => {});
+    api.automation.macros
+      .list(accountId, token)
+      .then((r) => setMacros(r.macros))
+      .catch(() => setMacros([]));
   }, [token, accountId]);
 
   useEffect(() => {
@@ -204,6 +213,62 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
     setDraft(content);
     setCannedPick(null);
     setCanned([]);
+  };
+
+  const runMacro = async (macroId: string) => {
+    if (!conversation || !token || !accountId) return;
+    setMacroOpen(false);
+    try {
+      await api.automation.macros.run(accountId, macroId, conversation.id, token);
+      onConversationUpdate?.();
+      await fetchMessages();
+    } catch (err: unknown) {
+      setDraft((d) => d);
+      alert(err instanceof Error ? err.message : 'Macro failed');
+    }
+  };
+
+  const loadAiSuggestions = async () => {
+    if (!conversation || !token || !accountId) return;
+    setAiLoading(true);
+    setAiSummary(null);
+    try {
+      const res = await api.platformAi.suggestions(
+        accountId,
+        { conversationId: conversation.id, mode: 'suggest' },
+        token
+      );
+      setAiSuggestions(res.suggestions ?? []);
+      if (!(res.suggestions?.length)) {
+        alert('No AI suggestions returned. Check Connected services (Anthropic BYOK).');
+      }
+    } catch (err: unknown) {
+      setAiSuggestions([]);
+      alert(err instanceof Error ? err.message : 'AI suggestions failed');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const loadAiSummary = async () => {
+    if (!conversation || !token || !accountId) return;
+    setAiLoading(true);
+    try {
+      const res = await api.platformAi.suggestions(
+        accountId,
+        { conversationId: conversation.id, mode: 'summarize' },
+        token
+      );
+      setAiSummary(res.summary ?? null);
+      if (!res.summary) {
+        alert('No summary returned. Check Connected services (Anthropic BYOK).');
+      }
+    } catch (err: unknown) {
+      setAiSummary(null);
+      alert(err instanceof Error ? err.message : 'Summarize failed');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSend = async (e: React.FormEvent) => {
@@ -613,6 +678,30 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
               </div>
             )}
 
+            {(aiSuggestions.length > 0 || aiSummary) && (
+              <div className="mb-2 rounded-lg border border-accent-200 bg-accent-50/80 p-2.5 space-y-2">
+                {aiSummary && (
+                  <p className="text-xs text-teal-900">
+                    <span className="font-semibold text-accent-600">Summary · </span>
+                    {aiSummary}
+                  </p>
+                )}
+                {aiSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setDraft(s);
+                      setAiSuggestions([]);
+                    }}
+                    className="block w-full text-left text-xs text-gray-800 bg-white border border-accent-100 rounded-md px-2.5 py-2 hover:border-primary-400 hover:bg-primary-50/50 transition-colors"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <textarea
               value={draft}
               onChange={(e) => {
@@ -659,6 +748,52 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
                   title="Canned responses"
                 >
                   /
+                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setMacroOpen((o) => !o)}
+                    className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg text-sm"
+                    title="Run macro"
+                  >
+                    ⚡
+                  </button>
+                  {macroOpen && (
+                    <div className="absolute bottom-full left-0 mb-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg p-1.5 min-w-[180px]">
+                      {macros.length === 0 ? (
+                        <p className="text-xs text-gray-400 px-2 py-1.5">No macros</p>
+                      ) : (
+                        macros.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => void runMacro(m.id)}
+                            className="block w-full text-left text-xs px-2.5 py-1.5 rounded-md hover:bg-primary-50 text-gray-800"
+                          >
+                            {m.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void loadAiSuggestions()}
+                  disabled={aiLoading}
+                  className="p-2 text-accent-600 hover:bg-accent-50 rounded-lg text-sm disabled:opacity-50"
+                  title="AI reply suggestions"
+                >
+                  ✨
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void loadAiSummary()}
+                  disabled={aiLoading}
+                  className="p-2 text-accent-600 hover:bg-accent-50 rounded-lg text-sm disabled:opacity-50"
+                  title="Summarize thread"
+                >
+                  Σ
                 </button>
                 <button
                   type="button"

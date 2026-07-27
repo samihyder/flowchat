@@ -2,13 +2,16 @@
 
 > **Purpose:** Define what “chat module complete” means before CRM work (Sprint 6) begins.  
 > **Scope:** Web live chat only — omnichannel (email, WhatsApp, etc.) is Phase 3+.  
-> **Reference:** Stories are tracked in [sprints.md](sprints.md) Sprint 4–5.
+> **Reference:** Stories are tracked in [sprints.md](sprints.md) Sprint 4–5.  
+> **Code status (2026-07-25):** Sprint 4–5 Must features are **shipped** in the product. Formal staging sign-off checklist below remains open. Sprint 6 CRM work has already proceeded with this understanding.
 
 ---
 
 ## Gate rule
 
-**Sprint 6 (CRM) is blocked** until every **Must** item in this document is implemented and verified in staging.
+**Originally:** Sprint 6 (CRM) is blocked until every **Must** item in this document is implemented and verified in staging.
+
+**Current:** Must items are implemented in code. Keep the checklist below for **staging sign-off** — do not treat the chat module as formally signed until boxes are checked in a staging environment. CRM (Sprint 6) is already in the codebase.
 
 ---
 
@@ -122,7 +125,7 @@
 
 ## Definition of Done (sign-off checklist)
 
-Use this before starting Sprint 6:
+> Staging verification — **code shipped; formal sign-off pending** (reconciled 2026-07-25). Use this before treating the chat module gate as closed.
 
 ### Visitor journey
 - [ ] Visitor can start chat on an allowlisted domain only

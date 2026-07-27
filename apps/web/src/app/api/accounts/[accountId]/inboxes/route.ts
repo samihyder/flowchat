@@ -27,7 +27,7 @@ export async function GET(req: Request, { params }: Params) {
   const sql = neon(databaseUrl);
   const rows = await sql`
     SELECT id, name, channel_type as "channelType", widget_color as "widgetColor",
-           widget_icon as "widgetIcon", widget_theme as "widgetTheme",
+           widget_icon as "widgetIcon", widget_mode as "widgetMode", widget_theme as "widgetTheme",
            greeting_message as "greetingMessage", greeting_messages as "greetingMessages",
            welcome_title as "welcomeTitle", welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
            default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled",
@@ -69,6 +69,7 @@ export async function POST(req: Request, { params }: Params) {
     welcomeTagline?: string;
     widgetColor?: string;
     widgetIcon?: string;
+    widgetMode?: string;
     widgetTheme?: Record<string, string>;
     websiteUrl?: string;
     defaultAssigneeId?: string;
@@ -89,6 +90,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const primary = body.widgetColor ?? '#06B6D4';
   const theme = mergeWidgetTheme(body.widgetTheme, primary);
+  const widgetMode = body.widgetMode === 'headless' ? 'headless' : 'hosted';
   const accountSettings = await getAccountSettings(sql, accountId);
 
   const greetingMessages =
@@ -113,7 +115,7 @@ export async function POST(req: Request, { params }: Params) {
   const rows = await sql`
     INSERT INTO inboxes (
       account_id, name, channel_type, greeting_message, greeting_messages,
-      welcome_title, welcome_tagline, widget_color, widget_icon, widget_theme,
+      welcome_title, welcome_tagline, widget_color, widget_icon, widget_mode, widget_theme,
       website_url, default_assignee_id
     )
     VALUES (
@@ -126,12 +128,13 @@ export async function POST(req: Request, { params }: Params) {
       ${welcomeTagline},
       ${primary},
       ${body.widgetIcon ?? 'chat'},
+      ${widgetMode},
       ${JSON.stringify(theme)}::jsonb,
       ${body.websiteUrl?.trim() || null},
       ${body.defaultAssigneeId.trim()}::uuid
     )
     RETURNING id, name, channel_type as "channelType", widget_color as "widgetColor",
-              widget_icon as "widgetIcon", widget_theme as "widgetTheme",
+              widget_icon as "widgetIcon", widget_mode as "widgetMode", widget_theme as "widgetTheme",
               greeting_message as "greetingMessage", greeting_messages as "greetingMessages",
               welcome_title as "welcomeTitle",
               welcome_tagline as "welcomeTagline", website_url as "websiteUrl",

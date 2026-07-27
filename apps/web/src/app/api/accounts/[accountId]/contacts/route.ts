@@ -2,7 +2,6 @@ import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
 import { linkContactToGlobalCompany } from '@/lib/companies/resolve';
-import { triggerMarketingWorkflows } from '@/lib/marketing/workflow-triggers';
 import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-attributes';
 import { listContacts } from '@/lib/contacts-query';
 import { getAccountSettings } from '@/lib/account-settings-db';
@@ -159,9 +158,8 @@ export async function POST(req: Request, { params }: Params) {
         to: email,
         name,
       });
-    } else {
-      await triggerMarketingWorkflows(sql, accountId, 'contact_created', contact.id);
     }
+    // S6M-9: no CRM-triggered marketing enrollments — campaign wizard only
   }
 
   return Response.json({ contact: rows[0] }, { status: 201 });

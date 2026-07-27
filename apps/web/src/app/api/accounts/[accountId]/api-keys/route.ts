@@ -1,10 +1,17 @@
 import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
-import { generateApiKey } from '@/lib/api-keys';
+import { generateApiKey, normalizeApiKeyScopes, normalizeStringArray } from '@/lib/api-keys';
 import { writeAuditLog } from '@/lib/audit-log';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
+
+function serializeApiKey(row: Record<string, unknown>) {
+  return {
+    ...row,
+    scopes: normalizeStringArray(row.scopes),
+  };
+}
 
 export async function GET(req: Request, { params }: Params) {
   const { accountId } = await params;
@@ -25,7 +32,9 @@ export async function GET(req: Request, { params }: Params) {
     ORDER BY created_at DESC
   `;
 
-  return Response.json({ apiKeys: rows });
+  return Response.json({
+    apiKeys: (rows as Record<string, unknown>[]).map(serializeApiKey),
+  });
 }
 
 export async function POST(req: Request, { params }: Params) {
@@ -41,11 +50,12 @@ export async function POST(req: Request, { params }: Params) {
   const body = (await req.json()) as { name?: string; scopes?: string[] };
   const name = body.name?.trim() || 'Integration key';
   const scopes = body.scopes?.length
-    ? body.scopes.filter((s) => s === 'contacts:read' || s === 'contacts:write')
-    : ['contacts:read', 'contacts:write'];
+    ? normalizeApiKeyScopes(body.scopes)
+    : (['contacts:read', 'contacts:write'] as const);
 
   const { key, hash, prefix } = generateApiKey();
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
+  const scopesJson = JSON.stringify([...scopes]);
 
   const rows = await sql`
     INSERT INTO account_api_keys (account_id, name, key_hash, key_prefix, scopes, created_by)
@@ -54,7 +64,7 @@ export async function POST(req: Request, { params }: Params) {
       ${name},
       ${hash},
       ${prefix},
-      ${JSON.stringify(scopes)}::jsonb,
+      ${scopesJson}::jsonb,
       ${auth.userId}::uuid
     )
     RETURNING id, name, key_prefix as "keyPrefix", scopes, enabled, created_at as "createdAt"
@@ -68,5 +78,8 @@ export async function POST(req: Request, { params }: Params) {
     resourceId: (rows[0] as { id: string }).id,
   });
 
-  return Response.json({ apiKey: rows[0], secret: key }, { status: 201 });
+  return Response.json(
+    { apiKey: serializeApiKey(rows[0] as Record<string, unknown>), secret: key },
+    { status: 201 }
+  );
 }

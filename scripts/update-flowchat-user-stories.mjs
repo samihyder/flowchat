@@ -251,7 +251,7 @@ const SUPERSEDED_BY_S6M = {
   'S6-15': {
     Status: 'Superseded',
     'Acceptance Criteria':
-      '• [Superseded by S6M — see marketing-module-screens.md] Was: visual workflow builder with CRM triggers (contact created, label added, conversation resolved)\n• Replacement: campaign-only wizard with explicit recipients (S6M-6, S6M-9)\n• Remove triggerMarketingWorkflows at S6M-9 implementation',
+      '• [Superseded by S6M — see marketing-module-screens.md] Was: visual workflow builder with CRM triggers (contact created, label added, conversation resolved)\n• Replacement: campaign-only wizard with explicit recipients (S6M-6, S6M-9)\n• Remove triggerMarketingWorkflows at S6M-9 closeout (still Partial in codebase as of 2026-07-25)',
   },
   'S6-16': {
     Status: 'Superseded',
@@ -268,7 +268,7 @@ function rebuildSummary(stories) {
     S4: { Name: 'Lifecycle & Trust', Dates: '2026-07-27 → 2026-08-16' },
     S5: { Name: 'Rich Messaging', Dates: '2026-08-17 → 2026-09-06' },
     S6: { Name: 'CRM + Email Marketing', Dates: '2026-09-07 → 2026-10-04' },
-    S6M: { Name: 'Marketing Campaign Redesign', Dates: 'Planned 2026-Q3' },
+    S6M: { Name: 'Marketing Campaign Redesign', Dates: 'Implemented 2026-Q2/Q3 — pending QA / closeout' },
     S7B: { Name: 'Connected Services (BYOK)', Dates: 'Implemented 2026-06' },
   };
 
@@ -279,7 +279,7 @@ function rebuildSummary(stories) {
     S4: '✅ Completed',
     S5: '✅ Completed',
     S6: '✅ Completed',
-    S6M: '📋 Planned',
+    S6M: '🟡 Implemented — pending QA / closeout',
     S7B: '✅ Completed',
   };
 
