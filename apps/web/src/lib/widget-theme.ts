@@ -170,11 +170,39 @@ export function parseDomainsText(text: string): string[] {
     .filter(Boolean);
 }
 
+/** Neon/jsonb may return an array, a JSON string, or null — always normalize to string[]. */
+export function normalizeStringList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((v): v is string => typeof v === 'string');
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((v): v is string => typeof v === 'string');
+      }
+    } catch {
+      return trimmed
+        .split(/[\n,]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+}
+
+function normalizePreChatFields(value: unknown): PreChatField[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((f): f is PreChatField => !!f && typeof f === 'object');
+}
+
 export function settingsFromInbox(inbox: {
   name: string;
   channelType: string;
   greetingMessage?: string | null;
-  greetingMessages?: string[] | null;
+  greetingMessages?: string[] | null | unknown;
   welcomeTitle?: string | null;
   welcomeTagline?: string | null;
   websiteUrl?: string | null;
@@ -183,7 +211,7 @@ export function settingsFromInbox(inbox: {
   widgetIcon?: string | null;
   widgetMode?: WidgetMode | string | null;
   widgetTheme?: Partial<WidgetTheme> | null;
-  allowedDomains?: string[] | null;
+  allowedDomains?: string[] | null | unknown;
   offlineMessage?: string | null;
   privacyPolicyUrl?: string | null;
   requireConsent?: boolean;
@@ -192,12 +220,13 @@ export function settingsFromInbox(inbox: {
   businessHours?: BusinessHours | Record<string, unknown> | null;
   missedChatMinutes?: number;
   csatEnabled?: boolean;
-  preChatFields?: PreChatField[] | null;
+  preChatFields?: PreChatField[] | null | unknown;
 }): WidgetSettingsInput {
   const primary = inbox.widgetColor ?? MUTEX_PRIMARY_DEFAULT;
+  const fromJsonb = normalizeStringList(inbox.greetingMessages);
   const greetingMessages =
-    inbox.greetingMessages && inbox.greetingMessages.length > 0
-      ? inbox.greetingMessages
+    fromJsonb.length > 0
+      ? fromJsonb
       : inbox.greetingMessage
         ? inbox.greetingMessage
             .split('\n')
@@ -218,7 +247,7 @@ export function settingsFromInbox(inbox: {
     widgetIcon: (inbox.widgetIcon as WidgetIconId) || 'chat',
     widgetMode: inbox.widgetMode === 'headless' ? 'headless' : 'hosted',
     widgetTheme: mergeWidgetTheme(inbox.widgetTheme, primary),
-    allowedDomainsText: (inbox.allowedDomains ?? []).join('\n'),
+    allowedDomainsText: normalizeStringList(inbox.allowedDomains).join('\n'),
     offlineMessage:
       inbox.offlineMessage ??
       'We are currently offline. Leave a message and we will get back to you soon.',
@@ -229,7 +258,7 @@ export function settingsFromInbox(inbox: {
     businessHours: { ...DEFAULT_BUSINESS_HOURS, ...(inbox.businessHours as BusinessHours | undefined) },
     missedChatMinutes: inbox.missedChatMinutes ?? 5,
     csatEnabled: inbox.csatEnabled ?? false,
-    preChatFields: (inbox.preChatFields as PreChatField[] | undefined) ?? [],
+    preChatFields: normalizePreChatFields(inbox.preChatFields),
   };
 }
 

@@ -1,9 +1,12 @@
 import { parseDomainsText, type WidgetSettingsInput } from '@/lib/widget-theme';
 
 export function inboxPayloadFromSettings(s: WidgetSettingsInput) {
-  const greetingMessages =
-    s.greetingMessages.length > 0
-      ? s.greetingMessages
+  const greetingMessages = Array.isArray(s.greetingMessages)
+    ? s.greetingMessages.filter((m) => typeof m === 'string' && m.trim())
+    : [];
+  const resolved =
+    greetingMessages.length > 0
+      ? greetingMessages
       : s.greetingMessage
           .split('\n')
           .map((l) => l.trim())
@@ -12,8 +15,8 @@ export function inboxPayloadFromSettings(s: WidgetSettingsInput) {
   return {
     name: s.name,
     channelType: s.channelType,
-    greetingMessage: greetingMessages.join('\n'),
-    greetingMessages,
+    greetingMessage: resolved.join('\n'),
+    greetingMessages: resolved,
     welcomeTitle: s.welcomeTitle,
     welcomeTagline: s.welcomeTagline,
     websiteUrl: s.websiteUrl.trim() || undefined,
@@ -31,6 +34,6 @@ export function inboxPayloadFromSettings(s: WidgetSettingsInput) {
     businessHours: s.businessHours,
     missedChatMinutes: s.missedChatMinutes,
     csatEnabled: s.csatEnabled,
-    preChatFields: s.preChatFields,
+    preChatFields: Array.isArray(s.preChatFields) ? s.preChatFields : [],
   };
 }

@@ -16,12 +16,32 @@ export function resolveGreetingMessages(
   greetingMessage: string | null | undefined,
   accountSettings?: AccountSettings | null
 ): string[] {
+  let msgs: string[] = [];
   if (Array.isArray(greetingMessages)) {
-    const msgs = greetingMessages
+    msgs = greetingMessages
       .map((m) => (typeof m === 'string' ? m.trim() : ''))
       .filter(Boolean);
-    if (msgs.length > 0) return msgs;
+  } else if (typeof greetingMessages === 'string' && greetingMessages.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(greetingMessages);
+      if (Array.isArray(parsed)) {
+        msgs = parsed
+          .map((m) => (typeof m === 'string' ? m.trim() : ''))
+          .filter(Boolean);
+      } else {
+        msgs = greetingMessages
+          .split('\n')
+          .map((l) => l.trim())
+          .filter(Boolean);
+      }
+    } catch {
+      msgs = greetingMessages
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean);
+    }
   }
+  if (msgs.length > 0) return msgs;
 
   if (greetingMessage?.trim()) {
     const lines = greetingMessage

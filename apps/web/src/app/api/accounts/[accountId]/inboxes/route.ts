@@ -1,7 +1,7 @@
 import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { isAccountAgent } from '@/lib/inbox-assignee';
-import { mergeWidgetTheme } from '@/lib/widget-theme';
+import { mergeWidgetTheme, normalizeStringList } from '@/lib/widget-theme';
 import { getAccountSettings } from '@/lib/account-settings-db';
 import {
   MUTEX_DEFAULT_GREETING_MESSAGES,
@@ -10,6 +10,16 @@ import {
 } from '@/lib/welcome-messages';
 
 type Params = { params: Promise<{ accountId: string }> };
+
+function normalizeInboxRow(row: Record<string, unknown>) {
+  return {
+    ...row,
+    greetingMessages: normalizeStringList(row.greetingMessages),
+    allowedDomains: normalizeStringList(row.allowedDomains),
+    preChatFields: Array.isArray(row.preChatFields) ? row.preChatFields : [],
+    widgetMode: row.widgetMode === 'headless' ? 'headless' : 'hosted',
+  };
+}
 
 export async function GET(req: Request, { params }: Params) {
   const { accountId } = await params;
@@ -42,7 +52,9 @@ export async function GET(req: Request, { params }: Params) {
     ORDER BY created_at ASC
   `;
 
-  return Response.json({ inboxes: rows });
+  return Response.json({
+    inboxes: (rows as Record<string, unknown>[]).map(normalizeInboxRow),
+  });
 }
 
 export async function POST(req: Request, { params }: Params) {
