@@ -30,7 +30,7 @@ export async function GET(req: Request, { params }: Params) {
   const sql = neon(databaseUrl);
 
   const rows = await sql`
-    SELECT i.allowed_domains as "allowedDomains", i.business_hours as "businessHours",
+    SELECT i.name, i.allowed_domains as "allowedDomains", i.business_hours as "businessHours",
            i.use_business_hours as "useBusinessHours",
            i.offline_message as "offlineMessage",
            i.greeting_messages as "greetingMessages",
@@ -47,6 +47,7 @@ export async function GET(req: Request, { params }: Params) {
   `;
 
   const inbox = rows[0] as {
+    name: string;
     allowedDomains: unknown;
     businessHours: unknown;
     useBusinessHours: boolean;
@@ -95,7 +96,7 @@ export async function GET(req: Request, { params }: Params) {
       agentsOnline: availability.agentsOnline,
       offlineMessage: inbox.offlineMessage ?? DEFAULT_OFFLINE_MESSAGE,
       greetingMessages,
-      welcomeTitle: resolveWelcomeTitle(inbox.welcomeTitle, accountSettings),
+      welcomeTitle: resolveWelcomeTitle(inbox.welcomeTitle, accountSettings, inbox.name),
       welcomeTagline: resolveWelcomeTagline(
         inbox.welcomeTagline,
         accountSettings,

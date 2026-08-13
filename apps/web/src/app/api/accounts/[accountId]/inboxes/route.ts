@@ -4,9 +4,8 @@ import { isAccountAgent } from '@/lib/inbox-assignee';
 import { mergeWidgetTheme, normalizeStringList } from '@/lib/widget-theme';
 import { getAccountSettings } from '@/lib/account-settings-db';
 import {
-  MUTEX_DEFAULT_GREETING_MESSAGES,
-  MUTEX_DEFAULT_WELCOME_TAGLINE,
-  MUTEX_DEFAULT_WELCOME_TITLE,
+  DEFAULT_GREETING_MESSAGES,
+  DEFAULT_WELCOME_TAGLINE,
 } from '@/lib/welcome-messages';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -112,17 +111,17 @@ export async function POST(req: Request, { params }: Params) {
       .filter(Boolean) ??
     (accountSettings.autoMessages?.length
       ? accountSettings.autoMessages
-      : MUTEX_DEFAULT_GREETING_MESSAGES);
+      : DEFAULT_GREETING_MESSAGES);
 
   const greetingMessage = greetingMessages.join('\n');
   const welcomeTitle =
     body.welcomeTitle ??
     accountSettings.autoWelcomeTitle ??
-    MUTEX_DEFAULT_WELCOME_TITLE;
+    `Chat with ${body.name.trim()}`;
   const welcomeTagline =
     body.welcomeTagline ??
     accountSettings.autoWelcomeTagline ??
-    MUTEX_DEFAULT_WELCOME_TAGLINE;
+    DEFAULT_WELCOME_TAGLINE;
 
   const rows = await sql`
     INSERT INTO inboxes (

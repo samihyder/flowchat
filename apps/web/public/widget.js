@@ -561,11 +561,43 @@
     render();
   }
 
+  var widgetOpenTriggered = false;
+
+  // Auto-greeting: the first time the visitor opens the widget (and no
+  // conversation/session exists yet), silently create the conversation
+  // server-side and fire the inbox's configured greeting into it. This is a
+  // real, persisted message — it shows up immediately in the tenant's Inbox,
+  // even if the visitor never fills in the prechat form. If they do fill it
+  // in later, startChat() reuses this same conversation (matched by sourceId)
+  // instead of creating a duplicate.
+  async function initWidgetOpen() {
+    if (widgetOpenTriggered || state.conversationId || state.prechatDone) return;
+    widgetOpenTriggered = true;
+    try {
+      const res = await fetch(`${apiUrl}/public/inboxes/${inboxId}/widget-open`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceId, pageUrl: window.location.href }),
+      });
+      const data = await res.json();
+      if (res.ok && data.conversationId && data.visitorToken) {
+        state.conversationId = data.conversationId;
+        state.visitorToken = data.visitorToken;
+        saveSession();
+        connectWs();
+        startPolling();
+      }
+    } catch (_) {
+      widgetOpenTriggered = false;
+    }
+  }
+
   function toggle() {
     state.open = !state.open;
     if (state.open) {
       loadConfig(true);
       if (!state.prechatDone) state.view = 'home';
+      initWidgetOpen();
     }
     render();
   }

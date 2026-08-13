@@ -1,15 +1,18 @@
 import type { AccountSettings } from '@/lib/account-settings';
 
-/** Mutex Systems defaults — derived from mutexsystemsltd.com positioning & services. */
-export const MUTEX_DEFAULT_GREETING_MESSAGES = [
-  'Hi, welcome to Mutex Systems!',
-  'We help businesses build secure applications, integrate AI automation, and deploy scalable cloud infrastructure with enterprise-grade cybersecurity.',
-  'How can our experts help you today — software development, AI, cybersecurity, cloud, or hardware?',
+/**
+ * Tenant-agnostic fallback copy — used only when a tenant hasn't set a
+ * workspace default or a per-inbox override. Every tenant on this platform
+ * gets their own inbox/account name folded in via resolveWelcomeTitle();
+ * nothing here should ever hardcode a specific business's name or pitch.
+ */
+export const DEFAULT_GREETING_MESSAGES = [
+  'Hi there! 👋',
+  'How can we help you today?',
 ];
 
-export const MUTEX_DEFAULT_WELCOME_TITLE = 'Chat with Mutex Systems';
-export const MUTEX_DEFAULT_WELCOME_TAGLINE =
-  'UK-headquartered · Our experts typically respond within 24 hours';
+export const DEFAULT_WELCOME_TITLE = 'Chat with us';
+export const DEFAULT_WELCOME_TAGLINE = 'We typically reply in a few minutes';
 
 export function resolveGreetingMessages(
   greetingMessages: unknown,
@@ -55,16 +58,24 @@ export function resolveGreetingMessages(
     return accountSettings.autoMessages.map((m) => m.trim()).filter(Boolean);
   }
 
-  return [...MUTEX_DEFAULT_GREETING_MESSAGES];
+  return [...DEFAULT_GREETING_MESSAGES];
 }
 
+/**
+ * @param fallbackName Inbox or account name to personalize the generic
+ * default with (e.g. "Chat with Acme Co") when no explicit title is set at
+ * any level. Omit only when no name is available yet (e.g. a blank new-inbox
+ * form).
+ */
 export function resolveWelcomeTitle(
   inboxTitle: string | null | undefined,
-  accountSettings?: AccountSettings | null
+  accountSettings?: AccountSettings | null,
+  fallbackName?: string | null
 ): string {
   if (inboxTitle?.trim()) return inboxTitle.trim();
   if (accountSettings?.autoWelcomeTitle?.trim()) return accountSettings.autoWelcomeTitle.trim();
-  return MUTEX_DEFAULT_WELCOME_TITLE;
+  if (fallbackName?.trim()) return `Chat with ${fallbackName.trim()}`;
+  return DEFAULT_WELCOME_TITLE;
 }
 
 export function resolveWelcomeTagline(
@@ -77,7 +88,7 @@ export function resolveWelcomeTagline(
     return accountSettings.autoWelcomeTagline.trim();
   }
   if (offline) {
-    return inboxTagline?.trim() || accountSettings?.autoWelcomeTagline?.trim() || MUTEX_DEFAULT_WELCOME_TAGLINE;
+    return inboxTagline?.trim() || accountSettings?.autoWelcomeTagline?.trim() || DEFAULT_WELCOME_TAGLINE;
   }
-  return MUTEX_DEFAULT_WELCOME_TAGLINE;
+  return DEFAULT_WELCOME_TAGLINE;
 }

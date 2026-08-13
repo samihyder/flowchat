@@ -91,7 +91,7 @@ export async function GET(req: Request, { params }: Params) {
           name: inbox.name,
           greetingMessage: greetingMessages.join('\n'),
           greetingMessages,
-          welcomeTitle: resolveWelcomeTitle(inbox.welcomeTitle, accountSettings),
+          welcomeTitle: resolveWelcomeTitle(inbox.welcomeTitle, accountSettings, inbox.name),
           welcomeTagline: resolveWelcomeTagline(inbox.welcomeTagline, accountSettings),
           widgetColor: primary,
           widgetIcon: inbox.widgetIcon ?? 'chat',

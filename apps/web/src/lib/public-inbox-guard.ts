@@ -7,7 +7,7 @@ import type { AppSql } from '@/lib/db-sql';
 export async function guardPublicInboxRequest(
   req: Request,
   inboxId: string,
-  action: 'visit' | 'session' | 'message',
+  action: 'visit' | 'session' | 'message' | 'widget_open',
   sourceId?: string
 ): Promise<{ ok: true; sql: AppSql } | { ok: false; response: Response }> {
   const databaseUrl = process.env.DATABASE_URL;
@@ -19,7 +19,12 @@ export async function guardPublicInboxRequest(
   }
 
   const ip = getClientIp(req) ?? 'unknown';
-  const limits = { visit: [30, 60_000], session: [10, 60_000], message: [60, 60_000] } as const;
+  const limits = {
+    visit: [30, 60_000],
+    session: [10, 60_000],
+    message: [60, 60_000],
+    widget_open: [20, 60_000],
+  } as const;
   const [limit, window] = limits[action];
   const rl = checkRateLimit(`${action}:${inboxId}:${ip}:${sourceId ?? ''}`, limit, window);
   if (!rl.allowed) {
