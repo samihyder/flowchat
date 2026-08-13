@@ -1,0 +1,191 @@
+import { corsHeaders, optionsResponse } from '@/lib/cors';
+import { newVisitorToken } from '@/lib/conversations';
+import { dispatchWebhooks } from '@/lib/webhooks';
+import { emitPlatformEvent } from '@/lib/platform-events';
+import { getClientIp } from '@/lib/request-ip';
+import { getClientGeo } from '@/lib/request-geo';
+import { sendWelcomeMessages } from '@/lib/welcome-messages';
+import { guardPublicInboxRequest } from '@/lib/public-inbox-guard';
+import { pickRoundRobinAssignee } from '@/lib/assign';
+import type { AppSql } from '@/lib/db-sql';
+
+type Params = { params: Promise<{ inboxId: string }> };
+
+/** Placeholder name for a visitor who hasn't filled the prechat form yet. */
+const ANONYMOUS_VISITOR_NAME = 'Website Visitor';
+
+async function resolveAssignee(
+  sql: AppSql,
+  inboxId: string,
+  accountId: string,
+  roundRobinEnabled: boolean,
+  defaultAssigneeId: string | null
+) {
+  if (roundRobinEnabled) {
+    return pickRoundRobinAssignee(sql, inboxId, accountId);
+  }
+  return defaultAssigneeId;
+}
+
+export async function OPTIONS() {
+  return optionsResponse();
+}
+
+/**
+ * Fired when a visitor opens the chat widget (before/without the prechat form).
+ * Creates (or reuses) an anonymous contact + open conversation for this
+ * browser's sourceId and fires the inbox's configured auto-greeting into it,
+ * so the greeting is a real, persisted message visible in the tenant's Inbox
+ * the moment the widget opens — not just a client-side preview.
+ *
+ * If the visitor later submits the prechat form, `sessions/route.ts` looks up
+ * the same contact_inboxes row by sourceId and reuses this same conversation,
+ * just filling in the real name/email — no duplicate conversation is created.
+ */
+export async function POST(req: Request, { params }: Params) {
+  const { inboxId } = await params;
+  const body = (await req.json().catch(() => ({}))) as {
+    sourceId?: string;
+    pageUrl?: string;
+  };
+  const sourceId = body.sourceId?.trim();
+
+  if (!sourceId || sourceId.length < 8) {
+    return Response.json({ error: 'Invalid sourceId' }, { status: 400, headers: corsHeaders() });
+  }
+
+  const guard = await guardPublicInboxRequest(req, inboxId, 'widget_open', sourceId);
+  if (!guard.ok) {
+    const headers = { ...corsHeaders(), ...(guard.response.headers as Headers) };
+    return new Response(guard.response.body, { status: guard.response.status, headers });
+  }
+
+  const sql = guard.sql;
+  const clientIp = getClientIp(req);
+  const geo = getClientGeo(req);
+
+  const inboxes = (await sql`
+    SELECT id, account_id as "accountId", default_assignee_id as "defaultAssigneeId",
+           round_robin_enabled as "roundRobinEnabled"
+    FROM inboxes
+    WHERE id = ${inboxId}::uuid AND is_enabled = true LIMIT 1
+  `) as {
+    id: string;
+    accountId: string;
+    defaultAssigneeId: string | null;
+    roundRobinEnabled: boolean;
+  }[];
+  const inbox = inboxes[0];
+  if (!inbox) {
+    return Response.json({ error: 'Inbox not found' }, { status: 404, headers: corsHeaders() });
+  }
+
+  async function findLink() {
+    return (await sql`
+      SELECT ci.visitor_token as "visitorToken", c.id as "contactId", c.is_blocked as "isBlocked"
+      FROM contact_inboxes ci
+      INNER JOIN contacts c ON c.id = ci.contact_id
+      WHERE ci.inbox_id = ${inboxId}::uuid AND ci.source_id = ${sourceId}
+      LIMIT 1
+    `) as { visitorToken: string; contactId: string; isBlocked: boolean }[];
+  }
+
+  let link = (await findLink())[0];
+
+  if (!link) {
+    const contactRows = (await sql`
+      INSERT INTO contacts (account_id, name, type, last_activity_at)
+      VALUES (${inbox.accountId}::uuid, ${ANONYMOUS_VISITOR_NAME}, 'visitor', NOW())
+      RETURNING id
+    `) as { id: string }[];
+    const contactId = contactRows[0]!.id;
+    const visitorToken = newVisitorToken();
+
+    try {
+      await sql`
+        INSERT INTO contact_inboxes (contact_id, inbox_id, source_id, visitor_token, last_ip_address, country_code, last_seen_at)
+        VALUES (
+          ${contactId}::uuid,
+          ${inboxId}::uuid,
+          ${sourceId},
+          ${visitorToken},
+          ${clientIp},
+          ${geo.countryCode},
+          NOW()
+        )
+      `;
+      link = { contactId, visitorToken, isBlocked: false };
+    } catch (err) {
+      // Concurrent widget-open (e.g. double-click) can race on the
+      // (inbox_id, source_id) unique index — fall back to the row that won.
+      if ((err as { code?: string }).code !== '23505') throw err;
+      link = (await findLink())[0];
+    }
+  } else if (clientIp || geo.countryCode) {
+    await sql`
+      UPDATE contact_inboxes SET
+        last_ip_address = COALESCE(${clientIp}, last_ip_address),
+        country_code = COALESCE(${geo.countryCode}, country_code),
+        last_seen_at = NOW()
+      WHERE inbox_id = ${inboxId}::uuid AND source_id = ${sourceId}
+    `;
+  }
+
+  if (!link) {
+    return Response.json({ error: 'Failed to resolve visitor' }, { status: 500, headers: corsHeaders() });
+  }
+
+  if (link.isBlocked) {
+    return Response.json({ error: 'Access denied' }, { status: 403, headers: corsHeaders() });
+  }
+
+  let convRows = (await sql`
+    SELECT id FROM conversations
+    WHERE contact_id = ${link.contactId}::uuid
+      AND inbox_id = ${inboxId}::uuid
+      AND status = 'open'
+    ORDER BY created_at DESC LIMIT 1
+  `) as { id: string }[];
+
+  if (!convRows[0]) {
+    const assigneeId = await resolveAssignee(
+      sql,
+      inboxId,
+      inbox.accountId,
+      inbox.roundRobinEnabled,
+      inbox.defaultAssigneeId
+    );
+    convRows = (await sql`
+      INSERT INTO conversations (account_id, inbox_id, contact_id, assignee_id)
+      VALUES (
+        ${inbox.accountId}::uuid,
+        ${inboxId}::uuid,
+        ${link.contactId}::uuid,
+        ${assigneeId}::uuid
+      )
+      RETURNING id
+    `) as { id: string }[];
+
+    void dispatchWebhooks(sql, inbox.accountId, 'conversation.created', {
+      conversationId: convRows[0]!.id,
+      inboxId,
+      contactId: link.contactId,
+    });
+    void emitPlatformEvent(sql, inbox.accountId, 'conversation.created', {
+      conversationId: convRows[0]!.id,
+      inboxId,
+      contactId: link.contactId,
+      assigneeId,
+    });
+  }
+
+  const conversationId = convRows[0]!.id;
+
+  // No-ops if a greeting was already sent for this conversation.
+  await sendWelcomeMessages(sql, conversationId, inbox.accountId, inboxId);
+
+  return Response.json(
+    { conversationId, visitorToken: link.visitorToken },
+    { headers: corsHeaders() }
+  );
+}

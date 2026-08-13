@@ -3,6 +3,7 @@
  * Use when the inbox widget mode is "headless".
  *
  *   const client = FlowChat.createClient({ inboxId, apiUrl, wsUrl });
+ *   await client.openWidget(); // fires auto-greeting when your chat UI opens
  *   await client.startSession({ name: 'Ada', email: 'ada@example.com' });
  *   client.on('message', (msg) => { ... });
  *   await client.sendMessage('Hello');
@@ -127,6 +128,34 @@
           }),
         });
       } catch (_) {}
+    }
+
+    // Auto-greeting: call this when your custom UI opens the chat (e.g. the
+    // user clicks your chat icon), before you have a name/email. Creates (or
+    // reuses) the visitor's conversation server-side and fires the inbox's
+    // configured greeting into it — a real, persisted message that shows up
+    // immediately in the tenant's Inbox. If startSession() is called later
+    // with a real name, it reuses this same conversation (matched by
+    // sourceId) instead of creating a duplicate.
+    async function openWidget() {
+      if (conversationId && visitorToken) return getSession();
+      var res = await fetch(apiUrl + '/public/inboxes/' + inboxId + '/widget-open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceId: sourceId,
+          pageUrl: (global.location && global.location.href) || null,
+        }),
+      });
+      var data = await res.json().catch(function () {
+        return {};
+      });
+      if (!res.ok) throw new Error(data.error || 'Failed to open widget');
+      conversationId = data.conversationId;
+      visitorToken = data.visitorToken;
+      saveSession();
+      emit('session', { conversationId: conversationId, visitorToken: visitorToken });
+      return getSession();
     }
 
     async function startSession(input) {
@@ -319,6 +348,7 @@
       getConfig: getConfig,
       getAvailability: getAvailability,
       trackVisit: trackVisit,
+      openWidget: openWidget,
       startSession: startSession,
       getMessages: getMessages,
       sendMessage: sendMessage,

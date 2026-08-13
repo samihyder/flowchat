@@ -2,9 +2,9 @@ import type { BusinessHours } from '@/lib/business-hours';
 import type { PreChatField } from '@/lib/api';
 import { DEFAULT_BUSINESS_HOURS } from '@/lib/business-hours';
 import {
-  MUTEX_DEFAULT_GREETING_MESSAGES,
-  MUTEX_DEFAULT_WELCOME_TAGLINE,
-  MUTEX_DEFAULT_WELCOME_TITLE,
+  DEFAULT_GREETING_MESSAGES,
+  DEFAULT_WELCOME_TAGLINE,
+  DEFAULT_WELCOME_TITLE,
 } from '@/lib/welcome-message-defaults';
 import { MUTEX_PRIMARY_DEFAULT } from '@/lib/mutex-brand';
 
@@ -141,10 +141,10 @@ export type WidgetSettingsInput = {
 export const emptyWidgetSettings = (): WidgetSettingsInput => ({
   name: '',
   channelType: 'web_widget',
-  greetingMessage: MUTEX_DEFAULT_GREETING_MESSAGES.join('\n'),
-  greetingMessages: [...MUTEX_DEFAULT_GREETING_MESSAGES],
-  welcomeTitle: MUTEX_DEFAULT_WELCOME_TITLE,
-  welcomeTagline: MUTEX_DEFAULT_WELCOME_TAGLINE,
+  greetingMessage: DEFAULT_GREETING_MESSAGES.join('\n'),
+  greetingMessages: [...DEFAULT_GREETING_MESSAGES],
+  welcomeTitle: DEFAULT_WELCOME_TITLE,
+  welcomeTagline: DEFAULT_WELCOME_TAGLINE,
   websiteUrl: '',
   defaultAssigneeId: '',
   widgetColor: MUTEX_PRIMARY_DEFAULT,
@@ -232,15 +232,15 @@ export function settingsFromInbox(inbox: {
             .split('\n')
             .map((l) => l.trim())
             .filter(Boolean)
-        : [...MUTEX_DEFAULT_GREETING_MESSAGES];
+        : [...DEFAULT_GREETING_MESSAGES];
 
   return {
     name: inbox.name,
     channelType: inbox.channelType,
     greetingMessage: greetingMessages.join('\n'),
     greetingMessages,
-    welcomeTitle: inbox.welcomeTitle ?? MUTEX_DEFAULT_WELCOME_TITLE,
-    welcomeTagline: inbox.welcomeTagline ?? MUTEX_DEFAULT_WELCOME_TAGLINE,
+    welcomeTitle: inbox.welcomeTitle ?? (inbox.name ? `Chat with ${inbox.name}` : DEFAULT_WELCOME_TITLE),
+    welcomeTagline: inbox.welcomeTagline ?? DEFAULT_WELCOME_TAGLINE,
     websiteUrl: inbox.websiteUrl ?? '',
     defaultAssigneeId: inbox.defaultAssigneeId ?? '',
     widgetColor: primary,

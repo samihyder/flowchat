@@ -7,9 +7,9 @@ import {
 } from '@/lib/inbox-availability';
 
 export {
-  MUTEX_DEFAULT_GREETING_MESSAGES,
-  MUTEX_DEFAULT_WELCOME_TAGLINE,
-  MUTEX_DEFAULT_WELCOME_TITLE,
+  DEFAULT_GREETING_MESSAGES,
+  DEFAULT_WELCOME_TAGLINE,
+  DEFAULT_WELCOME_TITLE,
   resolveGreetingMessages,
   resolveWelcomeTitle,
   resolveWelcomeTagline,

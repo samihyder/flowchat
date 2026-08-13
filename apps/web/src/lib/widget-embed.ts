@@ -6,8 +6,8 @@ export const PRODUCTION_WEB_URL =
   process.env.WEB_APP_URL ??
   'https://flowchat-web-ten.vercel.app';
 
-export const WIDGET_SCRIPT_VERSION = 10;
-export const HEADLESS_SCRIPT_VERSION = 1;
+export const WIDGET_SCRIPT_VERSION = 11;
+export const HEADLESS_SCRIPT_VERSION = 2;
 
 export type WidgetEmbedMode = 'hosted' | 'headless';
 
@@ -45,6 +45,7 @@ export function buildHeadlessEmbedSnippet(inboxId: string, webUrl = PRODUCTION_W
   client.trackVisit();
 
   // Example — wire these to your own UI
+  // await client.openWidget(); // call when your chat UI opens — fires the auto-greeting
   // await client.startSession({ name: "Visitor", email: "you@example.com" });
   // client.on("message", (msg) => console.log("new message", msg));
   // client.connect();

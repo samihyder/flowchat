@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import { api, type Inbox } from '@/lib/api';
 import {
-  MUTEX_DEFAULT_GREETING_MESSAGES,
-  MUTEX_DEFAULT_WELCOME_TAGLINE,
-  MUTEX_DEFAULT_WELCOME_TITLE,
+  DEFAULT_GREETING_MESSAGES,
+  DEFAULT_WELCOME_TAGLINE,
+  DEFAULT_WELCOME_TITLE,
 } from '@/lib/welcome-message-defaults';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,9 +32,9 @@ export default function AutoMessagesSettingsPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [inboxes, setInboxes] = useState<Inbox[]>([]);
   const [workspace, setWorkspace] = useState<AutoMessagesFieldsValue>({
-    messagesText: MUTEX_DEFAULT_GREETING_MESSAGES.join('\n'),
-    welcomeTitle: MUTEX_DEFAULT_WELCOME_TITLE,
-    welcomeTagline: MUTEX_DEFAULT_WELCOME_TAGLINE,
+    messagesText: DEFAULT_GREETING_MESSAGES.join('\n'),
+    welcomeTitle: DEFAULT_WELCOME_TITLE,
+    welcomeTagline: DEFAULT_WELCOME_TAGLINE,
   });
   const [inboxDrafts, setInboxDrafts] = useState<Record<string, AutoMessagesFieldsValue>>({});
   const [savingWorkspace, setSavingWorkspace] = useState(false);
@@ -57,12 +57,12 @@ export default function AutoMessagesSettingsPage() {
       const defaultMessages =
         settings.autoMessages && settings.autoMessages.length > 0
           ? settings.autoMessages
-          : MUTEX_DEFAULT_GREETING_MESSAGES;
+          : DEFAULT_GREETING_MESSAGES;
 
       setWorkspace({
         messagesText: defaultMessages.join('\n'),
-        welcomeTitle: settings.autoWelcomeTitle ?? MUTEX_DEFAULT_WELCOME_TITLE,
-        welcomeTagline: settings.autoWelcomeTagline ?? MUTEX_DEFAULT_WELCOME_TAGLINE,
+        welcomeTitle: settings.autoWelcomeTitle ?? `Chat with ${accountRes.account.name}`,
+        welcomeTagline: settings.autoWelcomeTagline ?? DEFAULT_WELCOME_TAGLINE,
       });
 
       const webInboxes = inboxRes.inboxes.filter((i) => i.channelType === 'web_widget');
@@ -78,8 +78,8 @@ export default function AutoMessagesSettingsPage() {
               : defaultMessages;
         drafts[inbox.id] = fieldsFromInboxMessages(
           messages,
-          inbox.welcomeTitle ?? settings.autoWelcomeTitle ?? MUTEX_DEFAULT_WELCOME_TITLE,
-          inbox.welcomeTagline ?? settings.autoWelcomeTagline ?? MUTEX_DEFAULT_WELCOME_TAGLINE
+          inbox.welcomeTitle ?? settings.autoWelcomeTitle ?? `Chat with ${inbox.name}`,
+          inbox.welcomeTagline ?? settings.autoWelcomeTagline ?? DEFAULT_WELCOME_TAGLINE
         );
       }
       setInboxDrafts(drafts);
