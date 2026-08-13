@@ -86,6 +86,7 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
   const [editDraft, setEditDraft] = useState('');
   const [agents, setAgents] = useState<{ userId: string; name: string }[]>([]);
   const [savingAssign, setSavingAssign] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastEventSeq = useRef(0);
 
@@ -444,6 +445,15 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
               {!connected && <span className="text-amber-600 ml-2">· reconnecting…</span>}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setInfoOpen(true)}
+            className="lg:hidden shrink-0 w-9 h-9 rounded-lg hover:bg-gray-100 text-gray-500 flex items-center justify-center text-base"
+            aria-label="Visitor info"
+            title="Visitor info"
+          >
+            ℹ️
+          </button>
           {onBack && (
             <Button type="button" variant="secondary" size="sm" onClick={onBack} className="shrink-0">
               ← Back
@@ -833,6 +843,8 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
           agents={agents}
           onReassign={(id) => void handleReassign(id)}
           saving={savingAssign}
+          mobileOpen={infoOpen}
+          onMobileClose={() => setInfoOpen(false)}
         />
       )}
     </div>

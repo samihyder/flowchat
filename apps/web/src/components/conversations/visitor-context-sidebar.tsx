@@ -15,6 +15,9 @@ type Props = {
   agents: { userId: string; name: string }[];
   onReassign: (assigneeId: string | null) => void;
   saving?: boolean;
+  /** Below `lg`, the panel renders as a slide-over instead of a static column. */
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 };
 
 export function VisitorContextSidebar({
@@ -24,6 +27,8 @@ export function VisitorContextSidebar({
   agents,
   onReassign,
   saving,
+  mobileOpen,
+  onMobileClose,
 }: Props) {
   const [ctx, setCtx] = useState<VisitorContext | null>(null);
   const [contact, setContact] = useState<ContactDetail | null>(null);
@@ -53,7 +58,33 @@ export function VisitorContextSidebar({
   const sectionTitle = 'text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-2.5';
 
   return (
-    <aside className="hidden lg:flex w-[280px] shrink-0 border-l border-gray-200 bg-white flex-col overflow-y-auto">
+    <>
+      {mobileOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={onMobileClose}
+          aria-label="Close visitor info"
+        />
+      )}
+      <aside
+        className={`fixed lg:static inset-y-0 right-0 z-50 w-[280px] max-w-[85vw] shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-y-auto transform transition-transform duration-200 lg:translate-x-0 ${
+          mobileOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {onMobileClose && (
+          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
+            <span className="text-sm font-semibold text-gray-900">Visitor info</span>
+            <button
+              type="button"
+              onClick={onMobileClose}
+              className="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-500 flex items-center justify-center"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       {/* Conversation */}
       <section className="p-4 border-b border-gray-200">
         <h3 className={sectionTitle}>Conversation</h3>
@@ -224,7 +255,8 @@ export function VisitorContextSidebar({
           {!conversation.assigneeName && participants.length === 0 && 'No participants yet'}
         </p>
       </section>
-    </aside>
+      </aside>
+    </>
   );
 }
 

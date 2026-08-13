@@ -333,7 +333,7 @@ export default function ContactsPage() {
       />
 
       {/* one horizontal facts strip replaces the old workflow-strip + 2x4 metric grid */}
-      <div className="mx-6 mt-4 mb-3 flex items-stretch bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto shrink-0">
+      <div className="mx-3 sm:mx-6 mt-4 mb-3 flex items-stretch bg-white border border-gray-200 rounded-xl shadow-sm overflow-x-auto shrink-0">
         <Fact label="Total contacts" value={loading ? '—' : total} />
         <Fact label="Reachable email" value={stats.hasEmail} />
         <Fact label="Has phone" value={stats.hasPhone} />
@@ -357,7 +357,7 @@ export default function ContactsPage() {
       </div>
 
       {access.isAdmin && !access.canImport && (
-        <div className="mx-6 mb-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+        <div className="mx-3 sm:mx-6 mb-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
           Contact import is turned off.{' '}
           <Link href={'/settings/crm' as Route} className="font-medium underline">
             Enable it in Settings → CRM
@@ -367,19 +367,19 @@ export default function ContactsPage() {
       )}
 
       {exportError && (
-        <div className="mx-6 mb-3 text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+        <div className="mx-3 sm:mx-6 mb-3 text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
           Export failed: {exportError}
         </div>
       )}
 
       {selected.size > 0 && (
-        <div className="mx-6 mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3">
+        <div className="mx-3 sm:mx-6 mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3">
           <span className="text-sm text-primary-900 font-medium">{selected.size} selected</span>
           <button type="button" onClick={toggleAll} className="text-xs text-primary-600 hover:underline">
             {selected.size === contacts.length ? 'Clear' : 'Select page'}
           </button>
           {bulkMsg && <span className="text-xs text-primary-800">{bulkMsg}</span>}
-          <div className="ml-auto flex flex-wrap items-center gap-2">
+          <div className="w-full sm:w-auto sm:ml-auto flex flex-wrap items-center gap-2">
             <select
               value={bulkLabelId}
               onChange={(e) => setBulkLabelId(e.target.value)}
@@ -446,82 +446,84 @@ export default function ContactsPage() {
         </div>
       )}
 
-      <div className="flex-1 flex min-h-0 mx-6 mb-6 gap-0 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="flex-1 flex min-h-0 mx-3 sm:mx-6 mb-6 gap-0 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="flex-1 min-w-0 flex flex-col min-h-0">
           <div className="shrink-0 p-3 border-b border-gray-100 bg-slate-50/80">
-            <div className="flex flex-wrap gap-2 items-center">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search contacts…"
-                className="flex-1 min-w-[140px]"
+                className="w-full sm:flex-1 sm:min-w-[140px]"
               />
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
-              >
-                {TYPES.map((t) => (
-                  <option key={t || 'all'} value={t}>
-                    {t ? t.charAt(0).toUpperCase() + t.slice(1) : 'All types'}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={marketingStatus}
-                onChange={(e) => setMarketingStatus(e.target.value)}
-                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
-              >
-                <option value="">Subscription</option>
-                <option value="subscribed">Subscribed</option>
-                <option value="unsubscribed">Unsubscribed</option>
-                <option value="pending">Pending</option>
-                <option value="bounced">Bounced</option>
-              </select>
-              <select
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white max-w-[120px]"
-              >
-                <option value="">Country</option>
-                {COUNTRY_OPTIONS.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={labelId}
-                onChange={(e) => setLabelId(e.target.value)}
-                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
-              >
-                <option value="">All labels</option>
-                {labels.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={hasAutomation}
-                onChange={(e) => setHasAutomation(e.target.value)}
-                className="px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
-              >
-                <option value="">Automation</option>
-                <option value="yes">In automation</option>
-                <option value="no">No automation</option>
-              </select>
-              <select
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value)}
-                className="ml-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
-              >
-                {SORTS.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                >
+                  {TYPES.map((t) => (
+                    <option key={t || 'all'} value={t}>
+                      {t ? t.charAt(0).toUpperCase() + t.slice(1) : 'All types'}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={marketingStatus}
+                  onChange={(e) => setMarketingStatus(e.target.value)}
+                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                >
+                  <option value="">Subscription</option>
+                  <option value="subscribed">Subscribed</option>
+                  <option value="unsubscribed">Unsubscribed</option>
+                  <option value="pending">Pending</option>
+                  <option value="bounced">Bounced</option>
+                </select>
+                <select
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="w-full sm:w-auto sm:max-w-[120px] px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                >
+                  <option value="">Country</option>
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={labelId}
+                  onChange={(e) => setLabelId(e.target.value)}
+                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                >
+                  <option value="">All labels</option>
+                  {labels.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={hasAutomation}
+                  onChange={(e) => setHasAutomation(e.target.value)}
+                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                >
+                  <option value="">Automation</option>
+                  <option value="yes">In automation</option>
+                  <option value="no">No automation</option>
+                </select>
+                <select
+                  value={sortKey}
+                  onChange={(e) => setSortKey(e.target.value)}
+                  className="w-full sm:w-auto sm:ml-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                >
+                  {SORTS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 

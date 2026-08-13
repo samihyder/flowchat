@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api, type Conversation, type Label } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useMutedConversationsStore } from '@/store/muted-conversations';
 import { Button } from '@/components/ui/button';
 import { LabelPill, PriorityBadge, StatusBadge } from '@/components/conversations/conversation-badges';
 import { asLabelArray } from '@/lib/conversation-normalize';
@@ -22,6 +23,8 @@ export function ConversationToolbar({ conversation, onUpdated, onResolve, onExpo
   const [labels, setLabels] = useState<Label[]>([]);
   const [saving, setSaving] = useState(false);
   const [labelPickerOpen, setLabelPickerOpen] = useState(false);
+  const muted = useMutedConversationsStore((s) => s.mutedIds.has(conversation.id));
+  const toggleMuted = useMutedConversationsStore((s) => s.toggle);
 
   useEffect(() => {
     if (!token || !accountId) return;
@@ -50,6 +53,11 @@ export function ConversationToolbar({ conversation, onUpdated, onResolve, onExpo
   const conversationLabels = asLabelArray(conversation.labels);
   const selectedLabelIds = conversationLabels.map((l) => l.id);
 
+  const handleToggleMute = () => {
+    if (!token || !accountId) return;
+    void toggleMuted(accountId, conversation.id, !muted, token);
+  };
+
   return (
     <div className="px-4 py-2.5 bg-white border-b border-gray-200 flex flex-wrap items-center gap-2 shrink-0">
       <StatusBadge status={conversation.status} />
@@ -57,6 +65,14 @@ export function ConversationToolbar({ conversation, onUpdated, onResolve, onExpo
       {conversationLabels.map((l) => (
         <LabelPill key={l.id} name={l.name} color={l.color} />
       ))}
+      <button
+        type="button"
+        onClick={handleToggleMute}
+        className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100"
+        title={muted ? 'Unmute this conversation' : 'Mute this conversation'}
+      >
+        {muted ? '🔕 Muted' : '🔔'}
+      </button>
 
       <div className="relative">
         <Button

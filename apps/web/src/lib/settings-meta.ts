@@ -73,6 +73,10 @@ export const SETTINGS_META: Record<string, SettingsMeta> = {
     title: 'Roles & SAML',
     description: 'Custom roles and single sign-on configuration',
   },
+  '/settings/notifications': {
+    title: 'Notifications',
+    description: 'Visitor alert sound for the web dashboard and installed app',
+  },
   '/settings/ai-assistants': {
     title: 'AI assistants',
     description: 'Copilot assistants and knowledge documents',

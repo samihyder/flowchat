@@ -26,7 +26,7 @@ export function AuthShell({
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-[#F0FDF4] to-white px-4 py-10">
       <div className="w-full max-w-[420px]">
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.07)] p-9">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-[0_4px_24px_rgba(0,0,0,0.07)] p-6 sm:p-9">
           <AuthLogo />
           <h1 className="text-[22px] font-bold text-gray-900">{title}</h1>
           {subtitle && <p className="text-sm text-gray-500 mt-1.5 mb-6">{subtitle}</p>}

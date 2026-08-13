@@ -61,8 +61,13 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
               </div>
               <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-0.5">
-              <span className="text-sm font-semibold text-gray-900 truncate">
+              <span className="text-sm font-semibold text-gray-900 truncate flex items-center gap-1">
                 {conv.contactName || 'Visitor'}
+                {conv.isMuted && (
+                  <span aria-label="Muted" title="Muted" className="text-[10px] opacity-60 shrink-0">
+                    🔕
+                  </span>
+                )}
               </span>
               <span className="text-[11px] text-gray-400 shrink-0">{formatTime(conv.lastMessageAt)}</span>
             </div>

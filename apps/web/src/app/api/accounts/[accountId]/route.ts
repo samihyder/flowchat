@@ -54,6 +54,7 @@ export async function PATCH(req: Request, { params }: Params) {
       autoMessages?: string[];
       autoWelcomeTitle?: string;
       autoWelcomeTagline?: string;
+      visitorAlarmSoundId?: string;
     };
   };
 
