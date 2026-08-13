@@ -30,7 +30,7 @@ export function ContactListItem({
       )}
       <Link
         href={`/dashboard/contacts/${contact.id}` as Route}
-        className="flex-1 text-left px-4 py-3 flex items-center gap-3 min-w-0"
+        className="flex-1 text-left px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-3 min-w-0"
       >
         <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-primary-100 text-primary-700">
           {initialsFromName(contact.name)}
@@ -68,10 +68,10 @@ export function ContactListItem({
                 ⚡ {contact.activeAutomation.name} · {contact.activeAutomation.currentStep}/{contact.activeAutomation.totalSteps}
               </span>
             ) : (
-              <span className="text-[10px] text-gray-400">— no automation</span>
+              <span className="hidden sm:inline text-[10px] text-gray-400">— no automation</span>
             )}
             {contact.country && (
-              <span className="text-[10px] text-gray-500">{countryLabel(contact.country)}</span>
+              <span className="hidden sm:inline text-[10px] text-gray-500">{countryLabel(contact.country)}</span>
             )}
             <span className="text-[10px] text-gray-400">{formatRelativeTime(contact.lastActivityAt)}</span>
           </div>
