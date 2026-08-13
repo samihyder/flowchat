@@ -7,7 +7,7 @@ import type { Availability } from '@/store/ws';
 import { initials } from '@/components/conversations/conversation-badges';
 import { useAuthStore } from '@/store/auth';
 import { EcosystemNavItem } from '@/components/layout/ecosystem-nav-item';
-import { usePwaMode } from '@/lib/use-pwa-mode';
+import { useRestrictedNav } from '@/lib/use-pwa-mode';
 
 type Inbox = { id: string; name: string; channelType: string; widgetColor: string | null };
 type Team = { id: string; name: string };
@@ -104,7 +104,7 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin);
-  const pwaMode = usePwaMode();
+  const navRestricted = useRestrictedNav();
   const isDashboard = pathname === '/dashboard';
   const isMarketing =
     pathname.startsWith('/marketing') || pathname.startsWith('/settings/email-marketing');
@@ -149,7 +149,7 @@ export function DashboardSidebar({
           />
         </NavSection>
 
-        {!pwaMode && (
+        {!navRestricted && (
           <NavSection label="Inboxes">
             {inboxes.length === 0 ? (
               <NavItem href="/settings/inboxes" icon="➕" label="Create inbox" />
@@ -168,7 +168,7 @@ export function DashboardSidebar({
           </NavSection>
         )}
 
-        {!pwaMode && teams.length > 0 && (
+        {!navRestricted && teams.length > 0 && (
           <NavSection label="Teams">
             {teams.map((team) => (
               <NavItem
@@ -188,7 +188,7 @@ export function DashboardSidebar({
             icon="🧑‍💼"
             label="Contacts"
           />
-          {!pwaMode && (
+          {!navRestricted && (
             <>
               <NavItem
                 href="/dashboard/documents"
@@ -212,7 +212,7 @@ export function DashboardSidebar({
           )}
         </NavSection>
 
-        {!pwaMode && (
+        {!navRestricted && (
           <NavSection label="Ecosystem">
             <NavItem
               href="/settings/leadsnapper"
@@ -235,7 +235,7 @@ export function DashboardSidebar({
           </NavSection>
         )}
 
-        {!pwaMode && (
+        {!navRestricted && (
           <NavSection label="Insights">
             <NavItem
               href="/dashboard/analytics"
@@ -252,7 +252,7 @@ export function DashboardSidebar({
           </NavSection>
         )}
 
-        {!pwaMode && (
+        {!navRestricted && (
           <NavSection label="Workspace">
             <NavItem
               href="/settings/account"

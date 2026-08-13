@@ -37,3 +37,28 @@ export function usePwaMode(): boolean {
   }, []);
   return pwa;
 }
+
+/** Reactive viewport-width check — true at the same width the install prompt targets. */
+export function useIsMobileViewport(): boolean {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return mobile;
+}
+
+/**
+ * True when the nav should be restricted to Chat + Contacts: either the app
+ * is running installed as a PWA, or it's being viewed in a mobile browser
+ * tab (not yet installed) — mobile screens show the install banner in place
+ * of the full module list rather than cramming everything in.
+ */
+export function useRestrictedNav(): boolean {
+  const pwaMode = usePwaMode();
+  const isMobile = useIsMobileViewport();
+  return pwaMode || isMobile;
+}
