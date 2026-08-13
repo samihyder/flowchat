@@ -37,6 +37,7 @@ const sections: NavSection[] = [
     items: [
       { label: 'SLA', href: '/settings/sla' as Route, icon: 'timer' },
       { label: 'Roles', href: '/settings/roles' as Route, icon: 'badge' },
+      { label: 'Notifications', href: '/settings/notifications' as Route, icon: 'notifications' },
     ],
   },
   {

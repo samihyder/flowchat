@@ -55,6 +55,7 @@ export async function listConversations(sql: AppSql, filters: ConversationFilter
            ct.name as "contactName", ct.email as "contactEmail",
            i.name as "inboxName",
            u.name as "assigneeName",
+           (cm.id IS NOT NULL) as "isMuted",
            COALESCE(
              (SELECT json_agg(json_build_object('id', l.id, 'name', l.name, 'color', l.color))
               FROM conversation_labels cl
@@ -66,6 +67,7 @@ export async function listConversations(sql: AppSql, filters: ConversationFilter
     INNER JOIN contacts ct ON ct.id = c.contact_id
     INNER JOIN inboxes i ON i.id = c.inbox_id
     LEFT JOIN users u ON u.id = c.assignee_id
+    LEFT JOIN conversation_mutes cm ON cm.conversation_id = c.id AND cm.user_id = ${agentUserId}::uuid
     WHERE c.account_id = ${accountId}::uuid
       AND c.status = ${status}
       AND (${inboxId}::uuid IS NULL OR c.inbox_id = ${inboxId}::uuid)

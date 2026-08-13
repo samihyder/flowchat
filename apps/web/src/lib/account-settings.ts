@@ -50,6 +50,8 @@ export type AccountSettings = {
   aiModel?: string;
   /** When true, chat widget uses AI to reply to visitor messages */
   widgetAiEnabled?: boolean;
+  /** Preset id for the visitor-online alert tone (see ALARM_PRESETS in visitor-alarm.ts). Administrator-only. */
+  visitorAlarmSoundId?: string;
 };
 
 function parseStringArray(raw: unknown): string[] | undefined {
@@ -105,6 +107,8 @@ export function parseAccountSettings(raw: unknown): AccountSettings {
       typeof s.leadmonitorMinScore === 'number' ? s.leadmonitorMinScore : undefined,
     whatsappCrmSyncEnabled:
       typeof s.whatsappCrmSyncEnabled === 'boolean' ? s.whatsappCrmSyncEnabled : undefined,
+    visitorAlarmSoundId:
+      typeof s.visitorAlarmSoundId === 'string' ? s.visitorAlarmSoundId : undefined,
   };
 }
 

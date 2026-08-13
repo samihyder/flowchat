@@ -289,6 +289,7 @@ export type Conversation = {
   contactName: string;
   contactEmail: string | null;
   inboxName: string;
+  isMuted?: boolean;
 };
 
 export type MessageAttachment = {
@@ -1103,6 +1104,7 @@ export const api = {
             autoMessages?: string[];
             autoWelcomeTitle?: string;
             autoWelcomeTagline?: string;
+            visitorAlarmSoundId?: string;
           };
         };
       }>(`/accounts/${accountId}`, { token }),
@@ -1130,6 +1132,7 @@ export const api = {
           marketingPortfolioUrl?: string;
           marketingPortfolioTemplate?: string;
           marketingAutoAppendTemplates?: boolean;
+          visitorAlarmSoundId?: string;
         };
       },
       token: string
@@ -1147,6 +1150,7 @@ export const api = {
             autoMessages?: string[];
             autoWelcomeTitle?: string;
             autoWelcomeTagline?: string;
+            visitorAlarmSoundId?: string;
           };
         };
       }>(`/accounts/${accountId}`, { method: 'PATCH', body, token }),
@@ -1701,6 +1705,18 @@ export const api = {
     get: (accountId: string, conversationId: string, token: string) =>
       request<{ conversation: Conversation }>(
         `/accounts/${accountId}/conversations/${conversationId}`,
+        { token }
+      ),
+
+    mute: (accountId: string, conversationId: string, muted: boolean, token: string) =>
+      request<{ muted: boolean }>(
+        `/accounts/${accountId}/conversations/${conversationId}/mute`,
+        { method: 'POST', body: { muted }, token }
+      ),
+
+    mutedIds: (accountId: string, token: string) =>
+      request<{ mutedConversationIds: string[] }>(
+        `/accounts/${accountId}/conversations/muted-ids`,
         { token }
       ),
 

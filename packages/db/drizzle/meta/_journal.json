@@ -309,6 +309,13 @@
       "when": 1780334231280,
       "tag": "0043_inbox_widget_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1780334232280,
+      "tag": "0044_conversation_mutes",
+      "breakpoints": true
     }
   ]
 }

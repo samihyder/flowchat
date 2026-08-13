@@ -15,6 +15,8 @@ import { useSessionKeepAlive } from '@/lib/useSessionKeepAlive';
 import { api } from '@/lib/api';
 import { countryLabel } from '@/lib/country';
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
+import { InstallPrompt } from '@/components/pwa/install-prompt';
+import { useMutedConversationsStore } from '@/store/muted-conversations';
 
 type Inbox = { id: string; name: string; channelType: string; widgetColor: string | null };
 type Team = { id: string; name: string };
@@ -49,6 +51,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [inboxes, setInboxes] = useState<Inbox[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [alarmSoundId, setAlarmSoundId] = useState<string | undefined>(undefined);
   const [messageMuted, setMessageMuted] = useState(true);
   const [unreadAll, setUnreadAll] = useState(0);
   const [unreadMine, setUnreadMine] = useState(0);
@@ -56,7 +59,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const [unreadByInbox, setUnreadByInbox] = useState<Record<string, number>>({});
 
   useWebSocket();
-  const { alert: visitorAlert, muted: alarmMuted, toggleMute: toggleAlarm } = useVisitorAlarm();
+  const { alert: visitorAlert, muted: alarmMuted, toggleMute: toggleAlarm } = useVisitorAlarm(alarmSoundId);
   useMessageAlert();
 
   useEffect(() => {
@@ -95,6 +98,11 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     Promise.all([
       api.inboxes.list(accountId, token).then((r) => setInboxes(r.inboxes)).catch(() => {}),
       api.teams.list(accountId, token).then((r) => setTeams(r.teams)).catch(() => {}),
+      useMutedConversationsStore.getState().bootstrap(accountId, token),
+      api.account
+        .get(accountId, token)
+        .then((r) => setAlarmSoundId(r.account.settings?.visitorAlarmSoundId))
+        .catch(() => {}),
     ]);
   }, [authReady, token, accountId, router]);
 
@@ -148,6 +156,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-gray-50">
+      <InstallPrompt />
       {sidebarOpen && (
         <button
           type="button"

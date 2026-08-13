@@ -9,6 +9,7 @@ export * from './team_members';
 export * from './contacts';
 export * from './contact_inboxes';
 export * from './conversations';
+export * from './conversation_mutes';
 export * from './messages';
 export * from './labels';
 export * from './analytics_exceptions';

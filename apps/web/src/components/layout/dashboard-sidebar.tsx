@@ -7,6 +7,7 @@ import type { Availability } from '@/store/ws';
 import { initials } from '@/components/conversations/conversation-badges';
 import { useAuthStore } from '@/store/auth';
 import { EcosystemNavItem } from '@/components/layout/ecosystem-nav-item';
+import { usePwaMode } from '@/lib/use-pwa-mode';
 
 type Inbox = { id: string; name: string; channelType: string; widgetColor: string | null };
 type Team = { id: string; name: string };
@@ -103,6 +104,7 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin);
+  const pwaMode = usePwaMode();
   const isDashboard = pathname === '/dashboard';
   const isMarketing =
     pathname.startsWith('/marketing') || pathname.startsWith('/settings/email-marketing');
@@ -147,24 +149,26 @@ export function DashboardSidebar({
           />
         </NavSection>
 
-        <NavSection label="Inboxes">
-          {inboxes.length === 0 ? (
-            <NavItem href="/settings/inboxes" icon="➕" label="Create inbox" />
-          ) : (
-            inboxes.map((inbox) => (
-              <NavItem
-                key={inbox.id}
-                href={`/dashboard?inbox=${inbox.id}`}
-                active={isDashboard && false}
-                icon="🌐"
-                label={inbox.name}
-                badge={unreadByInbox[inbox.id]}
-              />
-            ))
-          )}
-        </NavSection>
+        {!pwaMode && (
+          <NavSection label="Inboxes">
+            {inboxes.length === 0 ? (
+              <NavItem href="/settings/inboxes" icon="➕" label="Create inbox" />
+            ) : (
+              inboxes.map((inbox) => (
+                <NavItem
+                  key={inbox.id}
+                  href={`/dashboard?inbox=${inbox.id}`}
+                  active={isDashboard && false}
+                  icon="🌐"
+                  label={inbox.name}
+                  badge={unreadByInbox[inbox.id]}
+                />
+              ))
+            )}
+          </NavSection>
+        )}
 
-        {teams.length > 0 && (
+        {!pwaMode && teams.length > 0 && (
           <NavSection label="Teams">
             {teams.map((team) => (
               <NavItem
@@ -184,70 +188,80 @@ export function DashboardSidebar({
             icon="🧑‍💼"
             label="Contacts"
           />
-          <NavItem
-            href="/dashboard/documents"
-            active={pathname.startsWith('/dashboard/documents')}
-            icon="📄"
-            label="Documents"
-          />
-          <NavItem
-            href="/dashboard/channel-campaigns"
-            active={pathname.startsWith('/dashboard/channel-campaigns')}
-            icon="📣"
-            label="Channel campaigns"
-          />
-          <NavItem
-            href="/marketing/campaigns"
-            active={isMarketing}
-            icon="📧"
-            label="Marketing"
-          />
+          {!pwaMode && (
+            <>
+              <NavItem
+                href="/dashboard/documents"
+                active={pathname.startsWith('/dashboard/documents')}
+                icon="📄"
+                label="Documents"
+              />
+              <NavItem
+                href="/dashboard/channel-campaigns"
+                active={pathname.startsWith('/dashboard/channel-campaigns')}
+                icon="📣"
+                label="Channel campaigns"
+              />
+              <NavItem
+                href="/marketing/campaigns"
+                active={isMarketing}
+                icon="📧"
+                label="Marketing"
+              />
+            </>
+          )}
         </NavSection>
 
-        <NavSection label="Ecosystem">
-          <NavItem
-            href="/settings/leadsnapper"
-            active={pathname.startsWith('/settings/leadsnapper')}
-            icon="🧲"
-            label="LeadSnapper"
-          />
-          <EcosystemNavItem
-            target="wa-automation"
-            icon="💬"
-            label="WhatsApp CRM"
-            path="/wa-automation/inbox"
-          />
-          <EcosystemNavItem
-            target="lead-monitor"
-            icon="📡"
-            label="Lead Monitor"
-            path="/lead-monitor/leads"
-          />
-        </NavSection>
+        {!pwaMode && (
+          <NavSection label="Ecosystem">
+            <NavItem
+              href="/settings/leadsnapper"
+              active={pathname.startsWith('/settings/leadsnapper')}
+              icon="🧲"
+              label="LeadSnapper"
+            />
+            <EcosystemNavItem
+              target="wa-automation"
+              icon="💬"
+              label="WhatsApp CRM"
+              path="/wa-automation/inbox"
+            />
+            <EcosystemNavItem
+              target="lead-monitor"
+              icon="📡"
+              label="Lead Monitor"
+              path="/lead-monitor/leads"
+            />
+          </NavSection>
+        )}
 
-        <NavSection label="Insights">
-          <NavItem
-            href="/dashboard/analytics"
-            active={pathname === '/dashboard/analytics'}
-            icon="📊"
-            label="Analytics"
-          />
-          <NavItem
-            href="/dashboard/reports"
-            active={pathname === '/dashboard/reports'}
-            icon="📈"
-            label="Reports"
-          />
-        </NavSection>
+        {!pwaMode && (
+          <NavSection label="Insights">
+            <NavItem
+              href="/dashboard/analytics"
+              active={pathname === '/dashboard/analytics'}
+              icon="📊"
+              label="Analytics"
+            />
+            <NavItem
+              href="/dashboard/reports"
+              active={pathname === '/dashboard/reports'}
+              icon="📈"
+              label="Reports"
+            />
+          </NavSection>
+        )}
 
-        <NavSection label="Workspace">
-          <NavItem
-            href="/settings/account"
-            active={pathname.startsWith('/settings')}
-            icon="⚙️"
-            label="Settings"
-          />
-        </NavSection>
+        {!pwaMode && (
+          <NavSection label="Workspace">
+            <NavItem
+              href="/settings/account"
+              active={pathname.startsWith('/settings')}
+              icon="⚙️"
+              label="Settings"
+            />
+          </NavSection>
+        )}
       </nav>
 
       <div className="p-3 border-t border-sidebar-hover">
