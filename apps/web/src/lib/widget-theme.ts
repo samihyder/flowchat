@@ -125,6 +125,8 @@ export type WidgetSettingsInput = {
   widgetColor: string;
   widgetIcon: WidgetIconId;
   widgetMode: WidgetMode;
+  /** Opens the widget panel itself on page load instead of waiting for a launcher click. */
+  autoOpenChat: boolean;
   widgetTheme: WidgetTheme;
   allowedDomainsText: string;
   offlineMessage: string;
@@ -150,6 +152,7 @@ export const emptyWidgetSettings = (): WidgetSettingsInput => ({
   widgetColor: MUTEX_PRIMARY_DEFAULT,
   widgetIcon: 'chat',
   widgetMode: 'hosted',
+  autoOpenChat: false,
   widgetTheme: defaultWidgetTheme(),
   allowedDomainsText: '',
   offlineMessage: 'We are currently offline. Leave a message and we will get back to you soon.',
@@ -210,6 +213,7 @@ export function settingsFromInbox(inbox: {
   widgetColor?: string | null;
   widgetIcon?: string | null;
   widgetMode?: WidgetMode | string | null;
+  autoOpenChat?: boolean | null;
   widgetTheme?: Partial<WidgetTheme> | null;
   allowedDomains?: string[] | null | unknown;
   offlineMessage?: string | null;
@@ -246,6 +250,7 @@ export function settingsFromInbox(inbox: {
     widgetColor: primary,
     widgetIcon: (inbox.widgetIcon as WidgetIconId) || 'chat',
     widgetMode: inbox.widgetMode === 'headless' ? 'headless' : 'hosted',
+    autoOpenChat: inbox.autoOpenChat ?? false,
     widgetTheme: mergeWidgetTheme(inbox.widgetTheme, primary),
     allowedDomainsText: normalizeStringList(inbox.allowedDomains).join('\n'),
     offlineMessage:

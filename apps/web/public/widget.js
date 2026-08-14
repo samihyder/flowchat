@@ -570,7 +570,12 @@
   // even if the visitor never fills in the prechat form. If they do fill it
   // in later, startChat() reuses this same conversation (matched by sourceId)
   // instead of creating a duplicate.
-  async function initWidgetOpen() {
+  //
+  // showChat=true (used by auto-open, when no prechat gate is required)
+  // additionally flips the panel straight into the live chat view — the
+  // greeting renders as real message bubbles and the composer is ready for
+  // an immediate reply — instead of leaving it as a silent background call.
+  async function initWidgetOpen(showChat) {
     if (widgetOpenTriggered || state.conversationId || state.prechatDone) return;
     widgetOpenTriggered = true;
     try {
@@ -584,8 +589,14 @@
         state.conversationId = data.conversationId;
         state.visitorToken = data.visitorToken;
         saveSession();
+        if (showChat) {
+          state.prechatDone = true;
+          state.view = 'chat';
+          await loadMessages(false);
+        }
         connectWs();
         startPolling();
+        if (showChat) render();
       }
     } catch (_) {
       widgetOpenTriggered = false;
@@ -600,6 +611,36 @@
       initWidgetOpen();
     }
     render();
+  }
+
+  // Auto-open (per-inbox setting): opens the panel itself on page load
+  // instead of waiting for a launcher click. Skips straight to the live
+  // chat view with the greeting already showing and the composer ready,
+  // UNLESS the inbox requires consent or a required prechat field — those
+  // compliance gates are never bypassed, so auto-open just surfaces the
+  // form immediately instead of behind an extra "Start conversation" click.
+  // Fires on every page load — it does not remember a prior manual close.
+  function maybeAutoOpen() {
+    if (!state.inbox || !state.inbox.autoOpenChat) return;
+    if (state.open) return;
+    if (state.prechatDone) {
+      state.open = true;
+      render();
+      return;
+    }
+    var requiredFields = (state.inbox.preChatFields || []).some(function (f) {
+      return f && f.required;
+    });
+    var needsGate = (state.availability && state.availability.requireConsent) || requiredFields;
+    state.open = true;
+    if (needsGate) {
+      state.view = 'prechat';
+      render();
+      initWidgetOpen();
+    } else {
+      render();
+      initWidgetOpen(true);
+    }
   }
 
   async function loadAvailability() {
@@ -958,6 +999,9 @@
     if (mode === 'headless') return;
     return restoreSession();
   }).then(function () {
-    if (uiMounted) render();
+    if (uiMounted) {
+      render();
+      maybeAutoOpen();
+    }
   });
 })();

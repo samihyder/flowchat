@@ -125,6 +125,26 @@ function WidgetCustomizerInner({ settings, onChange, showNameChannel = true }: P
       </div>
 
       <div>
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={settings.autoOpenChat}
+            onChange={(e) => onChange({ ...settings, autoOpenChat: e.target.checked })}
+            className="mt-0.5 rounded border-gray-300 text-primary-600 focus-visible:ring-2 focus-visible:ring-primary-500/40"
+          />
+          <span>
+            <span className="block text-sm font-medium text-gray-800">Auto-open chat</span>
+            <span className="block text-xs text-gray-500 mt-0.5">
+              Opens the widget panel itself when a visitor lands on the page, with the greeting
+              already showing — instead of waiting for them to click the launcher. They can reply
+              immediately unless consent or required prechat fields are configured below. Headless
+              integrations can read this flag from the widget config and open their own UI.
+            </span>
+          </span>
+        </label>
+      </div>
+
+      <div>
         <div className="flex items-center justify-between gap-2 mb-1">
           <label className={labelClass}>Greeting messages</label>
           <a href="/settings/auto-messages" className="text-xs text-primary-600 hover:underline">

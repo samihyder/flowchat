@@ -37,6 +37,7 @@ export async function GET(req: Request, { params }: Params) {
   const rows = await sql`
     SELECT id, name, channel_type as "channelType", widget_color as "widgetColor",
            widget_icon as "widgetIcon", widget_mode as "widgetMode", widget_theme as "widgetTheme",
+           auto_open_chat as "autoOpenChat",
            greeting_message as "greetingMessage", greeting_messages as "greetingMessages",
            welcome_title as "welcomeTitle", welcome_tagline as "welcomeTagline", website_url as "websiteUrl",
            default_assignee_id as "defaultAssigneeId", is_enabled as "isEnabled",
@@ -82,6 +83,7 @@ export async function POST(req: Request, { params }: Params) {
     widgetIcon?: string;
     widgetMode?: string;
     widgetTheme?: Record<string, string>;
+    autoOpenChat?: boolean;
     websiteUrl?: string;
     defaultAssigneeId?: string;
   };
@@ -127,7 +129,7 @@ export async function POST(req: Request, { params }: Params) {
     INSERT INTO inboxes (
       account_id, name, channel_type, greeting_message, greeting_messages,
       welcome_title, welcome_tagline, widget_color, widget_icon, widget_mode, widget_theme,
-      website_url, default_assignee_id
+      auto_open_chat, website_url, default_assignee_id
     )
     VALUES (
       ${accountId}::uuid,
@@ -141,11 +143,13 @@ export async function POST(req: Request, { params }: Params) {
       ${body.widgetIcon ?? 'chat'},
       ${widgetMode},
       ${JSON.stringify(theme)}::jsonb,
+      ${body.autoOpenChat ?? false},
       ${body.websiteUrl?.trim() || null},
       ${body.defaultAssigneeId.trim()}::uuid
     )
     RETURNING id, name, channel_type as "channelType", widget_color as "widgetColor",
               widget_icon as "widgetIcon", widget_mode as "widgetMode", widget_theme as "widgetTheme",
+              auto_open_chat as "autoOpenChat",
               greeting_message as "greetingMessage", greeting_messages as "greetingMessages",
               welcome_title as "welcomeTitle",
               welcome_tagline as "welcomeTagline", website_url as "websiteUrl",

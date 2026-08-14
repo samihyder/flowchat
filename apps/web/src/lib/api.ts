@@ -32,6 +32,7 @@ export type Inbox = {
   widgetColor: string | null;
   widgetIcon?: string | null;
   widgetMode?: 'hosted' | 'headless' | null;
+  autoOpenChat?: boolean;
   widgetTheme?: WidgetTheme | null;
   greetingMessage?: string | null;
   greetingMessages?: string[] | null;
@@ -1217,6 +1218,7 @@ export const api = {
         widgetColor?: string;
         widgetIcon?: string;
         widgetMode?: 'hosted' | 'headless';
+        autoOpenChat?: boolean;
         widgetTheme?: WidgetTheme;
         websiteUrl?: string;
         defaultAssigneeId: string;
@@ -1236,6 +1238,7 @@ export const api = {
         widgetColor?: string;
         widgetIcon?: string;
         widgetMode?: 'hosted' | 'headless';
+        autoOpenChat?: boolean;
         widgetTheme?: WidgetTheme;
         websiteUrl?: string | null;
         defaultAssigneeId?: string;

@@ -31,6 +31,7 @@ export async function PATCH(req: Request, { params }: Params) {
     widgetIcon?: string;
     widgetMode?: string;
     widgetTheme?: Record<string, string>;
+    autoOpenChat?: boolean;
     websiteUrl?: string | null;
     defaultAssigneeId?: string;
     allowedDomains?: string[];
@@ -94,6 +95,7 @@ export async function PATCH(req: Request, { params }: Params) {
       widget_icon = COALESCE(${body.widgetIcon ?? null}, widget_icon),
       widget_mode = COALESCE(${widgetMode}, widget_mode),
       widget_theme = COALESCE(${body.widgetTheme ? JSON.stringify(theme) : null}::jsonb, widget_theme),
+      auto_open_chat = COALESCE(${body.autoOpenChat ?? null}, auto_open_chat),
       website_url = COALESCE(${body.websiteUrl !== undefined ? body.websiteUrl : null}, website_url),
       default_assignee_id = COALESCE(${body.defaultAssigneeId !== undefined ? body.defaultAssigneeId : null}::uuid, default_assignee_id),
       allowed_domains = COALESCE(${body.allowedDomains ? JSON.stringify(body.allowedDomains) : null}::jsonb, allowed_domains),
@@ -110,6 +112,7 @@ export async function PATCH(req: Request, { params }: Params) {
     WHERE id = ${inboxId}::uuid AND account_id = ${accountId}::uuid
     RETURNING id, name, channel_type as "channelType", widget_color as "widgetColor",
               widget_icon as "widgetIcon", widget_mode as "widgetMode", widget_theme as "widgetTheme",
+              auto_open_chat as "autoOpenChat",
               greeting_message as "greetingMessage", greeting_messages as "greetingMessages",
               welcome_title as "welcomeTitle",
               welcome_tagline as "welcomeTagline", website_url as "websiteUrl",

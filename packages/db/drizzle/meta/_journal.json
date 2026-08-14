@@ -316,6 +316,13 @@
       "when": 1780334232280,
       "tag": "0044_conversation_mutes",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1780334233280,
+      "tag": "0045_widget_auto_open",
+      "breakpoints": true
     }
   ]
 }

@@ -29,6 +29,8 @@ export const inboxes = pgTable('inboxes', {
   widgetIcon: varchar('widget_icon', { length: 32 }).default('chat'),
   /** hosted = FlowChat UI; headless = API/WS only for a custom UI */
   widgetMode: varchar('widget_mode', { length: 20 }).notNull().default('hosted'),
+  /** When true, the widget panel opens itself on page load instead of waiting for a launcher click. */
+  autoOpenChat: boolean('auto_open_chat').notNull().default(false),
   widgetTheme: jsonb('widget_theme'),
   websiteUrl: varchar('website_url', { length: 500 }),
   defaultAssigneeId: uuid('default_assignee_id').references(() => users.id, { onDelete: 'set null' }),

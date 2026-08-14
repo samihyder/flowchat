@@ -24,6 +24,7 @@ export function inboxPayloadFromSettings(s: WidgetSettingsInput) {
     widgetColor: s.widgetColor,
     widgetIcon: s.widgetIcon,
     widgetMode: s.widgetMode,
+    autoOpenChat: s.autoOpenChat,
     widgetTheme: s.widgetTheme,
     allowedDomains: parseDomainsText(s.allowedDomainsText),
     offlineMessage: s.offlineMessage.trim() || null,

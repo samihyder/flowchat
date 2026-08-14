@@ -34,7 +34,7 @@ export async function GET(req: Request, { params }: Params) {
              i.greeting_messages as "greetingMessages",
              i.welcome_title as "welcomeTitle", i.welcome_tagline as "welcomeTagline",
              i.widget_color as "widgetColor", i.widget_icon as "widgetIcon",
-             i.widget_mode as "widgetMode",
+             i.widget_mode as "widgetMode", i.auto_open_chat as "autoOpenChat",
              i.widget_theme as "widgetTheme", i.allowed_domains as "allowedDomains",
              i.pre_chat_fields as "preChatFields", i.csat_enabled as "csatEnabled",
              a.settings as "accountSettings"
@@ -54,6 +54,7 @@ export async function GET(req: Request, { params }: Params) {
       widgetColor: string | null;
       widgetIcon: string | null;
       widgetMode: string | null;
+      autoOpenChat: boolean;
       widgetTheme: Record<string, string> | null;
       allowedDomains: unknown;
       preChatFields: unknown;
@@ -96,6 +97,7 @@ export async function GET(req: Request, { params }: Params) {
           widgetColor: primary,
           widgetIcon: inbox.widgetIcon ?? 'chat',
           widgetMode: inbox.widgetMode === 'headless' ? 'headless' : 'hosted',
+          autoOpenChat: inbox.autoOpenChat ?? false,
           widgetTheme: mergeWidgetTheme(inbox.widgetTheme, primary),
           preChatFields: inbox.preChatFields ?? [],
           csatEnabled: inbox.csatEnabled ?? false,

@@ -6,7 +6,7 @@ export const PRODUCTION_WEB_URL =
   process.env.WEB_APP_URL ??
   'https://flowchat-web-ten.vercel.app';
 
-export const WIDGET_SCRIPT_VERSION = 11;
+export const WIDGET_SCRIPT_VERSION = 12;
 export const HEADLESS_SCRIPT_VERSION = 2;
 
 export type WidgetEmbedMode = 'hosted' | 'headless';

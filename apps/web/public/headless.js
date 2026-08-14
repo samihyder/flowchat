@@ -3,7 +3,8 @@
  * Use when the inbox widget mode is "headless".
  *
  *   const client = FlowChat.createClient({ inboxId, apiUrl, wsUrl });
- *   await client.openWidget(); // fires auto-greeting when your chat UI opens
+ *   const config = await client.getConfig();
+ *   if (config.autoOpenChat) await client.openWidget(); // open your UI immediately on page load
  *   await client.startSession({ name: 'Ada', email: 'ada@example.com' });
  *   client.on('message', (msg) => { ... });
  *   await client.sendMessage('Hello');
