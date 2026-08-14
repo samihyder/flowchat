@@ -9,9 +9,19 @@ const protectedPrefixes = ['/dashboard', '/settings', '/marketing'];
  * protected prefix bounces back to `/dashboard` — the PWA is scoped to
  * Chat (Inbox) + Contacts only, set client-side in use-pwa-mode.ts and read
  * here via the `fc_pwa` cookie so it's enforced even on direct navigation.
+ *
+ * `/settings/notifications` is a deliberate, narrow exception: it's the
+ * administrator-only page for choosing the visitor-alert sound, reachable
+ * from the chat module itself (the "Change sound" link on the visitor
+ * banner, and the sidebar footer's tune icon when nav is restricted) — it
+ * would otherwise be permanently unreachable to a PWA-only admin.
  */
 function isPwaAllowedPath(pathname: string): boolean {
-  return pathname === '/dashboard' || pathname.startsWith('/dashboard/contacts');
+  return (
+    pathname === '/dashboard' ||
+    pathname.startsWith('/dashboard/contacts') ||
+    pathname === '/settings/notifications'
+  );
 }
 
 export function middleware(request: NextRequest) {

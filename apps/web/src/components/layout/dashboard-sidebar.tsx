@@ -297,6 +297,16 @@ export function DashboardSidebar({
               {messageMuted ? 'notifications_off' : 'notifications'}
             </span>
           </button>
+          {navRestricted && (
+            <button
+              type="button"
+              onClick={() => router.push('/settings/notifications' as Route)}
+              className="text-sidebar-muted hover:text-white hover:bg-sidebar-hover rounded-lg p-2.5 -m-1 transition-colors"
+              title="Notification sound settings"
+            >
+              <span className="material-symbols-outlined text-[18px] block">tune</span>
+            </button>
+          )}
           {isSuperAdmin && (
             <>
               <button

@@ -219,8 +219,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 flex flex-col min-w-0 min-h-screen">
         {lastMissedChatEvent && (
-          <div className="bg-red-600 text-white px-4 py-2.5 text-sm font-medium flex items-center justify-between gap-3 shrink-0 shadow-sm animate-fade-in">
-            <span>
+          <div className="bg-red-600 text-white px-4 py-2.5 text-sm font-medium flex flex-wrap items-center justify-between gap-2 shrink-0 shadow-sm animate-fade-in">
+            <span className="min-w-0 break-words">
               Missed chat: {lastMissedChatEvent.contactName} on {lastMissedChatEvent.inboxName} (
               {lastMissedChatEvent.minutesWaiting}m waiting)
             </span>
@@ -243,21 +243,30 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         )}
         {visitorAlert && (
-          <div className="bg-amber-500 text-white px-4 py-2.5 text-sm font-medium flex items-center justify-between gap-3 shrink-0 shadow-sm animate-pulse">
-            <span>
+          <div className="bg-amber-500 text-white px-4 py-2.5 text-sm font-medium flex flex-wrap items-center justify-between gap-2 shrink-0 shadow-sm animate-pulse">
+            <span className="min-w-0 break-words">
               Visitor on {visitorAlert.inboxName}
               {visitorAlert.ipAddress ? ` · ${visitorAlert.ipAddress}` : ''}
               {visitorAlert.countryCode
                 ? ` · ${countryLabel(visitorAlert.countryCode) ?? visitorAlert.countryCode}`
                 : ''}
             </span>
-            <button
-              type="button"
-              onClick={toggleAlarm}
-              className="text-xs font-semibold px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 transition-colors shrink-0"
-            >
-              {alarmMuted ? 'Unmute alarm' : 'Mute alarm'}
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href={'/settings/notifications' as Route}
+                className="text-xs font-semibold px-2 py-1 rounded-md hover:bg-white/15 transition-colors"
+                title="Change the alarm sound (administrators only)"
+              >
+                Change sound
+              </Link>
+              <button
+                type="button"
+                onClick={toggleAlarm}
+                className="text-xs font-semibold px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 transition-colors"
+              >
+                {alarmMuted ? 'Unmute alarm' : 'Mute alarm'}
+              </button>
+            </div>
           </div>
         )}
         <div

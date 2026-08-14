@@ -15,6 +15,10 @@ export default function NotificationsSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  // Separate from `error` (save-time failures): if the initial admin-check
+  // fetch itself fails, we must not fall through to the "not admin" view —
+  // that would misreport a network/server error as a permissions denial.
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     if (!token || !accountId) return;
@@ -23,7 +27,9 @@ export default function NotificationsSettingsPage() {
         setIsAdmin(access.isAdmin);
         setSelected(accountRes.account.settings?.visitorAlarmSoundId || DEFAULT_ALARM_PRESET_ID);
       })
-      .catch(() => setError('Failed to load notification settings.'))
+      .catch((err) =>
+        setLoadError(err instanceof Error ? err.message : 'Failed to load notification settings.')
+      )
       .finally(() => setLoaded(true));
   }, [token, accountId]);
 
@@ -44,6 +50,14 @@ export default function NotificationsSettingsPage() {
 
   if (!loaded) {
     return <div className="p-6 text-sm text-gray-400">Loading…</div>;
+  }
+
+  if (loadError) {
+    return (
+      <div className="p-6 max-w-2xl">
+        <p className="text-sm text-red-600">{loadError}</p>
+      </div>
+    );
   }
 
   if (!isAdmin) {
