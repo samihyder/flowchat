@@ -78,7 +78,7 @@ export function VisitorContextSidebar({
             <button
               type="button"
               onClick={onMobileClose}
-              className="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-500 flex items-center justify-center"
+              className="w-11 h-11 rounded-lg hover:bg-gray-100 text-gray-500 flex items-center justify-center"
               aria-label="Close"
             >
               ✕

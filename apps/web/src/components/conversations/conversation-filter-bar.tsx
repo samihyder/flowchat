@@ -28,7 +28,7 @@ export function ConversationFilterBar({ filters, labels, onChange }: Props) {
             key={s}
             type="button"
             onClick={() => onChange({ ...filters, status: s })}
-            className={`px-2.5 py-1 rounded-md text-xs font-medium capitalize ${
+            className={`px-2.5 py-2.5 sm:py-1 rounded-md text-xs font-medium capitalize ${
               filters.status === s
                 ? 'bg-primary-600 text-white'
                 : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
@@ -42,7 +42,7 @@ export function ConversationFilterBar({ filters, labels, onChange }: Props) {
         <select
           value={filters.priority}
           onChange={(e) => onChange({ ...filters, priority: e.target.value })}
-          className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white"
+          className="text-xs border border-gray-200 rounded-md px-2 py-2.5 sm:py-1 bg-white"
         >
           <option value="">All priorities</option>
           {PRIORITIES.map((p) => (
@@ -54,7 +54,7 @@ export function ConversationFilterBar({ filters, labels, onChange }: Props) {
         <select
           value={filters.labelId}
           onChange={(e) => onChange({ ...filters, labelId: e.target.value })}
-          className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white max-w-[120px]"
+          className="text-xs border border-gray-200 rounded-md px-2 py-2.5 sm:py-1 bg-white max-w-[120px]"
         >
           <option value="">All labels</option>
           {labels.map((l) => (
@@ -67,14 +67,14 @@ export function ConversationFilterBar({ filters, labels, onChange }: Props) {
           type="date"
           value={filters.from}
           onChange={(e) => onChange({ ...filters, from: e.target.value })}
-          className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white"
+          className="text-xs border border-gray-200 rounded-md px-2 py-2.5 sm:py-1 bg-white"
           title="From date"
         />
         <input
           type="date"
           value={filters.to}
           onChange={(e) => onChange({ ...filters, to: e.target.value })}
-          className="text-xs border border-gray-200 rounded-md px-2 py-1 bg-white"
+          className="text-xs border border-gray-200 rounded-md px-2 py-2.5 sm:py-1 bg-white"
           title="To date"
         />
       </div>

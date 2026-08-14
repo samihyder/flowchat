@@ -11,7 +11,9 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'px-3 py-1.5 text-xs',
+  // Extra vertical padding below sm: (mobile/PWA) keeps a comfortable tap
+  // target on the smallest button size without changing desktop density.
+  sm: 'px-3 py-2.5 sm:py-1.5 text-xs',
   md: 'px-4 py-2 text-sm',
   lg: 'px-5 py-2.5 text-base',
 };

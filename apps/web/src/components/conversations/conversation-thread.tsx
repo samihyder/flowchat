@@ -448,7 +448,7 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
           <button
             type="button"
             onClick={() => setInfoOpen(true)}
-            className="lg:hidden shrink-0 w-9 h-9 rounded-lg hover:bg-gray-100 text-gray-500 flex items-center justify-center text-base"
+            className="lg:hidden shrink-0 w-11 h-11 rounded-lg hover:bg-gray-100 text-gray-500 flex items-center justify-center text-base"
             aria-label="Visitor info"
             title="Visitor info"
           >

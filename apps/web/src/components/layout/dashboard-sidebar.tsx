@@ -36,7 +36,7 @@ function NavItem({
   return (
     <Link
       href={href as Route}
-      className={`flex items-center gap-2.5 px-4 py-2 text-[13px] font-medium transition-colors ${
+      className={`flex items-center gap-2.5 px-4 py-2.5 sm:py-2 text-[13px] font-medium transition-colors ${
         active
           ? 'bg-sidebar-hover text-white'
           : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'
@@ -269,7 +269,7 @@ export function DashboardSidebar({
           <button
             type="button"
             onClick={onAvailabilityClick}
-            className="relative shrink-0"
+            className="relative shrink-0 p-1 -m-1"
             title="Change availability"
           >
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#2DD4BF] to-[#06B6D4] flex items-center justify-center text-white text-xs font-bold">
@@ -288,7 +288,7 @@ export function DashboardSidebar({
           <button
             type="button"
             onClick={onToggleMessageMute}
-            className="text-sidebar-muted hover:text-white p-1 text-sm"
+            className="text-sidebar-muted hover:text-white p-2.5 -m-1 text-sm"
             title={messageMuted ? 'Unmute sounds' : 'Mute sounds'}
           >
             {messageMuted ? '🔕' : '🔔'}
@@ -298,7 +298,7 @@ export function DashboardSidebar({
               <button
                 type="button"
                 onClick={() => router.push('/select-workspace' as Route)}
-                className="text-sidebar-muted hover:text-white p-1"
+                className="text-sidebar-muted hover:text-white p-2.5 -m-1"
                 title="Switch workspace"
               >
                 <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>
@@ -308,7 +308,7 @@ export function DashboardSidebar({
               <button
                 type="button"
                 onClick={() => router.push('/admin/api-catalog' as Route)}
-                className="text-sidebar-muted hover:text-white p-1"
+                className="text-sidebar-muted hover:text-white p-2.5 -m-1"
                 title="API Catalog"
               >
                 <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>
@@ -320,7 +320,7 @@ export function DashboardSidebar({
           <button
             type="button"
             onClick={onSignOut}
-            className="text-sidebar-muted hover:text-white p-1"
+            className="text-sidebar-muted hover:text-white p-2.5 -m-1"
             title="Sign out"
           >
             <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>

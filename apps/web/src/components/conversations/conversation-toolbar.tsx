@@ -68,7 +68,7 @@ export function ConversationToolbar({ conversation, onUpdated, onResolve, onExpo
       <button
         type="button"
         onClick={handleToggleMute}
-        className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700 px-2 py-1 rounded-md hover:bg-gray-100"
+        className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700 px-2.5 py-2.5 -my-1 rounded-md hover:bg-gray-100"
         title={muted ? 'Unmute this conversation' : 'Mute this conversation'}
       >
         {muted ? '🔕 Muted' : '🔔'}

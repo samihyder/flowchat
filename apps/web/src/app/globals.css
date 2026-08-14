@@ -64,6 +64,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Mobile/PWA tap responsiveness: kill the 300ms tap delay and the blue
+   flash on every interactive element, app-wide. */
+a, button, [role="button"], input, select, textarea, label {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iOS Safari auto-zooms the page when a focused input's font-size is under
+   16px — nearly every form control here uses text-xs/text-sm (12-14px) for
+   desktop density. Bump to 16px only below the tablet breakpoint so mobile
+   typing doesn't trigger that zoom; desktop sizing is untouched. */
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
 ::selection {
   background: #CFFAFE;
   color: #164E63;
