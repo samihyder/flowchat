@@ -46,9 +46,12 @@ export function EcosystemNavItem({
       type="button"
       onClick={() => void open()}
       disabled={loading}
-      className="flex w-full items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-sidebar-text transition-colors hover:bg-sidebar-hover hover:text-white disabled:opacity-60"
+      className="group flex items-center gap-2.5 mx-2 px-3 py-2.5 sm:py-2 rounded-lg text-[13px] font-medium text-sidebar-text transition-all duration-150 hover:bg-sidebar-hover hover:text-white active:scale-[0.98] disabled:opacity-60"
+      style={{ width: 'calc(100% - 1rem)' }}
     >
-      <span className="w-4 text-center text-sm opacity-80">{icon}</span>
+      <span className="material-symbols-outlined text-[18px] w-5 text-center opacity-90 group-hover:opacity-100 shrink-0">
+        {icon}
+      </span>
       <span className="truncate flex-1 text-left">{loading ? 'Opening…' : label}</span>
     </button>
   );

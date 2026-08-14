@@ -29,7 +29,7 @@ const PAGE_SIZE = 50;
 
 function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="px-4 py-2.5 border-r border-gray-100 last:border-r-0 shrink-0">
+    <div className="px-4 py-2.5 border-r border-gray-100 last:border-r-0 shrink-0 transition-colors hover:bg-gray-50">
       <p className="text-[10px] uppercase tracking-wide text-gray-400">{label}</p>
       <p className="text-sm font-semibold text-gray-900 mt-0.5">{value}</p>
     </div>
@@ -460,7 +460,7 @@ export default function ContactsPage() {
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white transition-colors hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
                 >
                   {TYPES.map((t) => (
                     <option key={t || 'all'} value={t}>
@@ -471,7 +471,7 @@ export default function ContactsPage() {
                 <select
                   value={marketingStatus}
                   onChange={(e) => setMarketingStatus(e.target.value)}
-                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white transition-colors hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
                 >
                   <option value="">Subscription</option>
                   <option value="subscribed">Subscribed</option>
@@ -482,7 +482,7 @@ export default function ContactsPage() {
                 <select
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  className="w-full sm:w-auto sm:max-w-[120px] px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                  className="w-full sm:w-auto sm:max-w-[120px] px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white transition-colors hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
                 >
                   <option value="">Country</option>
                   {COUNTRY_OPTIONS.map((c) => (
@@ -494,7 +494,7 @@ export default function ContactsPage() {
                 <select
                   value={labelId}
                   onChange={(e) => setLabelId(e.target.value)}
-                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white transition-colors hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
                 >
                   <option value="">All labels</option>
                   {labels.map((l) => (
@@ -506,7 +506,7 @@ export default function ContactsPage() {
                 <select
                   value={hasAutomation}
                   onChange={(e) => setHasAutomation(e.target.value)}
-                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                  className="w-full sm:w-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white transition-colors hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
                 >
                   <option value="">Automation</option>
                   <option value="yes">In automation</option>
@@ -515,7 +515,7 @@ export default function ContactsPage() {
                 <select
                   value={sortKey}
                   onChange={(e) => setSortKey(e.target.value)}
-                  className="w-full sm:w-auto sm:ml-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white"
+                  className="w-full sm:w-auto sm:ml-auto px-2 py-2 text-xs border border-gray-200 rounded-lg bg-white transition-colors hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
                 >
                   {SORTS.map((s) => (
                     <option key={s.value} value={s.value}>

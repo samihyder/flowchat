@@ -22,16 +22,16 @@ type Props = {
 export function ConversationFilterBar({ filters, labels, onChange }: Props) {
   return (
     <div className="px-3 py-2 border-b border-gray-100 bg-gray-50/80 space-y-2 shrink-0">
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1.5">
         {STATUSES.map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => onChange({ ...filters, status: s })}
-            className={`px-2.5 py-2.5 sm:py-1 rounded-md text-xs font-medium capitalize ${
+            className={`px-3 py-2.5 sm:py-1 rounded-full text-xs font-medium capitalize transition-all duration-150 active:scale-95 ${
               filters.status === s
-                ? 'bg-primary-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                ? 'bg-primary-600 text-white shadow-sm shadow-primary-900/15'
+                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
             }`}
           >
             {s}
@@ -42,7 +42,7 @@ export function ConversationFilterBar({ filters, labels, onChange }: Props) {
         <select
           value={filters.priority}
           onChange={(e) => onChange({ ...filters, priority: e.target.value })}
-          className="text-xs border border-gray-200 rounded-md px-2 py-2.5 sm:py-1 bg-white"
+          className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 sm:py-1 bg-white transition-colors hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
         >
           <option value="">All priorities</option>
           {PRIORITIES.map((p) => (
@@ -54,7 +54,7 @@ export function ConversationFilterBar({ filters, labels, onChange }: Props) {
         <select
           value={filters.labelId}
           onChange={(e) => onChange({ ...filters, labelId: e.target.value })}
-          className="text-xs border border-gray-200 rounded-md px-2 py-2.5 sm:py-1 bg-white max-w-[120px]"
+          className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 sm:py-1 bg-white max-w-[120px] transition-colors hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
         >
           <option value="">All labels</option>
           {labels.map((l) => (
@@ -67,14 +67,14 @@ export function ConversationFilterBar({ filters, labels, onChange }: Props) {
           type="date"
           value={filters.from}
           onChange={(e) => onChange({ ...filters, from: e.target.value })}
-          className="text-xs border border-gray-200 rounded-md px-2 py-2.5 sm:py-1 bg-white"
+          className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 sm:py-1 bg-white transition-colors hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
           title="From date"
         />
         <input
           type="date"
           value={filters.to}
           onChange={(e) => onChange({ ...filters, to: e.target.value })}
-          className="text-xs border border-gray-200 rounded-md px-2 py-2.5 sm:py-1 bg-white"
+          className="text-xs border border-gray-200 rounded-lg px-2 py-2.5 sm:py-1 bg-white transition-colors hover:border-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40"
           title="To date"
         />
       </div>

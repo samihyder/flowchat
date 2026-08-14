@@ -36,18 +36,20 @@ function NavItem({
   return (
     <Link
       href={href as Route}
-      className={`flex items-center gap-2.5 px-4 py-2.5 sm:py-2 text-[13px] font-medium transition-colors ${
+      className={`group flex items-center gap-2.5 mx-2 px-3 py-2.5 sm:py-2 rounded-lg text-[13px] font-medium transition-all duration-150 ${
         active
-          ? 'bg-sidebar-hover text-white'
-          : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'
+          ? 'bg-primary-500 text-white shadow-sm shadow-primary-900/30'
+          : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white active:scale-[0.98]'
       }`}
     >
-      <span className="w-4 text-center text-sm opacity-80">{icon}</span>
+      <span className="material-symbols-outlined text-[18px] w-5 text-center opacity-90 group-hover:opacity-100 shrink-0">
+        {icon}
+      </span>
       <span className="truncate flex-1">{label}</span>
       {badge !== undefined && badge > 0 && (
         <span
           className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-            badgeRed ? 'bg-red-500 text-white' : 'bg-primary-500 text-white'
+            badgeRed ? 'bg-red-500 text-white' : active ? 'bg-white/25 text-white' : 'bg-primary-500 text-white'
           }`}
         >
           {badge > 99 ? '99+' : badge}
@@ -128,21 +130,21 @@ export function DashboardSidebar({
           <NavItem
             href="/dashboard"
             active={isDashboard && !conversationFilter}
-            icon="💬"
+            icon="chat"
             label="All conversations"
             badge={unreadAll}
           />
           <NavItem
             href="/dashboard?filter=mine"
             active={isDashboard && conversationFilter === 'mine'}
-            icon="👤"
+            icon="person"
             label="Mine"
             badge={unreadMine}
           />
           <NavItem
             href="/dashboard?filter=unassigned"
             active={isDashboard && conversationFilter === 'unassigned'}
-            icon="📥"
+            icon="inbox"
             label="Unassigned"
             badge={unreadUnassigned}
             badgeRed
@@ -152,14 +154,14 @@ export function DashboardSidebar({
         {!navRestricted && (
           <NavSection label="Inboxes">
             {inboxes.length === 0 ? (
-              <NavItem href="/settings/inboxes" icon="➕" label="Create inbox" />
+              <NavItem href="/settings/inboxes" icon="add" label="Create inbox" />
             ) : (
               inboxes.map((inbox) => (
                 <NavItem
                   key={inbox.id}
                   href={`/dashboard?inbox=${inbox.id}`}
                   active={isDashboard && false}
-                  icon="🌐"
+                  icon="language"
                   label={inbox.name}
                   badge={unreadByInbox[inbox.id]}
                 />
@@ -174,7 +176,7 @@ export function DashboardSidebar({
               <NavItem
                 key={team.id}
                 href={`/dashboard?team=${team.id}`}
-                icon="👥"
+                icon="group"
                 label={team.name}
               />
             ))}
@@ -185,7 +187,7 @@ export function DashboardSidebar({
           <NavItem
             href="/dashboard/contacts"
             active={pathname.startsWith('/dashboard/contacts')}
-            icon="🧑‍💼"
+            icon="contacts"
             label="Contacts"
           />
           {!navRestricted && (
@@ -193,19 +195,19 @@ export function DashboardSidebar({
               <NavItem
                 href="/dashboard/documents"
                 active={pathname.startsWith('/dashboard/documents')}
-                icon="📄"
+                icon="description"
                 label="Documents"
               />
               <NavItem
                 href="/dashboard/channel-campaigns"
                 active={pathname.startsWith('/dashboard/channel-campaigns')}
-                icon="📣"
+                icon="campaign"
                 label="Channel campaigns"
               />
               <NavItem
                 href="/marketing/campaigns"
                 active={isMarketing}
-                icon="📧"
+                icon="mail"
                 label="Marketing"
               />
             </>
@@ -217,18 +219,18 @@ export function DashboardSidebar({
             <NavItem
               href="/settings/leadsnapper"
               active={pathname.startsWith('/settings/leadsnapper')}
-              icon="🧲"
+              icon="travel_explore"
               label="LeadSnapper"
             />
             <EcosystemNavItem
               target="wa-automation"
-              icon="💬"
+              icon="chat"
               label="WhatsApp CRM"
               path="/wa-automation/inbox"
             />
             <EcosystemNavItem
               target="lead-monitor"
-              icon="📡"
+              icon="sensors"
               label="Lead Monitor"
               path="/lead-monitor/leads"
             />
@@ -240,13 +242,13 @@ export function DashboardSidebar({
             <NavItem
               href="/dashboard/analytics"
               active={pathname === '/dashboard/analytics'}
-              icon="📊"
+              icon="bar_chart"
               label="Analytics"
             />
             <NavItem
               href="/dashboard/reports"
               active={pathname === '/dashboard/reports'}
-              icon="📈"
+              icon="trending_up"
               label="Reports"
             />
           </NavSection>
@@ -257,7 +259,7 @@ export function DashboardSidebar({
             <NavItem
               href="/settings/account"
               active={pathname.startsWith('/settings')}
-              icon="⚙️"
+              icon="settings"
               label="Settings"
             />
           </NavSection>
@@ -288,17 +290,19 @@ export function DashboardSidebar({
           <button
             type="button"
             onClick={onToggleMessageMute}
-            className="text-sidebar-muted hover:text-white p-2.5 -m-1 text-sm"
+            className="text-sidebar-muted hover:text-white hover:bg-sidebar-hover rounded-lg p-2.5 -m-1 transition-colors"
             title={messageMuted ? 'Unmute sounds' : 'Mute sounds'}
           >
-            {messageMuted ? '🔕' : '🔔'}
+            <span className="material-symbols-outlined text-[18px] block">
+              {messageMuted ? 'notifications_off' : 'notifications'}
+            </span>
           </button>
           {isSuperAdmin && (
             <>
               <button
                 type="button"
                 onClick={() => router.push('/select-workspace' as Route)}
-                className="text-sidebar-muted hover:text-white p-2.5 -m-1"
+                className="text-sidebar-muted hover:text-white hover:bg-sidebar-hover rounded-lg p-2.5 -m-1 transition-colors"
                 title="Switch workspace"
               >
                 <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>
@@ -308,7 +312,7 @@ export function DashboardSidebar({
               <button
                 type="button"
                 onClick={() => router.push('/admin/api-catalog' as Route)}
-                className="text-sidebar-muted hover:text-white p-2.5 -m-1"
+                className="text-sidebar-muted hover:text-white hover:bg-sidebar-hover rounded-lg p-2.5 -m-1 transition-colors"
                 title="API Catalog"
               >
                 <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>
@@ -320,7 +324,7 @@ export function DashboardSidebar({
           <button
             type="button"
             onClick={onSignOut}
-            className="text-sidebar-muted hover:text-white p-2.5 -m-1"
+            className="text-sidebar-muted hover:text-white hover:bg-sidebar-hover rounded-lg p-2.5 -m-1 transition-colors"
             title="Sign out"
           >
             <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth={1.5}>

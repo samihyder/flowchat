@@ -160,14 +160,14 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       {sidebarOpen && (
         <button
           type="button"
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-[1px] z-40 lg:hidden transition-opacity animate-fade-in"
           onClick={() => setSidebarOpen(false)}
           aria-label="Close menu"
         />
       )}
 
       <aside
-        className={`fixed lg:relative inset-y-0 left-0 z-50 w-[220px] bg-sidebar-bg flex flex-col shrink-0 transform transition-transform duration-200 ${
+        className={`fixed lg:relative inset-y-0 left-0 z-50 w-[220px] bg-sidebar-bg flex flex-col shrink-0 transform transition-transform duration-200 ease-out shadow-2xl lg:shadow-none ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -219,7 +219,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 flex flex-col min-w-0 min-h-screen">
         {lastMissedChatEvent && (
-          <div className="bg-red-600 text-white px-4 py-2.5 text-sm font-medium flex items-center justify-between gap-3 shrink-0">
+          <div className="bg-red-600 text-white px-4 py-2.5 text-sm font-medium flex items-center justify-between gap-3 shrink-0 shadow-sm animate-fade-in">
             <span>
               Missed chat: {lastMissedChatEvent.contactName} on {lastMissedChatEvent.inboxName} (
               {lastMissedChatEvent.minutesWaiting}m waiting)
@@ -227,19 +227,23 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-3 shrink-0">
               <Link
                 href={`/dashboard?conversation=${lastMissedChatEvent.conversationId}` as Route}
-                className="text-xs underline"
+                className="text-xs font-semibold px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 transition-colors"
                 onClick={() => clearMissedChatEvent()}
               >
                 Open
               </Link>
-              <button type="button" onClick={() => clearMissedChatEvent()} className="text-xs underline">
+              <button
+                type="button"
+                onClick={() => clearMissedChatEvent()}
+                className="text-xs font-semibold px-2 py-1 rounded-md hover:bg-white/15 transition-colors"
+              >
                 Dismiss
               </button>
             </div>
           </div>
         )}
         {visitorAlert && (
-          <div className="bg-amber-500 text-white px-4 py-2.5 text-sm font-medium flex items-center justify-between gap-3 shrink-0 animate-pulse">
+          <div className="bg-amber-500 text-white px-4 py-2.5 text-sm font-medium flex items-center justify-between gap-3 shrink-0 shadow-sm animate-pulse">
             <span>
               Visitor on {visitorAlert.inboxName}
               {visitorAlert.ipAddress ? ` · ${visitorAlert.ipAddress}` : ''}
@@ -250,17 +254,20 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={toggleAlarm}
-              className="text-xs underline opacity-90 shrink-0"
+              className="text-xs font-semibold px-2 py-1 rounded-md bg-white/15 hover:bg-white/25 transition-colors shrink-0"
             >
               {alarmMuted ? 'Unmute alarm' : 'Mute alarm'}
             </button>
           </div>
         )}
-        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 shrink-0">
+        <div
+          className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 shrink-0"
+          style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+        >
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="p-3 -m-1 rounded-lg hover:bg-gray-100 text-gray-600"
+            className="p-3 -m-1 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors active:scale-95"
             aria-label="Open menu"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2}>

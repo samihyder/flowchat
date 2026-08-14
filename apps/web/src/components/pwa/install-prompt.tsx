@@ -72,7 +72,10 @@ export function InstallPrompt() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-[60] sm:hidden">
+    <div
+      className="fixed inset-x-3 z-[60] sm:hidden animate-fade-in"
+      style={{ bottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+    >
       <div className="rounded-2xl border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.18)] p-4 flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2DD4BF] to-[#06B6D4] flex items-center justify-center text-white font-bold text-base shrink-0">
           F

@@ -419,7 +419,7 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
     return (
       <div className="flex-1 flex items-center justify-center text-center p-12 bg-gray-50">
         <div>
-          <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-100 to-primary-50 shadow-inner flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">👋</span>
           </div>
           <h2 className="text-base font-semibold text-gray-900 mb-1">Select a conversation</h2>
@@ -563,12 +563,12 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
                         </div>
                       ) : (
                         <div
-                          className={`px-3.5 py-2.5 rounded-xl text-sm leading-relaxed ${
+                          className={`px-3.5 py-2.5 rounded-xl text-sm leading-relaxed transition-opacity ${
                             isNote
                               ? 'bg-amber-50 border border-amber-200 text-amber-950 rounded-lg'
                               : isAgent && !isNote
-                                ? 'bg-primary-500 text-white rounded-br-sm'
-                                : 'bg-white border border-gray-200 text-gray-900 rounded-bl-sm'
+                                ? 'bg-primary-500 text-white rounded-br-sm shadow-sm shadow-primary-900/10'
+                                : 'bg-white border border-gray-200 text-gray-900 rounded-bl-sm shadow-sm shadow-gray-900/5'
                           } ${isPending ? 'opacity-70' : ''}`}
                         >
                           <p>{msg.content}</p>
@@ -659,14 +659,14 @@ export function ConversationThread({ conversation, onConversationUpdate, onBack 
               <button
                 type="button"
                 onClick={() => setComposerMode('reply')}
-                className={`text-xs font-medium px-2.5 py-1 rounded-md ${composerMode === 'reply' ? 'bg-primary-50 text-primary-700' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`text-xs font-medium px-3 py-1.5 rounded-full transition-all duration-150 active:scale-95 ${composerMode === 'reply' ? 'bg-primary-50 text-primary-700 shadow-sm shadow-primary-900/5' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
               >
                 💬 Reply
               </button>
               <button
                 type="button"
                 onClick={() => setComposerMode('note')}
-                className={`text-xs font-medium px-2.5 py-1 rounded-md ${composerMode === 'note' ? 'bg-amber-50 text-amber-800' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`text-xs font-medium px-3 py-1.5 rounded-full transition-all duration-150 active:scale-95 ${composerMode === 'note' ? 'bg-amber-50 text-amber-800 shadow-sm shadow-amber-900/5' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
               >
                 🔒 Note
               </button>

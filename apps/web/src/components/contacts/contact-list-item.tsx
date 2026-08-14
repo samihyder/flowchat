@@ -24,15 +24,15 @@ export function ContactListItem({
             type="checkbox"
             checked={bulkSelected}
             onChange={onBulkToggle}
-            className="rounded border-gray-300"
+            className="rounded border-gray-300 text-primary-600 focus-visible:ring-2 focus-visible:ring-primary-500/40"
           />
         </label>
       )}
       <Link
         href={`/dashboard/contacts/${contact.id}` as Route}
-        className="flex-1 text-left px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-3 min-w-0"
+        className="flex-1 text-left px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-3 min-w-0 active:scale-[0.99] transition-transform"
       >
-        <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-primary-100 text-primary-700">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-gradient-to-br from-primary-100 to-primary-200 text-primary-700 ring-1 ring-primary-900/5">
           {initialsFromName(contact.name)}
         </div>
         <div className="flex-1 min-w-0">

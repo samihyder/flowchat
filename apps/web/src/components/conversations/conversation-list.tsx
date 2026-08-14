@@ -23,7 +23,7 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
   if (conversations.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-        <div className="w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center mb-4">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-100 to-primary-50 shadow-inner flex items-center justify-center mb-4">
           <svg viewBox="0 0 24 24" className="w-7 h-7 text-primary-500" fill="currentColor">
             <path d="M20 6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2v3l4-3h6a2 2 0 0 0 2-2V6z" />
           </svg>
@@ -47,16 +47,16 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
           <button
             type="button"
             onClick={() => onSelect(conv.id)}
-            className={`w-full text-left px-4 py-3 border-b border-gray-100 transition-colors ${
+            className={`w-full text-left px-4 py-3 border-b border-gray-100 transition-all duration-150 active:scale-[0.99] ${
               active
                 ? 'bg-primary-50 border-l-[3px] border-l-primary-500'
                 : unread
-                  ? 'bg-primary-50/60 border-l-[3px] border-l-primary-500'
+                  ? 'bg-primary-50/60 border-l-[3px] border-l-primary-500 hover:bg-primary-50'
                   : 'border-l-[3px] border-l-transparent hover:bg-gray-50'
             }`}
           >
             <div className="flex gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-semibold shrink-0">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 text-primary-700 flex items-center justify-center text-xs font-semibold shrink-0 ring-1 ring-primary-900/5">
                 {initials(conv.contactName)}
               </div>
               <div className="flex-1 min-w-0">
@@ -64,8 +64,8 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
               <span className="text-sm font-semibold text-gray-900 truncate flex items-center gap-1">
                 {conv.contactName || 'Visitor'}
                 {conv.isMuted && (
-                  <span aria-label="Muted" title="Muted" className="text-[10px] opacity-60 shrink-0">
-                    🔕
+                  <span aria-label="Muted" title="Muted" className="material-symbols-outlined text-xs text-gray-400 shrink-0">
+                    notifications_off
                   </span>
                 )}
               </span>
@@ -98,7 +98,7 @@ export function ConversationList({ conversations, selectedId, loading, onSelect 
             <p className="text-[11px] text-primary-600 mt-1 truncate font-medium">{conv.inboxName}</p>
               </div>
               {unread && (
-                <span className="shrink-0 w-[18px] h-[18px] rounded-full bg-primary-500 text-white text-[10px] font-bold flex items-center justify-center self-start mt-1">
+                <span className="shrink-0 w-[18px] h-[18px] rounded-full bg-primary-500 text-white text-[10px] font-bold flex items-center justify-center self-start mt-1 shadow-sm shadow-primary-900/20">
                   {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
                 </span>
               )}
