@@ -7,6 +7,7 @@ import { COUNTRY_OPTIONS, countryLabel } from '@/lib/country';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import { MarketingListFooter } from '@/components/marketing/ui/marketing-list-footer';
 import { MarketingPageHeader } from '@/components/marketing/ui/marketing-page-header';
+import { SegmentMembersModal } from '@/components/marketing/segment-members-modal';
 
 const BORDER_COLORS = ['#06B6D4', '#EF4444', '#F59E0B', '#2DD4BF', '#8B5CF6', '#0EA5E9', '#EC4899'];
 
@@ -83,6 +84,7 @@ export function MarketingSegmentsView() {
   const [previewSegmentId, setPreviewSegmentId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [managingMembersOf, setManagingMembersOf] = useState<MarketingSegment | null>(null);
 
   const load = () => {
     if (!token || !accountId) return;
@@ -297,14 +299,25 @@ export function MarketingSegmentsView() {
                   Created {new Date(s.createdAt).toLocaleDateString()}
                 </p>
                 <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void showPreview(s.id)}
-                    className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
-                  >
-                    Preview
-                  </button>
+                  {s.segmentType === 'static' ? (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setManagingMembersOf(s)}
+                      className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
+                    >
+                      Manage members
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void showPreview(s.id)}
+                      className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
+                    >
+                      Preview
+                    </button>
+                  )}
                   <button
                     type="button"
                     disabled={busy}
@@ -357,7 +370,7 @@ export function MarketingSegmentsView() {
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"
             >
               <option value="dynamic">Dynamic (filter)</option>
-              <option value="static">Static (manual members)</option>
+              <option value="static">List (manually add contacts)</option>
             </select>
             {type === 'dynamic' && (
               <div>
@@ -543,6 +556,16 @@ export function MarketingSegmentsView() {
           </div>
         )}
       </div>
+
+      {managingMembersOf && (
+        <SegmentMembersModal
+          segment={managingMembersOf}
+          onClose={() => {
+            setManagingMembersOf(null);
+            load();
+          }}
+        />
+      )}
 
       <MarketingListFooter />
     </div>

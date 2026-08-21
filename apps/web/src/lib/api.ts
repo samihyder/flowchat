@@ -2290,6 +2290,16 @@ export const api = {
           body: { contactIds },
           token,
         }),
+      listMembers: (accountId: string, segmentId: string, token: string) =>
+        request<{
+          members: { id: string; name: string; email: string | null; type: string; marketingStatus: string }[];
+        }>(`/accounts/${accountId}/marketing/segments/${segmentId}/members`, { token }),
+      removeMember: (accountId: string, segmentId: string, contactId: string, token: string) =>
+        request<{ ok: boolean }>(`/accounts/${accountId}/marketing/segments/${segmentId}/members`, {
+          method: 'DELETE',
+          body: { contactId },
+          token,
+        }),
     },
 
     suppressions: {

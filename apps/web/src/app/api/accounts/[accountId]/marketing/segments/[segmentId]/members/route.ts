@@ -4,6 +4,33 @@ import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string; segmentId: string }> };
 
+/** Full raw member list for a static list, regardless of subscribe/suppression status. */
+export async function GET(req: Request, { params }: Params) {
+  const { accountId, segmentId } = await params;
+  const token = getBearerToken(req);
+  if (!token) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await authorizeAccount(token, accountId);
+  if (!auth) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+  const sql = neon(process.env.DATABASE_URL!) as AppSql;
+  const seg = await sql`
+    SELECT id FROM marketing_segments
+    WHERE id = ${segmentId}::uuid AND account_id = ${accountId}::uuid AND segment_type = 'static'
+    LIMIT 1
+  `;
+  if (!seg[0]) return Response.json({ error: 'Static segment not found' }, { status: 404 });
+
+  const members = await sql`
+    SELECT c.id, c.name, c.email, c.type, c.marketing_status as "marketingStatus"
+    FROM marketing_segment_members sm
+    INNER JOIN contacts c ON c.id = sm.contact_id
+    WHERE sm.segment_id = ${segmentId}::uuid AND c.account_id = ${accountId}::uuid
+    ORDER BY c.name ASC
+  `;
+
+  return Response.json({ members });
+}
+
 export async function POST(req: Request, { params }: Params) {
   const { accountId, segmentId } = await params;
   const token = getBearerToken(req);
