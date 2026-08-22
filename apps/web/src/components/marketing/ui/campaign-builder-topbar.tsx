@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
+import { MarketingUserMenu } from '@/components/marketing/ui/marketing-user-menu';
 import { marketingRoutes } from '@/lib/marketing/routes';
 
 type CampaignBuilderTopBarProps = {
@@ -49,13 +50,6 @@ export function CampaignBuilderTopBar({ onLaunch, launchDisabled }: CampaignBuil
           >
             <MarketingIcon name="notifications" />
           </button>
-          <Link
-            href={'/settings/email-marketing' as Route}
-            className="p-2 text-on-surface-variant hover:bg-gray-50 rounded-full transition-colors"
-            aria-label="Settings"
-          >
-            <MarketingIcon name="settings" />
-          </Link>
           {onLaunch ? (
             <button
               type="button"
@@ -66,6 +60,7 @@ export function CampaignBuilderTopBar({ onLaunch, launchDisabled }: CampaignBuil
               Launch
             </button>
           ) : null}
+          <MarketingUserMenu />
         </div>
       </div>
     </header>
