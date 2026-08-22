@@ -6,7 +6,7 @@ import { verifyAnthropicKey } from '@/lib/credentials/providers/ai/anthropic';
 import { verifyEnrichmentCredential } from '@/lib/credentials/providers/enrichment';
 import {
   deleteCredential,
-  getCredentialSecret,
+  getCredentialRow,
   updateCredential,
   updateCredentialSecret,
 } from '@/lib/credentials/store';
@@ -32,48 +32,59 @@ export async function PATCH(req: Request, { params }: Params) {
   };
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
-  const existing = await getCredentialSecret(sql, accountId, credentialId, { activeOnly: false });
-  if (!existing) return Response.json({ error: 'Credential not found' }, { status: 404 });
 
-  if (body.secret?.trim()) {
-    let verify: { ok: true } | { ok: false; error: string };
-    const mergedConfig = { ...existing.row.config, ...(body.config ?? {}) };
-    if (existing.row.category === 'email_marketing') {
-      verify = await verifyEmailCredential(
-        existing.row.provider as EmailProviderId,
-        body.secret.trim(),
-        mergedConfig
-      );
-    } else if (existing.row.provider === 'anthropic') {
-      verify = await verifyAnthropicKey(body.secret.trim());
-    } else if (existing.row.category === 'data_enrichment') {
-      verify = await verifyEnrichmentCredential(
-        existing.row.provider as EnrichmentProviderId,
-        body.secret.trim(),
-        mergedConfig
-      );
-    } else {
-      return Response.json({ error: 'Unsupported provider' }, { status: 400 });
+  try {
+    // Metadata only — no need to decrypt the currently-stored secret just to read its
+    // provider/category/config, and decrypting on every edit is pure unnecessary risk.
+    const existing = await getCredentialRow(sql, accountId, credentialId);
+    if (!existing) return Response.json({ error: 'Credential not found' }, { status: 404 });
+
+    if (body.secret?.trim()) {
+      let verify: { ok: true } | { ok: false; error: string };
+      const mergedConfig = { ...existing.config, ...(body.config ?? {}) };
+      if (existing.category === 'email_marketing') {
+        verify = await verifyEmailCredential(
+          existing.provider as EmailProviderId,
+          body.secret.trim(),
+          mergedConfig
+        );
+      } else if (existing.provider === 'anthropic') {
+        verify = await verifyAnthropicKey(body.secret.trim());
+      } else if (existing.category === 'data_enrichment') {
+        verify = await verifyEnrichmentCredential(
+          existing.provider as EnrichmentProviderId,
+          body.secret.trim(),
+          mergedConfig
+        );
+      } else {
+        return Response.json({ error: 'Unsupported provider' }, { status: 400 });
+      }
+      if (!verify.ok) return Response.json({ error: verify.error }, { status: 400 });
+      await updateCredentialSecret(sql, accountId, credentialId, body.secret.trim());
     }
-    if (!verify.ok) return Response.json({ error: verify.error }, { status: 400 });
-    await updateCredentialSecret(sql, accountId, credentialId, body.secret.trim());
+
+    const { secret: _secret, ...patch } = body;
+    if (patch.label || patch.isDefault !== undefined || patch.config) {
+      await updateCredential(sql, accountId, credentialId, patch);
+    }
+
+    await writeAuditLog(sql, {
+      accountId,
+      actorId: auth.userId,
+      action: 'service_credential.updated',
+      resourceType: 'service_credential',
+      resourceId: credentialId,
+      metadata: { ...patch, secretRotated: Boolean(body.secret?.trim()) },
+    });
+
+    return Response.json({ ok: true });
+  } catch (err) {
+    console.error('service_credential.update failed', { accountId, credentialId, err });
+    return Response.json(
+      { error: err instanceof Error ? err.message : 'Failed to update connection' },
+      { status: 500 }
+    );
   }
-
-  const { secret: _secret, ...patch } = body;
-  if (patch.label || patch.isDefault !== undefined || patch.config) {
-    await updateCredential(sql, accountId, credentialId, patch);
-  }
-
-  await writeAuditLog(sql, {
-    accountId,
-    actorId: auth.userId,
-    action: 'service_credential.updated',
-    resourceType: 'service_credential',
-    resourceId: credentialId,
-    metadata: { ...patch, secretRotated: Boolean(body.secret?.trim()) },
-  });
-
-  return Response.json({ ok: true });
 }
 
 export async function DELETE(req: Request, { params }: Params) {
@@ -86,15 +97,24 @@ export async function DELETE(req: Request, { params }: Params) {
   }
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
-  await deleteCredential(sql, accountId, credentialId);
 
-  await writeAuditLog(sql, {
-    accountId,
-    actorId: auth.userId,
-    action: 'service_credential.deleted',
-    resourceType: 'service_credential',
-    resourceId: credentialId,
-  });
+  try {
+    await deleteCredential(sql, accountId, credentialId);
 
-  return Response.json({ ok: true });
+    await writeAuditLog(sql, {
+      accountId,
+      actorId: auth.userId,
+      action: 'service_credential.deleted',
+      resourceType: 'service_credential',
+      resourceId: credentialId,
+    });
+
+    return Response.json({ ok: true });
+  } catch (err) {
+    console.error('service_credential.delete failed', { accountId, credentialId, err });
+    return Response.json(
+      { error: err instanceof Error ? err.message : 'Failed to remove connection' },
+      { status: 500 }
+    );
+  }
 }

@@ -78,6 +78,32 @@ export async function listCredentials(
   return (rows as DbRow[]).map((r) => serialize(r));
 }
 
+/**
+ * Fetch a credential's metadata (label, provider, config, etc.) without touching the
+ * encrypted secret at all. Use this whenever the plaintext secret isn't actually needed —
+ * `getCredentialSecret` below decrypts on every call, which is unnecessary work and an
+ * unnecessary failure point for callers that only need to read config/provider/category.
+ */
+export async function getCredentialRow(
+  sql: AppSql,
+  accountId: string,
+  credentialId: string
+): Promise<ServiceCredentialRow | null> {
+  const rows = await sql`
+    SELECT id, account_id as "accountId", category, provider, label,
+           secret_prefix as "secretPrefix",
+           config_json as config, status, is_default as "isDefault",
+           last_verified_at as "lastVerifiedAt", last_used_at as "lastUsedAt",
+           usage_count as "usageCount", created_at as "createdAt", updated_at as "updatedAt"
+    FROM account_service_credentials
+    WHERE id = ${credentialId}::uuid AND account_id = ${accountId}::uuid
+    LIMIT 1
+  `;
+  const r = rows[0] as Omit<DbRow, 'secretCiphertext' | 'secretIv' | 'secretTag'> | undefined;
+  if (!r) return null;
+  return serialize(r as DbRow);
+}
+
 export async function getCredentialSecret(
   sql: AppSql,
   accountId: string,
