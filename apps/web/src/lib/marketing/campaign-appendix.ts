@@ -1,6 +1,7 @@
 import type { AccountSettings } from '@/lib/account-settings';
 import { applyMergeTags, type MergeContact } from '@/lib/marketing/merge-tags';
 import type { MarketingAppendixExtras } from '@/lib/marketing/email-appendix';
+import { resolveDefaultSignatureHtml } from '@/lib/marketing/signatures';
 
 export type CampaignAppendixInput = {
   signatureHtml: string | null;
@@ -30,7 +31,7 @@ export function buildCampaignEmailAppendix(
   const parts: string[] = [];
 
   if (campaign.useWorkspaceSignature) {
-    const signature = settings.marketingEmailSignature?.trim();
+    const signature = resolveDefaultSignatureHtml(settings).trim();
     if (signature) parts.push(applyMergeTags(signature, contact, mergeExtras));
   } else if (campaign.signatureHtml?.trim()) {
     parts.push(applyMergeTags(campaign.signatureHtml.trim(), contact, mergeExtras));

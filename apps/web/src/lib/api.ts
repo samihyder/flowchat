@@ -1,5 +1,8 @@
 import { getApiUrl } from '@/lib/config';
 import { marketingErrorFromResponse } from '@/lib/marketing/error-messages';
+import type { MarketingEmailSignature } from '@/lib/account-settings';
+
+export type { MarketingEmailSignature };
 
 export type WidgetTheme = {
   launcherBg: string;
@@ -361,7 +364,9 @@ export type AccountCrmSettings = {
   marketingPhysicalAddress?: string;
   marketingDoubleOptIn?: boolean;
   marketingByokOnly?: boolean;
+  /** @deprecated Superseded by marketingEmailSignatures. */
   marketingEmailSignature?: string;
+  marketingEmailSignatures?: MarketingEmailSignature[];
   marketingCalendlyUrl?: string;
   marketingCalendlyTemplate?: string;
   marketingPortfolioUrl?: string;

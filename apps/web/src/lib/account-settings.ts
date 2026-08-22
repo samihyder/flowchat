@@ -1,3 +1,10 @@
+export type MarketingEmailSignature = {
+  id: string;
+  name: string;
+  html: string;
+  isDefault: boolean;
+};
+
 export type AccountSettings = {
   allowedInviteDomains?: string[];
   dataRetentionDays?: number;
@@ -32,8 +39,13 @@ export type AccountSettings = {
   marketingDoubleOptIn?: boolean;
   /** When true, marketing sends require tenant-owned ESP credentials (no platform fallback) */
   marketingByokOnly?: boolean;
-  /** HTML signature block appended to marketing emails */
+  /**
+   * @deprecated Superseded by marketingEmailSignatures (supports multiple, one default).
+   * Kept only so accounts that saved a signature before that migration still resolve one.
+   */
   marketingEmailSignature?: string;
+  /** Named signatures a workspace can pick between; exactly one should be isDefault. */
+  marketingEmailSignatures?: MarketingEmailSignature[];
   /** Calendly (or booking) URL used in {{calendly_url}} merge tag */
   marketingCalendlyUrl?: string;
   /** HTML template for Calendly link (supports {{calendly_url}}) */
@@ -59,6 +71,16 @@ function parseStringArray(raw: unknown): string[] | undefined {
   return raw.filter((v): v is string => typeof v === 'string');
 }
 
+function parseMarketingEmailSignatures(raw: unknown): MarketingEmailSignature[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const parsed = raw.filter((v): v is MarketingEmailSignature => {
+    if (!v || typeof v !== 'object') return false;
+    const s = v as Record<string, unknown>;
+    return typeof s.id === 'string' && typeof s.name === 'string' && typeof s.html === 'string';
+  });
+  return parsed.length ? parsed : undefined;
+}
+
 export function parseAccountSettings(raw: unknown): AccountSettings {
   if (!raw || typeof raw !== 'object') return {};
   const s = raw as Record<string, unknown>;
@@ -80,6 +102,7 @@ export function parseAccountSettings(raw: unknown): AccountSettings {
     marketingByokOnly: typeof s.marketingByokOnly === 'boolean' ? s.marketingByokOnly : undefined,
     marketingEmailSignature:
       typeof s.marketingEmailSignature === 'string' ? s.marketingEmailSignature : undefined,
+    marketingEmailSignatures: parseMarketingEmailSignatures(s.marketingEmailSignatures),
     marketingCalendlyUrl: typeof s.marketingCalendlyUrl === 'string' ? s.marketingCalendlyUrl : undefined,
     marketingCalendlyTemplate:
       typeof s.marketingCalendlyTemplate === 'string' ? s.marketingCalendlyTemplate : undefined,

@@ -1,5 +1,6 @@
 import type { AccountSettings } from '@/lib/account-settings';
 import { applyMergeTags, type MergeContact } from '@/lib/marketing/merge-tags';
+import { resolveDefaultSignatureHtml } from '@/lib/marketing/signatures';
 
 export type MarketingAppendixExtras = {
   senderName?: string;
@@ -26,7 +27,7 @@ export function buildMarketingEmailAppendix(
   };
 
   const parts: string[] = [];
-  const signature = settings.marketingEmailSignature?.trim();
+  const signature = resolveDefaultSignatureHtml(settings).trim();
   const calendly = settings.marketingCalendlyTemplate?.trim();
   const portfolio = settings.marketingPortfolioTemplate?.trim();
 
