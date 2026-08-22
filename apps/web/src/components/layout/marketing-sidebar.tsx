@@ -31,6 +31,14 @@ const navSections: ModuleNavSection[] = [
     label: 'Automate',
     items: [{ label: 'Workflows', href: marketingRoutes.workflows, icon: 'account_tree' }],
   },
+  {
+    label: 'Configure',
+    items: [
+      // Senders, signature, meeting/portfolio links, and compliance footer live here —
+      // set once per workspace rather than re-entered per campaign.
+      { label: 'Email settings', href: '/settings/email-marketing', icon: 'settings' },
+    ],
+  },
 ];
 
 type MarketingSidebarProps = {

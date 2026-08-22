@@ -4,7 +4,6 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { api, type CampaignSenderConfig, type MarketingSender } from '@/lib/api';
-import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import { marketingErrorMessage } from '@/lib/marketing/error-messages';
 
@@ -22,6 +21,11 @@ type Props = {
   onConfigChange?: (config: Partial<CampaignSenderConfig>) => void;
 };
 
+/**
+ * Sender/signature/footer are workspace-level settings (Settings → Email marketing) — this
+ * step just picks which verified sender a campaign uses and previews what will actually go
+ * out. Nothing here is re-typed per campaign; it's all auto-fetched.
+ */
 export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
   function CampaignSenderStep({ accountId, campaignId, token, onConfigChange }, ref) {
     const [senders, setSenders] = useState<MarketingSender[]>([]);
@@ -29,11 +33,9 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
     const [fromName, setFromName] = useState('');
     const [fromEmail, setFromEmail] = useState('');
     const [replyTo, setReplyTo] = useState('');
-    const [useWorkspaceSignature, setUseWorkspaceSignature] = useState(true);
-    const [signatureHtml, setSignatureHtml] = useState('');
+    const [workspaceSignature, setWorkspaceSignature] = useState(DEFAULT_SIGNATURE);
     const [meetingLink, setMeetingLink] = useState('');
     const [portfolioLink, setPortfolioLink] = useState('');
-    const [workspaceSignature, setWorkspaceSignature] = useState(DEFAULT_SIGNATURE);
     const [physicalAddress, setPhysicalAddress] = useState('');
     const [providerTitle, setProviderTitle] = useState('Resend — Managed Domain');
     const [providerDetail, setProviderDetail] = useState('Verified sender identity');
@@ -51,19 +53,13 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
         .then(([sendersRes, senderRes, accountRes, credsRes]) => {
           setSenders(sendersRes.senders);
           const s = senderRes.sender;
-          setFromName(s.fromName ?? accountRes.account.settings?.marketingFromName ?? '');
-          setFromEmail(s.fromEmail ?? accountRes.account.settings?.marketingFromEmail ?? '');
-          setReplyTo(s.replyTo ?? '');
-          setUseWorkspaceSignature(s.useWorkspaceSignature);
-          setSignatureHtml(
-            s.signatureHtml ?? accountRes.account.settings?.marketingEmailSignature ?? DEFAULT_SIGNATURE
-          );
-          setMeetingLink(s.meetingLink ?? accountRes.account.settings?.marketingCalendlyUrl ?? '');
-          setPortfolioLink(s.portfolioLink ?? accountRes.account.settings?.marketingPortfolioUrl ?? '');
-          setWorkspaceSignature(
-            accountRes.account.settings?.marketingEmailSignature ?? DEFAULT_SIGNATURE
-          );
-          setPhysicalAddress(accountRes.account.settings?.marketingPhysicalAddress ?? '');
+          const settings = accountRes.account.settings ?? {};
+
+          // Workspace-level footer content — always auto-fetched, never re-entered here.
+          setWorkspaceSignature(settings.marketingEmailSignature ?? DEFAULT_SIGNATURE);
+          setMeetingLink(settings.marketingCalendlyUrl ?? '');
+          setPortfolioLink(settings.marketingPortfolioUrl ?? '');
+          setPhysicalAddress(settings.marketingPhysicalAddress ?? '');
 
           const match = sendersRes.senders.find(
             (x) => x.fromEmail === s.fromEmail && x.fromName === s.fromName
@@ -71,10 +67,13 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
           const defaultSender = sendersRes.senders.find((x) => x.isDefault) ?? sendersRes.senders[0];
           const selected = match ?? defaultSender;
           setSelectedSenderId(selected?.id ?? '');
+          setFromName(selected?.fromName ?? s.fromName ?? settings.marketingFromName ?? '');
+          setFromEmail(selected?.fromEmail ?? s.fromEmail ?? settings.marketingFromEmail ?? '');
+          setReplyTo(selected?.replyTo ?? s.replyTo ?? '');
           setDomainVerified(selected?.domainStatus === 'verified');
 
           const cred = credsRes.credentials.find((c) => c.isDefault) ?? credsRes.credentials[0];
-          const email = s.fromEmail ?? accountRes.account.settings?.marketingFromEmail ?? '';
+          const email = selected?.fromEmail ?? s.fromEmail ?? settings.marketingFromEmail ?? '';
           if (cred) {
             setProviderTitle(`${cred.provider} — Connected`);
             setProviderDetail(cred.label);
@@ -101,20 +100,9 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
       setProviderDetail(`Verified sender identity via ${row.fromEmail.split('@')[1] ?? 'domain'}`);
     };
 
-    const autoGenerateSignature = () => {
-      const name = fromName.trim() || 'Your Name';
-      const company = 'FlowChat';
-      const generated = `<p>Best regards,</p><p><strong>${name}</strong><br/>${company}</p>`;
-      setUseWorkspaceSignature(false);
-      setSignatureHtml(generated);
-    };
-
     const save = async (): Promise<string | null> => {
       if (!fromEmail.trim()) {
-        return 'From email is required before continuing.';
-      }
-      if (!useWorkspaceSignature && !signatureHtml.replace(/<[^>]+>/g, '').trim()) {
-        return 'Add a signature or enable the workspace default signature.';
+        return 'Add a verified sender in Settings → Email marketing before continuing.';
       }
       try {
         await api.marketing.campaigns.putSender(
@@ -122,13 +110,11 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
           campaignId,
           {
             ...(selectedSenderId ? { senderId: selectedSenderId } : {}),
-            fromName,
-            fromEmail,
-            replyTo: replyTo || null,
-            ...(useWorkspaceSignature ? {} : { signatureHtml }),
-            useWorkspaceSignature,
-            meetingLink: meetingLink || null,
-            portfolioLink: portfolioLink || null,
+            // Signature/links are always the workspace defaults now — no per-campaign override.
+            useWorkspaceSignature: true,
+            signatureHtml: null,
+            meetingLink: null,
+            portfolioLink: null,
           },
           token
         );
@@ -143,13 +129,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
       campaignId,
       token,
       selectedSenderId,
-      fromName,
       fromEmail,
-      replyTo,
-      useWorkspaceSignature,
-      signatureHtml,
-      meetingLink,
-      portfolioLink,
     ]);
 
     useEffect(() => {
@@ -157,8 +137,8 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
         fromName,
         fromEmail,
         replyTo: replyTo || null,
-        useWorkspaceSignature,
-        signatureHtml: useWorkspaceSignature ? null : signatureHtml,
+        useWorkspaceSignature: true,
+        signatureHtml: null,
         meetingLink: meetingLink || null,
         portfolioLink: portfolioLink || null,
         credentialId: null,
@@ -166,23 +146,13 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
         testSentBy: null,
         testSentTo: null,
       });
-    }, [
-      fromName,
-      fromEmail,
-      replyTo,
-      useWorkspaceSignature,
-      signatureHtml,
-      meetingLink,
-      portfolioLink,
-      onConfigChange,
-    ]);
+    }, [fromName, fromEmail, replyTo, meetingLink, portfolioLink, onConfigChange]);
 
     if (loading) {
       return <p className="text-sm text-gray-400 py-8 text-center">Loading sender settings…</p>;
     }
 
-    const previewSignature = useWorkspaceSignature ? workspaceSignature : signatureHtml;
-    const previewPlain = previewSignature.replace(/<[^>]+>/g, '\n').replace(/\n+/g, '\n').trim();
+    const previewPlain = workspaceSignature.replace(/<[^>]+>/g, '\n').replace(/\n+/g, '\n').trim();
 
     return (
       <div className="space-y-6">
@@ -190,56 +160,53 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
           <div className="mb-6">
             <h3 className="text-headline-sm text-on-surface mb-1">Sender Information</h3>
             <p className="text-sm text-on-surface-variant">
-              Configure how your emails appear in the recipient&apos;s inbox.
+              Auto-fetched from your connected email provider — how this campaign will appear in
+              the recipient&apos;s inbox.
             </p>
           </div>
 
-          {senders.length > 0 && (
-            <label className="block space-y-2 mb-6">
-              <span className="text-label-caps text-on-surface-variant">VERIFIED SENDER</span>
-              <select
-                value={selectedSenderId}
-                onChange={(e) => applySenderSelection(e.target.value)}
-                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none text-sm"
-              >
-                {senders.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label} — {s.fromEmail}
-                    {s.domainStatus === 'verified' ? ' ✓' : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
+          {senders.length === 0 ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800 mb-2">
+              No verified sender configured yet.{' '}
+              <Link href={'/settings/email-marketing' as Route} className="font-bold hover:underline">
+                Add one in Settings → Email marketing
+              </Link>{' '}
+              before sending this campaign.
+            </div>
+          ) : (
+            <>
+              {senders.length > 1 && (
+                <label className="block space-y-2 mb-6">
+                  <span className="text-label-caps text-on-surface-variant">VERIFIED SENDER</span>
+                  <select
+                    value={selectedSenderId}
+                    onChange={(e) => applySenderSelection(e.target.value)}
+                    className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none text-sm"
+                  >
+                    {senders.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label} — {s.fromEmail}
+                        {s.domainStatus === 'verified' ? ' ✓' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="space-y-2">
-              <label className="text-label-caps text-on-surface-variant">FROM NAME</label>
-              <input
-                value={fromName}
-                onChange={(e) => setFromName(e.target.value)}
-                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none text-body-md"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-label-caps text-on-surface-variant">FROM EMAIL</label>
-              <input
-                type="email"
-                value={fromEmail}
-                onChange={(e) => setFromEmail(e.target.value)}
-                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none text-body-md"
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-label-caps text-on-surface-variant">REPLY-TO (OPTIONAL)</label>
-              <input
-                type="email"
-                value={replyTo}
-                onChange={(e) => setReplyTo(e.target.value)}
-                className="w-full h-11 px-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-border focus:border-primary outline-none text-body-md"
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-1">
+                  <p className="text-label-caps text-on-surface-variant">From</p>
+                  <p className="text-body-md text-on-surface font-medium">
+                    {fromName || '—'} <span className="text-on-surface-variant">&lt;{fromEmail}&gt;</span>
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-label-caps text-on-surface-variant">Reply-to</p>
+                  <p className="text-body-md text-on-surface font-medium">{replyTo || 'Same as From'}</p>
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="bg-surface-container-low border border-primary-border rounded-lg p-4 flex items-center gap-4">
             <div className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center shadow-sm shrink-0">
@@ -258,86 +225,36 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
             href={'/settings/email-marketing' as Route}
             className="text-xs text-primary font-bold hover:underline inline-flex items-center gap-1 mt-4"
           >
-            Manage senders in settings
+            Manage senders &amp; API connection in settings
             <MarketingIcon name="open_in_new" className="text-[14px]" />
           </Link>
         </section>
 
         <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <div className="mb-6 flex justify-between items-end gap-4">
+          <div className="mb-4 flex justify-between items-start gap-4">
             <div>
-              <h3 className="text-headline-sm text-on-surface mb-1">Email Signature</h3>
+              <h3 className="text-headline-sm text-on-surface mb-1">Footer &amp; Signature Preview</h3>
               <p className="text-sm text-on-surface-variant">
-                Personalize your outreach with a professional signature.
+                Your workspace signature, meeting link, and portfolio link are appended
+                automatically — configure them once, they apply to every campaign.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={autoGenerateSignature}
-              className="text-primary text-xs font-bold flex items-center gap-1 hover:underline shrink-0"
+            <Link
+              href={'/settings/email-marketing' as Route}
+              className="text-primary text-xs font-bold flex items-center gap-1 hover:underline shrink-0 whitespace-nowrap"
             >
-              <MarketingIcon name="auto_fix" className="text-sm" />
-              Auto-Generate
-            </button>
+              <MarketingIcon name="edit" className="text-sm" />
+              Edit in settings
+            </Link>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-on-surface-variant mb-4">
-            <input
-              type="checkbox"
-              checked={useWorkspaceSignature}
-              onChange={(e) => setUseWorkspaceSignature(e.target.checked)}
-              className="rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            Use workspace default signature
-          </label>
-
-          {!useWorkspaceSignature && (
-            <div className="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary-border transition-all">
-              <EmailRichEditor
-                value={signatureHtml}
-                onChange={setSignatureHtml}
-                minHeight="192px"
-                placeholder="Your email signature…"
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-            <div className="space-y-2">
-              <label className="text-label-caps text-on-surface-variant">MEETING LINK</label>
-              <input
-                value={meetingLink}
-                onChange={(e) => setMeetingLink(e.target.value)}
-                placeholder="https://calendly.com/…"
-                className="w-full h-11 px-4 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-label-caps text-on-surface-variant">PORTFOLIO LINK</label>
-              <input
-                value={portfolioLink}
-                onChange={(e) => setPortfolioLink(e.target.value)}
-                placeholder="https://…"
-                className="w-full h-11 px-4 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-border"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <div className="mb-4">
-            <h3 className="text-headline-sm text-on-surface mb-1">Compliance &amp; Footer Preview</h3>
-            <p className="text-sm text-on-surface-variant">
-              Mandatory legal footer as required by CAN-SPAM / GDPR.
-            </p>
-          </div>
           <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-8 relative overflow-hidden">
             <div className="absolute top-0 left-0 bg-gray-200 text-gray-500 text-[10px] px-2 py-1 font-bold uppercase tracking-wider">
               Email Footer Preview
             </div>
             <div className="mt-4 space-y-4">
               <div className="text-body-md text-on-surface opacity-80 whitespace-pre-wrap">
-                {previewPlain || 'Your signature will appear here.'}
+                {previewPlain || 'Set a signature in Settings → Email marketing.'}
               </div>
               {(meetingLink || portfolioLink) && (
                 <div className="text-xs text-primary space-y-1">
