@@ -6,8 +6,7 @@ import type { Route } from 'next';
 import { api, type CampaignSenderConfig, type MarketingSender } from '@/lib/api';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
 import { marketingErrorMessage } from '@/lib/marketing/error-messages';
-
-const DEFAULT_SIGNATURE = `<p>Best regards,</p><p><strong>{{sender_name}}</strong><br/>{{company_name}}</p>`;
+import { DEFAULT_SIGNATURE_HTML, resolveDefaultSignatureHtml } from '@/lib/marketing/signatures';
 
 export type CampaignSenderStepHandle = {
   /** Returns null on success, or a user-facing error message. */
@@ -33,7 +32,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
     const [fromName, setFromName] = useState('');
     const [fromEmail, setFromEmail] = useState('');
     const [replyTo, setReplyTo] = useState('');
-    const [workspaceSignature, setWorkspaceSignature] = useState(DEFAULT_SIGNATURE);
+    const [workspaceSignature, setWorkspaceSignature] = useState(DEFAULT_SIGNATURE_HTML);
     const [meetingLink, setMeetingLink] = useState('');
     const [portfolioLink, setPortfolioLink] = useState('');
     const [physicalAddress, setPhysicalAddress] = useState('');
@@ -56,7 +55,7 @@ export const CampaignSenderStep = forwardRef<CampaignSenderStepHandle, Props>(
           const settings = accountRes.account.settings ?? {};
 
           // Workspace-level footer content — always auto-fetched, never re-entered here.
-          setWorkspaceSignature(settings.marketingEmailSignature ?? DEFAULT_SIGNATURE);
+          setWorkspaceSignature(resolveDefaultSignatureHtml(settings));
           setMeetingLink(settings.marketingCalendlyUrl ?? '');
           setPortfolioLink(settings.marketingPortfolioUrl ?? '');
           setPhysicalAddress(settings.marketingPhysicalAddress ?? '');

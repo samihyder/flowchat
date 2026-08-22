@@ -3,19 +3,17 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { api, type MarketingSender, type ServiceCredential } from '@/lib/api';
+import { api, type MarketingEmailSignature, type MarketingSender, type ServiceCredential } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { EmailRichEditor } from '@/components/marketing/email-rich-editor';
 import { MarketingHealthPanel, type MarketingHealthData } from '@/components/marketing/marketing-health-panel';
-import { ACCOUNT_LOGO_SIZE_PX } from '@/lib/branding/logo';
+import { SignatureManagerModal } from '@/components/marketing/settings/signature-manager-modal';
+import { LinkSettingModal } from '@/components/marketing/settings/link-setting-modal';
+import { DEFAULT_SIGNATURE_HTML, resolveDefaultSignature } from '@/lib/marketing/signatures';
 
-const DEFAULT_SIGNATURE = `<p>Best regards,</p>
-<p><img src="{{logo_url}}" alt="{{company_name}}" width="${ACCOUNT_LOGO_SIZE_PX}" height="${ACCOUNT_LOGO_SIZE_PX}" style="border-radius:8px;max-width:100%;height:auto" /></p>
-<p><strong>{{sender_name}}</strong><br/>{{company_name}}<br/><a href="mailto:{{sender_email}}">{{sender_email}}</a></p>`;
-const DEFAULT_CALENDLY = '<p><a href="{{calendly_url}}">Book a time on my calendar</a></p>';
-const DEFAULT_PORTFOLIO = '<p><a href="{{portfolio_url}}">View my portfolio</a></p>';
+const DEFAULT_CALENDLY_TEMPLATE = '<p><a href="{{calendly_url}}">Book a time on my calendar</a></p>';
+const DEFAULT_PORTFOLIO_TEMPLATE = '<p><a href="{{portfolio_url}}">View my portfolio</a></p>';
 
 const domainBadgeColor: Record<string, 'success' | 'warning' | 'gray'> = {
   verified: 'success',
@@ -42,14 +40,17 @@ export default function EmailMarketingSettingsPage() {
   const [suppressions, setSuppressions] = useState<{ id: string; email: string; reason: string }[]>([]);
   const [suppressEmail, setSuppressEmail] = useState('');
 
-  const [emailSignature, setEmailSignature] = useState(DEFAULT_SIGNATURE);
-  const [calendlyUrl, setCalendlyUrl] = useState('');
-  const [calendlyTemplate, setCalendlyTemplate] = useState(DEFAULT_CALENDLY);
-  const [portfolioUrl, setPortfolioUrl] = useState('');
-  const [portfolioTemplate, setPortfolioTemplate] = useState(DEFAULT_PORTFOLIO);
+  const [signatures, setSignatures] = useState<MarketingEmailSignature[]>([]);
+  const [meetingLink, setMeetingLink] = useState('');
+  const [meetingTemplate, setMeetingTemplate] = useState(DEFAULT_CALENDLY_TEMPLATE);
+  const [portfolioLink, setPortfolioLink] = useState('');
+  const [portfolioTemplate, setPortfolioTemplate] = useState(DEFAULT_PORTFOLIO_TEMPLATE);
+  const [signatureModalOpen, setSignatureModalOpen] = useState(false);
+  const [meetingModalOpen, setMeetingModalOpen] = useState(false);
+  const [portfolioModalOpen, setPortfolioModalOpen] = useState(false);
   const [autoAppendTemplates, setAutoAppendTemplates] = useState(true);
-  const [savingTemplates, setSavingTemplates] = useState(false);
-  const [templateMessage, setTemplateMessage] = useState('');
+  const [savingAutoAppend, setSavingAutoAppend] = useState(false);
+
   const [health, setHealth] = useState<MarketingHealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
   const [processingDue, setProcessingDue] = useState(false);
@@ -68,12 +69,27 @@ export default function EmailMarketingSettingsPage() {
     api.account.get(accountId, token).then((r) => {
       setDoubleOptIn(Boolean(r.account.settings?.marketingDoubleOptIn));
       const s = r.account.settings ?? {};
-      setEmailSignature(s.marketingEmailSignature ?? DEFAULT_SIGNATURE);
-      setCalendlyUrl(s.marketingCalendlyUrl ?? '');
-      setCalendlyTemplate(s.marketingCalendlyTemplate ?? DEFAULT_CALENDLY);
-      setPortfolioUrl(s.marketingPortfolioUrl ?? '');
-      setPortfolioTemplate(s.marketingPortfolioTemplate ?? DEFAULT_PORTFOLIO);
+      setMeetingLink(s.marketingCalendlyUrl ?? '');
+      setMeetingTemplate(s.marketingCalendlyTemplate ?? DEFAULT_CALENDLY_TEMPLATE);
+      setPortfolioLink(s.marketingPortfolioUrl ?? '');
+      setPortfolioTemplate(s.marketingPortfolioTemplate ?? DEFAULT_PORTFOLIO_TEMPLATE);
       setAutoAppendTemplates(s.marketingAutoAppendTemplates !== false);
+
+      if (s.marketingEmailSignatures?.length) {
+        setSignatures(s.marketingEmailSignatures);
+      } else {
+        // First visit since the multi-signature migration: seed a real default row in the
+        // DB (from the legacy single value if one exists) so a default always resolves
+        // from stored data, not just a hardcoded fallback.
+        const seeded: MarketingEmailSignature = {
+          id: crypto.randomUUID(),
+          name: 'Default',
+          html: s.marketingEmailSignature ?? DEFAULT_SIGNATURE_HTML,
+          isDefault: true,
+        };
+        setSignatures([seeded]);
+        void api.account.update(accountId, { settings: { marketingEmailSignatures: [seeded] } }, token);
+      }
     });
     api.marketing
       .getHealth(accountId, token)
@@ -137,32 +153,34 @@ export default function EmailMarketingSettingsPage() {
     setSavingOptIn(false);
   };
 
-  const saveEmailTemplates = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveMeetingLink = async (url: string, template: string) => {
     if (!token || !accountId) return;
-    setSavingTemplates(true);
-    setTemplateMessage('');
-    try {
-      await api.account.update(
-        accountId,
-        {
-          settings: {
-            marketingEmailSignature: emailSignature.trim() || undefined,
-            marketingCalendlyUrl: calendlyUrl.trim() || undefined,
-            marketingCalendlyTemplate: calendlyTemplate.trim() || undefined,
-            marketingPortfolioUrl: portfolioUrl.trim() || undefined,
-            marketingPortfolioTemplate: portfolioTemplate.trim() || undefined,
-            marketingAutoAppendTemplates: autoAppendTemplates,
-          },
-        },
-        token
-      );
-      setTemplateMessage('Email templates saved. They will be added automatically to automations and campaigns.');
-    } catch (err) {
-      setTemplateMessage(err instanceof Error ? err.message : 'Failed to save templates');
-    } finally {
-      setSavingTemplates(false);
-    }
+    await api.account.update(
+      accountId,
+      { settings: { marketingCalendlyUrl: url, marketingCalendlyTemplate: template } },
+      token
+    );
+    setMeetingLink(url);
+    setMeetingTemplate(template);
+  };
+
+  const savePortfolioLink = async (url: string, template: string) => {
+    if (!token || !accountId) return;
+    await api.account.update(
+      accountId,
+      { settings: { marketingPortfolioUrl: url, marketingPortfolioTemplate: template } },
+      token
+    );
+    setPortfolioLink(url);
+    setPortfolioTemplate(template);
+  };
+
+  const saveAutoAppend = async (enabled: boolean) => {
+    if (!token || !accountId) return;
+    setSavingAutoAppend(true);
+    setAutoAppendTemplates(enabled);
+    await api.account.update(accountId, { settings: { marketingAutoAppendTemplates: enabled } }, token);
+    setSavingAutoAppend(false);
   };
 
   const handleProcessDue = async () => {
@@ -184,6 +202,8 @@ export default function EmailMarketingSettingsPage() {
       setProcessingDue(false);
     }
   };
+
+  const defaultSignature = resolveDefaultSignature({ marketingEmailSignatures: signatures });
 
   return (
     <div className="p-6 max-w-3xl space-y-6">
@@ -315,26 +335,11 @@ export default function EmailMarketingSettingsPage() {
         {message && <p className="text-sm text-green-600">{message}</p>}
       </form>
 
-      <form onSubmit={saveEmailTemplates} className="bg-white border border-gray-200 rounded-xl p-5 space-y-5">
+      <section className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
         <div>
-          <h3 className="font-medium text-gray-900">Auto email footer templates</h3>
+          <h3 className="font-medium text-gray-900">Email footer</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Signature, Calendly, and portfolio links are appended automatically to every marketing email and
-            automation follow-up. Use merge tags:{' '}
-            <code className="text-xs">{'{{logo_url}}'}</code>,{' '}
-            <code className="text-xs">{'{{company_name}}'}</code>,{' '}
-            <code className="text-xs">{'{{sender_name}}'}</code>,{' '}
-            <code className="text-xs">{'{{sender_email}}'}</code>,{' '}
-            <code className="text-xs">{'{{calendly_url}}'}</code>,{' '}
-            <code className="text-xs">{'{{portfolio_url}}'}</code>,{' '}
-            <code className="text-xs">{'{{first_name}}'}</code>.
-          </p>
-          <p className="text-sm text-gray-500">
-            Upload your logo under{' '}
-            <a href="/settings/account" className="text-primary-600 hover:underline">
-              Settings → Account
-            </a>{' '}
-            first, then use <code className="text-xs">{'{{logo_url}}'}</code> in the signature below.
+            Appended automatically to every marketing email and automation follow-up.
           </p>
         </div>
 
@@ -342,56 +347,53 @@ export default function EmailMarketingSettingsPage() {
           <input
             type="checkbox"
             checked={autoAppendTemplates}
-            onChange={(e) => setAutoAppendTemplates(e.target.checked)}
+            disabled={savingAutoAppend}
+            onChange={(e) => void saveAutoAppend(e.target.checked)}
           />
-          Automatically append templates to outbound marketing emails
+          Automatically append the footer to outbound marketing emails
         </label>
 
-        <div>
-          <label className="text-xs font-medium text-gray-600 block mb-1">Signature</label>
-          <EmailRichEditor value={emailSignature} onChange={setEmailSignature} minHeight="120px" />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">Calendly URL</label>
-            <Input
-              value={calendlyUrl}
-              onChange={(e) => setCalendlyUrl(e.target.value)}
-              placeholder="https://calendly.com/you/30min"
-              type="url"
-            />
+        <div className="divide-y divide-gray-100 border border-gray-100 rounded-lg">
+          <div className="flex items-center justify-between gap-4 p-4">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">Email signatures</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {signatures.length} signature{signatures.length === 1 ? '' : 's'}
+                {defaultSignature ? ` — default: ${defaultSignature.name}` : ''}
+              </p>
+            </div>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setSignatureModalOpen(true)}>
+              Manage
+            </Button>
           </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1">Portfolio URL</label>
-            <Input
-              value={portfolioUrl}
-              onChange={(e) => setPortfolioUrl(e.target.value)}
-              placeholder="https://yoursite.com/portfolio"
-              type="url"
-            />
+          <div className="flex items-center justify-between gap-4 p-4">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">Meeting link</p>
+              <p className="text-xs text-gray-500 mt-0.5 truncate">{meetingLink || 'Not set'}</p>
+            </div>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setMeetingModalOpen(true)}>
+              Edit
+            </Button>
+          </div>
+          <div className="flex items-center justify-between gap-4 p-4">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900">Portfolio link</p>
+              <p className="text-xs text-gray-500 mt-0.5 truncate">{portfolioLink || 'Not set'}</p>
+            </div>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setPortfolioModalOpen(true)}>
+              Edit
+            </Button>
           </div>
         </div>
 
-        <div>
-          <label className="text-xs font-medium text-gray-600 block mb-1">Calendly link template</label>
-          <EmailRichEditor value={calendlyTemplate} onChange={setCalendlyTemplate} minHeight="80px" />
-        </div>
-
-        <div>
-          <label className="text-xs font-medium text-gray-600 block mb-1">Portfolio link template</label>
-          <EmailRichEditor value={portfolioTemplate} onChange={setPortfolioTemplate} minHeight="80px" />
-        </div>
-
-        <Button type="submit" disabled={savingTemplates}>
-          {savingTemplates ? 'Saving…' : 'Save email templates'}
-        </Button>
-        {templateMessage && (
-          <p className={`text-sm ${templateMessage.startsWith('Email templates saved') ? 'text-green-600' : 'text-red-600'}`}>
-            {templateMessage}
-          </p>
-        )}
-      </form>
+        <p className="text-sm text-gray-500">
+          Upload your logo under{' '}
+          <a href="/settings/account" className="text-primary-600 hover:underline">
+            Settings → Account
+          </a>{' '}
+          to use <code className="text-xs">{'{{logo_url}}'}</code> in a signature.
+        </p>
+      </section>
 
       <section className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
         <h3 className="font-medium text-gray-900">Suppression list</h3>
@@ -436,6 +438,42 @@ export default function EmailMarketingSettingsPage() {
           <code className="font-mono">RESEND_WEBHOOK_SECRET</code> is set.
         </p>
       </section>
+
+      {signatureModalOpen && token && accountId && (
+        <SignatureManagerModal
+          accountId={accountId}
+          token={token}
+          signatures={signatures}
+          onChange={setSignatures}
+          onClose={() => setSignatureModalOpen(false)}
+        />
+      )}
+      {meetingModalOpen && (
+        <LinkSettingModal
+          title="Meeting link"
+          description="Used in the {{calendly_url}} merge tag."
+          urlLabel="Meeting URL"
+          urlPlaceholder="https://calendly.com/you/30min"
+          mergeTag="{{calendly_url}}"
+          initialUrl={meetingLink}
+          initialTemplate={meetingTemplate}
+          onClose={() => setMeetingModalOpen(false)}
+          onSave={saveMeetingLink}
+        />
+      )}
+      {portfolioModalOpen && (
+        <LinkSettingModal
+          title="Portfolio link"
+          description="Used in the {{portfolio_url}} merge tag."
+          urlLabel="Portfolio URL"
+          urlPlaceholder="https://yoursite.com/portfolio"
+          mergeTag="{{portfolio_url}}"
+          initialUrl={portfolioLink}
+          initialTemplate={portfolioTemplate}
+          onClose={() => setPortfolioModalOpen(false)}
+          onSave={savePortfolioLink}
+        />
+      )}
     </div>
   );
 }
