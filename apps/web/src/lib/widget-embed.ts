@@ -2,8 +2,8 @@ import { PRODUCTION_WS_URL } from '@/lib/config';
 
 /** Public web app URL — include subpath if used (e.g. https://www.digitalbrandcast.com/FlowChat). */
 export const PRODUCTION_WEB_URL =
-  process.env.NEXT_PUBLIC_WEB_APP_URL ??
-  process.env.WEB_APP_URL ??
+  process.env.NEXT_PUBLIC_WEB_APP_URL ||
+  process.env.WEB_APP_URL ||
   'https://flowchat-web-ten.vercel.app';
 
 export const WIDGET_SCRIPT_VERSION = 12;

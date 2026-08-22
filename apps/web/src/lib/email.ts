@@ -46,7 +46,7 @@ export async function sendMissedChatEmail(
   }
 ) {
   const origin =
-    process.env.WEB_APP_URL ??
+    process.env.WEB_APP_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3100');
   const link = `${origin.replace(/\/$/, '')}/dashboard?conversation=${details.conversationId}`;
 
