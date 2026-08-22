@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { MarketingUserMenu } from '@/components/marketing/ui/marketing-user-menu';
 
 type MarketingPageHeaderProps = {
   title: string;
@@ -15,6 +16,8 @@ export function MarketingPageHeader({ title, search, action }: MarketingPageHead
       <div className="flex items-center gap-3 md:gap-4 shrink-0">
         {search}
         {action}
+        <div className="h-6 w-px bg-gray-200 hidden sm:block" />
+        <MarketingUserMenu />
       </div>
     </header>
   );
