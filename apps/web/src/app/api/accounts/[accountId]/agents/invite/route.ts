@@ -92,7 +92,7 @@ export async function POST(req: Request, { params }: Params) {
   `;
 
   const origin =
-    process.env.WEB_APP_URL ??
+    process.env.WEB_APP_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3100');
   const inviteUrl = `${origin.replace(/\/$/, '')}/accept-invite?token=${inviteToken}`;
 

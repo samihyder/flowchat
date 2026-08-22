@@ -8,9 +8,9 @@ import { checkSenderDomainStatus, isMarketingDomainReady } from '@/lib/marketing
 
 type Params = { params: Promise<{ accountId: string }> };
 
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(req: Request, { params }: Params) {
   const { accountId } = await params;
-  const token = getBearerToken(_req);
+  const token = getBearerToken(req);
   if (!token) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const auth = await authorizeAccount(token, accountId);
   if (!auth) return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -53,10 +53,12 @@ export async function GET(_req: Request, { params }: Params) {
 
   const cronOk = isCronHealthy(cronState);
 
-  const origin =
-    process.env.NEXT_PUBLIC_WEB_APP_URL ??
-    process.env.WEB_APP_URL ??
-    'https://app.flowchat.io';
+  // `??` doesn't catch an env var deployed as an empty string (which is how this shipped in
+  // production — WEB_APP_URL / NEXT_PUBLIC_WEB_APP_URL were both set to "", so the webhook
+  // URL shown here silently lost its host entirely). Fall back to the actual request origin
+  // rather than a hardcoded domain that may not even be this deployment's real one.
+  const envOrigin = process.env.NEXT_PUBLIC_WEB_APP_URL || process.env.WEB_APP_URL || '';
+  const origin = envOrigin || new URL(req.url).origin;
 
   // Prefer credential-scoped URL. Platform fallback only when RESEND_WEBHOOK_SECRET is set
   // (unsigned /api/webhooks/resend is no longer advertised).
