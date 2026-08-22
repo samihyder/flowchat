@@ -8,14 +8,30 @@ import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import { marketingRoutes } from '@/lib/marketing/routes';
 import { MarketingIcon } from '@/components/marketing/ui/marketing-icon';
+import { ModuleSidebar, type ModuleNavSection } from '@/components/layout/module-sidebar';
 import { initials } from '@/components/conversations/conversation-badges';
 
 const CRM_HOME = '/dashboard/contacts' as const;
 
-const navItems = [
-  { label: 'Campaigns', href: marketingRoutes.campaigns, icon: 'mail' },
-  { label: 'Templates', href: marketingRoutes.templates, icon: 'description' },
-] as const;
+// Grouped and ordered the way a campaign gets built: send & monitor first,
+// then the content/audience building blocks, then ongoing automation.
+const navSections: ModuleNavSection[] = [
+  {
+    label: 'Send',
+    items: [{ label: 'Campaigns', href: marketingRoutes.campaigns, icon: 'mail' }],
+  },
+  {
+    label: 'Build',
+    items: [
+      { label: 'Templates', href: marketingRoutes.templates, icon: 'description' },
+      { label: 'Segments', href: marketingRoutes.segments, icon: 'groups' },
+    ],
+  },
+  {
+    label: 'Automate',
+    items: [{ label: 'Workflows', href: marketingRoutes.workflows, icon: 'account_tree' }],
+  },
+];
 
 type MarketingSidebarProps = {
   variant?: 'list' | 'wizard';
@@ -30,12 +46,7 @@ export function MarketingSidebar({ variant = 'list', onNavigate }: MarketingSide
 
   const isWizard = variant === 'wizard' || pathname.includes('/edit');
 
-  const isActive = (href: string) => {
-    if (href === marketingRoutes.campaigns) {
-      return pathname.startsWith(marketingRoutes.campaigns);
-    }
-    return pathname.startsWith(href);
-  };
+  const isActive = (href: string) => pathname.startsWith(href);
 
   const handleNewCampaign = async () => {
     if (!token || !accountId || creating) return;
@@ -50,47 +61,28 @@ export function MarketingSidebar({ variant = 'list', onNavigate }: MarketingSide
   };
 
   return (
-    <aside className="h-screen w-64 border-r border-gray-200 bg-surface flex flex-col p-4">
-      <div className="mb-8 px-4">
+    <aside className="h-screen w-64 border-r border-gray-200 bg-surface flex flex-col">
+      <div className="px-4 py-4 border-b border-gray-100">
         <h1 className="text-headline-sm font-bold text-primary">FlowChat</h1>
-        <p className="text-[12px] text-gray-500 uppercase tracking-wider font-semibold">
+        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mt-0.5">
           Campaign Manager
         </p>
       </div>
 
-      <div className="mb-6 px-2">
+      <div className="px-3 pt-3">
         <Link
           href={CRM_HOME as Route}
           onClick={onNavigate}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-lg border border-primary-border bg-primary-surface text-primary font-semibold text-body-md transition-colors hover:bg-primary-fixed hover:border-primary-fixed-dim"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-primary-border bg-primary-surface text-primary font-semibold text-[13px] transition-colors hover:bg-primary-fixed hover:border-primary-fixed-dim"
         >
-          <MarketingIcon name="arrow_back" className="text-[20px]" />
+          <MarketingIcon name="arrow_back" className="text-[18px]" />
           <span>Back to CRM</span>
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-1">
-        {navItems.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href as Route}
-              onClick={onNavigate}
-              className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 ${
-                active
-                  ? 'text-primary bg-primary-surface font-bold'
-                  : 'text-on-surface-variant hover:bg-gray-50'
-              }`}
-            >
-              <MarketingIcon name={item.icon} />
-              <span className="text-body-md">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <ModuleSidebar sections={navSections} isActive={isActive} onNavigate={onNavigate} />
 
-      <div className={`mt-auto ${isWizard ? 'pt-4 border-t border-gray-100' : 'border-t border-gray-200 pt-4 px-2'}`}>
+      <div className={`mt-auto ${isWizard ? 'pt-4 border-t border-gray-100 px-3 pb-3' : 'border-t border-gray-200 pt-4 px-3 pb-3'}`}>
         {isWizard && (
           <button
             type="button"
@@ -102,7 +94,7 @@ export function MarketingSidebar({ variant = 'list', onNavigate }: MarketingSide
             <span>{creating ? 'Creating…' : 'New Campaign'}</span>
           </button>
         )}
-        <div className={`flex items-center gap-3 ${isWizard ? 'mt-6 px-4' : 'px-2'}`}>
+        <div className={`flex items-center gap-3 ${isWizard ? 'mt-6 px-1' : 'px-1'}`}>
           <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold text-primary shrink-0">
             {initials(user?.name || user?.email || 'A')}
           </div>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { api, type Contact, type Label, type EmailAutomation } from '@/lib/api';
+import { api, type Contact, type Label, type EmailAutomation, type MarketingSegment } from '@/lib/api';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,6 +67,11 @@ export default function ContactsPage() {
   const [bulkAutomateBusy, setBulkAutomateBusy] = useState(false);
   const [bulkAssignBusy, setBulkAssignBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState('');
+  const [lists, setLists] = useState<MarketingSegment[]>([]);
+  const [bulkListId, setBulkListId] = useState('');
+  const [bulkListBusy, setBulkListBusy] = useState(false);
+  const [newListName, setNewListName] = useState('');
+  const [creatingList, setCreatingList] = useState(false);
   const [exportError, setExportError] = useState('');
   const importCancelledRef = useRef(false);
 
@@ -137,6 +142,10 @@ export default function ContactsPage() {
       .list(accountId, token)
       .then((r) => setAutomations(r.automations.filter((a) => a.enabled)))
       .catch(() => setAutomations([]));
+    api.marketing.segments
+      .list(accountId, token)
+      .then((r) => setLists(r.segments.filter((s) => s.segmentType === 'static')))
+      .catch(() => setLists([]));
     api.agents
       .list(accountId, token)
       .then((r) => setAgents(r.agents.map((a) => ({ userId: a.userId, name: a.displayName || a.name }))))
@@ -227,9 +236,14 @@ export default function ContactsPage() {
     }
   };
 
-  const handleCreate = async (name: string, email: string) => {
+  const handleCreate = async (name: string, email: string, listIds: string[]) => {
     if (!token || !accountId) return;
-    await api.contacts.create(accountId, { name, email: email || null, type: 'lead' }, token);
+    const { contact } = await api.contacts.create(accountId, { name, email: email || null, type: 'lead' }, token);
+    if (listIds.length > 0) {
+      await Promise.all(
+        listIds.map((listId) => api.marketing.segments.addMembers(accountId, listId, [contact.id], token))
+      );
+    }
     await load();
     loadStats();
   };
@@ -292,6 +306,42 @@ export default function ContactsPage() {
       setBulkMsg(err instanceof Error ? err.message : 'Bulk assignment failed');
     } finally {
       setBulkAssignBusy(false);
+    }
+  };
+
+  const handleBulkAddToList = async () => {
+    if (!token || !accountId || selected.size === 0 || !bulkListId) return;
+    setBulkListBusy(true);
+    setBulkMsg('');
+    try {
+      await api.marketing.segments.addMembers(accountId, bulkListId, [...selected], token);
+      const list = lists.find((l) => l.id === bulkListId);
+      setBulkMsg(`Added ${selected.size} contact(s) to "${list?.name ?? 'list'}".`);
+      setSelected(new Set());
+      setBulkListId('');
+    } catch (err) {
+      setBulkMsg(err instanceof Error ? err.message : 'Could not add contacts to list');
+    } finally {
+      setBulkListBusy(false);
+    }
+  };
+
+  const handleBulkCreateList = async () => {
+    const name = newListName.trim();
+    if (!token || !accountId || !name || selected.size === 0) return;
+    setCreatingList(true);
+    setBulkMsg('');
+    try {
+      const { segment } = await api.marketing.segments.create(accountId, { name, segmentType: 'static' }, token);
+      await api.marketing.segments.addMembers(accountId, segment.id, [...selected], token);
+      setLists((prev) => [...prev, segment]);
+      setBulkMsg(`Created "${segment.name}" and added ${selected.size} contact(s).`);
+      setSelected(new Set());
+      setNewListName('');
+    } catch (err) {
+      setBulkMsg(err instanceof Error ? err.message : 'Could not create list');
+    } finally {
+      setCreatingList(false);
     }
   };
 
@@ -394,6 +444,42 @@ export default function ContactsPage() {
             </select>
             <Button type="button" variant="secondary" size="sm" disabled={!bulkLabelId} onClick={() => void handleBulkLabel()}>
               Apply
+            </Button>
+            <select
+              value={bulkListId}
+              onChange={(e) => setBulkListId(e.target.value)}
+              className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+            >
+              <option value="">📋 Add to list…</option>
+              {lists.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!bulkListId || bulkListBusy}
+              onClick={() => void handleBulkAddToList()}
+            >
+              {bulkListBusy ? 'Adding…' : 'Add'}
+            </Button>
+            <Input
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              placeholder="+ New list name…"
+              className="!w-32 !py-1.5 text-xs"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!newListName.trim() || creatingList}
+              onClick={() => void handleBulkCreateList()}
+            >
+              {creatingList ? '…' : 'Create'}
             </Button>
             <select
               value={bulkAutomationId}
