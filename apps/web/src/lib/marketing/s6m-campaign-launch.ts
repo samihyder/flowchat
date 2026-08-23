@@ -2,7 +2,7 @@ import type { AccountSettings } from '@/lib/account-settings';
 import type { AppSql } from '@/lib/db-sql';
 import { resolveEmailCredential } from '@/lib/credentials/store';
 import { MarketingError, MarketingErrorCode } from '@/lib/marketing/errors';
-import { applyMergeTags } from '@/lib/marketing/merge-tags';
+import { applyMergeTags, buildSendMergeExtras } from '@/lib/marketing/merge-tags';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
 import { buildCampaignEmailAppendix } from '@/lib/marketing/campaign-appendix';
 import { checkSenderDomainStatus, isMarketingDomainReady, marketingDomainStatusDetail } from '@/lib/marketing/senders';
@@ -207,7 +207,15 @@ export async function sendCampaignTestEmail(
     });
   }
 
-  let html = applyMergeTags(step1.htmlBody, mergeCtx);
+  const mergeExtras = buildSendMergeExtras({
+    senderName: sender.fromName,
+    senderEmail: sender.fromEmail,
+    meetingLink: sender.meetingLink ?? settings.marketingCalendlyUrl,
+    portfolioLink: sender.portfolioLink ?? settings.marketingPortfolioUrl,
+    contactMessage: 'This is a sample contact message for preview purposes.',
+  });
+
+  let html = applyMergeTags(step1.htmlBody, mergeCtx, mergeExtras);
   const appendix = buildCampaignEmailAppendix(
     settings,
     mergeCtx,
@@ -226,9 +234,9 @@ export async function sendCampaignTestEmail(
 
   const result = await sendMarketingEmail(sql, accountId, userId, settings, {
     to,
-    subject: `[TEST] ${applyMergeTags(step1.subject, mergeCtx)}`,
+    subject: `[TEST] ${applyMergeTags(step1.subject, mergeCtx, mergeExtras)}`,
     html,
-    text: step1.plainBody ? applyMergeTags(step1.plainBody, mergeCtx) : undefined,
+    text: step1.plainBody ? applyMergeTags(step1.plainBody, mergeCtx, mergeExtras) : undefined,
     credentialId: sender.credentialId,
     mergeContact: mergeCtx,
     isTest: true,
