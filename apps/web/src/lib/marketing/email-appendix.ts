@@ -1,5 +1,5 @@
 import type { AccountSettings } from '@/lib/account-settings';
-import { applyMergeTags, type MergeContact } from '@/lib/marketing/merge-tags';
+import { applyMergeTags, buildSendMergeExtras, type MergeContact } from '@/lib/marketing/merge-tags';
 import { resolveDefaultSignatureHtml } from '@/lib/marketing/signatures';
 
 export type MarketingAppendixExtras = {
@@ -17,14 +17,14 @@ export function buildMarketingEmailAppendix(
 ): string {
   if (settings.marketingAutoAppendTemplates === false) return '';
 
-  const mergeExtras: Record<string, string> = {
-    calendly_url: settings.marketingCalendlyUrl ?? '',
-    portfolio_url: settings.marketingPortfolioUrl ?? '',
-    sender_name: extras?.senderName ?? settings.marketingFromName ?? '',
-    sender_email: extras?.senderEmail ?? settings.marketingFromEmail ?? '',
-    company_name: extras?.companyName ?? '',
-    logo_url: extras?.logoUrl ?? '',
-  };
+  const mergeExtras = buildSendMergeExtras({
+    meetingLink: settings.marketingCalendlyUrl,
+    portfolioLink: settings.marketingPortfolioUrl,
+    senderName: extras?.senderName ?? settings.marketingFromName,
+    senderEmail: extras?.senderEmail ?? settings.marketingFromEmail,
+    companyName: extras?.companyName,
+    logoUrl: extras?.logoUrl,
+  });
 
   const parts: string[] = [];
   const signature = resolveDefaultSignatureHtml(settings).trim();

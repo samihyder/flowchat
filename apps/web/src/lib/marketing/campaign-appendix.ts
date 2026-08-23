@@ -1,5 +1,5 @@
 import type { AccountSettings } from '@/lib/account-settings';
-import { applyMergeTags, type MergeContact } from '@/lib/marketing/merge-tags';
+import { applyMergeTags, buildSendMergeExtras, type MergeContact } from '@/lib/marketing/merge-tags';
 import type { MarketingAppendixExtras } from '@/lib/marketing/email-appendix';
 import { resolveDefaultSignatureHtml } from '@/lib/marketing/signatures';
 
@@ -17,16 +17,14 @@ export function buildCampaignEmailAppendix(
   campaign: CampaignAppendixInput,
   extras?: MarketingAppendixExtras
 ): string {
-  const mergeExtras: Record<string, string> = {
-    meeting_link: campaign.meetingLink ?? settings.marketingCalendlyUrl ?? '',
-    portfolio_link: campaign.portfolioLink ?? settings.marketingPortfolioUrl ?? '',
-    calendly_url: campaign.meetingLink ?? settings.marketingCalendlyUrl ?? '',
-    portfolio_url: campaign.portfolioLink ?? settings.marketingPortfolioUrl ?? '',
-    sender_name: extras?.senderName ?? settings.marketingFromName ?? '',
-    sender_email: extras?.senderEmail ?? settings.marketingFromEmail ?? '',
-    company_name: extras?.companyName ?? '',
-    logo_url: extras?.logoUrl ?? '',
-  };
+  const mergeExtras = buildSendMergeExtras({
+    meetingLink: campaign.meetingLink ?? settings.marketingCalendlyUrl,
+    portfolioLink: campaign.portfolioLink ?? settings.marketingPortfolioUrl,
+    senderName: extras?.senderName ?? settings.marketingFromName,
+    senderEmail: extras?.senderEmail ?? settings.marketingFromEmail,
+    companyName: extras?.companyName,
+    logoUrl: extras?.logoUrl,
+  });
 
   const parts: string[] = [];
 

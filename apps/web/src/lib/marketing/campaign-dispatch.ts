@@ -1,6 +1,6 @@
 import type { AppSql } from '@/lib/db-sql';
 import { getAccountSettings } from '@/lib/account-settings-db';
-import { applyMergeTags } from '@/lib/marketing/merge-tags';
+import { applyMergeTags, buildSendMergeExtras } from '@/lib/marketing/merge-tags';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
 import { resolveSegmentContacts } from '@/lib/marketing/segments';
 import { isInSendWindow, resolveContactTimezone } from '@/lib/marketing/send-time';
@@ -252,9 +252,15 @@ export async function processCampaignBatch(
       type: row.type ?? undefined,
       customAttributes: row.customAttributes ?? {},
     };
-    const subject = applyMergeTags(baseSubject, mergeCtx);
-    const html = applyMergeTags(campaign.htmlBody, mergeCtx);
-    const text = campaign.textBody ? applyMergeTags(campaign.textBody, mergeCtx) : undefined;
+    const mergeExtras = buildSendMergeExtras({
+      senderName: settings.marketingFromName,
+      senderEmail: settings.marketingFromEmail,
+      meetingLink: settings.marketingCalendlyUrl,
+      portfolioLink: settings.marketingPortfolioUrl,
+    });
+    const subject = applyMergeTags(baseSubject, mergeCtx, mergeExtras);
+    const html = applyMergeTags(campaign.htmlBody, mergeCtx, mergeExtras);
+    const text = campaign.textBody ? applyMergeTags(campaign.textBody, mergeCtx, mergeExtras) : undefined;
 
     const result = await sendMarketingEmail(sql, accountId, row.contactId, settings, {
       to: row.email,

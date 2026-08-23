@@ -11,9 +11,12 @@ export function applyMergeTags(
   contact: MergeContact,
   extras?: Record<string, string>
 ): string {
-  const firstName = contact.name.trim().split(/\s+/)[0] ?? contact.name;
+  const nameParts = contact.name.trim().split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] ?? contact.name;
+  const lastName = nameParts.slice(1).join(' ');
   const tags: Record<string, string> = {
     first_name: firstName,
+    last_name: lastName,
     name: contact.name,
     email: contact.email ?? '',
     phone: contact.phone ?? '',
@@ -26,6 +29,45 @@ export function applyMergeTags(
   }
 
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => tags[key] ?? '');
+}
+
+export type SendMergeExtrasInput = {
+  senderName?: string | null;
+  senderEmail?: string | null;
+  meetingLink?: string | null;
+  portfolioLink?: string | null;
+  contactMessage?: string | null;
+  companyName?: string | null;
+  logoUrl?: string | null;
+};
+
+/**
+ * Every merge tag advertised in the composer chip rail (MERGE_TAG_CHIPS) that isn't a plain
+ * contact field needs to be supplied as `extras` by the caller — applyMergeTags has no way to
+ * derive sender/link/message context on its own. Call sites kept forgetting one or more of
+ * these (agent_name/agent_email in particular were never wired anywhere), so tags like
+ * {{agent_name}} silently rendered as literal text in sent email. Route every send path
+ * through this one builder instead of hand-rolling the extras object per call site.
+ */
+export function buildSendMergeExtras(input: SendMergeExtrasInput): Record<string, string> {
+  const senderName = input.senderName ?? '';
+  const senderEmail = input.senderEmail ?? '';
+  const meetingLink = input.meetingLink ?? '';
+  const portfolioLink = input.portfolioLink ?? '';
+  return {
+    agent_name: senderName,
+    agent_email: senderEmail,
+    // Aliases used by the signature/footer templates (email-appendix.ts, campaign-appendix.ts).
+    sender_name: senderName,
+    sender_email: senderEmail,
+    meeting_link: meetingLink,
+    calendly_url: meetingLink,
+    portfolio_link: portfolioLink,
+    portfolio_url: portfolioLink,
+    contact_message: input.contactMessage ?? '',
+    company_name: input.companyName ?? '',
+    logo_url: input.logoUrl ?? '',
+  };
 }
 
 export function htmlToPlainText(html: string): string {

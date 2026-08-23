@@ -5,7 +5,7 @@ import { buildCampaignEmailAppendix } from '@/lib/marketing/campaign-appendix';
 import type { ContactMessageMode } from '@/lib/marketing/campaign-step-draft';
 import { resolveContactMessage } from '@/lib/marketing/contact-message';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
-import { applyMergeTags } from '@/lib/marketing/merge-tags';
+import { applyMergeTags, buildSendMergeExtras } from '@/lib/marketing/merge-tags';
 
 const BATCH_SIZE = Number(process.env.MARKETING_BATCH_SIZE ?? 25);
 
@@ -223,14 +223,18 @@ export async function processS6mCampaignBatch(
       messageMode
     );
 
-    const mergeExtras: Record<string, string> = {
-      contact_message: contactMessage,
-      meeting_link: row.meetingLink ?? settings.marketingCalendlyUrl ?? '',
-      portfolio_link: row.portfolioLink ?? settings.marketingPortfolioUrl ?? '',
-    };
-
     const fromName = row.fromName ?? settings.marketingFromName ?? 'FlowChat';
     const fromEmail = row.fromEmail ?? settings.marketingFromEmail ?? row.email;
+
+    const mergeExtras = buildSendMergeExtras({
+      contactMessage,
+      meetingLink: row.meetingLink ?? settings.marketingCalendlyUrl,
+      portfolioLink: row.portfolioLink ?? settings.marketingPortfolioUrl,
+      senderName: fromName,
+      senderEmail: fromEmail,
+      companyName: branding.name,
+      logoUrl: branding.logoUrl,
+    });
 
     const appendix = buildCampaignEmailAppendix(
       settings,

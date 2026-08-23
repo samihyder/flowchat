@@ -1,6 +1,6 @@
 import type { AppSql } from '@/lib/db-sql';
 import { getAccountSettings } from '@/lib/account-settings-db';
-import { applyMergeTags } from '@/lib/marketing/merge-tags';
+import { applyMergeTags, buildSendMergeExtras } from '@/lib/marketing/merge-tags';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
 
 type WorkflowStep = {
@@ -215,9 +215,11 @@ export async function processWorkflowBatch(
   const due = await sql`
     SELECT e.id as "enrollmentId", e.workflow_id as "workflowId", e.contact_id as "contactId",
            e.current_step_order as "currentStepOrder", e.branch_context as "branchContext",
-           w.sender_id as "senderId"
+           w.sender_id as "senderId",
+           s.from_name as "senderFromName", s.from_email as "senderFromEmail"
     FROM marketing_workflow_enrollments e
     INNER JOIN marketing_workflows w ON w.id = e.workflow_id
+    LEFT JOIN marketing_senders s ON s.id = w.sender_id
     WHERE w.account_id = ${accountId}::uuid AND w.enabled = true
       AND e.status = 'active'
       AND (e.next_run_at IS NULL OR e.next_run_at <= NOW())
@@ -233,6 +235,8 @@ export async function processWorkflowBatch(
     currentStepOrder: number;
     branchContext: Record<string, unknown>;
     senderId: string | null;
+    senderFromName: string | null;
+    senderFromEmail: string | null;
   }[]) {
     const steps = await sql`
       SELECT id, step_order as "stepOrder", step_type as "stepType", config
@@ -368,13 +372,20 @@ export async function processWorkflowBatch(
         textBody = tpl.textBody ?? undefined;
       }
 
-      subject = applyMergeTags(subject, mergeCtx);
-      html = applyMergeTags(html, mergeCtx);
+      const mergeExtras = buildSendMergeExtras({
+        senderName: row.senderFromName ?? settings.marketingFromName,
+        senderEmail: row.senderFromEmail ?? settings.marketingFromEmail,
+        meetingLink: settings.marketingCalendlyUrl,
+        portfolioLink: settings.marketingPortfolioUrl,
+      });
+
+      subject = applyMergeTags(subject, mergeCtx, mergeExtras);
+      html = applyMergeTags(html, mergeCtx, mergeExtras);
       const result = await sendMarketingEmail(sql, accountId, row.contactId, settings, {
         to: contact.email,
         subject,
         html,
-        text: textBody ? applyMergeTags(textBody, mergeCtx) : undefined,
+        text: textBody ? applyMergeTags(textBody, mergeCtx, mergeExtras) : undefined,
         senderId: row.senderId,
         mergeContact: mergeCtx,
       });

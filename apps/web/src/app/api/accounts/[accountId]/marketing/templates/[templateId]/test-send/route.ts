@@ -1,7 +1,7 @@
 import { neon } from '@/lib/neon';
 import { authorizeAccount, getBearerToken } from '@/lib/db-auth';
 import { getAccountSettings } from '@/lib/account-settings-db';
-import { applyMergeTags } from '@/lib/marketing/merge-tags';
+import { applyMergeTags, buildSendMergeExtras } from '@/lib/marketing/merge-tags';
 import { sendMarketingEmail } from '@/lib/marketing/email-send';
 import type { AppSql } from '@/lib/db-sql';
 
@@ -42,11 +42,32 @@ export async function POST(req: Request, { params }: Params) {
     customAttributes: {},
   };
 
+  let senderName = settings.marketingFromName ?? '';
+  let senderEmail = settings.marketingFromEmail ?? '';
+  if (body.senderId) {
+    const senderRows = await sql`
+      SELECT from_name as "fromName", from_email as "fromEmail"
+      FROM marketing_senders WHERE id = ${body.senderId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
+    `;
+    const senderRow = senderRows[0] as { fromName: string; fromEmail: string } | undefined;
+    if (senderRow) {
+      senderName = senderRow.fromName;
+      senderEmail = senderRow.fromEmail;
+    }
+  }
+  const mergeExtras = buildSendMergeExtras({
+    senderName,
+    senderEmail,
+    meetingLink: settings.marketingCalendlyUrl,
+    portfolioLink: settings.marketingPortfolioUrl,
+    contactMessage: 'This is a sample contact message for preview purposes.',
+  });
+
   const result = await sendMarketingEmail(sql, accountId, auth.userId, settings, {
     to,
-    subject: `[TEST] ${applyMergeTags(template.subject, mergeCtx)}`,
-    html: applyMergeTags(template.htmlBody, mergeCtx),
-    text: template.textBody ? applyMergeTags(template.textBody, mergeCtx) : undefined,
+    subject: `[TEST] ${applyMergeTags(template.subject, mergeCtx, mergeExtras)}`,
+    html: applyMergeTags(template.htmlBody, mergeCtx, mergeExtras),
+    text: template.textBody ? applyMergeTags(template.textBody, mergeCtx, mergeExtras) : undefined,
     senderId: body.senderId ?? null,
     mergeContact: mergeCtx,
     isTest: true,
