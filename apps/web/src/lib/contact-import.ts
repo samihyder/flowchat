@@ -2,6 +2,7 @@ import type { AppSql } from '@/lib/db-sql';
 import { linkContactToGlobalCompany } from '@/lib/companies/resolve';
 import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
 import { validateCustomAttributes, type CustomAttributeDefinition } from '@/lib/custom-attributes';
+import { splitName } from '@/lib/contacts-name';
 import {
   parseCsvRaw,
   type ColumnMapping,
@@ -13,6 +14,8 @@ export { parseCsvRaw, importErrorsToCsv } from '@/lib/csv-import-utils';
 
 export type ParsedImportRow = {
   name: string;
+  firstName: string;
+  lastName: string;
   email: string | null;
   phone: string | null;
   type: 'visitor' | 'lead' | 'customer';
@@ -44,24 +47,33 @@ export function applyColumnMapping(
       return (map[field] ?? '').trim();
     };
 
-    const firstName = get(mapping.firstName);
-    const lastName = get(mapping.lastName);
+    let firstName = get(mapping.firstName);
+    let lastName = get(mapping.lastName);
     const fullName = get(mapping.name);
     const name =
       firstName || lastName
         ? `${firstName} ${lastName}`.trim()
         : fullName;
 
-    if (!firstName && mapping.firstName) {
+    if (!name) {
+      errors.push({ row: rowNum, message: 'Name is required (map First Name + Last Name, or Name)' });
+      continue;
+    }
+
+    // Only a combined Name column was mapped — derive structured first/last from it so
+    // every imported contact has both, matching the same fields required at manual
+    // creation.
+    if (!firstName && !lastName) {
+      const split = splitName(fullName);
+      firstName = split.firstName;
+      lastName = split.lastName;
+    }
+    if (!firstName) {
       errors.push({ row: rowNum, message: 'First Name is required' });
       continue;
     }
-    if (!lastName && mapping.lastName) {
+    if (!lastName) {
       errors.push({ row: rowNum, message: 'Last Name is required' });
-      continue;
-    }
-    if (!name) {
-      errors.push({ row: rowNum, message: 'Name is required (map First Name + Last Name, or Name)' });
       continue;
     }
 
@@ -92,6 +104,8 @@ export function applyColumnMapping(
 
     parsed.push({
       name,
+      firstName,
+      lastName,
       email,
       phone: get(mapping.phone ?? 'phone') || null,
       type,
@@ -194,6 +208,8 @@ export async function processImportJobBatch(
         const updated = await sql`
           UPDATE contacts SET
             name = ${row.name},
+            first_name = COALESCE(${row.firstName}, first_name),
+            last_name = COALESCE(${row.lastName}, last_name),
             email = COALESCE(${row.email}, email),
             phone = COALESCE(${row.phone}, phone),
             type = ${row.type},
@@ -201,7 +217,7 @@ export async function processImportJobBatch(
             custom_attributes = COALESCE(custom_attributes, '{}'::jsonb) || ${JSON.stringify(row.customAttributes)}::jsonb,
             updated_at = NOW()
           WHERE id = ${existingId}::uuid
-          RETURNING id, name, email, phone, type, external_id as "externalId",
+          RETURNING id, name, first_name as "firstName", last_name as "lastName", email, phone, type, external_id as "externalId",
                     last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
                     created_at as "createdAt", updated_at as "updatedAt"
         `;
@@ -231,10 +247,12 @@ export async function processImportJobBatch(
 
       if (!existingId) {
         const inserted = await sql`
-          INSERT INTO contacts (account_id, name, email, phone, type, external_id, custom_attributes, last_activity_at)
+          INSERT INTO contacts (account_id, name, first_name, last_name, email, phone, type, external_id, custom_attributes, last_activity_at)
           VALUES (
             ${accountId}::uuid,
             ${row.name},
+            ${row.firstName},
+            ${row.lastName},
             ${row.email},
             ${row.phone},
             ${row.type},
@@ -242,7 +260,7 @@ export async function processImportJobBatch(
             ${JSON.stringify(row.customAttributes)}::jsonb,
             NOW()
           )
-          RETURNING id, name, email, phone, type, external_id as "externalId",
+          RETURNING id, name, first_name as "firstName", last_name as "lastName", email, phone, type, external_id as "externalId",
                     last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
                     created_at as "createdAt", updated_at as "updatedAt"
         `;

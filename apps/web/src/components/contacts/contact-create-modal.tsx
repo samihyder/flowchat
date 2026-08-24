@@ -9,12 +9,15 @@ import { Input } from '@/components/ui/input';
 type Props = {
   open: boolean;
   onClose: () => void;
-  onCreate: (name: string, email: string, listIds: string[]) => Promise<void>;
+  onCreate: (firstName: string, lastName: string, email: string, listIds: string[]) => Promise<void>;
 };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function ContactCreateModal({ open, onClose, onCreate }: Props) {
   const { token, accountId } = useAuthStore();
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [lists, setLists] = useState<MarketingSegment[]>([]);
   const [selectedListIds, setSelectedListIds] = useState<Set<string>>(new Set());
@@ -40,14 +43,18 @@ export function ContactCreateModal({ open, onClose, onCreate }: Props) {
     });
   };
 
+  const emailValid = EMAIL_RE.test(email.trim());
+  const canSubmit = firstName.trim() && lastName.trim() && emailValid;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!canSubmit) return;
     setSaving(true);
     setError('');
     try {
-      await onCreate(name.trim(), email.trim(), [...selectedListIds]);
-      setName('');
+      await onCreate(firstName.trim(), lastName.trim(), email.trim(), [...selectedListIds]);
+      setFirstName('');
+      setLastName('');
       setEmail('');
       setSelectedListIds(new Set());
       onClose();
@@ -66,17 +73,45 @@ export function ContactCreateModal({ open, onClose, onCreate }: Props) {
       >
         <h2 className="text-lg font-semibold text-gray-900">New contact</h2>
         <div className="space-y-3">
-          <div>
-            <label htmlFor="new-contact-name" className="text-xs text-gray-500 block mb-1">
-              Name
-            </label>
-            <Input id="new-contact-name" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="new-contact-first-name" className="text-xs text-gray-500 block mb-1">
+                First name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="new-contact-first-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label htmlFor="new-contact-last-name" className="text-xs text-gray-500 block mb-1">
+                Last name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="new-contact-last-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+              />
+            </div>
           </div>
           <div>
             <label htmlFor="new-contact-email" className="text-xs text-gray-500 block mb-1">
-              Email
+              Email <span className="text-red-500">*</span>
             </label>
-            <Input id="new-contact-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input
+              id="new-contact-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            {email.trim() && !emailValid && (
+              <p className="text-xs text-red-600 mt-1">Enter a valid email address</p>
+            )}
           </div>
           {lists.length > 0 && (
             <div>
@@ -109,7 +144,7 @@ export function ContactCreateModal({ open, onClose, onCreate }: Props) {
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={!name.trim() || saving}>
+          <Button type="submit" disabled={!canSubmit || saving}>
             {saving ? 'Saving…' : 'Create contact'}
           </Button>
         </div>

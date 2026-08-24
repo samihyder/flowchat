@@ -457,6 +457,15 @@ function LeadSnapperProvisioningSection() {
   );
 }
 
+const STANDARD_CONTACT_FIELDS = [
+  { key: 'secondary_email', label: 'Secondary email' },
+  { key: 'mobile_number', label: 'Mobile number' },
+  { key: 'whatsapp_number', label: 'WhatsApp number' },
+  { key: 'linkedin_profile', label: 'LinkedIn profile' },
+  { key: 'x_profile', label: 'X profile' },
+  { key: 'client_notes', label: 'Client notes / message' },
+] as const;
+
 function CustomAttributesSection() {
   const { token, accountId } = useAuthStore();
   const [definitions, setDefinitions] = useState<
@@ -474,6 +483,7 @@ function CustomAttributesSection() {
   const [newType, setNewType] = useState('text');
   const [newOptions, setNewOptions] = useState('');
   const [newRequired, setNewRequired] = useState(false);
+  const [provisioning, setProvisioning] = useState(false);
   const [msg, setMsg] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
@@ -486,6 +496,41 @@ function CustomAttributesSection() {
   };
 
   useEffect(load, [token, accountId]);
+
+  const provisionStandardFields = async () => {
+    if (!token || !accountId) return;
+    setProvisioning(true);
+    setMsg('');
+    try {
+      const existingKeys = new Set(definitions.map((d) => d.key));
+      const missing = STANDARD_CONTACT_FIELDS.filter((f) => !existingKeys.has(f.key));
+      let created = 0;
+      for (const field of missing) {
+        await api.customAttributes.create(
+          accountId,
+          {
+            label: field.label,
+            key: field.key,
+            attrType: 'text',
+            required: false,
+            sortOrder: definitions.length + created,
+          },
+          token
+        );
+        created++;
+      }
+      setMsg(
+        created > 0
+          ? `Added ${created} standard field${created === 1 ? '' : 's'}.`
+          : 'All standard fields already exist.'
+      );
+      load();
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : 'Failed to provision fields');
+    } finally {
+      setProvisioning(false);
+    }
+  };
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -554,12 +599,21 @@ function CustomAttributesSection() {
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">Custom contact attributes</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Define extra fields shown on contact profiles and available in CSV import/export.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Custom contact attributes</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Define extra fields shown on contact profiles and available in CSV import/export.
+            First name, Last name, and Email are always required — everything else here is optional.
+          </p>
+        </div>
+        <Button type="button" variant="secondary" size="sm" disabled={provisioning} onClick={() => void provisionStandardFields()}>
+          {provisioning ? 'Adding…' : 'Add standard fields'}
+        </Button>
       </div>
+      <p className="text-xs text-gray-400 -mt-2">
+        One click adds: Secondary email, Mobile number, WhatsApp number, LinkedIn profile, X profile, Client notes / message.
+      </p>
       <ul className="space-y-2 text-sm">
         {definitions.map((d, i) => (
           <li key={d.id} className="border border-gray-100 rounded-lg p-2.5">

@@ -4,6 +4,7 @@ import { emitContactEvent, serializeContactRow } from '@/lib/contact-sync';
 import { getGlobalCompanyById, linkContactToGlobalCompany, toCompanySummary } from '@/lib/companies/resolve';
 import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-attributes';
 import { validateAssignment } from '@/lib/assign';
+import { joinName } from '@/lib/contacts-name';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string; contactId: string }> };
@@ -20,7 +21,8 @@ export async function GET(req: Request, { params }: Params) {
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
   const rows = await sql`
-    SELECT c.id, c.name, c.email, c.phone, c.country, c.type, c.external_id as "externalId",
+    SELECT c.id, c.name, c.first_name as "firstName", c.last_name as "lastName",
+           c.email, c.phone, c.country, c.type, c.external_id as "externalId",
            c.avatar_url as "avatarUrl", c.company_id as "companyId",
            c.enrichment_status as "enrichmentStatus",
            c.enrichment_provider as "enrichmentProvider",
@@ -108,6 +110,8 @@ export async function PATCH(req: Request, { params }: Params) {
 
   const body = (await req.json()) as {
     name?: string;
+    firstName?: string;
+    lastName?: string;
     email?: string | null;
     phone?: string | null;
     type?: string;
@@ -117,6 +121,19 @@ export async function PATCH(req: Request, { params }: Params) {
     assigneeId?: string | null;
     teamId?: string | null;
   };
+
+  if (body.firstName !== undefined && !body.firstName.trim()) {
+    return Response.json({ error: 'First name is required' }, { status: 400 });
+  }
+  if (body.lastName !== undefined && !body.lastName.trim()) {
+    return Response.json({ error: 'Last name is required' }, { status: 400 });
+  }
+  if (body.email !== undefined && !body.email?.trim()) {
+    return Response.json({ error: 'Email is required' }, { status: 400 });
+  }
+  if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim())) {
+    return Response.json({ error: 'Enter a valid email address' }, { status: 400 });
+  }
 
   if (body.type && !VALID_TYPES.includes(body.type as (typeof VALID_TYPES)[number])) {
     return Response.json({ error: 'Invalid contact type' }, { status: 400 });
@@ -136,10 +153,19 @@ export async function PATCH(req: Request, { params }: Params) {
   }
 
   const sql = neon(process.env.DATABASE_URL!) as AppSql;
-  const existing = await sql`
-    SELECT id FROM contacts WHERE id = ${contactId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
+  const existingRows = await sql`
+    SELECT id, first_name as "firstName", last_name as "lastName" FROM contacts
+    WHERE id = ${contactId}::uuid AND account_id = ${accountId}::uuid LIMIT 1
   `;
-  if (!existing[0]) return Response.json({ error: 'Contact not found' }, { status: 404 });
+  const existing = existingRows[0] as { id: string; firstName: string | null; lastName: string | null } | undefined;
+  if (!existing) return Response.json({ error: 'Contact not found' }, { status: 404 });
+
+  const nextFirstName = body.firstName !== undefined ? body.firstName.trim() : existing.firstName;
+  const nextLastName = body.lastName !== undefined ? body.lastName.trim() : existing.lastName;
+  const name =
+    body.firstName !== undefined || body.lastName !== undefined
+      ? joinName(nextFirstName ?? '', nextLastName ?? '') || body.name?.trim()
+      : body.name?.trim();
 
   const assignmentError = await validateAssignment(sql, accountId, {
     assigneeId: body.assigneeId,
@@ -165,7 +191,9 @@ export async function PATCH(req: Request, { params }: Params) {
 
   const rows = await sql`
     UPDATE contacts SET
-      name = COALESCE(${body.name?.trim() ?? null}, name),
+      name = COALESCE(${name ?? null}, name),
+      first_name = CASE WHEN ${body.firstName !== undefined} THEN ${body.firstName?.trim() || null} ELSE first_name END,
+      last_name = CASE WHEN ${body.lastName !== undefined} THEN ${body.lastName?.trim() || null} ELSE last_name END,
       email = CASE WHEN ${body.email !== undefined} THEN ${body.email?.trim() || null} ELSE email END,
       phone = CASE WHEN ${body.phone !== undefined} THEN ${body.phone?.trim() || null} ELSE phone END,
       country = CASE WHEN ${country !== undefined} THEN ${country ?? null} ELSE country END,
@@ -175,7 +203,7 @@ export async function PATCH(req: Request, { params }: Params) {
       team_id = CASE WHEN ${body.teamId !== undefined} THEN ${body.teamId ?? null}::uuid ELSE team_id END,
       updated_at = NOW()
     WHERE id = ${contactId}::uuid AND account_id = ${accountId}::uuid
-    RETURNING id, name, email, phone, country, type, external_id as "externalId",
+    RETURNING id, name, first_name as "firstName", last_name as "lastName", email, phone, country, type, external_id as "externalId",
               custom_attributes as "customAttributes",
               last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
               assignee_id as "assigneeId", team_id as "teamId",

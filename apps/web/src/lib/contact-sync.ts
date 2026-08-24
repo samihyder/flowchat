@@ -7,6 +7,8 @@ import { emitPlatformEvent } from '@/lib/platform-events';
 export type ContactRecord = {
   id: string;
   name: string;
+  firstName: string | null;
+  lastName: string | null;
   email: string | null;
   phone: string | null;
   type: string;
@@ -23,6 +25,8 @@ export function serializeContactRow(row: Record<string, unknown>): ContactRecord
   return {
     id: row.id as string,
     name: row.name as string,
+    firstName: (row.firstName as string | null) ?? null,
+    lastName: (row.lastName as string | null) ?? null,
     email: (row.email as string | null) ?? null,
     phone: (row.phone as string | null) ?? null,
     type: row.type as string,
