@@ -25,7 +25,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
 
   if (sort === 'name' && orderAsc) {
     return sql`
-      SELECT c.id, c.name, c.email, c.phone, c.type, c.country, c.external_id as "externalId",
+      SELECT c.id, c.name, c.first_name as "firstName", c.last_name as "lastName", c.email, c.phone, c.type, c.country, c.external_id as "externalId",
              c.marketing_status as "marketingStatus",
              c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
              c.created_at as "createdAt", c.updated_at as "updatedAt",
@@ -70,7 +70,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
 
   if (sort === 'name') {
     return sql`
-      SELECT c.id, c.name, c.email, c.phone, c.type, c.country, c.external_id as "externalId",
+      SELECT c.id, c.name, c.first_name as "firstName", c.last_name as "lastName", c.email, c.phone, c.type, c.country, c.external_id as "externalId",
              c.marketing_status as "marketingStatus",
              c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
              c.created_at as "createdAt", c.updated_at as "updatedAt",
@@ -115,7 +115,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
 
   if (sort === 'created_at' && orderAsc) {
     return sql`
-      SELECT c.id, c.name, c.email, c.phone, c.type, c.country, c.external_id as "externalId",
+      SELECT c.id, c.name, c.first_name as "firstName", c.last_name as "lastName", c.email, c.phone, c.type, c.country, c.external_id as "externalId",
              c.marketing_status as "marketingStatus",
              c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
              c.created_at as "createdAt", c.updated_at as "updatedAt",
@@ -160,7 +160,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
 
   if (sort === 'created_at') {
     return sql`
-      SELECT c.id, c.name, c.email, c.phone, c.type, c.country, c.external_id as "externalId",
+      SELECT c.id, c.name, c.first_name as "firstName", c.last_name as "lastName", c.email, c.phone, c.type, c.country, c.external_id as "externalId",
              c.marketing_status as "marketingStatus",
              c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
              c.created_at as "createdAt", c.updated_at as "updatedAt",
@@ -205,7 +205,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
 
   if (orderAsc) {
     return sql`
-      SELECT c.id, c.name, c.email, c.phone, c.type, c.country, c.external_id as "externalId",
+      SELECT c.id, c.name, c.first_name as "firstName", c.last_name as "lastName", c.email, c.phone, c.type, c.country, c.external_id as "externalId",
              c.marketing_status as "marketingStatus",
              c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
              c.created_at as "createdAt", c.updated_at as "updatedAt",
@@ -249,7 +249,7 @@ export async function listContacts(sql: AppSql, p: ContactListParams) {
   }
 
   return sql`
-    SELECT c.id, c.name, c.email, c.phone, c.type, c.country, c.external_id as "externalId",
+    SELECT c.id, c.name, c.first_name as "firstName", c.last_name as "lastName", c.email, c.phone, c.type, c.country, c.external_id as "externalId",
            c.marketing_status as "marketingStatus",
            c.last_activity_at as "lastActivityAt", c.is_blocked as "isBlocked",
            c.created_at as "createdAt", c.updated_at as "updatedAt",

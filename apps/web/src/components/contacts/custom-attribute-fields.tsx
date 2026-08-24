@@ -21,7 +21,10 @@ export function CustomAttributeFields({ definitions, values, onChange }: Props) 
       <h3 className="text-sm font-medium text-gray-700">Custom attributes</h3>
       {definitions.map((def) => (
         <div key={def.id}>
-          <label className="text-xs text-gray-500">{def.label}</label>
+          <label className="text-xs text-gray-500">
+            {def.label}
+            {def.required ? <span className="text-red-500"> *</span> : <span className="text-gray-400"> (optional)</span>}
+          </label>
           {def.attrType === 'boolean' ? (
             <select
               value={values[def.key] === true ? 'true' : values[def.key] === false ? 'false' : ''}

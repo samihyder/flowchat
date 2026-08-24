@@ -444,6 +444,8 @@ export type CustomAttributeDefinition = {
 export type Contact = {
   id: string;
   name: string;
+  firstName?: string | null;
+  lastName?: string | null;
   email: string | null;
   phone: string | null;
   country?: string | null;
@@ -1881,8 +1883,10 @@ export const api = {
     create: (
       accountId: string,
       body: {
-        name: string;
-        email?: string | null;
+        name?: string;
+        firstName: string;
+        lastName: string;
+        email: string;
         phone?: string | null;
         country?: string | null;
         type?: string;
@@ -1897,6 +1901,8 @@ export const api = {
       contactId: string,
       body: {
         name?: string;
+        firstName?: string;
+        lastName?: string;
         email?: string | null;
         phone?: string | null;
         country?: string | null;

@@ -236,9 +236,13 @@ export default function ContactsPage() {
     }
   };
 
-  const handleCreate = async (name: string, email: string, listIds: string[]) => {
+  const handleCreate = async (firstName: string, lastName: string, email: string, listIds: string[]) => {
     if (!token || !accountId) return;
-    const { contact } = await api.contacts.create(accountId, { name, email: email || null, type: 'lead' }, token);
+    const { contact } = await api.contacts.create(
+      accountId,
+      { firstName, lastName, email, type: 'lead' },
+      token
+    );
     if (listIds.length > 0) {
       await Promise.all(
         listIds.map((listId) => api.marketing.segments.addMembers(accountId, listId, [contact.id], token))

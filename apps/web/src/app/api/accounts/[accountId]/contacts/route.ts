@@ -6,6 +6,7 @@ import { validateCustomAttributes, serializeDefinitionRow } from '@/lib/custom-a
 import { listContacts } from '@/lib/contacts-query';
 import { getAccountSettings } from '@/lib/account-settings-db';
 import { sendDoubleOptInEmail } from '@/lib/marketing/double-opt-in';
+import { joinName } from '@/lib/contacts-name';
 import type { AppSql } from '@/lib/db-sql';
 
 type Params = { params: Promise<{ accountId: string }> };
@@ -73,6 +74,8 @@ export async function POST(req: Request, { params }: Params) {
 
   const body = (await req.json()) as {
     name?: string;
+    firstName?: string;
+    lastName?: string;
     email?: string | null;
     phone?: string | null;
     type?: string;
@@ -81,8 +84,19 @@ export async function POST(req: Request, { params }: Params) {
     customAttributes?: Record<string, unknown>;
   };
 
-  const name = body.name?.trim();
-  if (!name) return Response.json({ error: 'Name is required' }, { status: 400 });
+  // Manual contact creation (this endpoint) requires First name, Last name, and Email.
+  // Auto-created contacts (chat widget visitors, channel inbounds) go through separate
+  // code paths and are unaffected by this.
+  const firstName = body.firstName?.trim();
+  const lastName = body.lastName?.trim();
+  const email = body.email?.trim();
+  if (!firstName) return Response.json({ error: 'First name is required' }, { status: 400 });
+  if (!lastName) return Response.json({ error: 'Last name is required' }, { status: 400 });
+  if (!email) return Response.json({ error: 'Email is required' }, { status: 400 });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return Response.json({ error: 'Enter a valid email address' }, { status: 400 });
+  }
+  const name = joinName(firstName, lastName) || body.name?.trim() || firstName;
 
   const type = body.type?.trim() ?? 'lead';
   if (!VALID_TYPES.includes(type as (typeof VALID_TYPES)[number])) {
@@ -112,18 +126,21 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const rows = await sql`
-    INSERT INTO contacts (account_id, name, email, phone, country, type, custom_attributes, last_activity_at)
+    INSERT INTO contacts (account_id, name, first_name, last_name, email, phone, country, type, custom_attributes, last_activity_at)
     VALUES (
       ${accountId}::uuid,
       ${name},
-      ${body.email?.trim() || null},
+      ${firstName},
+      ${lastName},
+      ${email},
       ${body.phone?.trim() || null},
       ${country},
       ${type},
       ${JSON.stringify(customAttributes)}::jsonb,
       NOW()
     )
-    RETURNING id, name, email, phone, country, type, external_id as "externalId",
+    RETURNING id, name, first_name as "firstName", last_name as "lastName", email, phone, country, type,
+              external_id as "externalId",
               custom_attributes as "customAttributes",
               last_activity_at as "lastActivityAt", is_blocked as "isBlocked",
               created_at as "createdAt", updated_at as "updatedAt"
@@ -131,7 +148,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const contact = rows[0] as { id: string };
   if (rows[0]) {
-    await linkContactToGlobalCompany(sql, contact.id, body.email?.trim() || null, accountId);
+    await linkContactToGlobalCompany(sql, contact.id, email || null, accountId);
     await emitContactEvent(
       sql,
       accountId,
@@ -150,7 +167,6 @@ export async function POST(req: Request, { params }: Params) {
     }
   }
 
-  const email = body.email?.trim();
   if (contact && email) {
     const settings = await getAccountSettings(sql, accountId);
     if (settings.marketingDoubleOptIn) {

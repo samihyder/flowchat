@@ -20,6 +20,7 @@ import {
   type DasDocument,
 } from '@/lib/api';
 import { ContactMarketingTimeline } from '@/components/marketing/contact-marketing-timeline';
+import { splitName } from '@/lib/contacts-name';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CustomAttributeFields } from '@/components/contacts/custom-attribute-fields';
@@ -90,7 +91,8 @@ export default function ContactProfilePage() {
   const [allLabels, setAllLabels] = useState<Label[]>([]);
   const [attrDefs, setAttrDefs] = useState<CustomAttributeDefinition[]>([]);
   const [noteDraft, setNoteDraft] = useState('');
-  const [editName, setEditName] = useState('');
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editCountry, setEditCountry] = useState('');
@@ -175,7 +177,8 @@ export default function ContactProfilePage() {
     setAllLabels(labelRes.labels);
     setAttrDefs(attrRes.definitions);
     setIsAdmin(access.isAdmin);
-    setEditName(res.contact.name);
+    setEditFirstName(res.contact.firstName ?? splitName(res.contact.name).firstName);
+    setEditLastName(res.contact.lastName ?? splitName(res.contact.name).lastName);
     setEditEmail(res.contact.email ?? '');
     setEditPhone(res.contact.phone ?? '');
     setEditCountry(res.contact.country ?? '');
@@ -353,7 +356,8 @@ export default function ContactProfilePage() {
         accountId,
         contactId,
         {
-          name: editName,
+          firstName: editFirstName,
+          lastName: editLastName,
           email: editEmail || null,
           phone: editPhone || null,
           country: editCountry || null,
@@ -1057,8 +1061,9 @@ export default function ContactProfilePage() {
         <Modal title="Edit contact" onClose={() => setEditOpen(false)}>
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Name" />
-              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="Email" type="email" />
+              <Input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} placeholder="First name" required />
+              <Input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} placeholder="Last name" required />
+              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="Email" type="email" required />
               <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="Phone" />
               <select
                 value={editCountry}
@@ -1113,7 +1118,11 @@ export default function ContactProfilePage() {
             {attrDefs.length > 0 && (
               <CustomAttributeFields definitions={attrDefs} values={customAttributes} onChange={setCustomAttributes} />
             )}
-            <Button type="button" onClick={() => void handleSave()} disabled={saving}>
+            <Button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={saving || !editFirstName.trim() || !editLastName.trim() || !editEmail.trim()}
+            >
               {saving ? 'Saving…' : 'Save changes'}
             </Button>
           </div>
