@@ -27,6 +27,10 @@ const navSections: ModuleNavSection[] = [
     ],
   },
   {
+    label: 'Automate',
+    items: [{ label: 'Automations', href: marketingRoutes.automations, icon: 'bolt' }],
+  },
+  {
     label: 'Configure',
     items: [
       // Senders, signature, meeting/portfolio links, and compliance footer live here —
