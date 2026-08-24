@@ -14,4 +14,8 @@ export const marketingRoutes = {
   workflowNew: '/marketing/workflows/new',
   workflow: (id: string) => `/marketing/workflows/${id}`,
   workflowEdit: (id: string) => `/marketing/workflows/${id}/edit`,
+  automations: '/marketing/automations',
+  automationNew: '/marketing/automations/new',
+  automation: (id: string) => `/marketing/automations/${id}`,
+  automationEdit: (id: string) => `/marketing/automations/${id}/edit`,
 } as const;
